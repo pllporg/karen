@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-16T21:52:28.140Z",
+  "generatedAt": "2026-02-16T22:34:14.718Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -142,14 +142,18 @@
     "stateCounts": {
       "Backlog": 37,
       "In Review": 3,
-      "In Progress": 1,
-      "Done": 3
+      "Done": 4
     },
-    "inProgressIssueKeys": [
-      "KAR-41"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-41",
+        "title": "Add web application automated test suite for critical workflows",
+        "state": "Done",
+        "updatedAt": "2026-02-16T22:01:33.254Z",
+        "requirementId": "REQ-OPS-001"
+      },
       {
         "key": "KAR-37",
         "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
@@ -212,25 +216,25 @@
         "state": "Backlog",
         "updatedAt": "2026-02-16T20:39:07.045Z",
         "requirementId": "REQ-MAT-005"
-      },
-      {
-        "key": "KAR-44",
-        "title": "Implement advanced conflict rule profiles and resolution workflows",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:06.760Z",
-        "requirementId": "REQ-MAT-004"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-16T21:52:21.438Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-16T22:34:13.487Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "18effe95b4095b90de00c523ebd72365f21b5afe",
+    "gitHead": "f634e5e748644ca17a4a84406b5ca9597e46a3bb",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-33-ai-deadline-confirmation",
+      " M apps/api/src/ai/ai.service.ts",
+      " M apps/web/app/ai/page.tsx",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? apps/api/src/ai/deadline-candidates.util.ts",
+      "?? apps/api/test/deadline-candidates.util.spec.ts",
+      "?? apps/web/test/ai-page.spec.tsx"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 7
   }
 }

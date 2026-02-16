@@ -8,6 +8,7 @@ import { AuthenticatedUser } from '../common/types';
 import { AccessService } from '../access/access.service';
 import { AuditService } from '../audit/audit.service';
 import { toJsonValue } from '../common/utils/json.util';
+import { AiExcerptEvidence, deriveDeadlineCandidates } from './deadline-candidates.util';
 
 const AI_QUEUE = 'ai-jobs';
 
@@ -51,6 +52,11 @@ export class AiService implements OnModuleInit {
           organizationId,
           matterId,
         });
+        const deadlineCandidates = deriveDeadlineCandidates({
+          toolName,
+          content: result.content,
+          excerptEvidence: result.excerpts,
+        });
 
         const artifact = await this.prisma.aiArtifact.create({
           data: {
@@ -63,6 +69,7 @@ export class AiService implements OnModuleInit {
               banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
               citations: result.citations,
               excerptEvidence: result.excerpts,
+              deadlineCandidates,
               model: this.model,
               toolName,
             }),
@@ -296,7 +303,13 @@ export class AiService implements OnModuleInit {
       organizationId: string;
       matterId: string;
     },
-  ): Promise<{ content: string; citations: Array<{ chunkId: string }>; excerpts: unknown[]; prompt: string; systemPrompt: string }> {
+  ): Promise<{
+    content: string;
+    citations: Array<{ chunkId: string }>;
+    excerpts: AiExcerptEvidence[];
+    prompt: string;
+    systemPrompt: string;
+  }> {
     const systemPrompt = [
       'You are a legal operations AI assistant for litigation workflows.',
       'All outputs are drafts only and require attorney review.',
