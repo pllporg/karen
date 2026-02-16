@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-16T20:41:49.220Z",
+  "generatedAt": "2026-02-16T21:25:39.176Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -225,47 +225,15 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-16T20:41:35.714Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-16T21:24:08.090Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "74cf369efe74b45ca32fd4b72f18fbe4553712a8",
+    "gitHead": "9e17e75eca8af510dfa4a6a1bb04138c9cd4ce1c",
     "gitStatusShort": [
       "## main...origin/main",
-      " M .env.example",
-      " M .gitignore",
-      " M Prompt-Context",
-      " M README.md",
-      " M apps/api/.env.example",
-      " M apps/api/src/integrations/connectors/clio.connector.ts",
-      " M apps/api/src/integrations/connectors/connector.interface.ts",
-      " M apps/api/src/integrations/connectors/filevine.connector.ts",
-      " M apps/api/src/integrations/connectors/generic-rest.connector.ts",
-      " M apps/api/src/integrations/connectors/gmail.connector.ts",
-      " M apps/api/src/integrations/connectors/mycase.connector.ts",
-      " M apps/api/src/integrations/connectors/outlook.connector.ts",
-      " M apps/api/src/integrations/connectors/practicepanther.connector.ts",
-      " M apps/api/src/integrations/integrations.controller.ts",
-      " M apps/api/src/integrations/integrations.module.ts",
-      " M apps/api/src/integrations/integrations.service.ts",
-      " M apps/api/test/documents.spec.ts",
-      " M apps/api/test/integration-token-crypto.spec.ts",
-      " M apps/api/test/integrations.spec.ts",
-      " M apps/api/test/malware-scan.spec.ts",
-      " M docker-compose.yml",
-      " M package.json",
-      " M tools/backlog-sync/README.md",
-      " M tools/backlog-sync/config.example.env",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/verify_backlog_sync.mjs",
-      "?? .github/workflows/context-freshness.yml",
-      "?? apps/api/test/helpers/",
-      "?? apps/web/test/matters-page.spec.tsx",
-      "?? docs/",
-      "?? tools/backlog-sync/backlog_snapshot.mjs",
-      "?? tools/backlog-sync/check_handoff_freshness.mjs",
-      "?? tools/backlog-sync/session.snapshot.json"
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 33
+    "dirtyFileCount": 1
   }
 }
