@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { IncrementalSyncConnector } from './connector.interface';
+import { ConnectorSyncParams, ConnectorSyncResult, ConnectorWebhookParams, IncrementalSyncConnector } from './connector.interface';
 
 @Injectable()
 export class GmailConnector implements IncrementalSyncConnector {
   provider: 'GMAIL' = 'GMAIL';
+  supportsOAuth = false;
 
-  async sync(): Promise<{ nextCursor?: string | null; importedCount: number }> {
-    return { nextCursor: null, importedCount: 0 };
+  async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {
+    return {
+      nextCursor: params.cursor ?? new Date().toISOString(),
+      importedCount: 0,
+      warnings: ['Gmail sync remains phase-2 scaffold.'],
+    };
   }
 
-  async subscribeWebhooks(): Promise<{ subscriptionId: string }> {
-    return { subscriptionId: 'gmail-sync-stub' };
+  async subscribeWebhooks(params: ConnectorWebhookParams): Promise<{ subscriptionId: string }> {
+    return { subscriptionId: `gmail-${params.connectionId}-${Date.now()}` };
   }
 }
