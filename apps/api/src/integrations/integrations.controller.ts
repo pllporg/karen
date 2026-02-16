@@ -26,6 +26,8 @@ export class IntegrationsController {
     body: {
       provider: IntegrationProvider;
       name: string;
+      accessToken?: string;
+      refreshToken?: string;
       encryptedAccessToken?: string;
       encryptedRefreshToken?: string;
       scopes?: string[];

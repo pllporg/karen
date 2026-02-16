@@ -9,6 +9,7 @@ import { DocumentsService } from '../src/documents/documents.service';
 import { ExportsService } from '../src/exports/exports.service';
 import { ImportsService } from '../src/imports/imports.service';
 import { IntegrationsService } from '../src/integrations/integrations.service';
+import { IntegrationTokenCryptoService } from '../src/integrations/integration-token-crypto.service';
 import { MattersService } from '../src/matters/matters.service';
 import { OrganizationsService } from '../src/organizations/organizations.service';
 import { ReportingService } from '../src/reporting/reporting.service';
@@ -204,7 +205,11 @@ describe('Tenant isolation', () => {
       integrationConnection: { findMany: jest.fn().mockResolvedValue([]) },
       exportJob: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
-    const integrations = new IntegrationsService(prisma, { appendEvent: jest.fn() } as any);
+    const integrations = new IntegrationsService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      new IntegrationTokenCryptoService(),
+    );
     const exportsService = new ExportsService(
       prisma,
       { upload: jest.fn(), signedDownloadUrl: jest.fn(), getObjectBuffer: jest.fn() } as any,

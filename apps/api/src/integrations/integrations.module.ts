@@ -9,6 +9,7 @@ import { PracticePantherConnector } from './connectors/practicepanther.connector
 import { GenericRestConnector } from './connectors/generic-rest.connector';
 import { GmailConnector } from './connectors/gmail.connector';
 import { OutlookConnector } from './connectors/outlook.connector';
+import { IntegrationTokenCryptoService } from './integration-token-crypto.service';
 
 @Module({
   imports: [AuditModule],
@@ -22,6 +23,7 @@ import { OutlookConnector } from './connectors/outlook.connector';
     GenericRestConnector,
     GmailConnector,
     OutlookConnector,
+    IntegrationTokenCryptoService,
   ],
 })
 export class IntegrationsModule {}

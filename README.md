@@ -170,6 +170,7 @@ Included suites cover:
 - `apps/api/prisma/migrations/20260213180000_init/migration.sql` enables extension prerequisites and includes migration guidance. Generate complete SQL from Prisma schema in a Node-enabled environment via `pnpm --filter api prisma:migrate`.
 - AI outputs are not legal advice and must be attorney-reviewed.
 - OAuth provider handshake and external sync APIs are scaffolded for Phase 2 with persistent connection/sync/webhook records.
+- Integration OAuth tokens are encrypted at rest. Configure `INTEGRATION_TOKEN_ENCRYPTION_KEYS` and `INTEGRATION_TOKEN_ACTIVE_KEY_ID` for non-stub environments.
 
 ## Prompt-Parity Backlog Operations (Linear + GitHub)
 
