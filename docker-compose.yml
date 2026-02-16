@@ -55,7 +55,18 @@ services:
       exit 0;
       "
 
+  clamav:
+    image: clamav/clamav:latest
+    container_name: karen-clamav
+    profiles:
+      - security
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamavdata:/var/lib/clamav
+
 volumes:
   pgdata:
   redisdata:
   miniodata:
+  clamavdata:

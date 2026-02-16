@@ -37,13 +37,61 @@ export class IntegrationsController {
     return this.integrationsService.create({ user, ...body });
   }
 
+  @Post('oauth/start')
+  @RequirePermissions('integrations:write')
+  oauthStart(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    body: {
+      provider: IntegrationProvider;
+      name: string;
+      redirectUri: string;
+      scopes?: string[];
+      config?: Record<string, unknown>;
+    },
+  ) {
+    return this.integrationsService.startOAuth({
+      user,
+      provider: body.provider,
+      name: body.name,
+      redirectUri: body.redirectUri,
+      scopes: body.scopes,
+      config: body.config,
+    });
+  }
+
+  @Post('oauth/callback')
+  @RequirePermissions('integrations:write')
+  oauthCallback(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    body: {
+      connectionId: string;
+      code: string;
+      state: string;
+      redirectUri?: string;
+    },
+  ) {
+    return this.integrationsService.completeOAuth({
+      user,
+      connectionId: body.connectionId,
+      code: body.code,
+      state: body.state,
+      redirectUri: body.redirectUri,
+    });
+  }
+
   @Post('sync')
   @RequirePermissions('integrations:write')
-  sync(@CurrentUser() user: AuthenticatedUser, @Body() body: { connectionId: string; idempotencyKey: string }) {
+  sync(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { connectionId: string; idempotencyKey: string; cursor?: string | null },
+  ) {
     return this.integrationsService.triggerSync({
       user,
       connectionId: body.connectionId,
       idempotencyKey: body.idempotencyKey,
+      cursor: body.cursor,
     });
   }
 

@@ -1,0 +1,87 @@
+# Karen Legal Suite Session Handoff
+
+This document is the persistent handoff layer for new chats. Linear is canonical; this file provides the minimal runbook to reconstruct context quickly and consistently.
+
+## Snapshot Metadata
+
+- Snapshot File: `tools/backlog-sync/session.snapshot.json`
+- Snapshot Timestamp: `2026-02-16T20:41:49.220Z`
+- Snapshot Schema Version: `1.1.0`
+- Last Successful Mirror Verify: `2026-02-16T20:41:35.714Z`
+
+## Canonical Context Routing (Linear-First)
+
+Use this order when reconstructing context:
+
+1. Active Linear issue (`In Progress`/`In Review`)
+2. Linear project status for parity scope
+3. `tools/backlog-sync/requirements.matrix.json`
+4. `README.md` -> `New Chat Bootstrap`
+5. `Prompt-Context`
+
+Rule: GitHub issues are mirror-only for parity scope and never source-of-truth for task status.
+
+## Runtime Identity
+
+- Monorepo: `apps/api` (NestJS + Prisma + BullMQ), `apps/web` (Next.js App Router), `docker-compose.yml` (Postgres pgvector, Redis, MinIO, optional ClamAV)
+- Canonical backlog model: Linear project `Prompt Parity - Karen Legal Suite`
+- Sync model: one-way Linear -> GitHub mirror via `tools/backlog-sync/linear_to_github.mjs`
+
+## New Chat Bootstrap (Command-First)
+
+Run these in order:
+
+```bash
+git status --short --branch
+pnpm backlog:verify
+pnpm backlog:snapshot
+```
+
+Then read:
+
+1. `tools/backlog-sync/session.snapshot.json`
+2. `docs/SESSION_HANDOFF.md`
+3. Top priority Linear issues listed in snapshot (`priority.topRequirements`, `linearSummary.inProgressIssueKeys`)
+
+## Priority Lane Policy
+
+Selection policy:
+
+1. `phase-1` requirements before `phase-2`
+2. Within a phase: `Missing` requirements before `Partial`
+3. Within same phase/status: `High` risk before `Medium` before `Low`
+4. Security/data-integrity/portability before UX polish
+
+## Dirty Tree Policy
+
+Dirty working tree is allowed, but must be acknowledged at session start:
+
+1. Record current branch and changed files from `git status --short --branch`.
+2. Do not revert unrelated local changes.
+3. If local edits conflict with planned slice, call out conflict before modifying files.
+
+## Implementation Slice Protocol
+
+For each requirement slice:
+
+1. Implement code changes.
+2. Validate (`pnpm test`, `pnpm build`, plus targeted suites).
+3. Update Linear issue evidence/state.
+4. Run `pnpm backlog:sync`.
+5. Run `pnpm backlog:verify`.
+6. Run `pnpm backlog:snapshot`.
+7. Update this file’s `Snapshot Timestamp` and append delta note.
+
+## Decision Tree: Choosing Next Task
+
+1. Open snapshot `priority.topRequirements`.
+2. Prioritize `phase-1` items before `phase-2`.
+3. Within phase, if any requirement is `Missing`, pick highest-risk first.
+4. If no `Missing`, pick highest-risk `Partial`.
+5. If tie remains, pick requirement with greatest security/compliance impact.
+
+## Delta Log
+
+- 2026-02-16: Established new-chat continuity protocol, snapshot tooling, and freshness checks for context-compaction resilience.
+- 2026-02-16: Added five end-goal features as `phase-2` planned scope (`REQ-COMM-004`, `REQ-MAT-004`, `REQ-MAT-005`, `REQ-BILL-003`, `REQ-BILL-004`) and enabled phase-aware snapshot prioritization.
+- 2026-02-16: These additions are tracked as `phase-2` planned backlog items so they do not displace active `phase-1` delivery lanes.

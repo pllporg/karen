@@ -10,6 +10,7 @@ import { GenericRestConnector } from './connectors/generic-rest.connector';
 import { GmailConnector } from './connectors/gmail.connector';
 import { OutlookConnector } from './connectors/outlook.connector';
 import { IntegrationTokenCryptoService } from './integration-token-crypto.service';
+import { INTEGRATION_CONNECTORS } from './connectors/connector.interface';
 
 @Module({
   imports: [AuditModule],
@@ -23,6 +24,27 @@ import { IntegrationTokenCryptoService } from './integration-token-crypto.servic
     GenericRestConnector,
     GmailConnector,
     OutlookConnector,
+    {
+      provide: INTEGRATION_CONNECTORS,
+      inject: [
+        ClioConnector,
+        MyCaseConnector,
+        FilevineConnector,
+        PracticePantherConnector,
+        GenericRestConnector,
+        GmailConnector,
+        OutlookConnector,
+      ],
+      useFactory: (
+        clio: ClioConnector,
+        mycase: MyCaseConnector,
+        filevine: FilevineConnector,
+        practicePanther: PracticePantherConnector,
+        genericRest: GenericRestConnector,
+        gmail: GmailConnector,
+        outlook: OutlookConnector,
+      ) => [clio, mycase, filevine, practicePanther, genericRest, gmail, outlook],
+    },
     IntegrationTokenCryptoService,
   ],
 })

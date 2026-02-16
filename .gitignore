@@ -10,3 +10,4 @@ coverage
 .DS_Store
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal
+tools/backlog-sync/state/

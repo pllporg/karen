@@ -44,4 +44,22 @@ describe('IntegrationTokenCryptoService', () => {
 
     expect(() => service.decryptToken(encrypted)).toThrow('No decryption key found for key id: v1');
   });
+
+  it('supports key rotation by decrypting old envelopes while encrypting new tokens with active key', () => {
+    const keyV1 = Buffer.from('0123456789abcdef0123456789abcdef').toString('base64');
+    const keyV2 = Buffer.from('fedcba9876543210fedcba9876543210').toString('base64');
+    process.env.INTEGRATION_TOKEN_ENCRYPTION_KEYS = `v1:${keyV1},v2:${keyV2}`;
+    process.env.INTEGRATION_TOKEN_ACTIVE_KEY_ID = 'v1';
+
+    const service = new IntegrationTokenCryptoService();
+    const oldEnvelope = service.encryptToken('legacy-token');
+    expect(oldEnvelope).toContain('"kid":"v1"');
+
+    process.env.INTEGRATION_TOKEN_ACTIVE_KEY_ID = 'v2';
+    const rotatedEnvelope = service.encryptToken('new-token');
+    expect(rotatedEnvelope).toContain('"kid":"v2"');
+
+    expect(service.decryptToken(oldEnvelope)).toBe('legacy-token');
+    expect(service.decryptToken(rotatedEnvelope)).toBe('new-token');
+  });
 });

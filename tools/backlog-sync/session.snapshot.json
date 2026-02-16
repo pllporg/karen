@@ -1,0 +1,271 @@
+{
+  "schemaVersion": "1.1.0",
+  "generatedAt": "2026-02-16T20:41:49.220Z",
+  "sourceOfTruth": "Linear",
+  "contextContract": {
+    "canonicalOrder": [
+      "Linear issue (active)",
+      "Linear project state",
+      "tools/backlog-sync/requirements.matrix.json",
+      "README.md (New Chat Bootstrap)",
+      "Prompt-Context"
+    ],
+    "githubIssues": "mirror-only"
+  },
+  "matrixSummary": {
+    "totalRequirements": 34,
+    "unresolvedRequirements": 34,
+    "totalCountsByPhase": {
+      "phase-1": 29,
+      "phase-2": 5
+    },
+    "unresolvedCountsByPhase": {
+      "phase-1": 29,
+      "phase-2": 5
+    },
+    "unresolvedCountsByStatus": {
+      "Partial": 26,
+      "Complete": 3,
+      "Missing": 5
+    },
+    "unresolvedCountsByRisk": {
+      "High": 17,
+      "Medium": 17
+    },
+    "unresolvedCountsByStatusAndRisk": {
+      "Partial:High": 15,
+      "Complete:High": 2,
+      "Partial:Medium": 11,
+      "Missing:Medium": 5,
+      "Complete:Medium": 1
+    }
+  },
+  "priority": {
+    "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
+    "topRequirements": [
+      {
+        "requirementId": "REQ-AI-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+        "component": "Web",
+        "epicCode": "PARITY-08",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-AI-002",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Implement prompt injection defense hardening for ingestion pipeline",
+        "component": "API",
+        "epicCode": "PARITY-08",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-BILL-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
+        "component": "API",
+        "epicCode": "PARITY-06",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-BILL-002",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Complete trust accounting reports and ledger invariants",
+        "component": "API",
+        "epicCode": "PARITY-06",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Validate all required entities and relation semantics against prompt",
+        "component": "Data",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-INT-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
+        "component": "Integrations",
+        "epicCode": "PARITY-09",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-INT-002",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+        "component": "Integrations",
+        "epicCode": "PARITY-09",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Complete participant role configurability and side semantics coverage",
+        "component": "API",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-003",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Complete construction litigation intake wizard domain coverage",
+        "component": "Web",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-OPS-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Add web application automated test suite for critical workflows",
+        "component": "Web",
+        "epicCode": "PARITY-10",
+        "phase": "phase-1"
+      }
+    ]
+  },
+  "linearSummary": {
+    "projectName": "Prompt Parity - Karen Legal Suite",
+    "scopeLabel": "parity",
+    "scopedIssueCount": 44,
+    "stateCounts": {
+      "Backlog": 37,
+      "In Review": 3,
+      "In Progress": 4
+    },
+    "inProgressIssueKeys": [
+      "KAR-41",
+      "KAR-39",
+      "KAR-38",
+      "KAR-37"
+    ],
+    "inProgressWithoutVerificationEvidence": [],
+    "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-48",
+        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:08.468Z",
+        "requirementId": "REQ-BILL-004"
+      },
+      {
+        "key": "KAR-47",
+        "title": "Implement trust reconciliation workflows with discrepancy resolution",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:07.918Z",
+        "requirementId": "REQ-BILL-003"
+      },
+      {
+        "key": "KAR-26",
+        "title": "PARITY-06 Billing + Trust + Payments",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:07.918Z",
+        "requirementId": "PARITY-06"
+      },
+      {
+        "key": "KAR-46",
+        "title": "Implement document retention policies with legal hold workflow",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:07.376Z",
+        "requirementId": "REQ-COMM-004"
+      },
+      {
+        "key": "KAR-22",
+        "title": "PARITY-05 Communications + Documents",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:07.376Z",
+        "requirementId": "PARITY-05"
+      },
+      {
+        "key": "KAR-45",
+        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:07.045Z",
+        "requirementId": "REQ-MAT-005"
+      },
+      {
+        "key": "KAR-44",
+        "title": "Implement advanced conflict rule profiles and resolution workflows",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:06.760Z",
+        "requirementId": "REQ-MAT-004"
+      },
+      {
+        "key": "KAR-18",
+        "title": "PARITY-04 Contacts + Matters + Participants",
+        "state": "Backlog",
+        "updatedAt": "2026-02-16T20:39:06.760Z",
+        "requirementId": "PARITY-04"
+      },
+      {
+        "key": "KAR-39",
+        "title": "Implement Filevine and PracticePanther connector production adapters",
+        "state": "In Progress",
+        "updatedAt": "2026-02-16T20:12:53.936Z",
+        "requirementId": "REQ-INT-003"
+      },
+      {
+        "key": "KAR-38",
+        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+        "state": "In Progress",
+        "updatedAt": "2026-02-16T20:12:53.671Z",
+        "requirementId": "REQ-INT-002"
+      }
+    ]
+  },
+  "operational": {
+    "lastSuccessfulBacklogVerifyAt": "2026-02-16T20:41:35.714Z",
+    "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
+  },
+  "workspace": {
+    "gitHead": "74cf369efe74b45ca32fd4b72f18fbe4553712a8",
+    "gitStatusShort": [
+      "## main...origin/main",
+      " M .env.example",
+      " M .gitignore",
+      " M Prompt-Context",
+      " M README.md",
+      " M apps/api/.env.example",
+      " M apps/api/src/integrations/connectors/clio.connector.ts",
+      " M apps/api/src/integrations/connectors/connector.interface.ts",
+      " M apps/api/src/integrations/connectors/filevine.connector.ts",
+      " M apps/api/src/integrations/connectors/generic-rest.connector.ts",
+      " M apps/api/src/integrations/connectors/gmail.connector.ts",
+      " M apps/api/src/integrations/connectors/mycase.connector.ts",
+      " M apps/api/src/integrations/connectors/outlook.connector.ts",
+      " M apps/api/src/integrations/connectors/practicepanther.connector.ts",
+      " M apps/api/src/integrations/integrations.controller.ts",
+      " M apps/api/src/integrations/integrations.module.ts",
+      " M apps/api/src/integrations/integrations.service.ts",
+      " M apps/api/test/documents.spec.ts",
+      " M apps/api/test/integration-token-crypto.spec.ts",
+      " M apps/api/test/integrations.spec.ts",
+      " M apps/api/test/malware-scan.spec.ts",
+      " M docker-compose.yml",
+      " M package.json",
+      " M tools/backlog-sync/README.md",
+      " M tools/backlog-sync/config.example.env",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/verify_backlog_sync.mjs",
+      "?? .github/workflows/context-freshness.yml",
+      "?? apps/api/test/helpers/",
+      "?? apps/web/test/matters-page.spec.tsx",
+      "?? docs/",
+      "?? tools/backlog-sync/backlog_snapshot.mjs",
+      "?? tools/backlog-sync/check_handoff_freshness.mjs",
+      "?? tools/backlog-sync/session.snapshot.json"
+    ],
+    "dirtyFileCount": 33
+  }
+}

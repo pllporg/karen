@@ -33,7 +33,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
   - deadline confirmation flow
 - Public API surface with generated OpenAPI (`/openapi`)
 - Webhooks endpoint registration + delivery tracking
-- Integration connection/sync/webhook subscription stubs for Clio/MyCase/Filevine/PracticePanther/Gmail/Outlook/generic REST
+- Integration connection framework with OAuth start/callback (Clio/MyCase), encrypted token storage, idempotent sync runs, and webhook subscription registry for Clio/MyCase/Filevine/PracticePanther/Gmail/Outlook/generic REST
 
 ## Security + Ethics Controls
 
@@ -56,6 +56,12 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 docker compose up -d
 ```
 
+Optional: start local ClamAV sidecar for real malware scanning:
+
+```bash
+docker compose --profile security up -d clamav
+```
+
 2. Configure env:
 
 ```bash
@@ -67,6 +73,7 @@ For production-like document upload security, configure:
 - `MALWARE_SCANNER_PROVIDER=clamav`
 - `MALWARE_SCANNER_FAIL_OPEN=false`
 - `CLAMAV_HOST` / `CLAMAV_PORT` for your ClamAV daemon endpoint
+- local sidecar default endpoint: `127.0.0.1:3310`
 
 3. Install dependencies (Node 20+):
 
@@ -163,7 +170,7 @@ Included suites cover:
 - import batch execution
 - AI job queue creation
 - import/export roundtrip fixture check
-- web login/dashboard smoke and API client error handling
+- web login/dashboard smoke, matters create/intake flow, and API client error handling
 
 ## Important Notes
 
@@ -171,6 +178,62 @@ Included suites cover:
 - AI outputs are not legal advice and must be attorney-reviewed.
 - OAuth provider handshake and external sync APIs are scaffolded for Phase 2 with persistent connection/sync/webhook records.
 - Integration OAuth tokens are encrypted at rest. Configure `INTEGRATION_TOKEN_ENCRYPTION_KEYS` and `INTEGRATION_TOKEN_ACTIVE_KEY_ID` for non-stub environments.
+
+### Integration Token Key Rotation
+
+1. Add the new key to `INTEGRATION_TOKEN_ENCRYPTION_KEYS` while retaining old keys.
+2. Switch `INTEGRATION_TOKEN_ACTIVE_KEY_ID` to the new key id.
+3. Keep prior keys available until all legacy envelopes are re-written/expired.
+
+### Integration OAuth + Sync Endpoints
+
+- `POST /integrations/oauth/start`
+  - starts provider OAuth handshake and returns authorization URL + state for callback correlation
+- `POST /integrations/oauth/callback`
+  - exchanges authorization code for tokens (live mode optional via env; stub by default)
+- `POST /integrations/sync`
+  - triggers connector sync with idempotency key; stores cursor/checkpoint on completion
+- `POST /integrations/webhook-subscriptions`
+  - registers webhook subscription and persists provider external subscription id
+
+## Phase-2 Planned End-Goal Features
+
+- Document retention policies (including legal hold and disposition controls)
+- Advanced conflict rules (profile-based matching and conflict resolution workflow)
+- Trust reconciliation workflows (run lifecycle, discrepancy queue, sign-off)
+- LEDES/UTBMS export jobs (validation + standards-oriented outputs)
+- Jurisdictional deadline rules packs (versioned by jurisdiction/court/procedure)
+
+## New Chat Bootstrap
+
+Use this protocol at the start of every new chat to avoid context-compaction drift:
+
+```bash
+git status --short --branch
+pnpm backlog:verify
+pnpm backlog:snapshot
+```
+
+Then read context in this order:
+
+1. Active Linear issue(s) for current slice
+2. Linear project state (`Prompt Parity - Karen Legal Suite`)
+3. `tools/backlog-sync/requirements.matrix.json`
+4. `README.md` (this section)
+5. `Prompt-Context`
+
+Handoff artifacts:
+
+- `docs/SESSION_HANDOFF.md` (session state + operational handoff)
+- `docs/WORKING_CONTRACT.md` (implementation protocol)
+- `tools/backlog-sync/session.snapshot.json` (machine-readable status snapshot)
+
+Policy notes:
+
+- Linear is canonical for parity task state and acceptance evidence.
+- GitHub issues are mirror-only and not source-of-truth for parity state.
+- Dirty working tree is allowed, but must be inspected and acknowledged at session start.
+- Snapshot prioritization is phase-aware: `phase-1` requirements are ranked ahead of `phase-2` planned items.
 
 ## Prompt-Parity Backlog Operations (Linear + GitHub)
 
@@ -255,3 +318,36 @@ Checks:
 - Missing mirrors.
 - Orphan mirrors.
 - Missing requirement IDs.
+
+### 6) Generate machine-readable session snapshot
+
+```bash
+pnpm backlog:snapshot
+```
+
+Output:
+
+- `tools/backlog-sync/session.snapshot.json`
+
+Includes:
+
+- unresolved requirement counts by phase/status/risk
+- top priority requirement IDs
+- recent Linear issue updates
+- last successful `backlog:verify` timestamp
+
+### 7) Local bootstrap check shortcut
+
+```bash
+pnpm backlog:bootstrap:check
+```
+
+Equivalent to:
+
+```bash
+pnpm backlog:verify && pnpm backlog:snapshot
+```
+
+Fallback rule:
+
+- If snapshot and handoff timestamps drift, trust Linear state first, regenerate snapshot, and refresh `docs/SESSION_HANDOFF.md` before planning.
