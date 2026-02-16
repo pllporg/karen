@@ -1,0 +1,137 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import PortalPage from '../app/portal/page';
+
+function jsonResponse<T>(payload: T, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 200 ? 'OK' : 'Error',
+    json: async () => payload,
+    text: async () => JSON.stringify(payload),
+  } as Response;
+}
+
+describe('PortalPage', () => {
+  it('sends a portal message and refreshes snapshot counts', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'm1' }],
+          keyDates: [{ id: 'd1' }],
+          invoices: [{ id: 'i1' }],
+          documents: [{ id: 'doc1' }, { id: 'doc2' }],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: 'msg-1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'm1' }, { id: 'm2' }],
+          keyDates: [{ id: 'd1' }],
+          invoices: [{ id: 'i1' }],
+          documents: [{ id: 'doc1' }, { id: 'doc2' }, { id: 'doc3' }],
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PortalPage />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/snapshot',
+        expect.objectContaining({
+          credentials: 'include',
+          headers: expect.objectContaining({ 'content-type': 'application/json' }),
+        }),
+      );
+    });
+
+    expect(screen.getByText('1 visible matters')).toBeInTheDocument();
+    expect(screen.getByText('2 shared docs')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/messages',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+    });
+
+    const sendCall = fetchMock.mock.calls[1];
+    expect(JSON.parse(sendCall[1]?.body as string)).toEqual({
+      matterId: 'matter-1',
+      body: 'Can you share the latest mediation timeline?',
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('2 visible matters')).toBeInTheDocument();
+      expect(screen.getByText('3 shared docs')).toBeInTheDocument();
+    });
+  });
+
+  it('submits intake and creates e-sign envelope from portal actions', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], documents: [] }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'intake-1' }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'esign-1' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PortalPage />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/snapshot',
+        expect.objectContaining({
+          credentials: 'include',
+        }),
+      );
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-22' } });
+    fireEvent.change(screen.getByPlaceholderText('Intake Form Definition ID'), { target: { value: 'intake-def-1' } });
+    fireEvent.change(screen.getByPlaceholderText('Engagement Letter Template ID'), {
+      target: { value: 'letter-template-5' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create E-Sign Envelope' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/intake-submissions',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/esign',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+    });
+
+    const intakeCall = fetchMock.mock.calls[1];
+    expect(JSON.parse(intakeCall[1]?.body as string)).toEqual(
+      expect.objectContaining({
+        intakeFormDefinitionId: 'intake-def-1',
+        matterId: 'matter-22',
+      }),
+    );
+
+    const esignCall = fetchMock.mock.calls[2];
+    expect(JSON.parse(esignCall[1]?.body as string)).toEqual({
+      engagementLetterTemplateId: 'letter-template-5',
+      matterId: 'matter-22',
+    });
+  });
+});
