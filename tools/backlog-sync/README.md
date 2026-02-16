@@ -17,6 +17,11 @@ This toolkit sets up and operates a persistent parity backlog where:
   - Mirrors scoped Linear issues into GitHub issues (idempotent by `Linear-ID` marker).
 - `verify_backlog_sync.mjs`
   - Verifies mirror counts, traceability markers, and requirement IDs.
+  - Writes `tools/backlog-sync/state/verify.last.json` on successful verification.
+- `backlog_snapshot.mjs`
+  - Generates `session.snapshot.json` with priority, status, and continuity metadata.
+- `check_handoff_freshness.mjs`
+  - Validates handoff freshness against snapshot timestamp and Linear evidence discipline.
 
 ## Required Environment Variables
 
@@ -26,6 +31,8 @@ This toolkit sets up and operates a persistent parity backlog where:
 - `LINEAR_TEAM_KEY` (default: `KAR`)
 - `LINEAR_PROJECT_NAME` (default: `Prompt Parity - Karen Legal Suite`)
 - `LINEAR_SCOPE_LABEL` (default: `parity`)
+- `SNAPSHOT_TOP_N` (default: `10`)
+- `SNAPSHOT_RECENT_ISSUES` (default: `10`)
 
 ### GitHub
 
@@ -50,6 +57,12 @@ This toolkit sets up and operates a persistent parity backlog where:
 2. `pnpm backlog:seed`
 3. `pnpm backlog:sync`
 4. `pnpm backlog:verify`
+5. `pnpm backlog:snapshot`
+
+Bootstrap check shortcut:
+
+- `pnpm backlog:bootstrap:check`
+  - Runs `pnpm backlog:verify && pnpm backlog:snapshot`
 
 ## GitHub Repository Variables/Secrets
 
@@ -75,3 +88,4 @@ DRY_RUN=true node tools/backlog-sync/linear_to_github.mjs
 - GitHub issue comments are preserved (the script only updates issue metadata/body).
 - `requirements.matrix.json` is the persistent, versioned baseline of parity work.
 - `linear_issue_template.md` defines required fields/sections for manual parity issues.
+- `session.snapshot.json` is generated and intended to be read first in new chats.

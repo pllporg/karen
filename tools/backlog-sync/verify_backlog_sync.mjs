@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import {
   env,
   extractRequirementId,
@@ -17,6 +20,7 @@ const repo = requiredEnv('GITHUB_REPO');
 const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
 const scopeLabel = normalizeLabelName(env('LINEAR_SCOPE_LABEL', 'parity'));
 const allowMismatch = normalizeLabelName(env('ALLOW_MISMATCH', 'false')) === 'true';
+const verifyStatePath = path.join(process.cwd(), 'tools', 'backlog-sync', 'state', 'verify.last.json');
 
 function parseLinearId(body) {
   const match = String(body || '').match(/Linear-ID:\s*([a-zA-Z0-9-]+)/i);
@@ -110,6 +114,25 @@ async function main() {
     missingRequirementIds.length > 0 ||
     githubMissingRequirementMarker.length > 0 ||
     linearIssues.length !== githubByLinearId.size;
+
+  const verificationRecord = {
+    projectName,
+    scopeLabel,
+    generatedAt: new Date().toISOString(),
+    linearScopedIssueCount: linearIssues.length,
+    githubMirroredIssueCount: githubByLinearId.size,
+    missingMirrors,
+    orphanMirrors,
+    missingRequirementIds,
+    githubMissingRequirementMarker,
+    hasFailures,
+    allowMismatch,
+  };
+
+  if (!hasFailures) {
+    await mkdir(path.dirname(verifyStatePath), { recursive: true });
+    await writeFile(verifyStatePath, JSON.stringify(verificationRecord, null, 2) + '\n', 'utf8');
+  }
 
   if (hasFailures && !allowMismatch) {
     process.exit(1);

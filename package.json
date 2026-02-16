@@ -17,7 +17,10 @@
     "backlog:linear:setup": "node tools/backlog-sync/setup_linear_workspace.mjs",
     "backlog:seed": "node tools/backlog-sync/seed_parity_backlog.mjs",
     "backlog:sync": "node tools/backlog-sync/linear_to_github.mjs",
-    "backlog:verify": "node tools/backlog-sync/verify_backlog_sync.mjs"
+    "backlog:verify": "node tools/backlog-sync/verify_backlog_sync.mjs",
+    "backlog:snapshot": "node tools/backlog-sync/backlog_snapshot.mjs",
+    "backlog:handoff:check": "node tools/backlog-sync/check_handoff_freshness.mjs",
+    "backlog:bootstrap:check": "pnpm backlog:verify && pnpm backlog:snapshot"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

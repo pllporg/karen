@@ -38,7 +38,7 @@
           "title": "Implement upload malware scanning provider integration",
           "requirementId": "REQ-SEC-002",
           "promptSection": "SECURITY REQUIREMENTS / Malware scanning hook for uploads",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Infra",
           "risk": "High",
           "labels": ["parity", "security", "documents"],
@@ -60,11 +60,11 @@
           "title": "Implement encrypted OAuth token storage with key management",
           "requirementId": "REQ-SEC-003",
           "promptSection": "API & INTEGRATIONS / Integration connections table storing OAuth tokens encrypted",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "security", "integrations"],
-          "problemStatement": "Token fields exist but encryption-at-rest enforcement is incomplete.",
+          "problemStatement": "Token encryption-at-rest, decrypt-on-read usage, and key rotation guidance/tests are implemented.",
           "requirementExcerpt": "OAuth tokens must be stored encrypted.",
           "acceptanceCriteria": [
             "Encrypt access/refresh tokens with managed key before DB write.",
@@ -311,6 +311,48 @@
           "definitionOfDone": [
             "End-to-end intake scenario with seeded demo matter passes."
           ]
+        },
+        {
+          "title": "Implement advanced conflict rule profiles and resolution workflows",
+          "requirementId": "REQ-MAT-004",
+          "promptSection": "CRM / ConflictCheckResult + advanced conflict rule profiles",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "matters", "security", "phase-2"],
+          "problemStatement": "Conflict checks are present, but configurable weighted conflict rules and formal resolution policy logging are incomplete.",
+          "requirementExcerpt": "Advanced conflict rules should support profile-based matching, relationship-aware scoring, and logged attorney override decisions.",
+          "acceptanceCriteria": [
+            "Create conflict rule profiles with weighted match criteria and scope by practice area/matter type.",
+            "Conflict checks return rule-level hits, scores, and escalation recommendation (clear/warn/block).",
+            "Attorney resolution decisions require rationale and are stored in an auditable history."
+          ],
+          "apiImpact": "Conflict check endpoints include profile metadata, score breakdowns, and decision status fields.",
+          "securityImpact": "Reduces conflict-of-interest risk and improves defensible compliance records.",
+          "definitionOfDone": [
+            "Advanced conflict profile CRUD, execution path, and resolution audit tests are passing."
+          ]
+        },
+        {
+          "title": "Implement jurisdictional deadline rules packs and rule selection flow",
+          "requirementId": "REQ-MAT-005",
+          "promptSection": "Calendar / DeadlineRuleTemplate + Phase 2 advanced docket rules packs",
+          "parityStatus": "Missing",
+          "component": "Data",
+          "risk": "Medium",
+          "labels": ["parity", "matters", "phase-2"],
+          "problemStatement": "Deadline templates exist, but there is no versioned jurisdiction/court rules-pack framework for reusable deadline computation.",
+          "requirementExcerpt": "Jurisdictional deadline rules packs should be versioned and selectable by jurisdiction/court/procedure with attorney override controls.",
+          "acceptanceCriteria": [
+            "Define rules-pack entities keyed by jurisdiction, court, and procedure with effective date versioning.",
+            "Matter deadline calculator can select a pack and produce previewed deadlines before commit.",
+            "Override actions require reason capture and are audit logged."
+          ],
+          "apiImpact": "Deadline APIs gain rules-pack selection and preview/apply endpoints.",
+          "securityImpact": "No direct confidentiality change; improves litigation deadline reliability and auditability.",
+          "definitionOfDone": [
+            "Rules-pack CRUD and deadline generation tests pass with deterministic fixtures."
+          ]
         }
       ]
     },
@@ -382,6 +424,27 @@
           "definitionOfDone": [
             "Template merge acceptance suite passes."
           ]
+        },
+        {
+          "title": "Implement document retention policies with legal hold workflow",
+          "requirementId": "REQ-COMM-004",
+          "promptSection": "Documents / Evidence + Security controls for retention/legal hold",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "documents", "security", "phase-2"],
+          "problemStatement": "Document storage/versioning exists, but policy-driven retention and legal hold governance are not implemented.",
+          "requirementExcerpt": "Support retention policy assignment, legal hold precedence, disposition queue, and auditable retention actions.",
+          "acceptanceCriteria": [
+            "Create retention policy model with scope, trigger, and disposition rules.",
+            "Legal hold state blocks disposition and requires explicit release workflow.",
+            "Disposition events are approval-gated and fully audit logged."
+          ],
+          "apiImpact": "Document management APIs gain retention policy assignment and disposition queue endpoints.",
+          "securityImpact": "Improves defensible records governance and prevents unauthorized deletion.",
+          "definitionOfDone": [
+            "Retention + legal hold lifecycle tests cover policy application, hold exclusion, and disposition approvals."
+          ]
         }
       ]
     },
@@ -431,6 +494,48 @@
           "securityImpact": "Financial data integrity improved.",
           "definitionOfDone": [
             "Trust accounting regression tests pass."
+          ]
+        },
+        {
+          "title": "Implement trust reconciliation workflows with discrepancy resolution",
+          "requirementId": "REQ-BILL-003",
+          "promptSection": "Billing & Trust / trust reconciliation workflows",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "billing", "phase-2"],
+          "problemStatement": "Trust ledgers and reports are present, but formal reconciliation runs and discrepancy resolution workflows are missing.",
+          "requirementExcerpt": "Trust reconciliation should support statement-period runs, discrepancy tracking, resolution notes, and sign-off evidence.",
+          "acceptanceCriteria": [
+            "Create reconciliation run entities with lifecycle states (draft, in_review, completed).",
+            "System records discrepancy records with reason codes and resolution outcome.",
+            "Completed reconciliation requires sign-off and emits audit events."
+          ],
+          "apiImpact": "New reconciliation run/discrepancy endpoints and reporting payload fields.",
+          "securityImpact": "Improves financial controls and traceability for trust account compliance.",
+          "definitionOfDone": [
+            "Reconciliation workflows are tested end-to-end with deterministic trust ledger fixtures."
+          ]
+        },
+        {
+          "title": "Implement LEDES/UTBMS export jobs with validation profiles",
+          "requirementId": "REQ-BILL-004",
+          "promptSection": "Billing / LEDES export expectations",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "billing", "exports", "phase-2"],
+          "problemStatement": "UTBMS fields exist, but there is no standards-compliant LEDES export workflow with profile-based validation.",
+          "requirementExcerpt": "Provide executable LEDES export jobs, validation statuses, and downloadable LEDES outputs.",
+          "acceptanceCriteria": [
+            "Add LEDES export profile and export job entities with format selection and validation status.",
+            "Validation rejects incomplete required billing/task code data before export.",
+            "Export job writes output artifact and records checksum + audit metadata."
+          ],
+          "apiImpact": "Billing APIs gain LEDES export job create/status/download endpoints.",
+          "securityImpact": "Billing exports remain tenant-scoped and audit logged.",
+          "definitionOfDone": [
+            "LEDES fixture validation + export generation tests pass for supported formats."
           ]
         }
       ]
@@ -566,11 +671,11 @@
           "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
           "requirementId": "REQ-INT-001",
           "promptSection": "Phase 2 connectors / Clio Manage API",
-          "parityStatus": "Missing",
+          "parityStatus": "Partial",
           "component": "Integrations",
           "risk": "High",
           "labels": ["parity", "integrations", "migration"],
-          "problemStatement": "Connector currently returns stub responses.",
+          "problemStatement": "OAuth start/callback and idempotent sync/webhook scaffolding are implemented; provider API entity pulls remain to be completed.",
           "requirementExcerpt": "Connector must support OAuth, incremental sync, webhook subscriptions with idempotency keys.",
           "acceptanceCriteria": [
             "OAuth handshake and token refresh implemented.",
@@ -587,11 +692,11 @@
           "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
           "requirementId": "REQ-INT-002",
           "promptSection": "Phase 2 connectors / MyCase API",
-          "parityStatus": "Missing",
+          "parityStatus": "Partial",
           "component": "Integrations",
           "risk": "High",
           "labels": ["parity", "integrations", "migration"],
-          "problemStatement": "MyCase connector is stubbed and not syncing data.",
+          "problemStatement": "OAuth start/callback and idempotent sync/webhook scaffolding are implemented; provider API entity pulls remain to be completed.",
           "requirementExcerpt": "Connector must support incremental sync + webhooks where available.",
           "acceptanceCriteria": [
             "OAuth and refresh flow implemented.",
@@ -608,11 +713,11 @@
           "title": "Implement Filevine and PracticePanther connector production adapters",
           "requirementId": "REQ-INT-003",
           "promptSection": "Phase 2 connectors / Filevine + PracticePanther",
-          "parityStatus": "Missing",
+          "parityStatus": "Partial",
           "component": "Integrations",
           "risk": "Medium",
           "labels": ["parity", "integrations", "migration"],
-          "problemStatement": "Remaining connectors are placeholder stubs.",
+          "problemStatement": "Connectors now run through shared idempotent sync/webhook pipeline with checkpointing and warnings; provider-specific authenticated data pulls are still pending.",
           "requirementExcerpt": "Provide connector structure with incremental sync and webhook support.",
           "acceptanceCriteria": [
             "At minimum, authenticated pull sync for core entities.",
@@ -637,11 +742,11 @@
           "title": "Add web application automated test suite for critical workflows",
           "requirementId": "REQ-OPS-001",
           "promptSection": "DELIVERABLES / Tests",
-          "parityStatus": "Missing",
+          "parityStatus": "Partial",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "ops"],
-          "problemStatement": "Web app currently has no automated tests.",
+          "problemStatement": "Web app now has baseline tests, but coverage is not yet parity-complete for portal/import/document journeys.",
           "requirementExcerpt": "Tests should verify core auth/RBAC/matter/document/import/AI flows.",
           "acceptanceCriteria": [
             "Add component/integration tests for login, dashboard, matter screens, and portal flows.",
@@ -679,11 +784,11 @@
           "title": "Enforce Linear key branch/PR policy in CI",
           "requirementId": "REQ-OPS-003",
           "promptSection": "Backlog governance / strict issue key linkage",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Infra",
           "risk": "Medium",
           "labels": ["parity", "ops"],
-          "problemStatement": "Branch and PR naming currently allow unlinked work.",
+          "problemStatement": "Policy is enforced via CI and PR template metadata requirements.",
           "requirementExcerpt": "Branch and PR title must include Linear key for auto-linking.",
           "acceptanceCriteria": [
             "CI check fails on non-compliant branch names.",
