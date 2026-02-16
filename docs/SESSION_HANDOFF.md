@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-16T21:52:28.140Z`
+- Snapshot Timestamp: `2026-02-16T22:36:15.234Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-16T21:52:21.438Z`
+- Last Successful Mirror Verify: `2026-02-16T22:36:14.000Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -85,3 +85,4 @@ For each requirement slice:
 - 2026-02-16: Established new-chat continuity protocol, snapshot tooling, and freshness checks for context-compaction resilience.
 - 2026-02-16: Added five end-goal features as `phase-2` planned scope (`REQ-COMM-004`, `REQ-MAT-004`, `REQ-MAT-005`, `REQ-BILL-003`, `REQ-BILL-004`) and enabled phase-aware snapshot prioritization.
 - 2026-02-16: These additions are tracked as `phase-2` planned backlog items so they do not displace active `phase-1` delivery lanes.
+- 2026-02-16: Implemented `REQ-AI-001` deadline-extraction confirmation UX with side-by-side source excerpt evidence and explicit per-row confirmation before task/event creation, plus parser/unit tests for structured deadline candidates.
