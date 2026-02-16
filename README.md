@@ -17,7 +17,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Matters with participants, dashboard aggregation, intake wizard + construction domain profiles
 - Tasks, calendar, ICS export, docket
 - Communications threads/messages + full-text search query
-- Documents upload/version/share/signed URLs + malware scan stub + DOCX/PDF generation flows
+- Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
 - Client portal snapshot/messages/intake/e-sign stub
 - Plugin import framework:
@@ -41,7 +41,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Auth + AI endpoint rate limiting guards
 - Matter access enforcement (`ethicalWallEnabled` + deny-list)
 - Signed download URLs
-- Malware scanning hook (stub)
+- Malware scanning provider integration (`stub` and `clamav`) with fail-open/fail-closed controls
 - AI output governance:
   - draft-only artifacts (`DRAFT` until reviewed)
   - attorney-review banner metadata
@@ -61,6 +61,12 @@ docker compose up -d
 ```bash
 cp .env.example .env
 ```
+
+For production-like document upload security, configure:
+
+- `MALWARE_SCANNER_PROVIDER=clamav`
+- `MALWARE_SCANNER_FAIL_OPEN=false`
+- `CLAMAV_HOST` / `CLAMAV_PORT` for your ClamAV daemon endpoint
 
 3. Install dependencies (Node 20+):
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import PizZip from 'pizzip';
@@ -50,7 +50,14 @@ export class DocumentsService {
 
     const scan = await this.malwareScan.scan(input.file.buffer, input.file.originalname);
     if (!scan.clean) {
-      throw new Error(scan.reason ?? 'File failed malware scan');
+      await this.auditBlockedUpload(
+        input.user.organizationId,
+        input.user.id,
+        input.matterId,
+        input.file.originalname,
+        scan,
+      );
+      throw new UnprocessableEntityException(scan.reason ?? 'File failed malware scan');
     }
 
     const uploaded = await this.s3.upload(input.file.buffer, input.file.mimetype, `org/${input.user.organizationId}/matter/${input.matterId}`);
@@ -114,7 +121,15 @@ export class DocumentsService {
 
     const scan = await this.malwareScan.scan(input.file.buffer, input.file.originalname);
     if (!scan.clean) {
-      throw new Error(scan.reason ?? 'File failed malware scan');
+      await this.auditBlockedUpload(
+        input.user.organizationId,
+        input.user.id,
+        document.matterId,
+        input.file.originalname,
+        scan,
+        input.documentId,
+      );
+      throw new UnprocessableEntityException(scan.reason ?? 'File failed malware scan');
     }
 
     const uploaded = await this.s3.upload(input.file.buffer, input.file.mimetype, `org/${input.user.organizationId}/matter/${document.matterId}`);
@@ -298,6 +313,36 @@ export class DocumentsService {
         originalname: `${input.title}.pdf`,
         size: bytes.byteLength,
       } as UploadedFile,
+    });
+  }
+
+  private async auditBlockedUpload(
+    organizationId: string,
+    actorUserId: string,
+    matterId: string,
+    filename: string,
+    scan: {
+      provider?: string;
+      signature?: string;
+      failOpen?: boolean;
+      reason?: string;
+    },
+    documentId?: string,
+  ) {
+    await this.audit.appendEvent({
+      organizationId,
+      actorUserId,
+      action: 'document.upload.blocked',
+      entityType: 'document',
+      entityId: documentId ?? matterId,
+      metadata: {
+        matterId,
+        filename,
+        provider: scan.provider ?? 'unknown',
+        signature: scan.signature,
+        failOpen: scan.failOpen ?? false,
+        reason: scan.reason ?? 'File failed malware scan',
+      },
     });
   }
 }

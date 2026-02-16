@@ -34,4 +34,59 @@ describe('DocumentsService', () => {
     expect(result.document.id).toBe('doc1');
     expect(result.version.id).toBe('ver1');
   });
+
+  it('blocks upload when malware scanner returns a threat', async () => {
+    const prisma = {
+      document: {
+        create: jest.fn(),
+      },
+      documentVersion: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const appendEvent = jest.fn();
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { upload: jest.fn() } as any,
+      {
+        scan: jest.fn().mockResolvedValue({
+          clean: false,
+          reason: 'Malware signature detected: Eicar-Test-Signature',
+          provider: 'clamav',
+          signature: 'Eicar-Test-Signature',
+          failOpen: false,
+        }),
+      } as any,
+      { appendEvent } as any,
+    );
+
+    await expect(
+      service.uploadNew({
+        user: { id: 'u1', organizationId: 'org1' } as any,
+        matterId: 'matter1',
+        title: 'Infected Doc',
+        file: {
+          buffer: Buffer.from('infected'),
+          mimetype: 'application/octet-stream',
+          originalname: 'infected.bin',
+          size: 8,
+        } as any,
+      }),
+    ).rejects.toThrow('Malware signature detected: Eicar-Test-Signature');
+
+    expect(prisma.document.create).not.toHaveBeenCalled();
+    expect(prisma.documentVersion.create).not.toHaveBeenCalled();
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'document.upload.blocked',
+        entityType: 'document',
+        metadata: expect.objectContaining({
+          provider: 'clamav',
+          signature: 'Eicar-Test-Signature',
+        }),
+      }),
+    );
+  });
 });
