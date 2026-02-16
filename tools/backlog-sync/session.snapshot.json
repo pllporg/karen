@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-16T22:34:14.718Z",
+  "generatedAt": "2026-02-16T22:36:15.234Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -140,13 +140,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 37,
-      "In Review": 3,
+      "Backlog": 36,
+      "In Review": 4,
       "Done": 4
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-33",
+        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+        "state": "In Review",
+        "updatedAt": "2026-02-16T22:35:53.179Z",
+        "requirementId": "REQ-AI-001"
+      },
       {
         "key": "KAR-41",
         "title": "Add web application automated test suite for critical workflows",
@@ -209,32 +216,18 @@
         "state": "Backlog",
         "updatedAt": "2026-02-16T20:39:07.376Z",
         "requirementId": "PARITY-05"
-      },
-      {
-        "key": "KAR-45",
-        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:07.045Z",
-        "requirementId": "REQ-MAT-005"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-16T22:34:13.487Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-16T22:36:14.000Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "f634e5e748644ca17a4a84406b5ca9597e46a3bb",
+    "gitHead": "0155932860e9cc7b6b9e0b9fb97aeaa412950e67",
     "gitStatusShort": [
-      "## lin/KAR-33-ai-deadline-confirmation",
-      " M apps/api/src/ai/ai.service.ts",
-      " M apps/web/app/ai/page.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/ai/deadline-candidates.util.ts",
-      "?? apps/api/test/deadline-candidates.util.spec.ts",
-      "?? apps/web/test/ai-page.spec.tsx"
+      "## lin/KAR-33-ai-deadline-confirmation...origin/lin/KAR-33-ai-deadline-confirmation"
     ],
-    "dirtyFileCount": 7
+    "dirtyFileCount": 0
   }
 }
