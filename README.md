@@ -196,6 +196,15 @@ Included suites cover:
 - `POST /integrations/webhook-subscriptions`
   - registers webhook subscription and persists provider external subscription id
 
+Live provider pull sync mode (optional, defaults to scaffold mode):
+
+- set `INTEGRATION_SYNC_ENABLE_LIVE=true`
+- configure provider API bases as needed:
+  - `FILEVINE_API_BASE_URL`
+  - `PRACTICEPANTHER_API_BASE_URL`
+  - `CLIO_API_BASE_URL`
+  - `MYCASE_API_BASE_URL`
+
 ## Phase-2 Planned End-Goal Features
 
 - Document retention policies (including legal hold and disposition controls)
