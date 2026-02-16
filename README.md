@@ -204,6 +204,9 @@ Live provider pull sync mode (optional, defaults to scaffold mode):
   - `PRACTICEPANTHER_API_BASE_URL`
   - `CLIO_API_BASE_URL`
   - `MYCASE_API_BASE_URL`
+- optional webhook registration endpoints:
+  - `MYCASE_WEBHOOK_REGISTER_URL`
+  - `CLIO_WEBHOOK_REGISTER_URL`
 
 ## Phase-2 Planned End-Goal Features
 

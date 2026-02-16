@@ -9,6 +9,8 @@ import {
   IncrementalSyncConnector,
 } from './connector.interface';
 
+type JsonRecord = Record<string, unknown>;
+
 @Injectable()
 export class MyCaseConnector implements IncrementalSyncConnector {
   provider: 'MYCASE' = 'MYCASE';
@@ -94,20 +96,100 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   }
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {
-    if (!params.accessToken) {
-      throw new Error('MyCase sync requires an access token');
+    if (!this.isLiveSyncEnabled()) {
+      return {
+        nextCursor: params.cursor ?? new Date().toISOString(),
+        importedCount: 0,
+        warnings: [
+          'MyCase sync is running in scaffold mode. Set INTEGRATION_SYNC_ENABLE_LIVE=true to enable provider pulls.',
+        ],
+      };
     }
 
+    if (!params.accessToken) {
+      throw new Error('MyCase sync requires an access token when INTEGRATION_SYNC_ENABLE_LIVE=true');
+    }
+
+    const config = this.parseConfig(params.config);
+    const baseUrl = this.readConfigString(config, 'baseUrl') || process.env.MYCASE_API_BASE_URL || 'https://api.mycase.com/v1';
+    const contactsPath = this.readConfigString(config, 'contactsPath') || '/contacts';
+    const mattersPath = this.readConfigString(config, 'mattersPath') || '/matters';
+    const cursorParam = this.readConfigString(config, 'cursorParam') || 'updated_since';
+
+    const [contacts, matters] = await Promise.all([
+      this.pullEntityRecords({
+        providerLabel: 'MyCase',
+        baseUrl,
+        path: contactsPath,
+        accessToken: params.accessToken,
+        cursor: params.cursor,
+        cursorParam,
+      }),
+      this.pullEntityRecords({
+        providerLabel: 'MyCase',
+        baseUrl,
+        path: mattersPath,
+        accessToken: params.accessToken,
+        cursor: params.cursor,
+        cursorParam,
+      }),
+    ]);
+
+    const records = [...contacts.records, ...matters.records];
+    const warnings = [
+      ...contacts.warnings,
+      ...matters.warnings,
+      'MyCase sync currently maps contacts and matters only; additional entity pulls remain pending.',
+    ];
+
     return {
-      nextCursor: new Date().toISOString(),
-      importedCount: 0,
-      warnings: ['MyCase connector is running in bootstrap mode with no entity pulls yet.'],
+      nextCursor: this.resolveNextCursor(records, params.cursor),
+      importedCount: records.length,
+      warnings,
     };
   }
 
   async subscribeWebhooks(params: ConnectorWebhookParams): Promise<{ subscriptionId: string }> {
     if (!params.accessToken) {
       throw new Error('MyCase webhook subscription requires an access token');
+    }
+
+    if (!this.isLiveSyncEnabled()) {
+      return {
+        subscriptionId: `mycase-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
+      };
+    }
+
+    const config = this.parseConfig(params.config);
+    const registrationUrl =
+      this.readConfigString(config, 'webhookRegistrationUrl') || process.env.MYCASE_WEBHOOK_REGISTER_URL || '';
+    if (!registrationUrl) {
+      return {
+        subscriptionId: `mycase-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
+      };
+    }
+
+    const response = await fetch(registrationUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${params.accessToken}`,
+        Accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        event: params.event,
+        target_url: params.targetUrl,
+        connection_id: params.connectionId,
+      }),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`MyCase webhook registration failed (${response.status}): ${this.clipMessage(text)}`);
+    }
+    const payload = (await response.json()) as unknown;
+    const externalId = this.extractSubscriptionId(payload);
+    if (externalId) {
+      return { subscriptionId: externalId };
     }
 
     return {
@@ -118,6 +200,183 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   private isLiveOauthEnabled(): boolean {
     const value = String(process.env.INTEGRATION_OAUTH_ENABLE_LIVE || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+  }
+
+  private isLiveSyncEnabled(): boolean {
+    const value = String(process.env.INTEGRATION_SYNC_ENABLE_LIVE || '').trim().toLowerCase();
+    return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+  }
+
+  private async pullEntityRecords(input: {
+    providerLabel: string;
+    baseUrl: string;
+    path: string;
+    accessToken: string;
+    cursor?: string | null;
+    cursorParam: string;
+  }): Promise<{ records: JsonRecord[]; warnings: string[] }> {
+    const path = this.normalizePath(input.path);
+    const url = new URL(path, this.ensureTrailingSlash(input.baseUrl));
+    url.searchParams.set('limit', '100');
+    if (input.cursor) {
+      url.searchParams.set(input.cursorParam, input.cursor);
+    }
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${input.accessToken}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        return {
+          records: [],
+          warnings: [
+            `${input.providerLabel} ${path} returned status ${response.status}. ${this.clipMessage(body) || 'No response body.'}`,
+          ],
+        };
+      }
+
+      const payload = (await response.json()) as unknown;
+      const records = this.extractRecords(payload);
+      if (records.length === 0) {
+        return {
+          records: [],
+          warnings: [`${input.providerLabel} ${path} returned no parseable records in the response payload.`],
+        };
+      }
+
+      return { records, warnings: [] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        records: [],
+        warnings: [`${input.providerLabel} ${path} request failed: ${this.clipMessage(message)}`],
+      };
+    }
+  }
+
+  private resolveNextCursor(records: JsonRecord[], fallback?: string | null): string {
+    const timestampKeys = [
+      'updated_at',
+      'updatedAt',
+      'modified_at',
+      'modifiedAt',
+      'last_activity_at',
+      'lastActivityAt',
+    ];
+    let maxTimestamp = Number.NaN;
+
+    for (const record of records) {
+      for (const key of timestampKeys) {
+        const raw = record[key];
+        if (raw === null || raw === undefined) continue;
+        const parsed = Date.parse(String(raw));
+        if (Number.isFinite(parsed) && (!Number.isFinite(maxTimestamp) || parsed > maxTimestamp)) {
+          maxTimestamp = parsed;
+        }
+      }
+    }
+
+    if (Number.isFinite(maxTimestamp)) {
+      return new Date(maxTimestamp).toISOString();
+    }
+    if (fallback && fallback.trim().length > 0) {
+      return fallback;
+    }
+    return new Date().toISOString();
+  }
+
+  private extractRecords(payload: unknown): JsonRecord[] {
+    const direct = this.recordsFromCandidate(payload);
+    if (direct.length > 0) return direct;
+
+    const root = this.asRecord(payload);
+    if (!root) return [];
+    for (const key of ['data', 'results', 'items', 'records']) {
+      const nested = this.recordsFromCandidate(root[key]);
+      if (nested.length > 0) return nested;
+    }
+    return [];
+  }
+
+  private recordsFromCandidate(value: unknown): JsonRecord[] {
+    if (Array.isArray(value)) {
+      return value.filter((entry): entry is JsonRecord => Boolean(this.asRecord(entry)));
+    }
+
+    const record = this.asRecord(value);
+    if (!record) return [];
+
+    for (const key of ['data', 'results', 'items', 'records']) {
+      const nested = record[key];
+      if (Array.isArray(nested)) {
+        return nested.filter((entry): entry is JsonRecord => Boolean(this.asRecord(entry)));
+      }
+    }
+
+    return [];
+  }
+
+  private extractSubscriptionId(payload: unknown): string | null {
+    const root = this.asRecord(payload);
+    if (!root) return null;
+
+    const direct = this.asString(root.id) || this.asString(root.subscription_id) || this.asString(root.subscriptionId);
+    if (direct) return direct;
+
+    const data = this.asRecord(root.data);
+    if (!data) return null;
+    return this.asString(data.id) || this.asString(data.subscription_id) || this.asString(data.subscriptionId);
+  }
+
+  private parseConfig(config: unknown): Record<string, unknown> {
+    if (config && typeof config === 'object' && !Array.isArray(config)) {
+      return config as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private readConfigString(config: Record<string, unknown>, key: string): string | null {
+    const value = config[key];
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private ensureTrailingSlash(value: string): string {
+    const normalized = String(value || '').trim();
+    if (!normalized) return '/';
+    return normalized.endsWith('/') ? normalized : `${normalized}/`;
+  }
+
+  private normalizePath(value: string): string {
+    const normalized = String(value || '').trim();
+    if (!normalized) return '/';
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+  }
+
+  private asRecord(value: unknown): JsonRecord | null {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as JsonRecord;
+    }
+    return null;
+  }
+
+  private asString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private clipMessage(message: string): string {
+    const normalized = String(message || '').replace(/\s+/g, ' ').trim();
+    if (normalized.length <= 240) return normalized;
+    return `${normalized.slice(0, 237)}...`;
   }
 
   private slug(value: string): string {
