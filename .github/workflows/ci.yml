@@ -8,6 +8,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
+      REDIS_URL: redis://localhost:6379
+      SESSION_SECRET: ci-session-secret
+      WEB_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
 
     services:
       postgres:
@@ -39,7 +46,7 @@ jobs:
       - run: pnpm install
       - run: cp .env.example .env
       - run: pnpm --filter api prisma:generate
-      - run: pnpm --filter api prisma:migrate
+      - run: pnpm --filter api prisma:deploy
       - run: pnpm --filter api prisma:seed
       - run: pnpm --filter api test
       - run: pnpm --filter web test
