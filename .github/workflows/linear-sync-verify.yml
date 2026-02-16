@@ -1,0 +1,28 @@
+name: Verify Linear Mirror
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify parity backlog mirror integrity
+        env:
+          LINEAR_API_TOKEN: ${{ secrets.LINEAR_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          LINEAR_PROJECT_NAME: ${{ vars.LINEAR_PROJECT_NAME }}
+          LINEAR_SCOPE_LABEL: ${{ vars.LINEAR_SCOPE_LABEL }}
+        run: node tools/backlog-sync/verify_backlog_sync.mjs

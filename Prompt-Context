@@ -1,0 +1,299 @@
+You are Codex. Build a production-ready, original-design SaaS web app that combines:
+
+(A) A best-in-class legal practice management system (Clio/PracticePanther/MyCase/Filevine-class parity in core objects and flexibility)
+(B) A legal AI “case workforce” (Eve-like AI workflows across intake → pleadings → discovery → settlement)
+...tailored specifically for HOME IMPROVEMENT / RESIDENTIAL CONSTRUCTION LITIGATION, but works for any type of law.
+
+ABSOLUTE CONSTRAINTS (IP + Ethics + Safety)
+- AI outputs are drafts only; require “Attorney Review” and record provenance (prompt, sources, model, timestamp, user).
+- Security-first multi-tenant SaaS with strict isolation; RBAC/ABAC; audit logs; encryption; secure uploads.
+
+PORTABILITY & MIGRATION (HARD REQUIREMENT)
+This product must make it easy to migrate IN and OUT, comparable to top systems.
+
+1) Canonical Data Model + External IDs
+- Every core entity must support:
+  - stable UUID primary key
+  - external references: {source_system, external_id, external_parent_id, imported_at, import_batch_id}
+  - raw_source_payload JSON (optional) for audit and re-mapping
+- Build a generic Import Framework:
+  - ImportBatch (status, source_system, started_by, mapping_profile_id)
+  - ImportItem (entity_type, row_number, raw_json, resolved_entity_id, errors, warnings)
+  - MappingProfile: field mapping rules, transforms, dedupe rules, conflict rules
+  - Dedupe engine using: email/phone/name + fuzzy match + user-confirm merge UI
+
+2) Data Sources to Support
+Implement importers/connectors in a plugin architecture:
+
+MVP Importers (must be working end-to-end):
+- “MyCase Full Backup Import”: accept ZIP containing multiple CSVs; map contacts/companies, cases/matters, tasks, calendar events, invoices/payments, time entries, notes/messages where possible.
+- “Clio Migration Template Import”: accept CSV/XLSX in expected template-like format; map contacts, matters, tasks, calendar, activities/time entries, notes, phone logs/emails where available.
+- “Generic CSV Import”: user chooses entity type, maps columns, previews, imports.
+
+Phase 2 (structure now, can stub actual authentication):
+- API Connectors (OAuth where applicable) for:
+  - Clio Manage API connector
+  - MyCase API connector
+  - Filevine API connector
+  - PracticePanther API connector (or generic REST connector)
+- Each connector must support incremental sync + webhooks subscription (where available) with idempotency keys.
+
+3) Export / “Exit Strategy”
+- Full Backup export: a ZIP containing:
+  - CSVs per entity type (contacts, matters, tasks, events, time, invoices, payments, messages, notes, custom fields)
+  - Documents in folder structure with a manifest.json linking docs to records
+- Provide a “Data Dictionary” page that explains exported files.
+- Provide import/export test fixtures + automated tests verifying round-trip integrity.
+
+TARGET USERS / ROLES
+- Multi-tenant Organization (firm) with isolated data
+- Roles: Admin, Attorney, Paralegal, Intake Specialist, Billing/Accounting, Client (portal-only), “Vendor/Expert” (optional limited portal)
+- Matter-level ethical wall: matters can be restricted to a team; also allow “deny list” users.
+
+TECH STACK (choose and implement fully)
+- Frontend: Next.js (App Router) + TypeScript + Tailwind (or similar), responsive
+- Backend: Next.js API routes OR NestJS (TypeScript) separate service (choose and stick to it)
+- DB: Postgres + Prisma
+- Vector: pgvector
+- Cache/Queue: Redis + BullMQ
+- File storage: S3-compatible (MinIO local)
+- Auth: secure sessions; email/password; optional MFA (TOTP)
+- Payments: Stripe test mode
+- Email/SMS: provider interfaces + stub provider in MVP
+- AI: OpenAI API client via env vars; RAG via pgvector; rate limiting
+
+CORE OBJECT MODEL (ROBUST LIKE TOP PMS)
+Design the data model so it can represent what major PMS platforms represent:
+- People, companies, staff
+- Many-to-many relationships between contacts and matters with role semantics
+- Custom fields and configurable sections
+- Communications logs (email/call/sms) linked to contacts + matters
+- Flexible matter pipelines + practice areas + statuses
+- External system IDs for migration/sync
+
+DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities
+(You may add more, but do not omit these capabilities.)
+
+1) Tenancy / Users / Security
+- Organization, User, Membership, Role, Permission
+- MatterTeam, MatterTeamMember
+- AccessPolicy / ABAC hooks (e.g., “ethical wall”)
+- AuditLogEvent (append-only, tamper-evident hashes)
+
+2) Contacts & Relationship Graph (VERY IMPORTANT)
+Use a unified Contact model with subtype profiles:
+- Contact { id, kind: PERSON|ORGANIZATION, display_name, primary_email, primary_phone, tags[] }
+- PersonProfile { contact_id, first_name, last_name, bar_number?, license_jurisdiction?, title? }
+- OrganizationProfile { contact_id, legal_name, dba?, website? }
+- ContactMethod { contact_id, type: EMAIL|PHONE|ADDRESS|SOCIAL, value, is_primary }
+- ContactRelationship { from_contact_id, to_contact_id, relationship_type, notes } (e.g., employee-of, insured-by, spouse-of)
+
+3) Matters / Cases
+- Matter { id, organization_id, matter_number, name, practice_area, jurisdiction, venue, stage_id, status, opened_at, closed_at }
+- MatterStage (configurable pipelines by practice_area)
+- MatterType (configurable)
+- MatterParticipant (THE KEY TABLE):
+  - matter_id, contact_id
+  - participant_role (configurable role definition, not hard-coded enums)
+  - side: CLIENT_SIDE | OPPOSING_SIDE | NEUTRAL | COURT (nullable)
+  - is_primary (bool)
+  - represented_by_contact_id (nullable)  // link a party to their counsel contact
+  - law_firm_contact_id (nullable)        // for counsel
+  - notes
+This MUST support: opposing counsel, opposing party, co-counsel, local counsel, adjuster, insurer, mediator/arbitrator, judge/court staff, expert, inspector, process server, lien claimant, witnesses, subcontractors, suppliers.
+
+- MatterRelationship (optional): link related matters (e.g., parallel lien action)
+
+4) Custom Fields + Configurable Sections (Filevine-like flexibility without copying)
+- CustomFieldDefinition { id, organization_id, entity_type, key, label, field_type, options_json, validations_json }
+- CustomFieldValue { id, entity_type, entity_id, field_definition_id, value_json }
+- SectionDefinition { id, organization_id, matter_type_id, name, schema_json } // JSON schema for a “section”
+- SectionInstance { id, matter_id, section_definition_id, data_json, updated_by }
+
+5) Tasks / Projects / Workflows
+- Task { id, matter_id, title, description, assignee_user_id, due_at, priority, status, checklist_json, dependencies_json }
+- TaskTemplate, MatterTemplate, StageAutomation (on stage change create tasks/events)
+- Reminder / Notification
+
+6) Calendar / Deadlines / Dockets
+- CalendarEvent { id, matter_id, start_at, end_at, type, location, attendees }
+- DeadlineRuleTemplate (configurable “X days after Y”)
+- ServiceEvent (for triggers like “served on”)
+- DocketEntry { id, matter_id, filed_at, description, source_document_id? }
+- ICS export (MVP)
+
+7) Communications Hub (Parity Feature)
+Unify all comms as first-class:
+- CommunicationThread (linked to matter and/or contact)
+- CommunicationMessage { thread_id, type: EMAIL|SMS|CALL_LOG|PORTAL_MESSAGE|INTERNAL_NOTE, direction, subject, body, occurred_at, created_by }
+- CommunicationParticipant { message_id, contact_id, role: FROM|TO|CC|BCC|OTHER }
+- Attachments link to DocumentVersion
+MVP: internal + portal messages + call logs.
+Phase 2 structure: Gmail/Outlook sync interfaces with provider tokens and incremental sync.
+
+8) Documents / Evidence
+- Document { id, matter_id, title, category, tags[], confidentiality_level, shared_with_client, created_by }
+- DocumentVersion { id, document_id, storage_key, sha256, mime_type, size, uploaded_at }
+- DocumentFolder (optional)
+- DocumentShareLink (signed expiring)
+- EvidenceItem (optional wrapper for photos/videos) linked to doc versions
+
+9) Time / Expenses / Billing / Invoices / Payments
+- TimeEntry (timer + manual; UTBMS/phase/task codes optional)
+- Expense (with receipt doc)
+- Invoice + InvoiceLineItem, InvoiceStatus
+- Payment (Stripe + manual)
+- TrustAccount, TrustTransaction, MatterTrustLedger
+- LEDES/UTBMS export structure: build data fields even if export is phase 2.
+
+10) CRM / Intake / Leads (Completeness)
+- Lead { id, source, referral_contact_id?, stage, assigned_to, created_at }
+- IntakeFormDefinition (per org), IntakeSubmission
+- ConflictCheckResult (search contacts/matters and log results)
+- EngagementLetterTemplate + ESignEnvelope (stub integration + interface)
+
+11) AI Layer
+- AiJob { id, matter_id, tool_name, status, created_by, started_at, finished_at, error }
+- AiArtifact { id, job_id, type, content, metadata_json, reviewed_status: DRAFT|APPROVED|REJECTED }
+- AiSourceChunk { id, document_version_id, chunk_text, embedding, metadata_json }
+- StylePack { id, org_id, name } + StylePackSourceDoc(s)
+
+CONSTRUCTION LITIGATION DOMAIN EXTENSIONS (MUST INCLUDE)
+- PropertyProfile (address, parcel/APN optional, permits, inspections)
+- ContractProfile (contract date, price, payment schedule, change orders, warranties)
+- ProjectMilestone (planned vs actual)
+- Defect/Issue model (category, location in home, severity, photo links)
+- Damages model (repair estimate, paid amounts, completion costs, consequential)
+- LienModel (mechanic’s lien: claimant, amount, recording date, release date, status, docs)
+- InsuranceClaim (policy, adjuster, claim number, coverage notes)
+- ExpertEngagement (expert contact, scope, report doc links, fees)
+
+FEATURE REQUIREMENTS (COMPLETENESS)
+Implement the following modules for MVP (end-to-end UI + API):
+
+A) Admin & Configuration
+- Firm settings (letterhead, defaults, invoice templates)
+- Pipelines/stages editor per practice area
+- Custom fields & section builder (simple JSON schema builder acceptable)
+- Matter templates + stage automations
+- User management + roles + permissions
+- Audit log viewer
+
+B) Contacts
+- People/Org contacts with relationship graph
+- Tags + filters + dedupe suggestions
+
+C) Matters
+- Matter dashboard:
+  - Overview
+  - Participants (with sides + represented-by counsel mapping)
+  - Timeline & Docket
+  - Tasks
+  - Calendar
+  - Communications
+  - Documents
+  - Billing
+  - AI Workspace
+- Matter intake wizard that populates domain sections (property/contract/defects)
+
+D) Communications (MVP)
+- Log calls, emails (manual entry), texts (manual), portal messages
+- Link messages to matters + contacts
+- Search communications by keyword (Postgres full-text)
+
+E) Document Management + Automation
+- Upload, versioning, tagging, secure sharing
+- DOCX template merge: generate documents using merge fields from matter/contact/custom fields
+- PDF generation for invoices and finalized letters
+
+F) Billing & Trust
+- Time/expense capture; invoice generation; PDF
+- Stripe Checkout pay link
+- Trust ledger entries and basic trust reporting
+- Disclaimers about jurisdiction compliance
+
+G) Client Portal
+- Client login
+- View matter status, key dates, invoices, payments
+- Secure messaging with attachments
+- Share selected documents
+- Intake forms (client questionnaire) + e-sign stub flow
+
+H) Reporting
+- Matters by stage, upcoming deadlines, WIP, AR aging
+- CSV export
+
+AI WORKSPACE (Eve-like capabilities; all outputs are drafts)
+Implement background jobs + RAG per matter:
+
+1) AI Case Summary (with citations to document chunks)
+2) AI Timeline Extraction (suggest events; user confirms into timeline)
+3) AI Intake Evaluation & Missing-Info Checklist (lead viability scoring)
+4) AI Drafting (firm style pack):
+   - demand letter
+   - preservation/spoliation notice
+   - complaint skeleton
+   - client status update
+5) Discovery Tools:
+   - Generate discovery sets (ROGs/RFPs/RFAs) tailored to construction disputes
+   - Response drafting: upload opposing discovery PDF + docs; suggest objections + responses + missing-doc checklist
+   - Export to DOCX
+6) Deadline Extraction:
+   - Upload scheduling order/hearing notice → extract deadlines
+   - Must show side-by-side excerpt for each extracted date
+   - Require user confirmation before creating events/tasks
+7) Next Best Action:
+   - Suggest next steps based on stage, missing tasks, dates
+
+AI Governance
+- Store prompt, sources, model params, user, timestamps
+- “Attorney Review Required” banner on every AI output
+- Approve/Edit/Reject workflow
+- Red-team basic prompt injection defenses: isolate system prompts; content filters for malicious instructions in uploaded docs; always cite sources used
+
+SECURITY REQUIREMENTS
+- RBAC/ABAC enforced server-side
+- Rate limiting on auth + AI endpoints
+- Signed URLs for downloads
+- Malware scanning hook for uploads (stub)
+- Tenant isolation tests
+- Audit logs append-only, tamper-evident
+
+API & INTEGRATIONS (COMPETITIVE PARITY)
+- Public REST API (internal initially) with:
+  - OpenAPI spec generation
+  - Webhooks (record.created/updated for core entities)
+- Integration connections table storing OAuth tokens encrypted
+- Import/export endpoints + job status tracking
+
+DELIVERABLES
+1) Monorepo with /apps/web and /apps/api (or single Next.js, but clean separation)
+2) docker-compose.yml: Postgres, Redis, MinIO
+3) Prisma schema + migrations
+4) Seed demo data:
+   - 1 firm, multi-role users, 2 clients, 3 matters (construction litigation), opposing counsel contacts, experts, inspectors, adjuster, judge contact
+   - sample docs: contract, change order, inspection report, photos placeholders, scheduling order placeholder
+   - sample invoices/time entries/trust ledger entries
+5) README with setup, env vars, demo creds, how to run imports
+6) Tests: auth, RBAC/ethical wall, matter CRUD, participant roles, doc upload, import batch run, AI job creation
+
+IMPLEMENTATION SEQUENCE
+Phase 1 (must complete):
+- Repo scaffold + docker compose
+- Prisma schema with ExternalReference + ImportBatch system
+- Auth + RBAC/ABAC + tenant isolation tests
+- Contacts + Matters + Participants + Custom Fields
+- Tasks + Calendar + Documents
+- Communications logging
+- Billing + Invoices + Stripe test
+- Client portal basics
+- Importers: MyCase ZIP CSV, Clio-style CSV/XLSX, Generic CSV
+- AI: RAG ingestion, case summary, timeline extraction, drafting demand letter, discovery generate/respond drafts, deadline extraction w/ confirmation UI
+- Export: full backup zip
+
+Phase 2 (structure now; can stub):
+- Gmail/Outlook sync
+- API connectors for Clio/MyCase/Filevine/PracticePanther with OAuth + incremental sync
+- Advanced docket rules packs
+
+Now begin by generating the full repo, docker-compose.yml, Prisma schema (with migration/import framework), and then implement features in the order above until the MVP runs end-to-end.

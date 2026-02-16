@@ -1,0 +1,42 @@
+name: Linear to GitHub Sync
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      since_minutes:
+        description: "Sync window in minutes"
+        required: false
+        default: "120"
+      dry_run:
+        description: "Run without writing to GitHub"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync Linear to GitHub Issues
+        env:
+          LINEAR_API_TOKEN: ${{ secrets.LINEAR_API_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          LINEAR_TEAM_KEY: ${{ vars.LINEAR_TEAM_KEY }}
+          LINEAR_PROJECT_NAME: ${{ vars.LINEAR_PROJECT_NAME }}
+          LINEAR_SCOPE_LABEL: ${{ vars.LINEAR_SCOPE_LABEL }}
+          SYNC_LOOKBACK_MINUTES: ${{ github.event.inputs.since_minutes || '120' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node tools/backlog-sync/linear_to_github.mjs

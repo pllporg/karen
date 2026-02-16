@@ -1,0 +1,60 @@
+name: PR Linear Policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate-linear-linkage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch + PR title + PR body linkage
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          BRANCH_REGEX='^lin/[A-Z]+-[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$'
+          TITLE_REGEX='^\[[A-Z]+-[0-9]+\] .+'
+          KEY_REGEX='[A-Z]+-[0-9]+'
+
+          if [[ ! "$BRANCH_NAME" =~ $BRANCH_REGEX ]]; then
+            echo "Branch name must match: lin/<LINEAR_KEY>-<slug>"
+            echo "Example: lin/KAR-128-import-batch-dedupe-ui"
+            exit 1
+          fi
+
+          if [[ ! "$PR_TITLE" =~ $TITLE_REGEX ]]; then
+            echo "PR title must match: [<LINEAR_KEY>] <concise title>"
+            echo "Example: [KAR-128] Add dedupe merge confirmation UI"
+            exit 1
+          fi
+
+          BRANCH_KEY=$(echo "$BRANCH_NAME" | grep -oE "$KEY_REGEX" | head -n1)
+          TITLE_KEY=$(echo "$PR_TITLE" | grep -oE "$KEY_REGEX" | head -n1)
+
+          if [[ "$BRANCH_KEY" != "$TITLE_KEY" ]]; then
+            echo "Linear key mismatch between branch ($BRANCH_KEY) and title ($TITLE_KEY)."
+            exit 1
+          fi
+
+          if [[ "$PR_BODY" != *"Linear Issue"* ]]; then
+            echo "PR body must include the 'Linear Issue' section from the template."
+            exit 1
+          fi
+
+          if [[ "$PR_BODY" != *"$TITLE_KEY"* ]]; then
+            echo "PR body must include the same Linear key as branch/title: $TITLE_KEY"
+            exit 1
+          fi
+
+          if [[ "$PR_BODY" != *"Requirement ID"* ]]; then
+            echo "PR body must include Requirement ID."
+            exit 1
+          fi

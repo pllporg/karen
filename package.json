@@ -1,0 +1,26 @@
+{
+  "name": "karen-legal-suite",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "backlog:github:bootstrap": "node tools/backlog-sync/bootstrap_github_repo.mjs",
+    "backlog:linear:setup": "node tools/backlog-sync/setup_linear_workspace.mjs",
+    "backlog:seed": "node tools/backlog-sync/seed_parity_backlog.mjs",
+    "backlog:sync": "node tools/backlog-sync/linear_to_github.mjs",
+    "backlog:verify": "node tools/backlog-sync/verify_backlog_sync.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

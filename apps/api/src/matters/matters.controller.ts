@@ -1,0 +1,78 @@
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { MattersService } from './matters.service';
+import { SessionAuthGuard } from '../common/guards/session-auth.guard';
+import { PermissionGuard } from '../common/guards/permission.guard';
+import { RequirePermissions } from '../common/decorators/permissions.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../common/types';
+import { CreateMatterDto } from './dto/create-matter.dto';
+import { AddParticipantDto } from './dto/add-participant.dto';
+import { IntakeWizardDto } from './dto/intake-wizard.dto';
+
+@Controller('matters')
+@UseGuards(SessionAuthGuard, PermissionGuard)
+export class MattersController {
+  constructor(private readonly mattersService: MattersService) {}
+
+  @Get()
+  @RequirePermissions('matters:read')
+  list(@CurrentUser() user: AuthenticatedUser) {
+    return this.mattersService.list(user.organizationId);
+  }
+
+  @Post()
+  @RequirePermissions('matters:write')
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateMatterDto) {
+    return this.mattersService.create({
+      organizationId: user.organizationId,
+      actorUserId: user.id,
+      ...dto,
+    });
+  }
+
+  @Get(':id/dashboard')
+  @RequirePermissions('matters:read')
+  dashboard(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.mattersService.dashboard(user, id);
+  }
+
+  @Post(':id/participants')
+  @RequirePermissions('matters:write')
+  addParticipant(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: AddParticipantDto) {
+    return this.mattersService.addParticipant({
+      user,
+      matterId: id,
+      ...dto,
+    });
+  }
+
+  @Post('intake-wizard')
+  @RequirePermissions('matters:write')
+  intakeWizard(@CurrentUser() user: AuthenticatedUser, @Body() dto: IntakeWizardDto) {
+    return this.mattersService.intakeWizard({
+      user,
+      ...dto,
+    });
+  }
+
+  @Patch(':id/ethical-wall')
+  @RequirePermissions('matters:write')
+  setEthicalWall(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() body: { enabled: boolean }) {
+    return this.mattersService.setEthicalWall({ user, matterId: id, enabled: body.enabled });
+  }
+
+  @Post(':id/deny-users')
+  @RequirePermissions('matters:write')
+  denyUser(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() body: { deniedUserId: string; reason?: string },
+  ) {
+    return this.mattersService.addDeniedUser({
+      user,
+      matterId: id,
+      deniedUserId: body.deniedUserId,
+      reason: body.reason,
+    });
+  }
+}

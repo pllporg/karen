@@ -1,0 +1,702 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "generatedFrom": "Prompt-Context",
+    "assessmentDate": "2026-02-16",
+    "notes": "Initial parity matrix based on prompt requirements and current repo behavior."
+  },
+  "epics": [
+    {
+      "code": "PARITY-01",
+      "title": "Security + Tenancy",
+      "description": "Close security and isolation gaps to meet production-grade SaaS expectations.",
+      "labels": ["parity", "security"],
+      "tasks": [
+        {
+          "title": "Harden tenant isolation test coverage across all core entities",
+          "requirementId": "REQ-SEC-001",
+          "promptSection": "SECURITY REQUIREMENTS / Tenant isolation tests",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "security"],
+          "problemStatement": "Tenant checks exist but are not comprehensively verified across all read/write pathways.",
+          "requirementExcerpt": "Tenant isolation tests must be present and enforced server-side.",
+          "acceptanceCriteria": [
+            "Add test suites for cross-tenant access attempts on contacts, matters, documents, billing, imports, exports, and AI endpoints.",
+            "All multi-tenant tests fail if organization scoping is removed.",
+            "CI blocks merges when tenant isolation tests fail."
+          ],
+          "apiImpact": "No public API change; stricter test guarantees.",
+          "securityImpact": "Prevents data leakage between firms.",
+          "definitionOfDone": [
+            "Security test suite added and passing in CI.",
+            "Audit evidence links attached."
+          ]
+        },
+        {
+          "title": "Implement upload malware scanning provider integration",
+          "requirementId": "REQ-SEC-002",
+          "promptSection": "SECURITY REQUIREMENTS / Malware scanning hook for uploads",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "High",
+          "labels": ["parity", "security", "documents"],
+          "problemStatement": "Current malware scanner is a stub and always returns clean.",
+          "requirementExcerpt": "Malware scanning hook required for uploads.",
+          "acceptanceCriteria": [
+            "Integrate a real scanner (e.g., ClamAV sidecar or SaaS API).",
+            "Reject infected uploads and log scan outcomes.",
+            "Add integration test with simulated infected payload flow."
+          ],
+          "apiImpact": "Upload endpoints return explicit scan failure errors.",
+          "securityImpact": "Prevents malicious file ingestion.",
+          "definitionOfDone": [
+            "Scanner configurable via env.",
+            "Observed blocking behavior in tests and staging runbook."
+          ]
+        },
+        {
+          "title": "Implement encrypted OAuth token storage with key management",
+          "requirementId": "REQ-SEC-003",
+          "promptSection": "API & INTEGRATIONS / Integration connections table storing OAuth tokens encrypted",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "security", "integrations"],
+          "problemStatement": "Token fields exist but encryption-at-rest enforcement is incomplete.",
+          "requirementExcerpt": "OAuth tokens must be stored encrypted.",
+          "acceptanceCriteria": [
+            "Encrypt access/refresh tokens with managed key before DB write.",
+            "Decrypt only at use-time in connector services.",
+            "Add key-rotation migration strategy and tests."
+          ],
+          "apiImpact": "No endpoint shape changes; storage semantics updated.",
+          "securityImpact": "Reduces credential exposure risk.",
+          "definitionOfDone": [
+            "Encryption wrapper merged with tests.",
+            "Key rotation documented."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-02",
+      "title": "Data Model Completeness",
+      "description": "Ensure Prisma and domain entities fully cover prompt object model requirements.",
+      "labels": ["parity", "data-model"],
+      "tasks": [
+        {
+          "title": "Validate all required entities and relation semantics against prompt",
+          "requirementId": "REQ-DATA-001",
+          "promptSection": "DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities",
+          "parityStatus": "Partial",
+          "component": "Data",
+          "risk": "High",
+          "labels": ["parity", "data-model"],
+          "problemStatement": "Schema is broad but needs formal parity audit with explicit gap list.",
+          "requirementExcerpt": "Minimum entities and capabilities cannot be omitted.",
+          "acceptanceCriteria": [
+            "Generate schema checklist mapping every prompt entity to model/table and key relations.",
+            "Open explicit gap issues per missing/partial entity behavior.",
+            "Attach checklist artifact in docs."
+          ],
+          "apiImpact": "Potential follow-on migrations only.",
+          "securityImpact": "Improves data integrity and access policy enforcement confidence.",
+          "definitionOfDone": [
+            "Checklist committed and referenced by backlog items."
+          ]
+        },
+        {
+          "title": "Complete ABAC policy abstraction for matter-level ethical walls",
+          "requirementId": "REQ-DATA-002",
+          "promptSection": "Tenancy / AccessPolicy / ABAC hooks",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "security", "matters"],
+          "problemStatement": "Ethical wall logic exists but policy representation is not fully extensible.",
+          "requirementExcerpt": "AccessPolicy / ABAC hooks required for ethical wall controls.",
+          "acceptanceCriteria": [
+            "Define reusable policy evaluation contract with reason codes.",
+            "Cover deny-list + team restrictions + future policy composition.",
+            "Add unit and integration tests for policy combinations."
+          ],
+          "apiImpact": "Internal policy service contract introduced.",
+          "securityImpact": "Reduces accidental bypass risks.",
+          "definitionOfDone": [
+            "Policy engine contract documented and tested."
+          ]
+        },
+        {
+          "title": "Add pgvector-backed similarity retrieval path for source chunks",
+          "requirementId": "REQ-DATA-003",
+          "promptSection": "Vector: pgvector / AI Layer",
+          "parityStatus": "Partial",
+          "component": "Data",
+          "risk": "Medium",
+          "labels": ["parity", "ai-governance"],
+          "problemStatement": "Embeddings are stored but retrieval flow should explicitly support vector similarity queries.",
+          "requirementExcerpt": "RAG via pgvector required.",
+          "acceptanceCriteria": [
+            "Enable vector index + query path for matter-scoped retrieval.",
+            "Fallback behavior documented when embeddings unavailable.",
+            "Benchmark and verify top-k retrieval quality."
+          ],
+          "apiImpact": "AI tool internals updated for retrieval.",
+          "securityImpact": "Maintains matter-scoped data boundaries in retrieval.",
+          "definitionOfDone": [
+            "RAG retrieval uses vector similarity in production path."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-03",
+      "title": "Import/Export Portability",
+      "description": "Deliver migration parity for inbound and outbound data portability.",
+      "labels": ["parity", "migration", "imports", "exports"],
+      "tasks": [
+        {
+          "title": "Finalize MyCase ZIP importer field coverage and error mapping",
+          "requirementId": "REQ-PORT-001",
+          "promptSection": "MVP Importers / MyCase Full Backup Import",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "migration", "imports"],
+          "problemStatement": "Importer works but needs complete object mapping and richer diagnostics.",
+          "requirementExcerpt": "Map contacts, cases, tasks, calendar, invoices/payments, time, notes/messages where possible.",
+          "acceptanceCriteria": [
+            "Complete mapping coverage matrix for MyCase CSV files.",
+            "ImportItem warnings/errors capture row-level mapping context.",
+            "Round-trip fixture updated and passing."
+          ],
+          "apiImpact": "Import result payload contains richer warning structures.",
+          "securityImpact": "No material security impact.",
+          "definitionOfDone": [
+            "Coverage matrix committed; tests passing."
+          ]
+        },
+        {
+          "title": "Finalize Clio CSV/XLSX template importer coverage",
+          "requirementId": "REQ-PORT-002",
+          "promptSection": "MVP Importers / Clio Migration Template Import",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "migration", "imports"],
+          "problemStatement": "Clio template parser exists but parity-level mapping is incomplete.",
+          "requirementExcerpt": "Map contacts, matters, tasks, calendar, activities/time entries, notes, phone logs/emails where available.",
+          "acceptanceCriteria": [
+            "All documented Clio template tabs mapped or explicitly skipped with warnings.",
+            "XLSX and CSV parity test fixtures pass.",
+            "Import summary clearly identifies unmapped columns."
+          ],
+          "apiImpact": "Import summaries expanded.",
+          "securityImpact": "No material security impact.",
+          "definitionOfDone": [
+            "Importer acceptance tests cover complete template spectrum."
+          ]
+        },
+        {
+          "title": "Build user-confirm merge workflow for dedupe suggestions",
+          "requirementId": "REQ-PORT-003",
+          "promptSection": "Import Framework / Dedupe engine + user-confirm merge UI",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "High",
+          "labels": ["parity", "migration", "imports", "contacts"],
+          "problemStatement": "Dedupe suggestions exist but confirmation UX and merge controls need completion.",
+          "requirementExcerpt": "Dedupe engine with fuzzy matching and user-confirm merge UI required.",
+          "acceptanceCriteria": [
+            "UI presents duplicate candidates with confidence and field diff.",
+            "User can merge/ignore/defer; actions audit logged.",
+            "Merge tests verify referential integrity."
+          ],
+          "apiImpact": "New merge decision endpoints and payloads.",
+          "securityImpact": "Audit log and change traceability required.",
+          "definitionOfDone": [
+            "End-to-end dedupe confirmation flow demonstrated."
+          ]
+        },
+        {
+          "title": "Implement full backup export package conformance checks",
+          "requirementId": "REQ-PORT-004",
+          "promptSection": "Export / Exit Strategy",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "migration", "exports"],
+          "problemStatement": "Export exists but needs strict dictionary conformance and integrity validation.",
+          "requirementExcerpt": "ZIP with CSVs per entity and docs manifest; data dictionary page.",
+          "acceptanceCriteria": [
+            "Export output validated against documented manifest schema.",
+            "CSV set includes required entities/custom fields.",
+            "Automated round-trip integrity test confirms import/export coherence."
+          ],
+          "apiImpact": "Export endpoint emits validated package metadata.",
+          "securityImpact": "Signed export access and audit logging maintained.",
+          "definitionOfDone": [
+            "Round-trip export/import verification published."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-04",
+      "title": "Contacts + Matters + Participants",
+      "description": "Achieve workflow completeness for case-centric legal operations objects.",
+      "labels": ["parity", "contacts", "matters"],
+      "tasks": [
+        {
+          "title": "Complete participant role configurability and side semantics coverage",
+          "requirementId": "REQ-MAT-001",
+          "promptSection": "MatterParticipant role model requirements",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "matters"],
+          "problemStatement": "Participant table exists but needs exhaustive role semantics and validation rules.",
+          "requirementExcerpt": "Support opposing counsel, adjusters, insurer, mediator, judge, expert, inspector, etc.",
+          "acceptanceCriteria": [
+            "Participant role definitions configurable per org.",
+            "Validation for represented-by and law-firm link semantics.",
+            "Role-specific tests cover all listed participant categories."
+          ],
+          "apiImpact": "Role definition endpoints and validation rules strengthened.",
+          "securityImpact": "Matter access checks remain enforced on participant mutations.",
+          "definitionOfDone": [
+            "Participant role matrix test suite passes."
+          ]
+        },
+        {
+          "title": "Enhance contact relationship graph visualization and filtering",
+          "requirementId": "REQ-MAT-002",
+          "promptSection": "Contacts / relationship graph + tags + filters",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": ["parity", "contacts"],
+          "problemStatement": "Relationship data is available but UI ergonomics and filtering depth are limited.",
+          "requirementExcerpt": "People/org contacts with relationship graph and tags/filters.",
+          "acceptanceCriteria": [
+            "Graph view supports relationship-type filters and search.",
+            "Tag filters support compound conditions.",
+            "Dedupe suggestion indicators surfaced directly in contacts UI."
+          ],
+          "apiImpact": "No major API changes expected.",
+          "securityImpact": "Tenant and permission checks enforced for graph API.",
+          "definitionOfDone": [
+            "Contacts UX reviewed against parity checklist."
+          ]
+        },
+        {
+          "title": "Complete construction litigation intake wizard domain coverage",
+          "requirementId": "REQ-MAT-003",
+          "promptSection": "Construction litigation domain extensions + intake wizard",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "High",
+          "labels": ["parity", "domain-construction", "matters"],
+          "problemStatement": "Domain entities exist, but intake flow needs complete guided capture and validation.",
+          "requirementExcerpt": "Intake wizard must populate property, contract, defects, damages, lien, insurance, expert sections.",
+          "acceptanceCriteria": [
+            "Wizard captures all required domain sections with validation.",
+            "Draft-save and resume behavior implemented.",
+            "Matter dashboard shows domain section completeness indicators."
+          ],
+          "apiImpact": "Potential intake payload schema expansion.",
+          "securityImpact": "Field-level PII protections retained.",
+          "definitionOfDone": [
+            "End-to-end intake scenario with seeded demo matter passes."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-05",
+      "title": "Communications + Documents",
+      "description": "Close comms/document parity and integration workflows.",
+      "labels": ["parity", "communications", "documents"],
+      "tasks": [
+        {
+          "title": "Implement production email/SMS providers behind provider interface",
+          "requirementId": "REQ-COMM-001",
+          "promptSection": "Email/SMS provider interfaces + stub provider in MVP",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "communications"],
+          "problemStatement": "Current provider is stub-only and not suitable for production messaging.",
+          "requirementExcerpt": "Provider interfaces exist; MVP includes stub, but production providers needed for parity.",
+          "acceptanceCriteria": [
+            "Add configurable provider adapters (e.g., SendGrid, Twilio).",
+            "Delivery status and provider message IDs persisted.",
+            "Failure/retry policy covered in tests."
+          ],
+          "apiImpact": "Message send endpoints include delivery metadata.",
+          "securityImpact": "Secrets managed via environment and encryption.",
+          "definitionOfDone": [
+            "At least one real email and one SMS provider validated."
+          ]
+        },
+        {
+          "title": "Complete communication search relevance and indexing strategy",
+          "requirementId": "REQ-COMM-002",
+          "promptSection": "Communications / search by keyword (Postgres full-text)",
+          "parityStatus": "Partial",
+          "component": "Data",
+          "risk": "Medium",
+          "labels": ["parity", "communications"],
+          "problemStatement": "Search exists but ranking, indexing, and performance guardrails are not production-grade.",
+          "requirementExcerpt": "Search communications by keyword.",
+          "acceptanceCriteria": [
+            "Add indexed tsvector strategy with migration.",
+            "Sort by relevance and date.",
+            "Load/performance test for expected message volume."
+          ],
+          "apiImpact": "Search responses include rank score.",
+          "securityImpact": "Search remains tenant-scoped.",
+          "definitionOfDone": [
+            "Performance baseline documented."
+          ]
+        },
+        {
+          "title": "Expand document automation coverage for merge fields and generated outputs",
+          "requirementId": "REQ-COMM-003",
+          "promptSection": "Document Management + Automation",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "documents"],
+          "problemStatement": "DOCX/PDF generation exists but merge-source breadth and template governance are limited.",
+          "requirementExcerpt": "DOCX template merge from matter/contact/custom fields and PDF generation for invoices/finalized letters.",
+          "acceptanceCriteria": [
+            "Merge context supports matter/contact/custom field graph.",
+            "Template validation catches missing placeholders before generation.",
+            "Generated artifact metadata and provenance logged."
+          ],
+          "apiImpact": "Template merge endpoint payload/response enriched.",
+          "securityImpact": "Generated docs inherit confidentiality controls.",
+          "definitionOfDone": [
+            "Template merge acceptance suite passes."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-06",
+      "title": "Billing + Trust + Payments",
+      "description": "Complete billing and trust workflows with compliance-oriented reporting.",
+      "labels": ["parity", "billing"],
+      "tasks": [
+        {
+          "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
+          "requirementId": "REQ-BILL-001",
+          "promptSection": "Billing & Trust / Stripe Checkout pay link",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "billing"],
+          "problemStatement": "Checkout link generation exists but full payment lifecycle reconciliation is incomplete.",
+          "requirementExcerpt": "Stripe Checkout pay link required with payments tracking.",
+          "acceptanceCriteria": [
+            "Webhook handling reconciles checkout completion and payment state.",
+            "Idempotency handling for duplicate webhook deliveries.",
+            "Invoice balance transitions tested end-to-end."
+          ],
+          "apiImpact": "Webhook endpoint and payment status updates expanded.",
+          "securityImpact": "Webhook signature verification required.",
+          "definitionOfDone": [
+            "Stripe test-mode flow fully documented and tested."
+          ]
+        },
+        {
+          "title": "Complete trust accounting reports and ledger invariants",
+          "requirementId": "REQ-BILL-002",
+          "promptSection": "Billing & Trust / Trust ledger entries and basic trust reporting",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "billing"],
+          "problemStatement": "Trust tables exist but reconciliation and report completeness need hardening.",
+          "requirementExcerpt": "Trust ledger and basic trust reporting required.",
+          "acceptanceCriteria": [
+            "Matter and account-level trust balance reports implemented.",
+            "Invariant checks prevent negative trust balance unless explicitly allowed by policy.",
+            "Audit logs emitted for trust adjustments."
+          ],
+          "apiImpact": "Trust report endpoints expanded.",
+          "securityImpact": "Financial data integrity improved.",
+          "definitionOfDone": [
+            "Trust accounting regression tests pass."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-07",
+      "title": "Client Portal",
+      "description": "Bring portal capabilities to parity with secure client collaboration requirements.",
+      "labels": ["parity", "portal"],
+      "tasks": [
+        {
+          "title": "Implement secure portal attachments in message workflow",
+          "requirementId": "REQ-PORTAL-001",
+          "promptSection": "Client Portal / Secure messaging with attachments",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "High",
+          "labels": ["parity", "portal", "documents"],
+          "problemStatement": "Portal messaging exists but attachment flow is incomplete.",
+          "requirementExcerpt": "Secure messaging with attachments required for clients.",
+          "acceptanceCriteria": [
+            "Clients can upload attachments to portal threads.",
+            "Attachment access restricted by portal entitlement and expiry.",
+            "Audit events record all client attachment actions."
+          ],
+          "apiImpact": "Portal messaging endpoints support attachment metadata.",
+          "securityImpact": "Strict access controls and signed download URLs required.",
+          "definitionOfDone": [
+            "Portal attachment E2E tests pass."
+          ]
+        },
+        {
+          "title": "Replace e-sign stub with provider abstraction implementation",
+          "requirementId": "REQ-PORTAL-002",
+          "promptSection": "Client Portal / e-sign stub flow",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "Medium",
+          "labels": ["parity", "portal"],
+          "problemStatement": "E-sign currently stores stub envelopes only.",
+          "requirementExcerpt": "E-sign interface required; stub acceptable for MVP but parity backlog needs production-ready integration path.",
+          "acceptanceCriteria": [
+            "Provider abstraction supports create envelope, status polling, webhook callback.",
+            "Envelope lifecycle state transitions persisted and surfaced in portal.",
+            "Fallback stub remains available for local development."
+          ],
+          "apiImpact": "New provider config endpoints may be needed.",
+          "securityImpact": "Signature payload integrity and webhook auth required.",
+          "definitionOfDone": [
+            "At least one provider integration verified in sandbox."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-08",
+      "title": "AI Workspace + Governance",
+      "description": "Complete AI workforce tools and governance controls required by prompt.",
+      "labels": ["parity", "ai-governance"],
+      "tasks": [
+        {
+          "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+          "requirementId": "REQ-AI-001",
+          "promptSection": "AI Workspace / Deadline extraction with side-by-side excerpt",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "High",
+          "labels": ["parity", "ai-governance"],
+          "problemStatement": "Deadline extraction exists but UI evidence review needs stronger side-by-side verification.",
+          "requirementExcerpt": "Must show side-by-side excerpt for each extracted date and require confirmation before creating tasks/events.",
+          "acceptanceCriteria": [
+            "UI displays each extracted deadline with source excerpt and chunk link.",
+            "No task/event creation until user explicitly confirms row selection.",
+            "Confirmation action logged in audit trail."
+          ],
+          "apiImpact": "Artifact response includes structured evidence payload.",
+          "securityImpact": "Preserves review-required governance controls.",
+          "definitionOfDone": [
+            "Deadline confirmation UX validated with acceptance tests."
+          ]
+        },
+        {
+          "title": "Implement prompt injection defense hardening for ingestion pipeline",
+          "requirementId": "REQ-AI-002",
+          "promptSection": "AI Governance / Red-team prompt injection defenses",
+          "parityStatus": "Partial",
+          "component": "API",
+          "risk": "High",
+          "labels": ["parity", "ai-governance", "security"],
+          "problemStatement": "Basic redaction is present; robust defense-in-depth policy is still needed.",
+          "requirementExcerpt": "Isolate system prompts, filter malicious instructions, always cite sources used.",
+          "acceptanceCriteria": [
+            "Ingestion pipeline flags and quarantines high-risk instruction patterns.",
+            "Generation path enforces citation requirement for substantive claims.",
+            "Security tests include adversarial doc fixtures."
+          ],
+          "apiImpact": "AI job outputs include policy compliance metadata.",
+          "securityImpact": "Reduces prompt injection risk and hallucination blast radius.",
+          "definitionOfDone": [
+            "AI security test pack added to CI."
+          ]
+        },
+        {
+          "title": "Implement style pack management with source document governance",
+          "requirementId": "REQ-AI-003",
+          "promptSection": "AI Layer / StylePack + source docs",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": ["parity", "ai-governance"],
+          "problemStatement": "Schema includes style packs but management workflows are not complete.",
+          "requirementExcerpt": "Firm style packs should inform drafting tools.",
+          "acceptanceCriteria": [
+            "Admin UI to create/update style packs and attach source docs.",
+            "AI job payload can select style pack.",
+            "Draft outputs record selected style pack in provenance."
+          ],
+          "apiImpact": "AI create job schema may include stylePackId.",
+          "securityImpact": "No major change beyond existing org scope checks.",
+          "definitionOfDone": [
+            "Style pack assignment visible in artifact metadata."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-09",
+      "title": "Integrations + Webhooks",
+      "description": "Replace connector stubs with production-grade integration flows.",
+      "labels": ["parity", "integrations"],
+      "tasks": [
+        {
+          "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
+          "requirementId": "REQ-INT-001",
+          "promptSection": "Phase 2 connectors / Clio Manage API",
+          "parityStatus": "Missing",
+          "component": "Integrations",
+          "risk": "High",
+          "labels": ["parity", "integrations", "migration"],
+          "problemStatement": "Connector currently returns stub responses.",
+          "requirementExcerpt": "Connector must support OAuth, incremental sync, webhook subscriptions with idempotency keys.",
+          "acceptanceCriteria": [
+            "OAuth handshake and token refresh implemented.",
+            "Incremental cursor sync persists checkpoints.",
+            "Webhook subscriptions registered and delivery validated."
+          ],
+          "apiImpact": "Integration setup endpoints expanded for OAuth lifecycle.",
+          "securityImpact": "Token encryption and callback validation required.",
+          "definitionOfDone": [
+            "Clio integration E2E sandbox test documented."
+          ]
+        },
+        {
+          "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+          "requirementId": "REQ-INT-002",
+          "promptSection": "Phase 2 connectors / MyCase API",
+          "parityStatus": "Missing",
+          "component": "Integrations",
+          "risk": "High",
+          "labels": ["parity", "integrations", "migration"],
+          "problemStatement": "MyCase connector is stubbed and not syncing data.",
+          "requirementExcerpt": "Connector must support incremental sync + webhooks where available.",
+          "acceptanceCriteria": [
+            "OAuth and refresh flow implemented.",
+            "Incremental sync with idempotency key support.",
+            "Webhook event ingestion path covered by tests."
+          ],
+          "apiImpact": "Integration management API extended.",
+          "securityImpact": "Credentials protected and webhook auth enforced.",
+          "definitionOfDone": [
+            "MyCase sandbox sync passes acceptance checklist."
+          ]
+        },
+        {
+          "title": "Implement Filevine and PracticePanther connector production adapters",
+          "requirementId": "REQ-INT-003",
+          "promptSection": "Phase 2 connectors / Filevine + PracticePanther",
+          "parityStatus": "Missing",
+          "component": "Integrations",
+          "risk": "Medium",
+          "labels": ["parity", "integrations", "migration"],
+          "problemStatement": "Remaining connectors are placeholder stubs.",
+          "requirementExcerpt": "Provide connector structure with incremental sync and webhook support.",
+          "acceptanceCriteria": [
+            "At minimum, authenticated pull sync for core entities.",
+            "Idempotent sync run records and cursor checkpoints.",
+            "Clear unsupported capability warnings where provider APIs differ."
+          ],
+          "apiImpact": "Connector adapters expanded; no breaking public API planned.",
+          "securityImpact": "Same token/webhook security controls applied.",
+          "definitionOfDone": [
+            "Connector readiness matrix published."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-10",
+      "title": "Testing + Reliability + Ops",
+      "description": "Strengthen release confidence, CI policy enforcement, and operational controls.",
+      "labels": ["parity", "ops"],
+      "tasks": [
+        {
+          "title": "Add web application automated test suite for critical workflows",
+          "requirementId": "REQ-OPS-001",
+          "promptSection": "DELIVERABLES / Tests",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "High",
+          "labels": ["parity", "ops"],
+          "problemStatement": "Web app currently has no automated tests.",
+          "requirementExcerpt": "Tests should verify core auth/RBAC/matter/document/import/AI flows.",
+          "acceptanceCriteria": [
+            "Add component/integration tests for login, dashboard, matter screens, and portal flows.",
+            "Add smoke e2e test for primary user journey.",
+            "CI runs web tests and blocks on failure."
+          ],
+          "apiImpact": "No API changes required.",
+          "securityImpact": "Reduces regression risk in permission boundaries.",
+          "definitionOfDone": [
+            "Web test command implemented and required in CI."
+          ]
+        },
+        {
+          "title": "Document deployment runbook and operational SLOs",
+          "requirementId": "REQ-OPS-002",
+          "promptSection": "Production-ready expectation",
+          "parityStatus": "Partial",
+          "component": "Infra",
+          "risk": "Medium",
+          "labels": ["parity", "ops"],
+          "problemStatement": "Operational procedures for deploy/recover/monitor are incomplete.",
+          "requirementExcerpt": "Production-ready system requires clear operational playbooks.",
+          "acceptanceCriteria": [
+            "Create runbook for deploy, rollback, migrations, and incident response.",
+            "Define baseline SLOs and key health metrics.",
+            "Add healthcheck and startup readiness checks to deployment guidance."
+          ],
+          "apiImpact": "No endpoint changes.",
+          "securityImpact": "Improves incident response posture.",
+          "definitionOfDone": [
+            "Runbook committed and linked from README."
+          ]
+        },
+        {
+          "title": "Enforce Linear key branch/PR policy in CI",
+          "requirementId": "REQ-OPS-003",
+          "promptSection": "Backlog governance / strict issue key linkage",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "Medium",
+          "labels": ["parity", "ops"],
+          "problemStatement": "Branch and PR naming currently allow unlinked work.",
+          "requirementExcerpt": "Branch and PR title must include Linear key for auto-linking.",
+          "acceptanceCriteria": [
+            "CI check fails on non-compliant branch names.",
+            "CI check fails on PR titles missing Linear key.",
+            "PR template enforces requirement metadata."
+          ],
+          "apiImpact": "No API change.",
+          "securityImpact": "Improves change traceability and auditability.",
+          "definitionOfDone": [
+            "Policy workflow active on all PRs."
+          ]
+        }
+      ]
+    }
+  ]
+}

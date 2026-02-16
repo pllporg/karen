@@ -1,0 +1,4 @@
+Sample Scheduling Order
+Discovery cutoff: 2026-08-30
+Mediation deadline: 2026-09-15
+Trial readiness conference: 2026-10-20

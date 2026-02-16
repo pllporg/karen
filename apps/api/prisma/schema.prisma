@@ -1,0 +1,1500 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum ContactKind {
+  PERSON
+  ORGANIZATION
+}
+
+enum ContactMethodType {
+  EMAIL
+  PHONE
+  ADDRESS
+  SOCIAL
+}
+
+enum MatterStatus {
+  OPEN
+  PENDING
+  CLOSED
+  ARCHIVED
+}
+
+enum MatterParticipantSide {
+  CLIENT_SIDE
+  OPPOSING_SIDE
+  NEUTRAL
+  COURT
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELED
+}
+
+enum CommunicationMessageType {
+  EMAIL
+  SMS
+  CALL_LOG
+  PORTAL_MESSAGE
+  INTERNAL_NOTE
+}
+
+enum CommunicationDirection {
+  INBOUND
+  OUTBOUND
+  INTERNAL
+}
+
+enum CommunicationParticipantRole {
+  FROM
+  TO
+  CC
+  BCC
+  OTHER
+}
+
+enum DocumentConfidentiality {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  HIGHLY_CONFIDENTIAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  PAID
+  VOID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  STRIPE
+  MANUAL
+  CHECK
+  ACH
+  CASH
+}
+
+enum TrustTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum LeadStage {
+  NEW
+  SCREENING
+  CONFLICT_CHECK
+  CONSULTATION
+  RETAINED
+  REJECTED
+}
+
+enum AiJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AiArtifactReviewStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+enum ImportBatchStatus {
+  QUEUED
+  RUNNING
+  PARTIAL
+  COMPLETED
+  FAILED
+}
+
+enum ImportItemStatus {
+  PENDING
+  IMPORTED
+  FAILED
+  SKIPPED
+}
+
+enum IntegrationProvider {
+  CLIO
+  MYCASE
+  FILEVINE
+  PRACTICEPANTHER
+  GMAIL
+  OUTLOOK
+  GENERIC_REST
+}
+
+enum IntegrationConnectionStatus {
+  CONNECTED
+  ERROR
+  DISCONNECTED
+}
+
+enum IntegrationSyncStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum IntegrationWebhookStatus {
+  ACTIVE
+  ERROR
+  DISABLED
+}
+
+enum ExportJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Organization {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  slug         String   @unique
+  settingsJson Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model User {
+  id                 String              @id @default(uuid()) @db.Uuid
+  email              String              @unique
+  passwordHash       String
+  fullName           String?
+  mfaSecret          String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  memberships        Membership[]
+  sessions           Session[]
+  auditEvents        AuditLogEvent[]
+  communicationMessagesCreated CommunicationMessage[]
+  matterTeamMembers  MatterTeamMember[]
+  matterDenyEntries  MatterAccessDeny[]
+  tasksAssigned      Task[]              @relation("TaskAssignee")
+  tasksCreated       Task[]              @relation("TaskCreator")
+  reminders          Reminder[]
+  notifications      Notification[]
+  documentsCreated   Document[]
+  documentVersions   DocumentVersion[]
+  documentShareLinks DocumentShareLink[]
+  timeEntries        TimeEntry[]
+  expenses           Expense[]
+  leadsAssigned      Lead[]
+  conflictChecks     ConflictCheckResult[]
+  aiJobsCreated      AiJob[]
+  aiArtifactsReviewed AiArtifact[]
+  aiExecutionLogs    AiExecutionLog[]
+  sectionInstancesUpdated SectionInstance[]
+  importBatchesStarted ImportBatch[]
+  exportJobsRequested ExportJob[]
+}
+
+model Membership {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  userId         String           @db.Uuid
+  roleId         String?          @db.Uuid
+  contactId      String?          @db.Uuid
+  status         MembershipStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  contact        Contact?         @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  sessions       Session[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+}
+
+model Role {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  memberships    Membership[]
+  permissions    Permission[] @relation("RolePermissions")
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Permission {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  key            String
+  label          String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  roles          Role[]   @relation("RolePermissions")
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
+model Session {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  organizationId String   @db.Uuid
+  membershipId   String   @db.Uuid
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membership     Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model AccessPolicy {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  resourceType   String
+  effect         String
+  conditionsJson Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId, resourceType])
+}
+
+model AuditLogEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  actorUserId    String?  @db.Uuid
+  action         String
+  entityType     String
+  entityId       String
+  metadataJson   Json?
+  previousHash   String?
+  eventHash      String
+  createdAt      DateTime @default(now())
+  actorUser      User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@unique([organizationId, eventHash])
+}
+
+model Contact {
+  id                     String                     @id @default(uuid()) @db.Uuid
+  organizationId         String                     @db.Uuid
+  kind                   ContactKind
+  displayName            String
+  primaryEmail           String?
+  primaryPhone           String?
+  tags                   String[]                   @default([])
+  rawSourcePayload       Json?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  personProfile          PersonProfile?
+  organizationProfile    OrganizationProfile?
+  methods                ContactMethod[]
+  outgoingRelationships  ContactRelationship[]      @relation("ContactRelationshipFrom")
+  incomingRelationships  ContactRelationship[]      @relation("ContactRelationshipTo")
+  matterParticipants     MatterParticipant[]        @relation("MatterParticipantContact")
+  representedParticipants MatterParticipant[]       @relation("ParticipantRepresentedBy")
+  lawFirmParticipants    MatterParticipant[]        @relation("ParticipantLawFirm")
+  memberships            Membership[]
+  communicationThreads   CommunicationThread[]
+  communicationParticipants CommunicationParticipant[]
+  leadsReferred          Lead[]                     @relation("LeadReferralContact")
+  insuranceClaimsAdjuster InsuranceClaim[]          @relation("InsuranceAdjuster")
+  insuranceClaimsInsurer InsuranceClaim[]           @relation("InsuranceInsurer")
+  lienClaims             LienModel[]                @relation("LienClaimant")
+  expertEngagements      ExpertEngagement[]
+
+  @@index([organizationId])
+  @@index([primaryEmail])
+  @@index([primaryPhone])
+}
+
+model PersonProfile {
+  id                 String  @id @default(uuid()) @db.Uuid
+  contactId          String  @unique @db.Uuid
+  firstName          String?
+  lastName           String?
+  barNumber          String?
+  licenseJurisdiction String?
+  title              String?
+  contact            Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+}
+
+model OrganizationProfile {
+  id        String  @id @default(uuid()) @db.Uuid
+  contactId String  @unique @db.Uuid
+  legalName String
+  dba       String?
+  website   String?
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+}
+
+model ContactMethod {
+  id          String            @id @default(uuid()) @db.Uuid
+  contactId   String            @db.Uuid
+  type        ContactMethodType
+  value       String
+  label       String?
+  isPrimary   Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  contact     Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+}
+
+model ContactRelationship {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  fromContactId    String   @db.Uuid
+  toContactId      String   @db.Uuid
+  relationshipType String
+  notes            String?
+  createdAt        DateTime @default(now())
+  fromContact      Contact  @relation("ContactRelationshipFrom", fields: [fromContactId], references: [id], onDelete: Cascade)
+  toContact        Contact  @relation("ContactRelationshipTo", fields: [toContactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model MatterType {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matters        Matter[]
+  sectionDefinitions SectionDefinition[]
+
+  @@unique([organizationId, name])
+}
+
+model MatterStage {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  practiceArea   String
+  name           String
+  orderIndex     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matters        Matter[]
+  stageAutomationsFrom StageAutomation[] @relation("StageAutomationFrom")
+  stageAutomationsTo   StageAutomation[] @relation("StageAutomationTo")
+
+  @@index([organizationId, practiceArea, orderIndex])
+}
+
+model ParticipantRoleDefinition {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  key            String
+  label          String
+  description    String?
+  sideDefault    MatterParticipantSide?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  participants   MatterParticipant[]
+
+  @@unique([organizationId, key])
+}
+
+model Matter {
+  id                   String                @id @default(uuid()) @db.Uuid
+  organizationId       String                @db.Uuid
+  matterNumber         String
+  name                 String
+  practiceArea         String
+  jurisdiction         String?
+  venue                String?
+  stageId              String?               @db.Uuid
+  matterTypeId         String?               @db.Uuid
+  status               MatterStatus          @default(OPEN)
+  ethicalWallEnabled   Boolean               @default(false)
+  openedAt             DateTime              @default(now())
+  closedAt             DateTime?
+  rawSourcePayload     Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  stage                MatterStage?          @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  matterType           MatterType?           @relation(fields: [matterTypeId], references: [id], onDelete: SetNull)
+  participants         MatterParticipant[]
+  relatedFrom          MatterRelationship[]  @relation("MatterRelationshipFrom")
+  relatedTo            MatterRelationship[]  @relation("MatterRelationshipTo")
+  teams                MatterTeam[]
+  teamMembers          MatterTeamMember[]
+  denyUsers            MatterAccessDeny[]
+  sectionInstances     SectionInstance[]
+  tasks                Task[]
+  reminders            Reminder[]
+  calendarEvents       CalendarEvent[]
+  serviceEvents        ServiceEvent[]
+  docketEntries        DocketEntry[]
+  communicationThreads CommunicationThread[]
+  documentFolders     DocumentFolder[]
+  documents            Document[]
+  evidenceItems        EvidenceItem[]
+  timeEntries          TimeEntry[]
+  expenses             Expense[]
+  invoices             Invoice[]
+  trustTransactions    TrustTransaction[]
+  trustLedgers         MatterTrustLedger[]
+  intakeSubmissions    IntakeSubmission[]
+  eSignEnvelopes       ESignEnvelope[]
+  aiJobs               AiJob[]
+  propertyProfile      PropertyProfile?
+  contractProfile      ContractProfile?
+  projectMilestones    ProjectMilestone[]
+  defectIssues         DefectIssue[]
+  damagesItems         DamagesItem[]
+  lienModels           LienModel[]
+  insuranceClaims      InsuranceClaim[]
+  expertEngagements    ExpertEngagement[]
+
+  @@unique([organizationId, matterNumber])
+  @@index([organizationId, status])
+}
+
+model MatterTeam {
+  id        String            @id @default(uuid()) @db.Uuid
+  matterId  String            @db.Uuid
+  name      String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  matter    Matter            @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  members   MatterTeamMember[]
+
+  @@index([matterId])
+}
+
+model MatterTeamMember {
+  id          String     @id @default(uuid()) @db.Uuid
+  matterId    String     @db.Uuid
+  matterTeamId String?   @db.Uuid
+  userId      String     @db.Uuid
+  canWrite    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  matter      Matter     @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  matterTeam  MatterTeam? @relation(fields: [matterTeamId], references: [id], onDelete: SetNull)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matterId, userId])
+  @@index([matterTeamId])
+}
+
+model MatterAccessDeny {
+  id        String   @id @default(uuid()) @db.Uuid
+  matterId  String   @db.Uuid
+  userId    String   @db.Uuid
+  reason    String?
+  createdAt DateTime @default(now())
+  matter    Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matterId, userId])
+}
+
+model MatterParticipant {
+  id                          String                @id @default(uuid()) @db.Uuid
+  organizationId              String                @db.Uuid
+  matterId                    String                @db.Uuid
+  contactId                   String                @db.Uuid
+  participantRoleKey          String
+  participantRoleDefinitionId String?               @db.Uuid
+  side                        MatterParticipantSide?
+  isPrimary                   Boolean               @default(false)
+  representedByContactId      String?               @db.Uuid
+  lawFirmContactId            String?               @db.Uuid
+  notes                       String?
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
+  matter                      Matter                @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  contact                     Contact               @relation("MatterParticipantContact", fields: [contactId], references: [id], onDelete: Cascade)
+  participantRoleDefinition   ParticipantRoleDefinition? @relation(fields: [participantRoleDefinitionId], references: [id], onDelete: SetNull)
+  representedByContact        Contact?              @relation("ParticipantRepresentedBy", fields: [representedByContactId], references: [id], onDelete: SetNull)
+  lawFirmContact              Contact?              @relation("ParticipantLawFirm", fields: [lawFirmContactId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, matterId])
+  @@index([participantRoleKey])
+}
+
+model MatterRelationship {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  fromMatterId     String   @db.Uuid
+  toMatterId       String   @db.Uuid
+  relationshipType String
+  notes            String?
+  createdAt        DateTime @default(now())
+  fromMatter       Matter   @relation("MatterRelationshipFrom", fields: [fromMatterId], references: [id], onDelete: Cascade)
+  toMatter         Matter   @relation("MatterRelationshipTo", fields: [toMatterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model CustomFieldDefinition {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @db.Uuid
+  entityType      String
+  key             String
+  label           String
+  fieldType       String
+  optionsJson     Json?
+  validationsJson Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  values          CustomFieldValue[]
+
+  @@unique([organizationId, entityType, key])
+}
+
+model CustomFieldValue {
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @db.Uuid
+  entityType        String
+  entityId          String
+  fieldDefinitionId String               @db.Uuid
+  valueJson         Json
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  fieldDefinition   CustomFieldDefinition @relation(fields: [fieldDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, entityType, entityId, fieldDefinitionId])
+  @@index([organizationId, entityType, entityId])
+}
+
+model SectionDefinition {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterTypeId   String?  @db.Uuid
+  name           String
+  schemaJson     Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matterType     MatterType? @relation(fields: [matterTypeId], references: [id], onDelete: SetNull)
+  instances      SectionInstance[]
+}
+
+model SectionInstance {
+  id                 String   @id @default(uuid()) @db.Uuid
+  organizationId     String   @db.Uuid
+  matterId           String   @db.Uuid
+  sectionDefinitionId String  @db.Uuid
+  dataJson           Json
+  updatedByUserId    String?  @db.Uuid
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  matter             Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  sectionDefinition  SectionDefinition @relation(fields: [sectionDefinitionId], references: [id], onDelete: Cascade)
+  updatedBy          User?    @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([matterId, sectionDefinitionId])
+}
+
+model TaskTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  description    String?
+  templateJson   Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model MatterTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  matterTypeId   String?  @db.Uuid
+  configJson     Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model StageAutomation {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @db.Uuid
+  fromStageId    String?     @db.Uuid
+  toStageId      String      @db.Uuid
+  actionsJson    Json
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  fromStage      MatterStage? @relation("StageAutomationFrom", fields: [fromStageId], references: [id], onDelete: SetNull)
+  toStage        MatterStage  @relation("StageAutomationTo", fields: [toStageId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id               String      @id @default(uuid()) @db.Uuid
+  organizationId   String      @db.Uuid
+  matterId         String      @db.Uuid
+  title            String
+  description      String?
+  assigneeUserId   String?     @db.Uuid
+  dueAt            DateTime?
+  priority         TaskPriority @default(MEDIUM)
+  status           TaskStatus   @default(TODO)
+  checklistJson    Json?
+  dependenciesJson Json?
+  createdByUserId  String?      @db.Uuid
+  rawSourcePayload Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  matter           Matter       @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  assignee         User?        @relation("TaskAssignee", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  createdBy        User?        @relation("TaskCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, matterId, dueAt])
+}
+
+model Reminder {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterId       String   @db.Uuid
+  taskId         String?  @db.Uuid
+  userId         String   @db.Uuid
+  remindAt       DateTime
+  channel        String
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  matter         Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  type           String
+  payloadJson    Json
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CalendarEvent {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  matterId         String   @db.Uuid
+  startAt          DateTime
+  endAt            DateTime?
+  type             String
+  location         String?
+  attendeesJson    Json?
+  description      String?
+  source           String?
+  rawSourcePayload Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, startAt])
+}
+
+model DeadlineRuleTemplate {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  name             String
+  triggerType      String
+  offsetDays       Int
+  businessDaysOnly Boolean  @default(false)
+  configJson       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ServiceEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterId       String   @db.Uuid
+  eventType      String
+  occurredAt     DateTime
+  detailsJson    Json?
+  createdAt      DateTime @default(now())
+  matter         Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model DocketEntry {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  matterId         String   @db.Uuid
+  filedAt          DateTime
+  description      String
+  sourceDocumentId String?  @db.Uuid
+  createdAt        DateTime @default(now())
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  sourceDocument   Document? @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+}
+
+model CommunicationThread {
+  id             String                 @id @default(uuid()) @db.Uuid
+  organizationId String                 @db.Uuid
+  matterId       String?                @db.Uuid
+  contactId      String?                @db.Uuid
+  subject        String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  matter         Matter?                @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  contact        Contact?               @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  messages       CommunicationMessage[]
+
+  @@index([organizationId, matterId])
+}
+
+model CommunicationMessage {
+  id               String                    @id @default(uuid()) @db.Uuid
+  organizationId   String                    @db.Uuid
+  threadId         String                    @db.Uuid
+  type             CommunicationMessageType
+  direction        CommunicationDirection
+  subject          String?
+  body             String
+  occurredAt       DateTime                  @default(now())
+  createdByUserId  String?                   @db.Uuid
+  rawSourcePayload Json?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  thread           CommunicationThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  createdBy        User?                     @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  participants     CommunicationParticipant[]
+  attachments      CommunicationAttachment[]
+
+  @@index([organizationId, occurredAt])
+}
+
+model CommunicationParticipant {
+  id         String                      @id @default(uuid()) @db.Uuid
+  messageId  String                      @db.Uuid
+  contactId  String?                     @db.Uuid
+  role       CommunicationParticipantRole
+  createdAt  DateTime                    @default(now())
+  message    CommunicationMessage         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  contact    Contact?                    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+}
+
+model CommunicationAttachment {
+  id                String         @id @default(uuid()) @db.Uuid
+  messageId         String         @db.Uuid
+  documentVersionId String         @db.Uuid
+  createdAt         DateTime       @default(now())
+  message           CommunicationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, documentVersionId])
+}
+
+model DocumentFolder {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterId       String?  @db.Uuid
+  parentFolderId String?  @db.Uuid
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matter         Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  parentFolder   DocumentFolder? @relation("DocumentFolderTree", fields: [parentFolderId], references: [id], onDelete: SetNull)
+  childFolders   DocumentFolder[] @relation("DocumentFolderTree")
+  documents      Document[]
+}
+
+model Document {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  organizationId       String                 @db.Uuid
+  matterId             String                 @db.Uuid
+  folderId             String?                @db.Uuid
+  title                String
+  category             String?
+  tags                 String[]               @default([])
+  confidentialityLevel DocumentConfidentiality @default(CONFIDENTIAL)
+  sharedWithClient     Boolean                @default(false)
+  createdByUserId      String?                @db.Uuid
+  rawSourcePayload     Json?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  matter               Matter                 @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  folder               DocumentFolder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdBy            User?                  @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  versions             DocumentVersion[]
+  shareLinks           DocumentShareLink[]
+  docketEntries        DocketEntry[]
+  lienModels           LienModel[]
+  expertEngagements    ExpertEngagement[]
+  eSignEnvelopes       ESignEnvelope[]
+
+  @@index([organizationId, matterId])
+}
+
+model DocumentVersion {
+  id                String                  @id @default(uuid()) @db.Uuid
+  organizationId    String                  @db.Uuid
+  documentId        String                  @db.Uuid
+  storageKey        String
+  sha256            String
+  mimeType          String
+  size              Int
+  uploadedByUserId  String?                 @db.Uuid
+  uploadedAt        DateTime                @default(now())
+  document          Document                @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy        User?                   @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  communicationAttachments CommunicationAttachment[]
+  evidenceItems     EvidenceItem[]
+  aiSourceChunks    AiSourceChunk[]
+  stylePackSourceDocs StylePackSourceDoc[]
+  receiptsForExpenses Expense[]
+
+  @@index([organizationId, documentId])
+}
+
+model DocumentShareLink {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  documentId     String   @db.Uuid
+  token          String   @unique
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdByUserId String? @db.Uuid
+  createdAt      DateTime @default(now())
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdBy      User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+}
+
+model EvidenceItem {
+  id               String          @id @default(uuid()) @db.Uuid
+  organizationId   String          @db.Uuid
+  matterId         String          @db.Uuid
+  documentVersionId String         @db.Uuid
+  type             String
+  description      String?
+  createdAt        DateTime        @default(now())
+  matter           Matter          @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  documentVersion  DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+}
+
+model TimeEntry {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  matterId         String   @db.Uuid
+  userId           String?  @db.Uuid
+  description      String?
+  startedAt        DateTime
+  endedAt          DateTime?
+  durationMinutes  Int
+  billableRate     Float?
+  amount           Float
+  utbmsPhaseCode   String?
+  utbmsTaskCode    String?
+  status           String   @default("APPROVED")
+  rawSourcePayload Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  invoiceLineItems InvoiceLineItem[]
+
+  @@index([organizationId, matterId])
+}
+
+model Expense {
+  id                     String          @id @default(uuid()) @db.Uuid
+  organizationId         String          @db.Uuid
+  matterId               String          @db.Uuid
+  description            String
+  amount                 Float
+  incurredAt             DateTime
+  receiptDocumentVersionId String?       @db.Uuid
+  createdByUserId        String?         @db.Uuid
+  rawSourcePayload       Json?
+  createdAt              DateTime        @default(now())
+  matter                 Matter          @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  receiptDocumentVersion DocumentVersion? @relation(fields: [receiptDocumentVersionId], references: [id], onDelete: SetNull)
+  createdBy              User?           @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  invoiceLineItems       InvoiceLineItem[]
+}
+
+model Invoice {
+  id                   String        @id @default(uuid()) @db.Uuid
+  organizationId       String        @db.Uuid
+  matterId             String        @db.Uuid
+  invoiceNumber        String
+  status               InvoiceStatus @default(DRAFT)
+  issuedAt             DateTime      @default(now())
+  dueAt                DateTime?
+  subtotal             Float
+  tax                  Float         @default(0)
+  total                Float
+  balanceDue           Float
+  notes                String?
+  jurisdictionDisclaimer String?
+  pdfStorageKey        String?
+  stripeCheckoutUrl    String?
+  rawSourcePayload     Json?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  matter               Matter        @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  lineItems            InvoiceLineItem[]
+  payments             Payment[]
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId, status])
+}
+
+model InvoiceLineItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  invoiceId      String   @db.Uuid
+  description    String
+  quantity       Float
+  unitPrice      Float
+  amount         Float
+  timeEntryId    String?  @db.Uuid
+  expenseId      String?  @db.Uuid
+  utbmsPhaseCode String?
+  utbmsTaskCode  String?
+  createdAt      DateTime @default(now())
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  timeEntry      TimeEntry? @relation(fields: [timeEntryId], references: [id], onDelete: SetNull)
+  expense        Expense? @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+}
+
+model Payment {
+  id                   String        @id @default(uuid()) @db.Uuid
+  organizationId       String        @db.Uuid
+  invoiceId            String        @db.Uuid
+  amount               Float
+  method               PaymentMethod
+  stripePaymentIntentId String?
+  receivedAt           DateTime      @default(now())
+  reference            String?
+  rawSourcePayload     Json?
+  createdAt            DateTime      @default(now())
+  invoice              Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model TrustAccount {
+  id                 String            @id @default(uuid()) @db.Uuid
+  organizationId     String            @db.Uuid
+  name               String
+  bankName           String?
+  accountNumberMasked String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  transactions       TrustTransaction[]
+  ledgers            MatterTrustLedger[]
+}
+
+model TrustTransaction {
+  id             String               @id @default(uuid()) @db.Uuid
+  organizationId String               @db.Uuid
+  trustAccountId String               @db.Uuid
+  matterId       String               @db.Uuid
+  type           TrustTransactionType
+  amount         Float
+  occurredAt     DateTime             @default(now())
+  description    String?
+  createdAt      DateTime             @default(now())
+  trustAccount   TrustAccount         @relation(fields: [trustAccountId], references: [id], onDelete: Cascade)
+  matter         Matter               @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, trustAccountId])
+}
+
+model MatterTrustLedger {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  matterId       String       @db.Uuid
+  trustAccountId String       @db.Uuid
+  balance        Float        @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  matter         Matter       @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  trustAccount   TrustAccount @relation(fields: [trustAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, matterId, trustAccountId])
+}
+
+model Lead {
+  id               String    @id @default(uuid()) @db.Uuid
+  organizationId   String    @db.Uuid
+  source           String
+  referralContactId String?  @db.Uuid
+  stage            LeadStage @default(NEW)
+  assignedToUserId String?   @db.Uuid
+  notes            String?
+  createdAt        DateTime  @default(now())
+  referralContact  Contact?  @relation("LeadReferralContact", fields: [referralContactId], references: [id], onDelete: SetNull)
+  assignedTo       User?     @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  intakeSubmissions IntakeSubmission[]
+}
+
+model IntakeFormDefinition {
+  id                   String   @id @default(uuid()) @db.Uuid
+  organizationId       String   @db.Uuid
+  name                 String
+  schemaJson           Json
+  isClientPortalEnabled Boolean @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  submissions          IntakeSubmission[]
+}
+
+model IntakeSubmission {
+  id                     String   @id @default(uuid()) @db.Uuid
+  organizationId         String   @db.Uuid
+  intakeFormDefinitionId String   @db.Uuid
+  matterId               String?  @db.Uuid
+  leadId                 String?  @db.Uuid
+  submittedByContactId   String?  @db.Uuid
+  dataJson               Json
+  createdAt              DateTime @default(now())
+  intakeFormDefinition   IntakeFormDefinition @relation(fields: [intakeFormDefinitionId], references: [id], onDelete: Cascade)
+  matter                 Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  lead                   Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+}
+
+model ConflictCheckResult {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  queryText        String
+  resultJson       Json
+  searchedByUserId String?  @db.Uuid
+  createdAt        DateTime @default(now())
+  searchedBy       User?    @relation(fields: [searchedByUserId], references: [id], onDelete: SetNull)
+}
+
+model EngagementLetterTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  bodyTemplate   String
+  mergeFieldsJson Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  envelopes      ESignEnvelope[]
+}
+
+model ESignEnvelope {
+  id                        String   @id @default(uuid()) @db.Uuid
+  organizationId            String   @db.Uuid
+  engagementLetterTemplateId String  @db.Uuid
+  matterId                  String?  @db.Uuid
+  documentId                String?  @db.Uuid
+  status                    String
+  provider                  String
+  externalId                String?
+  payloadJson               Json?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  engagementLetterTemplate  EngagementLetterTemplate @relation(fields: [engagementLetterTemplateId], references: [id], onDelete: Cascade)
+  matter                    Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  document                  Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+}
+
+model AiJob {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @db.Uuid
+  matterId       String      @db.Uuid
+  toolName       String
+  status         AiJobStatus @default(QUEUED)
+  model          String?
+  createdByUserId String?    @db.Uuid
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  error          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  matter         Matter      @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  createdBy      User?       @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  artifacts      AiArtifact[]
+  executionLogs  AiExecutionLog[]
+
+  @@index([organizationId, matterId, createdAt])
+}
+
+model AiArtifact {
+  id               String                 @id @default(uuid()) @db.Uuid
+  organizationId   String                 @db.Uuid
+  jobId            String                 @db.Uuid
+  type             String
+  content          String
+  metadataJson     Json?
+  reviewedStatus   AiArtifactReviewStatus @default(DRAFT)
+  reviewedByUserId String?                @db.Uuid
+  reviewedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  job              AiJob                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reviewedBy       User?                  @relation(fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+}
+
+model AiSourceChunk {
+  id                String      @id @default(uuid()) @db.Uuid
+  organizationId    String      @db.Uuid
+  documentVersionId String      @db.Uuid
+  chunkText         String
+  embedding         Unsupported("vector")?
+  embeddingJson     Json?
+  metadataJson      Json?
+  createdAt         DateTime    @default(now())
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, documentVersionId])
+}
+
+model StylePack {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  sourceDocs     StylePackSourceDoc[]
+
+  @@unique([organizationId, name])
+}
+
+model StylePackSourceDoc {
+  id                String          @id @default(uuid()) @db.Uuid
+  stylePackId       String          @db.Uuid
+  documentVersionId String          @db.Uuid
+  createdAt         DateTime        @default(now())
+  stylePack         StylePack       @relation(fields: [stylePackId], references: [id], onDelete: Cascade)
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([stylePackId, documentVersionId])
+}
+
+model AiExecutionLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  aiJobId        String   @db.Uuid
+  promptText     String
+  sourceRefsJson Json?
+  modelParamsJson Json?
+  systemPromptHash String?
+  createdByUserId String? @db.Uuid
+  createdAt      DateTime @default(now())
+  aiJob          AiJob    @relation(fields: [aiJobId], references: [id], onDelete: Cascade)
+  createdBy      User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+}
+
+model ImportBatch {
+  id              String           @id @default(uuid()) @db.Uuid
+  organizationId  String           @db.Uuid
+  sourceSystem    String
+  status          ImportBatchStatus @default(QUEUED)
+  startedByUserId String?          @db.Uuid
+  mappingProfileId String?         @db.Uuid
+  startedAt       DateTime         @default(now())
+  finishedAt      DateTime?
+  summaryJson     Json?
+  startedBy       User?            @relation(fields: [startedByUserId], references: [id], onDelete: SetNull)
+  mappingProfile  MappingProfile?  @relation(fields: [mappingProfileId], references: [id], onDelete: SetNull)
+  items           ImportItem[]
+  externalReferences ExternalReference[]
+
+  @@index([organizationId, startedAt])
+}
+
+model ImportItem {
+  id               String         @id @default(uuid()) @db.Uuid
+  importBatchId    String         @db.Uuid
+  entityType       String
+  rowNumber        Int
+  rawJson          Json
+  resolvedEntityId String?
+  errorsJson       Json?
+  warningsJson     Json?
+  status           ImportItemStatus @default(PENDING)
+  createdAt        DateTime       @default(now())
+  importBatch      ImportBatch    @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+
+  @@index([importBatchId, status])
+}
+
+model MappingProfile {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  name             String
+  sourceSystem     String
+  fieldMappingsJson Json?
+  transformsJson   Json?
+  dedupeRulesJson  Json?
+  conflictRulesJson Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  importBatches    ImportBatch[]
+}
+
+model ExternalReference {
+  id               String    @id @default(uuid()) @db.Uuid
+  organizationId   String    @db.Uuid
+  entityType       String
+  entityId         String
+  sourceSystem     String
+  externalId       String
+  externalParentId String?
+  importedAt       DateTime  @default(now())
+  importBatchId    String?   @db.Uuid
+  rawSourcePayload Json?
+  importBatch      ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, sourceSystem, entityType, externalId])
+  @@index([organizationId, entityType, entityId])
+}
+
+model PropertyProfile {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterId       String   @unique @db.Uuid
+  addressLine1   String
+  addressLine2   String?
+  city           String?
+  state          String?
+  postalCode     String?
+  parcelNumber   String?
+  permitsJson    Json?
+  inspectionsJson Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matter         Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model ContractProfile {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  matterId         String   @unique @db.Uuid
+  contractDate     DateTime?
+  contractPrice    Float?
+  paymentScheduleJson Json?
+  changeOrdersJson Json?
+  warrantiesJson   Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model ProjectMilestone {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  matterId       String   @db.Uuid
+  name           String
+  plannedDate    DateTime?
+  actualDate     DateTime?
+  status         String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  matter         Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model DefectIssue {
+  id                    String   @id @default(uuid()) @db.Uuid
+  organizationId        String   @db.Uuid
+  matterId              String   @db.Uuid
+  category              String
+  locationInHome        String?
+  severity              String?
+  description           String?
+  photoDocumentVersionIds String[] @default([])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  matter                Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model DamagesItem {
+  id                 String   @id @default(uuid()) @db.Uuid
+  organizationId     String   @db.Uuid
+  matterId           String   @db.Uuid
+  category           String
+  repairEstimate     Float?
+  paidAmount         Float?
+  completionCost     Float?
+  consequentialAmount Float?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  matter             Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+}
+
+model LienModel {
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @db.Uuid
+  matterId         String   @db.Uuid
+  claimantContactId String? @db.Uuid
+  amount           Float
+  recordingDate    DateTime?
+  releaseDate      DateTime?
+  status           String
+  documentId       String?  @db.Uuid
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  claimantContact  Contact? @relation("LienClaimant", fields: [claimantContactId], references: [id], onDelete: SetNull)
+  document         Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+}
+
+model InsuranceClaim {
+  id                String   @id @default(uuid()) @db.Uuid
+  organizationId    String   @db.Uuid
+  matterId          String   @db.Uuid
+  policyNumber      String?
+  claimNumber       String?
+  adjusterContactId String?  @db.Uuid
+  insurerContactId  String?  @db.Uuid
+  coverageNotes     String?
+  status            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  matter            Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  adjusterContact   Contact? @relation("InsuranceAdjuster", fields: [adjusterContactId], references: [id], onDelete: SetNull)
+  insurerContact    Contact? @relation("InsuranceInsurer", fields: [insurerContactId], references: [id], onDelete: SetNull)
+}
+
+model ExpertEngagement {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @db.Uuid
+  matterId        String   @db.Uuid
+  expertContactId String   @db.Uuid
+  scope           String?
+  feeArrangement  String?
+  reportDocumentId String? @db.Uuid
+  status          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  matter          Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  expertContact   Contact  @relation(fields: [expertContactId], references: [id], onDelete: Cascade)
+  reportDocument  Document? @relation(fields: [reportDocumentId], references: [id], onDelete: SetNull)
+}
+
+model IntegrationConnection {
+  id                  String                    @id @default(uuid()) @db.Uuid
+  organizationId      String                    @db.Uuid
+  provider            IntegrationProvider
+  name                String
+  status              IntegrationConnectionStatus @default(CONNECTED)
+  encryptedAccessToken String?
+  encryptedRefreshToken String?
+  tokenExpiresAt      DateTime?
+  scopes              String[]                  @default([])
+  configJson          Json?
+  lastSyncAt          DateTime?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  syncRuns            IntegrationSyncRun[]
+  webhookSubscriptions IntegrationWebhookSubscription[]
+
+  @@index([organizationId, provider])
+}
+
+model IntegrationSyncRun {
+  id             String                @id @default(uuid()) @db.Uuid
+  organizationId String                @db.Uuid
+  connectionId   String                @db.Uuid
+  idempotencyKey String
+  status         IntegrationSyncStatus @default(QUEUED)
+  cursor         String?
+  startedAt      DateTime?             
+  finishedAt     DateTime?
+  error          String?
+  createdAt      DateTime              @default(now())
+  connection     IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, idempotencyKey])
+  @@index([organizationId, status])
+}
+
+model IntegrationWebhookSubscription {
+  id             String                    @id @default(uuid()) @db.Uuid
+  organizationId String                    @db.Uuid
+  connectionId   String                    @db.Uuid
+  event          String
+  targetUrl      String
+  status         IntegrationWebhookStatus  @default(ACTIVE)
+  externalId     String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  connection     IntegrationConnection     @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, event, targetUrl])
+}
+
+model WebhookEndpoint {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  url            String
+  secret         String
+  events         String[] @default([])
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deliveries     WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id               String   @id @default(uuid()) @db.Uuid
+  webhookEndpointId String  @db.Uuid
+  eventType        String
+  payloadJson      Json
+  status           String
+  idempotencyKey   String
+  attemptCount     Int      @default(0)
+  responseCode     Int?
+  lastAttemptAt    DateTime?
+  createdAt        DateTime @default(now())
+  webhookEndpoint  WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEndpointId, status])
+}
+
+model ExportJob {
+  id               String        @id @default(uuid()) @db.Uuid
+  organizationId   String        @db.Uuid
+  requestedByUserId String?      @db.Uuid
+  exportType       String
+  status           ExportJobStatus @default(QUEUED)
+  storageKey       String?
+  summaryJson      Json?
+  error            String?
+  createdAt        DateTime      @default(now())
+  finishedAt       DateTime?
+  requestedBy      User?         @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+}
