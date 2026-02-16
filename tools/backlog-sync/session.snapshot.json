@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-16T21:25:39.176Z",
+  "generatedAt": "2026-02-16T21:52:28.140Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -142,16 +142,35 @@
     "stateCounts": {
       "Backlog": 37,
       "In Review": 3,
-      "In Progress": 4
+      "In Progress": 1,
+      "Done": 3
     },
     "inProgressIssueKeys": [
-      "KAR-41",
-      "KAR-39",
-      "KAR-38",
-      "KAR-37"
+      "KAR-41"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-37",
+        "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
+        "state": "Done",
+        "updatedAt": "2026-02-16T21:50:59.539Z",
+        "requirementId": "REQ-INT-001"
+      },
+      {
+        "key": "KAR-38",
+        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+        "state": "Done",
+        "updatedAt": "2026-02-16T21:50:13.462Z",
+        "requirementId": "REQ-INT-002"
+      },
+      {
+        "key": "KAR-39",
+        "title": "Implement Filevine and PracticePanther connector production adapters",
+        "state": "Done",
+        "updatedAt": "2026-02-16T21:48:24.385Z",
+        "requirementId": "REQ-INT-003"
+      },
       {
         "key": "KAR-48",
         "title": "Implement LEDES/UTBMS export jobs with validation profiles",
@@ -200,40 +219,18 @@
         "state": "Backlog",
         "updatedAt": "2026-02-16T20:39:06.760Z",
         "requirementId": "REQ-MAT-004"
-      },
-      {
-        "key": "KAR-18",
-        "title": "PARITY-04 Contacts + Matters + Participants",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:06.760Z",
-        "requirementId": "PARITY-04"
-      },
-      {
-        "key": "KAR-39",
-        "title": "Implement Filevine and PracticePanther connector production adapters",
-        "state": "In Progress",
-        "updatedAt": "2026-02-16T20:12:53.936Z",
-        "requirementId": "REQ-INT-003"
-      },
-      {
-        "key": "KAR-38",
-        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
-        "state": "In Progress",
-        "updatedAt": "2026-02-16T20:12:53.671Z",
-        "requirementId": "REQ-INT-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-16T21:24:08.090Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-16T21:52:21.438Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "9e17e75eca8af510dfa4a6a1bb04138c9cd4ce1c",
+    "gitHead": "18effe95b4095b90de00c523ebd72365f21b5afe",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 1
+    "dirtyFileCount": 0
   }
 }
