@@ -8,6 +8,7 @@ import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
+    rawBody: true,
     cors: {
       origin: [process.env.WEB_BASE_URL || 'http://localhost:3000'],
       credentials: true,
