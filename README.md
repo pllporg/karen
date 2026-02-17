@@ -27,6 +27,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Full backup export ZIP (entity CSVs + document manifest)
 - AI workspace:
   - RAG ingestion
+  - pgvector similarity retrieval (matter-scoped) with recency fallback
   - queued jobs (BullMQ)
   - draft artifacts with provenance + citations
   - review workflow (approve/reject/edit)
