@@ -742,11 +742,11 @@
           "title": "Add web application automated test suite for critical workflows",
           "requirementId": "REQ-OPS-001",
           "promptSection": "DELIVERABLES / Tests",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "ops"],
-          "problemStatement": "Web app now has baseline tests, but coverage is not yet parity-complete for portal/import/document journeys.",
+          "problemStatement": "Web suite now includes broad page coverage plus a multi-surface smoke journey spanning sign-in, dashboard, matter creation, and portal messaging.",
           "requirementExcerpt": "Tests should verify core auth/RBAC/matter/document/import/AI flows.",
           "acceptanceCriteria": [
             "Add component/integration tests for login, dashboard, matter screens, and portal flows.",
@@ -756,7 +756,8 @@
           "apiImpact": "No API changes required.",
           "securityImpact": "Reduces regression risk in permission boundaries.",
           "definitionOfDone": [
-            "Web test command implemented and required in CI."
+            "Web test command implemented and required in CI.",
+            "Smoke journey regression is tracked in docs/parity artifacts."
           ]
         },
         {

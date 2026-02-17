@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T21:25:30.157Z",
+  "generatedAt": "2026-02-17T21:34:37.271Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,24 +14,24 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 34,
+    "unresolvedRequirements": 33,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 29,
+      "phase-1": 28,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 34
+      "Complete": 33
     },
     "unresolvedCountsByRisk": {
-      "High": 17,
+      "High": 16,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 17,
+      "Complete:High": 16,
       "Complete:Medium": 17
     }
   },
@@ -120,12 +120,12 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-OPS-001",
+        "requirementId": "REQ-PORT-001",
         "parityStatus": "Complete",
         "risk": "High",
-        "title": "Add web application automated test suite for critical workflows",
-        "component": "Web",
-        "epicCode": "PARITY-10",
+        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
+        "component": "API",
+        "epicCode": "PARITY-03",
         "phase": "phase-1"
       }
     ]
@@ -215,14 +215,18 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:25:27.581Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:34:36.027Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3208d8874c5583f3857ad42f54e81c66f1b89d42",
+    "gitHead": "7fd6a48def0c35bc17c51034ebe1ec4f76ddb0ad",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-52-web-smoke-journey-coverage",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? apps/web/test/smoke-user-journey.spec.tsx",
+      "?? docs/parity/web-smoke-journey-coverage.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 4
   }
 }

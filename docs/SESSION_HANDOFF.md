@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T21:25:30.157Z`
+- Snapshot Timestamp: `2026-02-17T21:34:37.271Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T21:25:27.581Z`
+- Last Successful Mirror Verify: `2026-02-17T21:34:36.027Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Verified `REQ-OPS-001` with a new cross-module web smoke journey test (`login -> dashboard -> matter create -> portal message`) plus full-suite test/build validation, documented at `docs/parity/web-smoke-journey-coverage.md`.
 - 2026-02-17: Added webhook delivery observability + manual retry controls with org-scoped delivery list/retry API endpoints, admin monitor/filter/retry UI, and regression coverage (`docs/parity/webhook-delivery-observability.md`).
 - 2026-02-17: Completed `REQ-BILL-004` by adding LEDES export profile/job schema, profile-driven UTBMS validation, billing endpoints for profile/job/list/download flow, checksum + artifact metadata persistence, billing-page LEDES workflow controls, and API/Web regression coverage (`docs/parity/ledes-export-workflows.md`).
 - 2026-02-17: Completed `REQ-BILL-003` by adding trust reconciliation run/discrepancy schema, statement-period run lifecycle endpoints (`create/submit/resolve/complete`), sign-off gating requiring all discrepancies to be resolved/waived, billing UI reconciliation actions, and API/Web regression coverage (`docs/parity/trust-reconciliation-workflows.md`).
