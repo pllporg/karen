@@ -10,6 +10,8 @@ import { GenericCsvImportPlugin } from './plugins/generic-csv.plugin';
 import { MyCaseZipImportPlugin } from './plugins/mycase-zip.plugin';
 import { ClioTemplateImportPlugin } from './plugins/clio-template.plugin';
 
+type ImportWarning = Prisma.InputJsonObject;
+
 @Injectable()
 export class ImportsService implements OnModuleInit {
   private readonly plugins = new Map<string, ImportPlugin>();
@@ -99,12 +101,16 @@ export class ImportsService implements OnModuleInit {
     });
 
     const parsedRows = await plugin.parse(input.file);
+    const orderedRows = this.orderImportRows(parsedRows);
 
     let imported = 0;
     let failed = 0;
+    let warningCount = 0;
 
-    for (const row of parsedRows) {
+    for (const row of orderedRows) {
       const entityType = input.entityTypeOverride || row.entityType;
+      const rowContext = this.buildRowContext(entityType, row);
+      const rowWarnings = this.normalizeWarnings(row.warnings, rowContext);
       try {
         const resolvedEntityId = await this.importRow({
           organizationId: input.user.organizationId,
@@ -121,11 +127,14 @@ export class ImportsService implements OnModuleInit {
               rowNumber: row.rowNumber,
               rawJson: toJsonValue(row.rawJson),
               resolvedEntityId,
+              warningsJson: rowWarnings.length > 0 ? toJsonValue(rowWarnings) : undefined,
               status: ImportItemStatus.IMPORTED,
             },
         });
         imported += 1;
+        warningCount += rowWarnings.length;
       } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown import error';
         await this.prisma.importItem.create({
           data: {
             importBatchId: batch.id,
@@ -133,12 +142,12 @@ export class ImportsService implements OnModuleInit {
               rowNumber: row.rowNumber,
               rawJson: toJsonValue(row.rawJson),
               status: ImportItemStatus.FAILED,
-              errorsJson: toJsonValue({
-                message: error instanceof Error ? error.message : 'Unknown import error',
-              }),
+              warningsJson: rowWarnings.length > 0 ? toJsonValue(rowWarnings) : undefined,
+              errorsJson: toJsonValue(this.buildErrorPayload(message, rowContext)),
             },
           });
         failed += 1;
+        warningCount += rowWarnings.length;
       }
     }
 
@@ -151,8 +160,10 @@ export class ImportsService implements OnModuleInit {
         finishedAt: new Date(),
         summaryJson: toJsonValue({
           total: parsedRows.length,
+          orderedTotal: orderedRows.length,
           imported,
           failed,
+          warnings: warningCount,
         }),
       },
     });
@@ -168,6 +179,7 @@ export class ImportsService implements OnModuleInit {
         totalRows: parsedRows.length,
         imported,
         failed,
+        warnings: warningCount,
       },
     });
 
@@ -681,6 +693,97 @@ export class ImportsService implements OnModuleInit {
     }
 
     return best && best.score >= 0.7 ? best.contact : null;
+  }
+
+  private orderImportRows(
+    rows: Array<{
+      entityType: string;
+      rowNumber: number;
+      rawJson: Prisma.InputJsonObject;
+      warnings?: Prisma.InputJsonArray;
+    }>,
+  ) {
+    return [...rows].sort((a, b) => {
+      const priorityDiff = this.importPriority(a.entityType) - this.importPriority(b.entityType);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const sourceFileA = this.asString((a.rawJson as Record<string, unknown>).__source_file || '');
+      const sourceFileB = this.asString((b.rawJson as Record<string, unknown>).__source_file || '');
+      const sourceDiff = sourceFileA.localeCompare(sourceFileB);
+      if (sourceDiff !== 0) return sourceDiff;
+
+      return a.rowNumber - b.rowNumber;
+    });
+  }
+
+  private importPriority(entityType: string): number {
+    const priorities: Record<string, number> = {
+      contact: 10,
+      matter: 20,
+      invoice: 30,
+      task: 40,
+      calendar_event: 50,
+      time_entry: 60,
+      payment: 70,
+      communication_message: 80,
+      note: 80,
+    };
+    return priorities[entityType] ?? 999;
+  }
+
+  private normalizeWarnings(warnings: Prisma.InputJsonArray | undefined, rowContext: Prisma.InputJsonObject): ImportWarning[] {
+    const input = Array.isArray(warnings) ? warnings : [];
+    const normalized: ImportWarning[] = [];
+    for (const warning of input) {
+      if (!warning || typeof warning !== 'object' || Array.isArray(warning)) continue;
+      const record = warning as Record<string, unknown>;
+      const code = this.asString(record.code || 'import_warning');
+      const message = this.asString(record.message || 'Importer warning');
+      const field = this.asString(record.field || '');
+      const context =
+        record.context && typeof record.context === 'object' && !Array.isArray(record.context)
+          ? (record.context as Record<string, unknown>)
+          : {};
+
+      normalized.push({
+        code,
+        message,
+        ...(field ? { field } : {}),
+        context: {
+          ...context,
+          rowContext,
+        },
+      });
+    }
+    return normalized;
+  }
+
+  private buildRowContext(entityType: string, row: { rowNumber: number; rawJson: Prisma.InputJsonObject }): Prisma.InputJsonObject {
+    const record = row.rawJson as Record<string, unknown>;
+    const availableFields = Object.keys(record).filter((key) => !key.startsWith('__'));
+    const sourceFile = this.asString(record.__source_file || '');
+    const sourceEntity = this.asString(record.__source_entity || '');
+    const externalId = this.asString(record.id || record.external_id || '');
+    const externalParentId = this.asString(
+      record.matter_id || record.case_id || record.invoice_id || record.parent_id || record.external_parent_id || '',
+    );
+
+    return {
+      entityType,
+      rowNumber: row.rowNumber,
+      sourceFile,
+      sourceEntity,
+      externalId,
+      externalParentId,
+      availableFields,
+    } as Prisma.InputJsonObject;
+  }
+
+  private buildErrorPayload(message: string, rowContext: Prisma.InputJsonObject): Prisma.InputJsonObject {
+    return {
+      message,
+      rowContext,
+    } as Prisma.InputJsonObject;
   }
 
   private detectContactKind(raw: Prisma.InputJsonObject): ContactKind {

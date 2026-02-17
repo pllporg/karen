@@ -1,0 +1,2 @@
+id,case_id,number,issued_date,due_date,subtotal,tax,total,balance_due
+400,100,INV-400,2026-04-01,2026-04-15,900,100,1000,500

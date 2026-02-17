@@ -161,7 +161,7 @@
           "title": "Finalize MyCase ZIP importer field coverage and error mapping",
           "requirementId": "REQ-PORT-001",
           "promptSection": "MVP Importers / MyCase Full Backup Import",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],
