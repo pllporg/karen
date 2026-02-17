@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T20:45:16.255Z",
+  "generatedAt": "2026-02-17T21:25:30.157Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -135,8 +135,8 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "In Review": 2,
-      "Done": 30,
+      "Done": 31,
+      "In Review": 1,
       "Backlog": 12
     },
     "inProgressIssueKeys": [],
@@ -145,8 +145,8 @@
       {
         "key": "KAR-48",
         "title": "Implement LEDES/UTBMS export jobs with validation profiles",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T20:44:48.911Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T20:54:23.712Z",
         "requirementId": "REQ-BILL-004"
       },
       {
@@ -215,13 +215,13 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:45:15.063Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:25:27.581Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "19d67695ce17ed68fe35041e83bd1e11ebf5dd55",
+    "gitHead": "3208d8874c5583f3857ad42f54e81c66f1b89d42",
     "gitStatusShort": [
-      "## lin/KAR-48-ledes-export-jobs...origin/lin/KAR-48-ledes-export-jobs"
+      "## main...origin/main"
     ],
     "dirtyFileCount": 0
   }
