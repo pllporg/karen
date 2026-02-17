@@ -224,7 +224,7 @@
           "title": "Implement full backup export package conformance checks",
           "requirementId": "REQ-PORT-004",
           "promptSection": "Export / Exit Strategy",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "migration", "exports"],
