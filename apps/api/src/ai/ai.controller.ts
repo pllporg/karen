@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AiArtifactReviewStatus } from '@prisma/client';
 import { AiService } from './ai.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
@@ -9,6 +9,9 @@ import { AuthenticatedUser } from '../common/types';
 import { CreateAiJobDto } from './dto/create-ai-job.dto';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
 import { RateLimit } from '../common/decorators/rate-limit.decorator';
+import { CreateStylePackDto } from './dto/create-style-pack.dto';
+import { UpdateStylePackDto } from './dto/update-style-pack.dto';
+import { AttachStylePackSourceDocDto } from './dto/attach-style-pack-source-doc.dto';
 
 @Controller('ai')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -21,6 +24,61 @@ export class AiController {
     return this.aiService.listJobs(user, matterId);
   }
 
+  @Get('style-packs')
+  @RequirePermissions('ai:read')
+  listStylePacks(@CurrentUser() user: AuthenticatedUser) {
+    return this.aiService.listStylePacks(user);
+  }
+
+  @Post('style-packs')
+  @RequirePermissions('organization:write')
+  createStylePack(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateStylePackDto) {
+    return this.aiService.createStylePack({
+      user,
+      name: dto.name,
+      description: dto.description,
+    });
+  }
+
+  @Patch('style-packs/:id')
+  @RequirePermissions('organization:write')
+  updateStylePack(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: UpdateStylePackDto) {
+    return this.aiService.updateStylePack({
+      user,
+      stylePackId: id,
+      name: dto.name,
+      description: dto.description,
+    });
+  }
+
+  @Post('style-packs/:id/source-docs')
+  @RequirePermissions('organization:write')
+  addStylePackSourceDoc(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: AttachStylePackSourceDocDto,
+  ) {
+    return this.aiService.addStylePackSourceDoc({
+      user,
+      stylePackId: id,
+      documentVersionId: dto.documentVersionId,
+    });
+  }
+
+  @Delete('style-packs/:id/source-docs/:documentVersionId')
+  @RequirePermissions('organization:write')
+  removeStylePackSourceDoc(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('documentVersionId') documentVersionId: string,
+  ) {
+    return this.aiService.removeStylePackSourceDoc({
+      user,
+      stylePackId: id,
+      documentVersionId,
+    });
+  }
+
   @Post('jobs')
   @RequirePermissions('ai:write')
   @UseGuards(RateLimitGuard)
@@ -31,6 +89,7 @@ export class AiController {
       matterId: dto.matterId,
       toolName: dto.toolName,
       payload: dto.input,
+      stylePackId: dto.stylePackId,
     });
   }
 

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { AiArtifactReviewStatus, AiJobStatus, Prisma } from '@prisma/client';
 import { Job } from 'bullmq';
 import OpenAI from 'openai';
@@ -12,6 +12,14 @@ import { AiExcerptEvidence, deriveDeadlineCandidates } from './deadline-candidat
 import { scanAndSanitizeUntrustedText } from './prompt-injection-filter.util';
 
 const AI_QUEUE = 'ai-jobs';
+
+type StylePackContext = {
+  id: string;
+  name: string;
+  description: string | null;
+  sourceDocumentVersionIds: string[];
+  sourceDocHints: string[];
+} | null;
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -28,13 +36,14 @@ export class AiService implements OnModuleInit {
 
   onModuleInit() {
     this.queue.createWorker(AI_QUEUE, async (job: Job) => {
-      const { aiJobId, organizationId, matterId, toolName, input, createdByUserId } = job.data as {
+      const { aiJobId, organizationId, matterId, toolName, input, createdByUserId, stylePackId } = job.data as {
         aiJobId: string;
         organizationId: string;
         matterId: string;
         toolName: string;
         input: Record<string, unknown>;
         createdByUserId: string;
+        stylePackId?: string;
       };
 
       await this.prisma.aiJob.update({
@@ -47,11 +56,16 @@ export class AiService implements OnModuleInit {
 
       try {
         const context = await this.buildMatterContext(organizationId, matterId);
+        const stylePack = await this.resolveStylePackForGeneration({
+          organizationId,
+          stylePackId,
+        });
         const result = await this.runTool(toolName, {
           context,
           input,
           organizationId,
           matterId,
+          stylePack,
         });
         const deadlineCandidates = deriveDeadlineCandidates({
           toolName,
@@ -73,6 +87,15 @@ export class AiService implements OnModuleInit {
               deadlineCandidates,
               model: this.model,
               toolName,
+              stylePack: stylePack
+                ? {
+                    id: stylePack.id,
+                    name: stylePack.name,
+                    description: stylePack.description,
+                    sourceDocumentVersionIds: stylePack.sourceDocumentVersionIds,
+                    sourceDocCount: stylePack.sourceDocumentVersionIds.length,
+                  }
+                : null,
             }),
             reviewedStatus: AiArtifactReviewStatus.DRAFT,
           },
@@ -87,6 +110,9 @@ export class AiService implements OnModuleInit {
             modelParamsJson: toJsonValue({
               model: this.model,
               toolName,
+              stylePackId: stylePack?.id ?? null,
+              stylePackName: stylePack?.name ?? null,
+              stylePackSourceDocCount: stylePack?.sourceDocumentVersionIds.length ?? 0,
             }),
             createdByUserId,
             systemPromptHash: this.hashPrompt(result.systemPrompt),
@@ -139,13 +165,202 @@ export class AiService implements OnModuleInit {
     });
   }
 
+  async listStylePacks(user: AuthenticatedUser) {
+    return this.prisma.stylePack.findMany({
+      where: { organizationId: user.organizationId },
+      orderBy: [{ name: 'asc' }],
+      include: {
+        sourceDocs: {
+          include: {
+            documentVersion: {
+              include: {
+                document: {
+                  select: {
+                    id: true,
+                    matterId: true,
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+  }
+
+  async createStylePack(input: {
+    user: AuthenticatedUser;
+    name: string;
+    description?: string;
+  }) {
+    const name = input.name.trim();
+    if (!name) {
+      throw new BadRequestException('Style pack name is required');
+    }
+
+    const stylePack = await this.prisma.stylePack.create({
+      data: {
+        organizationId: input.user.organizationId,
+        name,
+        description: this.normalizeNullableText(input.description),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'ai.style_pack.created',
+      entityType: 'stylePack',
+      entityId: stylePack.id,
+      metadata: {
+        name: stylePack.name,
+      },
+    });
+
+    return this.getStylePackById(input.user.organizationId, stylePack.id);
+  }
+
+  async updateStylePack(input: {
+    user: AuthenticatedUser;
+    stylePackId: string;
+    name?: string;
+    description?: string;
+  }) {
+    const stylePack = await this.assertStylePackInOrganization(input.user.organizationId, input.stylePackId);
+    const data: {
+      name?: string;
+      description?: string | null;
+    } = {};
+
+    if (input.name !== undefined) {
+      const trimmedName = input.name.trim();
+      if (!trimmedName) {
+        throw new BadRequestException('Style pack name cannot be empty');
+      }
+      data.name = trimmedName;
+    }
+
+    if (input.description !== undefined) {
+      data.description = this.normalizeNullableText(input.description);
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException('No style pack fields provided for update');
+    }
+
+    await this.prisma.stylePack.update({
+      where: { id: stylePack.id },
+      data,
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'ai.style_pack.updated',
+      entityType: 'stylePack',
+      entityId: stylePack.id,
+      metadata: data,
+    });
+
+    return this.getStylePackById(input.user.organizationId, stylePack.id);
+  }
+
+  async addStylePackSourceDoc(input: {
+    user: AuthenticatedUser;
+    stylePackId: string;
+    documentVersionId: string;
+  }) {
+    const stylePack = await this.assertStylePackInOrganization(input.user.organizationId, input.stylePackId);
+    const documentVersion = await this.prisma.documentVersion.findFirst({
+      where: {
+        id: input.documentVersionId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        document: true,
+      },
+    });
+
+    if (!documentVersion) {
+      throw new NotFoundException('Document version not found');
+    }
+
+    await this.access.assertMatterAccess(input.user, documentVersion.document.matterId, 'read');
+
+    await this.prisma.stylePackSourceDoc.upsert({
+      where: {
+        stylePackId_documentVersionId: {
+          stylePackId: stylePack.id,
+          documentVersionId: documentVersion.id,
+        },
+      },
+      update: {},
+      create: {
+        stylePackId: stylePack.id,
+        documentVersionId: documentVersion.id,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'ai.style_pack.source_doc.attached',
+      entityType: 'stylePack',
+      entityId: stylePack.id,
+      metadata: {
+        documentVersionId: documentVersion.id,
+        documentId: documentVersion.documentId,
+      },
+    });
+
+    return this.getStylePackById(input.user.organizationId, stylePack.id);
+  }
+
+  async removeStylePackSourceDoc(input: {
+    user: AuthenticatedUser;
+    stylePackId: string;
+    documentVersionId: string;
+  }) {
+    const stylePack = await this.assertStylePackInOrganization(input.user.organizationId, input.stylePackId);
+
+    const deleted = await this.prisma.stylePackSourceDoc.deleteMany({
+      where: {
+        stylePackId: stylePack.id,
+        documentVersionId: input.documentVersionId,
+      },
+    });
+
+    if (deleted.count === 0) {
+      throw new NotFoundException('Style pack source document link not found');
+    }
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'ai.style_pack.source_doc.detached',
+      entityType: 'stylePack',
+      entityId: stylePack.id,
+      metadata: {
+        documentVersionId: input.documentVersionId,
+      },
+    });
+
+    return this.getStylePackById(input.user.organizationId, stylePack.id);
+  }
+
   async createJob(input: {
     user: AuthenticatedUser;
     matterId: string;
     toolName: string;
     payload?: Record<string, unknown>;
+    stylePackId?: string;
   }) {
     await this.access.assertMatterAccess(input.user, input.matterId, 'write');
+    const stylePack = input.stylePackId
+      ? await this.assertStylePackInOrganization(input.user.organizationId, input.stylePackId)
+      : null;
 
     const aiJob = await this.prisma.aiJob.create({
       data: {
@@ -168,6 +383,7 @@ export class AiService implements OnModuleInit {
         toolName: input.toolName,
         input: input.payload ?? {},
         createdByUserId: input.user.id,
+        stylePackId: stylePack?.id,
       },
       {
         attempts: 2,
@@ -340,6 +556,7 @@ export class AiService implements OnModuleInit {
       input: Record<string, unknown>;
       organizationId: string;
       matterId: string;
+      stylePack: StylePackContext;
     },
   ): Promise<{
     content: string;
@@ -357,10 +574,12 @@ export class AiService implements OnModuleInit {
 
     const contextBlocks = input.context.chunks.map((chunk) => `[chunk:${chunk.id}] ${chunk.chunkText}`);
 
-    const taskPrompt = this.buildToolPrompt(toolName, input.input);
+    const stylePrompt = this.buildStylePrompt(input.stylePack);
+    const taskPrompt = this.buildToolPrompt(toolName, input.input, input.stylePack);
     const prompt = [
       `Matter: ${input.context.matter.name} (${input.context.matter.matterNumber})`,
       `Tool: ${toolName}`,
+      ...(stylePrompt ? [stylePrompt] : []),
       taskPrompt,
       'Context:',
       ...contextBlocks,
@@ -378,7 +597,7 @@ export class AiService implements OnModuleInit {
       });
       content = response.output_text;
     } else {
-      content = this.fallbackDraft(toolName, input.context);
+      content = this.fallbackDraft(toolName, input.context, input.stylePack);
     }
 
     const citations = input.context.chunks.slice(0, 5).map((chunk) => ({ chunkId: chunk.id }));
@@ -396,34 +615,57 @@ export class AiService implements OnModuleInit {
     };
   }
 
-  private buildToolPrompt(toolName: string, payload: Record<string, unknown>): string {
+  private buildToolPrompt(toolName: string, payload: Record<string, unknown>, stylePack: StylePackContext): string {
     const payloadText = JSON.stringify(payload);
+    const styleContext = stylePack ? ` Use style pack "${stylePack.name}" and stay consistent with its source guidance.` : '';
     switch (toolName) {
       case 'case_summary':
-        return `Produce a concise case summary with liability, damages, defenses, and action items. Payload: ${payloadText}`;
+        return `Produce a concise case summary with liability, damages, defenses, and action items.${styleContext} Payload: ${payloadText}`;
       case 'timeline_extraction':
-        return `Extract chronological events with date, source citation, and confidence. Payload: ${payloadText}`;
+        return `Extract chronological events with date, source citation, and confidence.${styleContext} Payload: ${payloadText}`;
       case 'intake_evaluation':
-        return `Evaluate intake viability and produce missing-information checklist with scoring (0-100). Payload: ${payloadText}`;
+        return `Evaluate intake viability and produce missing-information checklist with scoring (0-100).${styleContext} Payload: ${payloadText}`;
       case 'demand_letter':
-        return `Draft a demand letter using firm style and construction dispute facts. Payload: ${payloadText}`;
+        return `Draft a demand letter using firm style and construction dispute facts.${styleContext} Payload: ${payloadText}`;
       case 'preservation_notice':
-        return `Draft a preservation/spoliation notice with specific evidence categories. Payload: ${payloadText}`;
+        return `Draft a preservation/spoliation notice with specific evidence categories.${styleContext} Payload: ${payloadText}`;
       case 'complaint_skeleton':
-        return `Draft complaint skeleton with causes of action placeholders and factual allegations sections. Payload: ${payloadText}`;
+        return `Draft complaint skeleton with causes of action placeholders and factual allegations sections.${styleContext} Payload: ${payloadText}`;
       case 'client_status_update':
-        return `Draft a client status update in plain language with next steps and upcoming deadlines. Payload: ${payloadText}`;
+        return `Draft a client status update in plain language with next steps and upcoming deadlines.${styleContext} Payload: ${payloadText}`;
       case 'discovery_generate':
-        return `Generate construction-litigation discovery sets: ROGs, RFPs, RFAs with strategy notes. Payload: ${payloadText}`;
+        return `Generate construction-litigation discovery sets: ROGs, RFPs, RFAs with strategy notes.${styleContext} Payload: ${payloadText}`;
       case 'discovery_response':
-        return `Draft discovery responses with objections, response text, and missing document checklist. Payload: ${payloadText}`;
+        return `Draft discovery responses with objections, response text, and missing document checklist.${styleContext} Payload: ${payloadText}`;
       case 'deadline_extraction':
-        return `Extract deadlines from scheduling content. Output table with date, obligation, source excerpt, and chunk ID. Payload: ${payloadText}`;
+        return `Extract deadlines from scheduling content. Output table with date, obligation, source excerpt, and chunk ID.${styleContext} Payload: ${payloadText}`;
       case 'next_best_action':
-        return `Recommend next best actions based on stage, missing tasks, and near-term dates. Payload: ${payloadText}`;
+        return `Recommend next best actions based on stage, missing tasks, and near-term dates.${styleContext} Payload: ${payloadText}`;
       default:
-        return `Generate a legal draft output for tool ${toolName}. Payload: ${payloadText}`;
+        return `Generate a legal draft output for tool ${toolName}.${styleContext} Payload: ${payloadText}`;
     }
+  }
+
+  private buildStylePrompt(stylePack: StylePackContext): string | null {
+    if (!stylePack) return null;
+
+    const lines: string[] = [
+      `Style Pack Selected: ${stylePack.name} (${stylePack.id})`,
+      'Apply this style pack when drafting tone, structure, and argument framing.',
+    ];
+
+    if (stylePack.description) {
+      lines.push(`Style Objective: ${stylePack.description}`);
+    }
+
+    if (stylePack.sourceDocHints.length) {
+      lines.push('Style Source Documents:');
+      for (const hint of stylePack.sourceDocHints) {
+        lines.push(`- ${hint}`);
+      }
+    }
+
+    return lines.join('\n');
   }
 
   private async buildMatterContext(organizationId: string, matterId: string) {
@@ -457,6 +699,105 @@ export class AiService implements OnModuleInit {
     return { matter, chunks };
   }
 
+  private async getStylePackById(organizationId: string, stylePackId: string) {
+    const stylePack = await this.prisma.stylePack.findFirst({
+      where: {
+        id: stylePackId,
+        organizationId,
+      },
+      include: {
+        sourceDocs: {
+          include: {
+            documentVersion: {
+              include: {
+                document: {
+                  select: {
+                    id: true,
+                    matterId: true,
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!stylePack) {
+      throw new NotFoundException('Style pack not found');
+    }
+
+    return stylePack;
+  }
+
+  private async assertStylePackInOrganization(organizationId: string, stylePackId: string) {
+    const stylePack = await this.prisma.stylePack.findFirst({
+      where: {
+        id: stylePackId,
+        organizationId,
+      },
+    });
+
+    if (!stylePack) {
+      throw new NotFoundException('Style pack not found');
+    }
+
+    return stylePack;
+  }
+
+  private async resolveStylePackForGeneration(input: {
+    organizationId: string;
+    stylePackId?: string;
+  }): Promise<StylePackContext> {
+    if (!input.stylePackId) return null;
+
+    const stylePack = await this.prisma.stylePack.findFirst({
+      where: {
+        id: input.stylePackId,
+        organizationId: input.organizationId,
+      },
+      include: {
+        sourceDocs: {
+          include: {
+            documentVersion: {
+              include: {
+                document: {
+                  select: {
+                    title: true,
+                    matterId: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!stylePack) return null;
+
+    return {
+      id: stylePack.id,
+      name: stylePack.name,
+      description: stylePack.description,
+      sourceDocumentVersionIds: stylePack.sourceDocs.map((sourceDoc) => sourceDoc.documentVersionId),
+      sourceDocHints: stylePack.sourceDocs.map((sourceDoc) => {
+        const title = sourceDoc.documentVersion.document?.title || 'Untitled document';
+        const matterId = sourceDoc.documentVersion.document?.matterId || 'unknown-matter';
+        return `${title} [docVersion:${sourceDoc.documentVersionId}] [matter:${matterId}]`;
+      }),
+    };
+  }
+
+  private normalizeNullableText(value: string | undefined): string | null {
+    if (value === undefined) return null;
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : null;
+  }
+
   private chunkText(text: string): Array<{ text: string; start: number; end: number }> {
     const result: Array<{ text: string; start: number; end: number }> = [];
     const size = 1200;
@@ -488,12 +829,14 @@ export class AiService implements OnModuleInit {
       matter: { name: string; matterNumber: string };
       chunks: Array<{ id: string; chunkText: string }>;
     },
+    stylePack: StylePackContext,
   ): string {
     const citations = context.chunks.slice(0, 5).map((chunk) => `[chunk:${chunk.id}]`).join(', ');
     return [
       'ATTORNEY REVIEW REQUIRED - DRAFT OUTPUT',
       `Tool: ${toolName}`,
       `Matter: ${context.matter.name} (${context.matter.matterNumber})`,
+      ...(stylePack ? [`Style Pack: ${stylePack.name} (${stylePack.id})`] : []),
       'This fallback draft was generated without OpenAI API configured. Replace with model-backed draft.',
       `Citations: ${citations}`,
     ].join('\n');

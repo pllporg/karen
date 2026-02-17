@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T15:58:41.940Z`
+- Snapshot Timestamp: `2026-02-17T16:25:54.610Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T15:58:40.084Z`
+- Last Successful Mirror Verify: `2026-02-17T16:25:53.358Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Completed `REQ-AI-003` style-pack governance with admin CRUD/source-doc attachment endpoints, AI job `stylePackId` selection, style-pack provenance persisted in artifact + execution metadata, AI workspace style-pack management UI, and API/Web regression coverage (`docs/parity/style-pack-governance.md`).
 - 2026-02-17: Implemented `REQ-PORTAL-001` secure portal attachment workflow: client-scoped attachment upload/download endpoints, portal message attachment linking, strict server-side matter + `sharedWithClient` checks in both portal and staff communications paths, and new API/Web regression coverage (`docs/parity/portal-attachments-security.md`).
 - 2026-02-17: Completed `REQ-PORT-004` with a strict full-backup export contract (required files/columns + manifest schema/path checks), conformance-aware export job summaries, placeholder manifest-path integrity for missing document blobs, and new conformance/roundtrip regression coverage (`docs/parity/export-conformance.md`).
 - 2026-02-17: Completed `REQ-PORT-003` with confirmed dedupe workflow (`merge/ignore/defer/reopen`), field-diff candidate UX, dedupe decision API endpoints with audit events, and merge referential-integrity tests plus UI action tests (`docs/parity/dedupe-merge-workflow.md`).
