@@ -7,6 +7,7 @@ import { AccessService } from '../access/access.service';
 import { AuthenticatedUser } from '../common/types';
 import { AuditService } from '../audit/audit.service';
 import { S3Service } from '../files/s3.service';
+import { toJsonValue } from '../common/utils/json.util';
 
 @Injectable()
 export class BillingService {
@@ -167,13 +168,22 @@ export class BillingService {
 
     if (!invoice) throw new Error('Invoice not found');
     await this.access.assertMatterAccess(user, invoice.matterId, 'read');
+    if (invoice.balanceDue <= 0) {
+      return { url: null, warning: 'Invoice balance is zero. Checkout link not created.' };
+    }
 
     if (!this.stripe) {
       return { url: null, warning: 'Stripe is not configured (STRIPE_SECRET_KEY missing).' };
     }
 
+    const checkoutMetadata = {
+      invoiceId: invoice.id,
+      organizationId: user.organizationId,
+    };
+
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
+      client_reference_id: invoice.id,
       line_items: [
         {
           quantity: 1,
@@ -187,12 +197,12 @@ export class BillingService {
           },
         },
       ],
+      payment_intent_data: {
+        metadata: checkoutMetadata,
+      },
       success_url: `${process.env.WEB_BASE_URL || 'http://localhost:3000'}/billing/success?invoiceId=${invoice.id}`,
       cancel_url: `${process.env.WEB_BASE_URL || 'http://localhost:3000'}/billing/cancel?invoiceId=${invoice.id}`,
-      metadata: {
-        invoiceId: invoice.id,
-        organizationId: user.organizationId,
-      },
+      metadata: checkoutMetadata,
     });
 
     await this.prisma.invoice.update({
@@ -221,18 +231,34 @@ export class BillingService {
     if (!invoice) throw new Error('Invoice not found');
     await this.access.assertMatterAccess(input.user, invoice.matterId, 'write');
 
+    if (input.stripePaymentIntentId) {
+      const existing = await this.prisma.payment.findFirst({
+        where: {
+          organizationId: input.user.organizationId,
+          invoiceId: invoice.id,
+          stripePaymentIntentId: input.stripePaymentIntentId,
+        },
+      });
+      if (existing) return existing;
+    }
+
+    const amount = Number(Math.min(invoice.balanceDue, Math.max(0, input.amount)).toFixed(2));
+    if (amount <= 0) {
+      throw new Error('Payment amount must be greater than zero and invoice must have remaining balance');
+    }
+
     const payment = await this.prisma.payment.create({
       data: {
         organizationId: input.user.organizationId,
         invoiceId: invoice.id,
-        amount: input.amount,
+        amount,
         method: input.method,
         stripePaymentIntentId: input.stripePaymentIntentId,
         reference: input.reference,
       },
     });
 
-    const balanceDue = Number(Math.max(0, invoice.balanceDue - input.amount).toFixed(2));
+    const balanceDue = Number(Math.max(0, invoice.balanceDue - amount).toFixed(2));
     await this.prisma.invoice.update({
       where: { id: invoice.id },
       data: {
@@ -242,6 +268,82 @@ export class BillingService {
     });
 
     return payment;
+  }
+
+  async handleStripeWebhook(input: { payload: unknown; signature?: string; rawBody?: Buffer }) {
+    const event = this.parseStripeWebhookEvent(input);
+
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const invoiceId = this.readMetadataValue(session.metadata, 'invoiceId');
+      const organizationId = this.readMetadataValue(session.metadata, 'organizationId');
+
+      if (!invoiceId || !organizationId) {
+        return {
+          received: true,
+          eventId: event.id,
+          type: event.type,
+          status: 'ignored',
+          reason: 'missing_required_metadata',
+        };
+      }
+
+      return {
+        received: true,
+        eventId: event.id,
+        type: event.type,
+        ...(await this.reconcileStripePayment({
+          organizationId,
+          invoiceId,
+          stripeEventId: event.id,
+          stripeCheckoutSessionId: session.id,
+          stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+          amount: typeof session.amount_total === 'number' ? Number((session.amount_total / 100).toFixed(2)) : undefined,
+        })),
+      };
+    }
+
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const invoiceId = this.readMetadataValue(paymentIntent.metadata, 'invoiceId');
+      const organizationId = this.readMetadataValue(paymentIntent.metadata, 'organizationId');
+
+      if (!invoiceId || !organizationId) {
+        return {
+          received: true,
+          eventId: event.id,
+          type: event.type,
+          status: 'ignored',
+          reason: 'missing_required_metadata',
+        };
+      }
+
+      const amountInCents =
+        typeof paymentIntent.amount_received === 'number' && paymentIntent.amount_received > 0
+          ? paymentIntent.amount_received
+          : paymentIntent.amount;
+
+      return {
+        received: true,
+        eventId: event.id,
+        type: event.type,
+        ...(await this.reconcileStripePayment({
+          organizationId,
+          invoiceId,
+          stripeEventId: event.id,
+          stripePaymentIntentId: paymentIntent.id,
+          amount: Number((amountInCents / 100).toFixed(2)),
+        })),
+      };
+    }
+
+    return {
+      received: true,
+      eventId: event.id,
+      type: event.type,
+      status: 'ignored',
+      reason: 'event_type_not_handled',
+    };
   }
 
   async listInvoices(user: AuthenticatedUser, matterId?: string) {
@@ -372,5 +474,109 @@ export class BillingService {
     const bytes = await doc.save();
     const uploaded = await this.s3.upload(Buffer.from(bytes), 'application/pdf', `org/${invoice.organizationId}/invoices`);
     return uploaded.key;
+  }
+
+  private parseStripeWebhookEvent(input: { payload: unknown; signature?: string; rawBody?: Buffer }): Stripe.Event {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (this.stripe && webhookSecret) {
+      if (!input.signature || !input.rawBody) {
+        throw new Error('Stripe webhook signature verification failed: missing stripe-signature header or raw body');
+      }
+      return this.stripe.webhooks.constructEvent(input.rawBody, input.signature, webhookSecret);
+    }
+
+    const payload = input.payload;
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('Invalid Stripe webhook payload');
+    }
+
+    const event = payload as Partial<Stripe.Event>;
+    if (!event.id || !event.type || !event.data) {
+      throw new Error('Malformed Stripe webhook event payload');
+    }
+    return event as Stripe.Event;
+  }
+
+  private readMetadataValue(metadata: Stripe.Metadata | null | undefined, key: string): string | undefined {
+    const rawValue = metadata?.[key];
+    if (typeof rawValue !== 'string') return undefined;
+    const value = rawValue.trim();
+    return value ? value : undefined;
+  }
+
+  private async reconcileStripePayment(input: {
+    organizationId: string;
+    invoiceId: string;
+    stripeEventId: string;
+    amount?: number;
+    stripePaymentIntentId?: string;
+    stripeCheckoutSessionId?: string;
+  }): Promise<{ status: 'recorded' | 'duplicate' | 'ignored'; paymentId?: string; reason?: string }> {
+    const invoice = await this.prisma.invoice.findFirst({
+      where: {
+        id: input.invoiceId,
+        organizationId: input.organizationId,
+      },
+    });
+    if (!invoice) {
+      return { status: 'ignored', reason: 'invoice_not_found' };
+    }
+
+    if (input.stripePaymentIntentId) {
+      const existing = await this.prisma.payment.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          invoiceId: invoice.id,
+          stripePaymentIntentId: input.stripePaymentIntentId,
+        },
+      });
+      if (existing) return { status: 'duplicate', paymentId: existing.id };
+    }
+
+    const amount = Number(
+      Math.min(invoice.balanceDue, Math.max(0, input.amount ?? invoice.balanceDue)).toFixed(2),
+    );
+    if (amount <= 0) {
+      return { status: 'ignored', reason: 'invoice_balance_zero' };
+    }
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        organizationId: input.organizationId,
+        invoiceId: invoice.id,
+        amount,
+        method: PaymentMethod.STRIPE,
+        stripePaymentIntentId: input.stripePaymentIntentId,
+        reference: `stripe_event:${input.stripeEventId}`,
+        rawSourcePayload: toJsonValue({
+          stripeEventId: input.stripeEventId,
+          stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+        }),
+      },
+    });
+
+    const balanceDue = Number(Math.max(0, invoice.balanceDue - amount).toFixed(2));
+    await this.prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        balanceDue,
+        status: balanceDue === 0 ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.organizationId,
+      action: 'invoice.payment.reconciled',
+      entityType: 'invoice',
+      entityId: invoice.id,
+      metadata: {
+        paymentId: payment.id,
+        stripeEventId: input.stripeEventId,
+        amount,
+        balanceDue,
+      },
+    });
+
+    return { status: 'recorded', paymentId: payment.id };
   }
 }
