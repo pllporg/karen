@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T03:48:05.074Z",
+  "generatedAt": "2026-02-17T03:58:59.555Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 10,
-      "Partial": 19,
+      "Complete": 11,
+      "Partial": 18,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,11 +33,11 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 8,
+      "Complete:High": 9,
       "Complete:Medium": 2,
       "Partial:Medium": 10,
-      "Partial:High": 9,
-      "Missing:Medium": 5
+      "Missing:Medium": 5,
+      "Partial:High": 8
     }
   },
   "priority": {
@@ -107,15 +107,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-PORT-003",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Build user-confirm merge workflow for dedupe suggestions",
-        "component": "Web",
-        "epicCode": "PARITY-03",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-PORTAL-001",
         "parityStatus": "Partial",
         "risk": "High",
@@ -132,6 +123,15 @@
         "component": "Web",
         "epicCode": "PARITY-08",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-001",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Implement production email/SMS providers behind provider interface",
+        "component": "API",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,21 +140,28 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 28,
+      "Backlog": 27,
       "In Review": 3,
-      "Done": 12,
+      "Done": 13,
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-15"
+      "KAR-16"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-16",
+        "title": "Build user-confirm merge workflow for dedupe suggestions",
+        "state": "In Progress",
+        "updatedAt": "2026-02-17T03:58:46.301Z",
+        "requirementId": "REQ-PORT-003"
+      },
+      {
         "key": "KAR-15",
         "title": "Finalize Clio CSV/XLSX template importer coverage",
-        "state": "In Progress",
-        "updatedAt": "2026-02-17T03:47:51.767Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T03:51:06.319Z",
         "requirementId": "REQ-PORT-002"
       },
       {
@@ -212,32 +219,25 @@
         "state": "Done",
         "updatedAt": "2026-02-16T22:39:11.183Z",
         "requirementId": "REQ-AI-001"
-      },
-      {
-        "key": "KAR-41",
-        "title": "Add web application automated test suite for critical workflows",
-        "state": "Done",
-        "updatedAt": "2026-02-16T22:01:33.254Z",
-        "requirementId": "REQ-OPS-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T03:48:03.803Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T03:58:58.361Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "fb66bc6c9afdd0760bc2a169ec748d4c098ea9b4",
+    "gitHead": "02f9691eef84800fc4b6cf3f8d6619ff387561f2",
     "gitStatusShort": [
-      "## lin/KAR-15-clio-template-importer-coverage",
-      " M apps/api/src/imports/imports.service.ts",
-      " M apps/api/src/imports/plugins/clio-template.plugin.ts",
-      " M apps/api/test/imports.spec.ts",
+      "## lin/KAR-16-import-dedupe-merge-workflow",
+      " M apps/api/src/contacts/contacts.controller.ts",
+      " M apps/api/src/contacts/contacts.service.ts",
+      " M apps/web/app/contacts/page.tsx",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/test/fixtures/import-export/clio-template-full.csv",
-      "?? apps/api/test/fixtures/import-export/clio-template.xlsx",
-      "?? docs/parity/clio-import-coverage.md"
+      "?? apps/api/test/contacts-dedupe.spec.ts",
+      "?? apps/web/test/contacts-page.spec.tsx",
+      "?? docs/parity/dedupe-merge-workflow.md"
     ],
     "dirtyFileCount": 8
   }

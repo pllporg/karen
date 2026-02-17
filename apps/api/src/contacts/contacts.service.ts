@@ -4,6 +4,17 @@ import { distance } from 'fastest-levenshtein';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 
+type DedupeDecision = 'OPEN' | 'IGNORE' | 'DEFER';
+
+type ContactSnapshot = {
+  id: string;
+  displayName: string;
+  kind: ContactKind;
+  primaryEmail: string | null;
+  primaryPhone: string | null;
+  tags: string[];
+};
+
 @Injectable()
 export class ContactsService {
   constructor(
@@ -158,11 +169,18 @@ export class ContactsService {
 
   async dedupeSuggestions(organizationId: string) {
     const contacts = await this.prisma.contact.findMany({ where: { organizationId } });
+    const decisions = await this.latestDedupeDecisions(organizationId);
     const suggestions: Array<{
       primaryId: string;
       duplicateId: string;
+      pairKey: string;
       score: number;
+      confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+      decision: DedupeDecision;
       reasons: string[];
+      primary: ContactSnapshot;
+      duplicate: ContactSnapshot;
+      fieldDiffs: Array<{ field: string; primaryValue: string | null; duplicateValue: string | null }>;
     }> = [];
 
     for (let i = 0; i < contacts.length; i += 1) {
@@ -190,17 +208,31 @@ export class ContactsService {
         }
 
         if (score >= 0.6) {
+          const pairKey = this.pairKey(a.id, b.id);
+          const decision = decisions.get(pairKey) || 'OPEN';
           suggestions.push({
             primaryId: a.id,
             duplicateId: b.id,
+            pairKey,
             score: Math.min(1, score),
+            confidence: this.confidenceFromScore(Math.min(1, score)),
+            decision,
             reasons,
+            primary: this.snapshotContact(a),
+            duplicate: this.snapshotContact(b),
+            fieldDiffs: this.fieldDiffs(a, b),
           });
         }
       }
     }
 
-    return suggestions.sort((a, b) => b.score - a.score).slice(0, 100);
+    return suggestions
+      .sort((a, b) => {
+        const decisionSort = this.decisionSortWeight(a.decision) - this.decisionSortWeight(b.decision);
+        if (decisionSort !== 0) return decisionSort;
+        return b.score - a.score;
+      })
+      .slice(0, 100);
   }
 
   async mergeContacts(input: {
@@ -262,6 +294,142 @@ export class ContactsService {
       },
     });
 
+    await this.audit.appendEvent({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: 'contact.dedupe.merged',
+      entityType: 'contactDedupe',
+      entityId: this.pairKey(primary.id, duplicate.id),
+      metadata: {
+        primaryId: primary.id,
+        duplicateId: duplicate.id,
+        decision: 'MERGED',
+      },
+    });
+
     return this.prisma.contact.findUnique({ where: { id: primary.id } });
+  }
+
+  async setDedupeDecision(input: {
+    organizationId: string;
+    actorUserId: string;
+    primaryId: string;
+    duplicateId: string;
+    decision: DedupeDecision;
+  }) {
+    const primary = await this.prisma.contact.findFirst({ where: { id: input.primaryId, organizationId: input.organizationId } });
+    const duplicate = await this.prisma.contact.findFirst({ where: { id: input.duplicateId, organizationId: input.organizationId } });
+
+    if (!primary || !duplicate) {
+      throw new NotFoundException('Contact not found');
+    }
+
+    const pairKey = this.pairKey(primary.id, duplicate.id);
+    const action =
+      input.decision === 'IGNORE'
+        ? 'contact.dedupe.ignored'
+        : input.decision === 'DEFER'
+          ? 'contact.dedupe.deferred'
+          : 'contact.dedupe.reopened';
+
+    await this.audit.appendEvent({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action,
+      entityType: 'contactDedupe',
+      entityId: pairKey,
+      metadata: {
+        primaryId: primary.id,
+        duplicateId: duplicate.id,
+        decision: input.decision,
+      },
+    });
+
+    return {
+      pairKey,
+      decision: input.decision,
+      primaryId: primary.id,
+      duplicateId: duplicate.id,
+    };
+  }
+
+  private async latestDedupeDecisions(organizationId: string) {
+    const events = await this.prisma.auditLogEvent.findMany({
+      where: {
+        organizationId,
+        entityType: 'contactDedupe',
+        action: {
+          in: ['contact.dedupe.ignored', 'contact.dedupe.deferred', 'contact.dedupe.reopened', 'contact.dedupe.merged'],
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 1000,
+    });
+
+    const decisions = new Map<string, DedupeDecision>();
+    for (const event of events) {
+      if (event.action === 'contact.dedupe.ignored') decisions.set(event.entityId, 'IGNORE');
+      if (event.action === 'contact.dedupe.deferred') decisions.set(event.entityId, 'DEFER');
+      if (event.action === 'contact.dedupe.reopened') decisions.set(event.entityId, 'OPEN');
+      if (event.action === 'contact.dedupe.merged') decisions.set(event.entityId, 'OPEN');
+    }
+    return decisions;
+  }
+
+  private pairKey(primaryId: string, duplicateId: string) {
+    return [primaryId, duplicateId].sort().join('::');
+  }
+
+  private snapshotContact(contact: {
+    id: string;
+    displayName: string;
+    kind: ContactKind;
+    primaryEmail: string | null;
+    primaryPhone: string | null;
+    tags: string[];
+  }): ContactSnapshot {
+    return {
+      id: contact.id,
+      displayName: contact.displayName,
+      kind: contact.kind,
+      primaryEmail: contact.primaryEmail,
+      primaryPhone: contact.primaryPhone,
+      tags: contact.tags || [],
+    };
+  }
+
+  private fieldDiffs(
+    a: { displayName: string; kind: ContactKind; primaryEmail: string | null; primaryPhone: string | null; tags: string[] },
+    b: { displayName: string; kind: ContactKind; primaryEmail: string | null; primaryPhone: string | null; tags: string[] },
+  ) {
+    const pairs: Array<{ field: string; primaryValue: string | null; duplicateValue: string | null }> = [];
+    const fields: Array<{ field: string; left: string | null; right: string | null }> = [
+      { field: 'displayName', left: a.displayName || null, right: b.displayName || null },
+      { field: 'kind', left: a.kind || null, right: b.kind || null },
+      { field: 'primaryEmail', left: a.primaryEmail || null, right: b.primaryEmail || null },
+      { field: 'primaryPhone', left: a.primaryPhone || null, right: b.primaryPhone || null },
+      { field: 'tags', left: (a.tags || []).join(', ') || null, right: (b.tags || []).join(', ') || null },
+    ];
+    for (const item of fields) {
+      if ((item.left || '') === (item.right || '')) continue;
+      pairs.push({
+        field: item.field,
+        primaryValue: item.left,
+        duplicateValue: item.right,
+      });
+    }
+    return pairs;
+  }
+
+  private confidenceFromScore(score: number): 'HIGH' | 'MEDIUM' | 'LOW' {
+    if (score >= 0.85) return 'HIGH';
+    if (score >= 0.7) return 'MEDIUM';
+    return 'LOW';
+  }
+
+  private decisionSortWeight(decision: DedupeDecision) {
+    if (decision === 'OPEN') return 0;
+    if (decision === 'DEFER') return 1;
+    return 2;
   }
 }
