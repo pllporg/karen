@@ -7,6 +7,9 @@ import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../common/types';
 import { CreateCalendarEventDto } from './dto/create-event.dto';
+import { CreateRulesPackDto } from './dto/create-rules-pack.dto';
+import { PreviewDeadlinesDto } from './dto/preview-deadlines.dto';
+import { ApplyDeadlinePreviewDto } from './dto/apply-deadline-preview.dto';
 
 @Controller('calendar')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -23,6 +26,44 @@ export class CalendarController {
   @RequirePermissions('calendar:write')
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCalendarEventDto) {
     return this.calendarService.create({ user, ...dto });
+  }
+
+  @Get('rules-packs')
+  @RequirePermissions('calendar:read')
+  listRulesPacks(@CurrentUser() user: AuthenticatedUser) {
+    return this.calendarService.listRulesPacks(user);
+  }
+
+  @Post('rules-packs')
+  @RequirePermissions('calendar:write')
+  createRulesPack(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateRulesPackDto) {
+    return this.calendarService.createRulesPack({
+      user,
+      ...dto,
+    });
+  }
+
+  @Post('deadline-preview')
+  @RequirePermissions('calendar:read')
+  previewDeadlines(@CurrentUser() user: AuthenticatedUser, @Body() dto: PreviewDeadlinesDto) {
+    return this.calendarService.previewDeadlines({
+      user,
+      matterId: dto.matterId,
+      triggerDate: dto.triggerDate,
+      rulesPackId: dto.rulesPackId,
+    });
+  }
+
+  @Post('deadline-preview/apply')
+  @RequirePermissions('calendar:write')
+  applyDeadlinePreview(@CurrentUser() user: AuthenticatedUser, @Body() dto: ApplyDeadlinePreviewDto) {
+    return this.calendarService.applyDeadlinePreview({
+      user,
+      matterId: dto.matterId,
+      triggerDate: dto.triggerDate,
+      rulesPackId: dto.rulesPackId,
+      selections: dto.selections,
+    });
   }
 
   @Get('events/:matterId/ics')

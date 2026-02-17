@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T18:34:39.241Z`
+- Snapshot Timestamp: `2026-02-17T18:55:58.248Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T18:34:36.820Z`
+- Last Successful Mirror Verify: `2026-02-17T18:55:56.809Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Completed `REQ-MAT-005` by adding jurisdiction/court/procedure deadline rules packs with effective-date versioning, deadline preview/apply endpoints, business-day offset logic, required override-reason governance, matter-dashboard rules-pack preview/apply UI, and API/Web regression coverage (`docs/parity/deadline-rules-packs.md`).
 - 2026-02-17: Completed `REQ-MAT-004` by adding advanced conflict rule profile configuration (weighted criteria + thresholds + scoped defaults), conflict check execution with recommendation scoring (`CLEAR/WARN/BLOCK`), and attorney resolution workflow with required rationale + auditable history, including admin UI/API coverage and tests (`docs/parity/conflict-rule-profiles.md`).
 - 2026-02-17: Completed `REQ-OPS-002` with a production deployment runbook covering deploy/migrations/rollback/readiness/incident response plus baseline SLO targets and metrics, linked from `README.md`, with parity artifact `docs/parity/ops-runbook-slos.md`.
 - 2026-02-17: Completed `REQ-PORTAL-002` by replacing stub-only e-sign with provider abstraction (`stub` fallback + `sandbox` provider), adding envelope list/refresh endpoints, signed provider webhook callback handling, persisted envelope status history/event tracking, and portal UI status surfacing with API/Web regression coverage (`docs/parity/esign-provider-abstraction.md`).

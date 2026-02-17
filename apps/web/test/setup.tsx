@@ -18,6 +18,7 @@ vi.mock('next/navigation', () => ({
     prefetch: vi.fn(),
   }),
   usePathname: () => '/dashboard',
+  useParams: () => ({}),
   redirect: vi.fn(),
 }));
 
