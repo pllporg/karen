@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T17:31:47.162Z",
+  "generatedAt": "2026-02-17T17:49:36.868Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,9 +24,9 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 26,
-      "Partial": 3,
-      "Missing": 5
+      "Complete": 27,
+      "Missing": 5,
+      "Partial": 2
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 9,
-      "Partial:Medium": 3,
-      "Missing:Medium": 5
+      "Complete:Medium": 10,
+      "Missing:Medium": 5,
+      "Partial:Medium": 2
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-MAT-002",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Enhance contact relationship graph visualization and filtering",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-OPS-002",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "Integrations",
         "epicCode": "PARITY-09",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Complete participant role configurability and side semantics coverage",
+        "component": "API",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
       }
     ]
   },
@@ -141,19 +141,16 @@
     "stateCounts": {
       "Backlog": 19,
       "In Review": 1,
-      "Done": 23,
-      "In Progress": 1
+      "Done": 24
     },
-    "inProgressIssueKeys": [
-      "KAR-12"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
         "key": "KAR-12",
         "title": "Add pgvector-backed similarity retrieval path for source chunks",
-        "state": "In Progress",
-        "updatedAt": "2026-02-17T17:27:28.143Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T17:35:37.259Z",
         "requirementId": "REQ-DATA-003"
       },
       {
@@ -222,19 +219,23 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:31:44.379Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:49:30.574Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2047a4081b504a079ef4fdf9cd4acce1bfdd24fd",
+    "gitHead": "6401d1339d86b4a9054db6116a827f5679722f32",
     "gitStatusShort": [
-      "## lin/KAR-12-pgvector-retrieval-path...origin/lin/KAR-12-pgvector-retrieval-path",
-      " M apps/api/prisma/migrations/20260217173000_ai_source_chunk_vector_index/migration.sql",
-      " M apps/api/prisma/schema.prisma",
-      " M apps/api/src/ai/ai.service.ts",
-      " M apps/api/test/ai-vector-retrieval.spec.ts",
-      " M docs/parity/pgvector-retrieval.md"
+      "## lin/KAR-20-contacts-graph-filtering",
+      " M apps/api/src/contacts/contacts.controller.ts",
+      " M apps/api/src/contacts/contacts.service.ts",
+      " M apps/api/test/contacts-dedupe.spec.ts",
+      " M apps/api/test/tenant-isolation.spec.ts",
+      " M apps/web/app/contacts/page.tsx",
+      " M apps/web/test/contacts-page.spec.tsx",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? docs/parity/contacts-graph-filtering.md"
     ],
-    "dirtyFileCount": 5
+    "dirtyFileCount": 9
   }
 }

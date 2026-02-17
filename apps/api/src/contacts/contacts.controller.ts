@@ -15,8 +15,19 @@ export class ContactsController {
 
   @Get()
   @RequirePermissions('contacts:read')
-  list(@CurrentUser() user: AuthenticatedUser, @Query('search') search?: string, @Query('tag') tag?: string) {
-    return this.contactsService.list(user.organizationId, search, tag);
+  list(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('search') search?: string,
+    @Query('includeTags') includeTags?: string,
+    @Query('excludeTags') excludeTags?: string,
+    @Query('tagMode') tagMode?: 'any' | 'all',
+  ) {
+    return this.contactsService.list(user.organizationId, {
+      search,
+      includeTags: this.parseCsv(includeTags),
+      excludeTags: this.parseCsv(excludeTags),
+      tagMode: tagMode === 'all' ? 'all' : 'any',
+    });
   }
 
   @Post()
@@ -31,8 +42,16 @@ export class ContactsController {
 
   @Get(':id/graph')
   @RequirePermissions('contacts:read')
-  graph(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.contactsService.graph(user.organizationId, id);
+  graph(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('search') search?: string,
+    @Query('relationshipTypes') relationshipTypes?: string,
+  ) {
+    return this.contactsService.graph(user.organizationId, id, {
+      search,
+      relationshipTypes: this.parseCsv(relationshipTypes),
+    });
   }
 
   @Post('relationships')
@@ -75,5 +94,12 @@ export class ContactsController {
       duplicateId: body.duplicateId,
       decision: body.decision,
     });
+  }
+
+  private parseCsv(value?: string) {
+    return String(value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 }

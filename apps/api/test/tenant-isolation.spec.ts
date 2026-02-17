@@ -36,7 +36,11 @@ describe('Tenant isolation', () => {
     await service.list('org-isolated');
 
     expect(prisma.contact.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ organizationId: 'org-isolated' }) }),
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([expect.objectContaining({ organizationId: 'org-isolated' })]),
+        }),
+      }),
     );
   });
 
