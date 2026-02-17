@@ -8,6 +8,7 @@ import { AuthenticatedUser } from '../common/types';
 import { CreateMatterDto } from './dto/create-matter.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
 import { IntakeWizardDto } from './dto/intake-wizard.dto';
+import { SaveIntakeDraftDto } from './dto/save-intake-draft.dto';
 
 @Controller('matters')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -52,6 +53,28 @@ export class MattersController {
     return this.mattersService.intakeWizard({
       user,
       ...dto,
+    });
+  }
+
+  @Get('intake-wizard/drafts')
+  @RequirePermissions('matters:read')
+  listIntakeDrafts(@CurrentUser() user: AuthenticatedUser) {
+    return this.mattersService.listIntakeDrafts(user);
+  }
+
+  @Get('intake-wizard/drafts/:draftId')
+  @RequirePermissions('matters:read')
+  getIntakeDraft(@CurrentUser() user: AuthenticatedUser, @Param('draftId') draftId: string) {
+    return this.mattersService.getIntakeDraft({ user, draftId });
+  }
+
+  @Post('intake-wizard/drafts')
+  @RequirePermissions('matters:write')
+  saveIntakeDraft(@CurrentUser() user: AuthenticatedUser, @Body() dto: SaveIntakeDraftDto) {
+    return this.mattersService.saveIntakeDraft({
+      user,
+      draftId: dto.draftId,
+      payload: dto.payload,
     });
   }
 

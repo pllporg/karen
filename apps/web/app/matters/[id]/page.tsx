@@ -36,6 +36,22 @@ export default function MatterDashboardPage() {
           </div>
 
           <div className="card">
+            <h3 style={{ marginTop: 0 }}>Domain Section Completeness</h3>
+            <p>
+              {dashboard.domainSectionCompleteness?.completedCount || 0}/
+              {dashboard.domainSectionCompleteness?.totalCount || 0} sections complete
+              {' '}({dashboard.domainSectionCompleteness?.completionPercent || 0}%)
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {Object.entries(dashboard.domainSectionCompleteness?.sections || {}).map(([section, done]) => (
+                <li key={section}>
+                  {section}: {done ? 'Complete' : 'Missing'}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="card">
             <h3 style={{ marginTop: 0 }}>Participants</h3>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
               {dashboard.participants?.map((participant: any) => (

@@ -111,7 +111,7 @@
           "title": "Complete ABAC policy abstraction for matter-level ethical walls",
           "requirementId": "REQ-DATA-002",
           "promptSection": "Tenancy / AccessPolicy / ABAC hooks",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "security", "matters"],

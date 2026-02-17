@@ -204,4 +204,151 @@ describe('MattersService', () => {
     const createdKeys = matterParticipantCreate.mock.calls.map((call: any) => call[0].data.participantRoleKey);
     expect(new Set(createdKeys)).toEqual(new Set(categories.map((category) => category.key)));
   });
+
+  it('intake wizard persists all construction domain sections', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact-exists' }),
+      },
+      propertyProfile: { create: jest.fn().mockResolvedValue({ id: 'property-1' }) },
+      contractProfile: { create: jest.fn().mockResolvedValue({ id: 'contract-1' }) },
+      defectIssue: { create: jest.fn().mockResolvedValue({ id: 'defect-1' }) },
+      projectMilestone: { create: jest.fn().mockResolvedValue({ id: 'milestone-1' }) },
+      damagesItem: { create: jest.fn().mockResolvedValue({ id: 'damage-1' }) },
+      lienModel: { create: jest.fn().mockResolvedValue({ id: 'lien-1' }) },
+      insuranceClaim: { create: jest.fn().mockResolvedValue({ id: 'claim-1' }) },
+      expertEngagement: { create: jest.fn().mockResolvedValue({ id: 'expert-1' }) },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+    jest.spyOn(service, 'create').mockResolvedValue({ id: 'matter-1' } as any);
+    jest.spyOn(service, 'dashboard').mockResolvedValue({ id: 'matter-1' } as any);
+
+    await service.intakeWizard({
+      user: baseUser,
+      name: 'Kitchen Defect',
+      matterNumber: 'M-21',
+      practiceArea: 'Construction Litigation',
+      property: { addressLine1: '100 Main', city: 'Pasadena', state: 'CA' },
+      contract: { contractPrice: 120000, contractDate: '2025-02-10' },
+      defects: [{ category: 'Water Intrusion', severity: 'High' }],
+      milestones: [{ name: 'Initial inspection complete', status: 'OPEN' }],
+      damages: [{ category: 'Repair Estimate', repairEstimate: 28000 }],
+      liens: [{ claimantContactId: 'claimant-1', amount: 15000, status: 'RECORDED' }],
+      insuranceClaims: [{ claimNumber: 'CLM-1', insurerContactId: 'insurer-1', adjusterContactId: 'adjuster-1' }],
+      expertEngagements: [{ expertContactId: 'expert-contact-1', scope: 'Causation analysis' }],
+    });
+
+    expect(prisma.propertyProfile.create).toHaveBeenCalled();
+    expect(prisma.contractProfile.create).toHaveBeenCalled();
+    expect(prisma.defectIssue.create).toHaveBeenCalled();
+    expect(prisma.projectMilestone.create).toHaveBeenCalled();
+    expect(prisma.damagesItem.create).toHaveBeenCalled();
+    expect(prisma.lienModel.create).toHaveBeenCalled();
+    expect(prisma.insuranceClaim.create).toHaveBeenCalled();
+    expect(prisma.expertEngagement.create).toHaveBeenCalled();
+  });
+
+  it('dashboard returns domain completeness indicators', async () => {
+    const prisma = {
+      matter: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'matter-1',
+          matterNumber: 'M-1',
+          name: 'Matter',
+          practiceArea: 'Construction Litigation',
+          status: 'OPEN',
+          stage: null,
+          participants: [],
+          docketEntries: [],
+          tasks: [],
+          calendarEvents: [],
+          communicationThreads: [],
+          documents: [],
+          invoices: [],
+          aiJobs: [],
+          propertyProfile: { id: 'property-1', addressLine1: '123 Lane' },
+          contractProfile: { id: 'contract-1' },
+          defectIssues: [{ id: 'defect-1' }],
+          damagesItems: [{ id: 'damage-1' }],
+          lienModels: [{ id: 'lien-1' }],
+          insuranceClaims: [{ id: 'claim-1' }],
+          expertEngagements: [{ id: 'expert-1' }],
+          projectMilestones: [{ id: 'mile-1' }],
+        }),
+      },
+    } as any;
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const dashboard = await service.dashboard(baseUser, 'matter-1');
+    expect(dashboard.domainSectionCompleteness).toEqual(
+      expect.objectContaining({
+        completedCount: 8,
+        totalCount: 8,
+        completionPercent: 100,
+      }),
+    );
+    expect(dashboard.domainSectionCompleteness.sections.defects).toBe(true);
+    expect(dashboard.domainSectionCompleteness.sections.expertEngagements).toBe(true);
+  });
+
+  it('saves and resumes intake drafts', async () => {
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const prisma = {
+      intakeFormDefinition: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'draft-form-1' }),
+      },
+      intakeSubmission: {
+        create: jest.fn().mockResolvedValue({ id: 'draft-1' }),
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'draft-1',
+            createdAt: new Date('2026-02-17T01:00:00.000Z'),
+            dataJson: {
+              kind: 'matter_intake_wizard_draft',
+              savedAt: '2026-02-17T01:10:00.000Z',
+              payload: {
+                matterNumber: 'M-21-INTAKE',
+                name: 'Kitchen Defect (Intake)',
+                practiceArea: 'Construction Litigation',
+              },
+            },
+          },
+        ]),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'draft-1',
+          createdAt: new Date('2026-02-17T01:00:00.000Z'),
+          dataJson: {
+            kind: 'matter_intake_wizard_draft',
+            savedAt: '2026-02-17T01:10:00.000Z',
+            payload: { matterNumber: 'M-21-INTAKE', name: 'Kitchen Defect (Intake)' },
+          },
+        }),
+      },
+    } as any;
+    const service = new MattersService(prisma, audit, { assertMatterAccess: jest.fn() } as any);
+
+    const saved = await service.saveIntakeDraft({
+      user: baseUser,
+      payload: { matterNumber: 'M-21-INTAKE', name: 'Kitchen Defect (Intake)' },
+    });
+    expect(saved.id).toBe('draft-1');
+    expect(prisma.intakeSubmission.create).toHaveBeenCalled();
+
+    const list = await service.listIntakeDrafts(baseUser);
+    expect(list).toHaveLength(1);
+    expect(list[0].label).toContain('M-21-INTAKE');
+
+    const loaded = await service.getIntakeDraft({ user: baseUser, draftId: 'draft-1' });
+    expect(loaded.id).toBe('draft-1');
+    expect(loaded.payload.matterNumber).toBe('M-21-INTAKE');
+  });
 });
