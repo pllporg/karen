@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T03:58:59.555Z",
+  "generatedAt": "2026-02-17T04:19:11.136Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 11,
-      "Partial": 18,
+      "Complete": 12,
+      "Partial": 17,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,8 +34,8 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 9,
-      "Complete:Medium": 2,
-      "Partial:Medium": 10,
+      "Complete:Medium": 3,
+      "Partial:Medium": 9,
       "Missing:Medium": 5,
       "Partial:High": 8
     }
@@ -140,21 +140,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 27,
-      "In Review": 3,
-      "Done": 13,
-      "In Progress": 1
+      "Backlog": 26,
+      "In Review": 4,
+      "Done": 14
     },
-    "inProgressIssueKeys": [
-      "KAR-16"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-17",
+        "title": "Implement full backup export package conformance checks",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T04:18:56.564Z",
+        "requirementId": "REQ-PORT-004"
+      },
+      {
         "key": "KAR-16",
         "title": "Build user-confirm merge workflow for dedupe suggestions",
-        "state": "In Progress",
-        "updatedAt": "2026-02-17T03:58:46.301Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T04:02:02.184Z",
         "requirementId": "REQ-PORT-003"
       },
       {
@@ -212,33 +216,28 @@
         "state": "Done",
         "updatedAt": "2026-02-17T00:13:22.799Z",
         "requirementId": "REQ-AI-002"
-      },
-      {
-        "key": "KAR-33",
-        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
-        "state": "Done",
-        "updatedAt": "2026-02-16T22:39:11.183Z",
-        "requirementId": "REQ-AI-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T03:58:58.361Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T04:19:09.936Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "02f9691eef84800fc4b6cf3f8d6619ff387561f2",
+    "gitHead": "02311749c3644dd1aa7f41e1480898db10c6664f",
     "gitStatusShort": [
-      "## lin/KAR-16-import-dedupe-merge-workflow",
-      " M apps/api/src/contacts/contacts.controller.ts",
-      " M apps/api/src/contacts/contacts.service.ts",
-      " M apps/web/app/contacts/page.tsx",
+      "## lin/KAR-17-export-conformance-checks",
+      " M README.md",
+      " M apps/api/src/exports/exports.service.ts",
+      " M apps/api/test/roundtrip.spec.ts",
+      " M apps/web/app/data-dictionary/page.tsx",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/test/contacts-dedupe.spec.ts",
-      "?? apps/web/test/contacts-page.spec.tsx",
-      "?? docs/parity/dedupe-merge-workflow.md"
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? apps/api/src/exports/full-backup-contract.ts",
+      "?? apps/api/test/exports-conformance.spec.ts",
+      "?? docs/parity/export-conformance.md"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 10
   }
 }

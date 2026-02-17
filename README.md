@@ -147,6 +147,11 @@ Data dictionary page:
 
 - `GET http://localhost:3000/data-dictionary`
 
+Export contract + conformance rules:
+
+- `apps/api/src/exports/full-backup-contract.ts`
+- `docs/parity/export-conformance.md`
+
 ## Tests
 
 Run API tests:
