@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T18:08:03.926Z",
+  "generatedAt": "2026-02-17T18:15:30.106Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,9 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 28,
-      "Missing": 5,
-      "Partial": 1
+      "Complete": 29,
+      "Missing": 5
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -34,23 +33,13 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 11,
-      "Missing:Medium": 5,
-      "Partial:Medium": 1
+      "Complete:Medium": 12,
+      "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-OPS-002",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Document deployment runbook and operational SLOs",
-        "component": "Infra",
-        "epicCode": "PARITY-10",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-AI-001",
         "parityStatus": "Complete",
@@ -131,6 +120,15 @@
         "component": "Web",
         "epicCode": "PARITY-04",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-OPS-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Add web application automated test suite for critical workflows",
+        "component": "Web",
+        "epicCode": "PARITY-10",
+        "phase": "phase-1"
       }
     ]
   },
@@ -139,13 +137,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 18,
+      "Backlog": 17,
       "In Review": 1,
-      "Done": 25
+      "Done": 26
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-31",
+        "title": "Replace e-sign stub with provider abstraction implementation",
+        "state": "Done",
+        "updatedAt": "2026-02-17T18:12:32.131Z",
+        "requirementId": "REQ-PORTAL-002"
+      },
       {
         "key": "KAR-20",
         "title": "Enhance contact relationship graph visualization and filtering",
@@ -208,38 +213,23 @@
         "state": "Done",
         "updatedAt": "2026-02-17T04:28:33.599Z",
         "requirementId": "REQ-SEC-003"
-      },
-      {
-        "key": "KAR-7",
-        "title": "Implement upload malware scanning provider integration",
-        "state": "Done",
-        "updatedAt": "2026-02-17T04:28:33.351Z",
-        "requirementId": "REQ-SEC-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T18:08:01.133Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T18:15:28.684Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "ab3f5852c59fba26001662bbcac1e79ad77cab2d",
+    "gitHead": "b796c5f5f59601329d3c814cdf7dc2260503565e",
     "gitStatusShort": [
-      "## lin/KAR-31-esign-provider-abstraction",
-      " M .env.example",
-      " M apps/api/.env.example",
-      " M apps/api/src/portal/portal.controller.ts",
-      " M apps/api/src/portal/portal.module.ts",
-      " M apps/api/src/portal/portal.service.ts",
-      " M apps/api/test/portal.spec.ts",
-      " M apps/web/app/portal/page.tsx",
-      " M apps/web/test/portal-page.spec.tsx",
+      "## lin/KAR-42-ops-runbook-completion",
+      " M README.md",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/src/portal/esign/",
-      "?? apps/api/src/portal/portal-esign-webhook.controller.ts",
-      "?? docs/parity/esign-provider-abstraction.md"
+      "?? docs/DEPLOYMENT_RUNBOOK.md",
+      "?? docs/parity/ops-runbook-slos.md"
     ],
-    "dirtyFileCount": 13
+    "dirtyFileCount": 5
   }
 }

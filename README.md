@@ -19,7 +19,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Communications threads/messages + ranked full-text/fallback keyword search + configurable outbound providers (stub/Resend/Twilio) with persisted delivery metadata
 - Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows with template provenance + strict merge validation
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
-- Client portal snapshot/messages/intake/e-sign stub + secure attachment upload/download workflow
+- Client portal snapshot/messages/intake + provider-based e-sign workflow (stub/sandbox) + secure attachment upload/download
 - Plugin import framework:
   - `mycase_backup_zip`
   - `clio_template` (CSV/XLSX)
@@ -208,6 +208,13 @@ Included suites cover:
 - AI job queue creation
 - import/export roundtrip fixture check
 - web login/dashboard smoke, matters create/intake flow, and API client error handling
+
+## Operations Runbook
+
+- Deployment + rollback + incident + SLO guidance:
+  - `docs/DEPLOYMENT_RUNBOOK.md`
+- Parity evidence artifact:
+  - `docs/parity/ops-runbook-slos.md`
 
 ## Important Notes
 

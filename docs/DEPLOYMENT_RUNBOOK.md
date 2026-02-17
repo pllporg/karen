@@ -1,0 +1,140 @@
+# Deployment Runbook + Operational SLOs
+
+This runbook defines baseline production operations for Karen Legal Suite:
+
+- deployment and migration flow
+- startup readiness checks
+- rollback procedure
+- incident response process
+- baseline SLOs and operational metrics
+
+## 1) Scope and Environments
+
+- Services:
+  - `apps/api` (NestJS + Prisma + queues)
+  - `apps/web` (Next.js)
+  - Postgres (`pgvector`), Redis, MinIO, optional ClamAV
+- Expected deployment tiers:
+  - `staging` (pre-prod validation)
+  - `production` (customer traffic)
+
+## 2) Pre-Deployment Checklist
+
+Run from clean branch/commit intended for release:
+
+```bash
+pnpm install
+pnpm test
+pnpm build
+```
+
+Validate env configuration:
+
+- API secrets (`SESSION_SECRET`, provider keys, encryption keys) are present.
+- `INTEGRATION_TOKEN_ENCRYPTION_KEYS` + `INTEGRATION_TOKEN_ACTIVE_KEY_ID` are set.
+- Storage/database/cache endpoints resolve.
+- Optional scanners/providers are configured per policy.
+
+## 3) Deployment Procedure
+
+1. Deploy infrastructure changes (if any) first.
+2. Deploy API + web artifact for target commit.
+3. Run Prisma migration on API runtime:
+
+```bash
+pnpm --filter api prisma:deploy
+```
+
+4. If required for environment bootstrap only, run seed (never on live customer DB):
+
+```bash
+pnpm --filter api prisma:seed
+```
+
+5. Start/restart app services.
+6. Run readiness checks (below) before opening traffic.
+
+## 4) Startup Readiness Checks
+
+Required checks after rollout:
+
+```bash
+curl -fsS http://<api-host>/health
+curl -fsS http://<web-host>/login
+```
+
+Operational readiness checklist:
+
+- API process is serving `/health` without error.
+- web app serves core route(s) and can reach API base URL.
+- migration status is current (`prisma:deploy` succeeded).
+- queue workers and Redis connectivity are healthy.
+- document storage read/write path works.
+
+Post-start smoke tests (minimum):
+
+- Login as admin and client test user.
+- Create a matter and verify dashboard visibility.
+- Upload + download a document.
+- Trigger one portal message.
+
+## 5) Rollback Procedure
+
+When release is unhealthy:
+
+1. Freeze deploy pipeline and announce rollback in incident channel.
+2. Route traffic back to previous stable app revision.
+3. If migrations were non-breaking forward-compatible, keep DB at new version.
+4. If a migration is breaking and rollback is required:
+  - execute vetted restore/rollback plan from DB backup strategy
+  - validate data integrity checks before re-opening writes
+5. Re-run readiness + smoke checks on restored revision.
+
+## 6) Incident Response
+
+Severity baseline:
+
+- `SEV-1`: data loss/exposure risk, multi-tenant isolation risk, or full outage.
+- `SEV-2`: major workflow disruption for most users.
+- `SEV-3`: degraded/non-critical functionality.
+
+Response workflow:
+
+1. Detect + triage (identify scope, impacted tenants, blast radius).
+2. Contain (disable feature flag/integration path if needed).
+3. Recover (rollback/hotfix/service restart as appropriate).
+4. Communicate status updates on fixed cadence.
+5. Complete postmortem with corrective actions and owner/due date.
+
+## 7) Baseline SLOs and Metrics
+
+Initial SLO targets:
+
+- API availability: `99.9%` monthly
+- Web availability: `99.9%` monthly
+- P95 API latency (core CRUD): `< 500ms`
+- P99 API latency (core CRUD): `< 1200ms`
+- Queue job success rate (AI/import/export jobs): `>= 99%`
+- Critical webhook delivery success (with retries): `>= 99%`
+- RPO: `< 15 minutes` (database backup/replication policy dependent)
+- RTO: `< 60 minutes`
+
+Key metrics to track:
+
+- HTTP error rate (`5xx`) by route and tenant
+- DB connection pool saturation + query latency
+- queue depth, retry counts, dead-letter volume
+- storage operation failure rate
+- auth failure/rate-limit spikes
+- webhook delivery failures and retry behavior
+
+## 8) Operational Ownership
+
+- Release owner: runs deploy + readiness checklist.
+- Incident commander: owns mitigation and communication during active incidents.
+- Service owner: closes post-incident corrective actions.
+
+## 9) Change Management Notes
+
+- Every production release must map to a Linear issue/requirement.
+- Verification evidence (tests + runbook references) must be attached before marking requirement complete.
