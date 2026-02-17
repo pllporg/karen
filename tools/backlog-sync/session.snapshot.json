@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:21:28.855Z",
+  "generatedAt": "2026-02-17T16:25:54.610Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -139,13 +139,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 24,
-      "In Review": 1,
+      "Backlog": 23,
+      "In Review": 2,
       "Done": 19
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-35",
+        "title": "Implement style pack management with source document governance",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T16:25:39.396Z",
+        "requirementId": "REQ-AI-003"
+      },
       {
         "key": "KAR-30",
         "title": "Implement secure portal attachments in message workflow",
@@ -208,39 +215,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T03:13:48.963Z",
         "requirementId": "REQ-MAT-003"
-      },
-      {
-        "key": "KAR-19",
-        "title": "Complete participant role configurability and side semantics coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-17T01:12:49.187Z",
-        "requirementId": "REQ-MAT-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:20:36.111Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:25:53.358Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "9d97529fd1635362c35ad85d9c068de6334ab549",
+    "gitHead": "3198edd117924ec1e8aa09cd0ff607227fea7e12",
     "gitStatusShort": [
-      "## lin/KAR-35-style-pack-governance",
-      " M README.md",
-      " M apps/api/src/ai/ai.controller.ts",
-      " M apps/api/src/ai/ai.service.ts",
-      " M apps/api/src/ai/dto/create-ai-job.dto.ts",
-      " M apps/web/app/ai/page.tsx",
-      " M apps/web/test/ai-page.spec.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/ai/dto/attach-style-pack-source-doc.dto.ts",
-      "?? apps/api/src/ai/dto/create-style-pack.dto.ts",
-      "?? apps/api/src/ai/dto/update-style-pack.dto.ts",
-      "?? apps/api/test/ai-style-pack.spec.ts",
-      "?? docs/parity/style-pack-governance.md"
+      "## lin/KAR-35-style-pack-governance...origin/lin/KAR-35-style-pack-governance"
     ],
-    "dirtyFileCount": 14
+    "dirtyFileCount": 0
   }
 }
