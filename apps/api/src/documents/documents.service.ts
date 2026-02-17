@@ -3,7 +3,16 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-import { ContactKind, DocumentConfidentiality } from '@prisma/client';
+import {
+  ContactKind,
+  DocumentConfidentiality,
+  DocumentDispositionItemStatus,
+  DocumentDispositionRunStatus,
+  DocumentDispositionStatus,
+  DocumentLegalHoldStatus,
+  RetentionScope,
+  RetentionTrigger,
+} from '@prisma/client';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
@@ -109,9 +118,576 @@ export class DocumentsService {
       },
       include: {
         versions: { orderBy: { uploadedAt: 'desc' } },
+        retentionPolicy: true,
+        legalHolds: {
+          where: { status: DocumentLegalHoldStatus.ACTIVE },
+          orderBy: { placedAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async listRetentionPolicies(user: AuthenticatedUser) {
+    return this.prisma.documentRetentionPolicy.findMany({
+      where: {
+        organizationId: user.organizationId,
+      },
+      include: {
+        matter: {
+          select: {
+            id: true,
+            matterNumber: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
+    });
+  }
+
+  async createRetentionPolicy(input: {
+    user: AuthenticatedUser;
+    name: string;
+    description?: string;
+    scope: RetentionScope;
+    matterId?: string;
+    category?: string;
+    retentionDays: number;
+    trigger: RetentionTrigger;
+    requireApproval?: boolean;
+    isActive?: boolean;
+  }) {
+    if (input.scope === RetentionScope.MATTER && !input.matterId) {
+      throw new UnprocessableEntityException('matterId is required when scope is MATTER');
+    }
+    if (input.scope === RetentionScope.CATEGORY && !input.category?.trim()) {
+      throw new UnprocessableEntityException('category is required when scope is CATEGORY');
+    }
+    if (input.matterId) {
+      await this.access.assertMatterAccess(input.user, input.matterId, 'write');
+    }
+
+    const policy = await this.prisma.documentRetentionPolicy.create({
+      data: {
+        organizationId: input.user.organizationId,
+        name: input.name.trim(),
+        description: input.description?.trim() || null,
+        scope: input.scope,
+        matterId: input.matterId || null,
+        category: input.category?.trim() || null,
+        retentionDays: input.retentionDays,
+        trigger: input.trigger,
+        requireApproval: input.requireApproval ?? true,
+        isActive: input.isActive ?? true,
+        createdByUserId: input.user.id,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.retention_policy.created',
+      entityType: 'documentRetentionPolicy',
+      entityId: policy.id,
+      metadata: {
+        scope: policy.scope,
+        trigger: policy.trigger,
+        retentionDays: policy.retentionDays,
+        requireApproval: policy.requireApproval,
+      },
+    });
+
+    return policy;
+  }
+
+  async assignRetentionPolicy(input: {
+    user: AuthenticatedUser;
+    documentId: string;
+    policyId: string;
+  }) {
+    const document = await this.prisma.document.findFirst({
+      where: {
+        id: input.documentId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        matter: {
+          select: {
+            id: true,
+            closedAt: true,
+          },
+        },
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+    if (document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Cannot assign retention policy to a disposed document');
+    }
+    await this.access.assertMatterAccess(input.user, document.matterId, 'write');
+
+    const policy = await this.prisma.documentRetentionPolicy.findFirst({
+      where: {
+        id: input.policyId,
+        organizationId: input.user.organizationId,
+        isActive: true,
+      },
+    });
+    if (!policy) {
+      throw new NotFoundException('Retention policy not found');
+    }
+    if (policy.scope === RetentionScope.MATTER && policy.matterId && policy.matterId !== document.matterId) {
+      throw new UnprocessableEntityException('Retention policy scope does not match document matter');
+    }
+    if (policy.scope === RetentionScope.CATEGORY && policy.category && policy.category !== (document.category || '')) {
+      throw new UnprocessableEntityException('Retention policy scope does not match document category');
+    }
+
+    const retentionEligibleAt = this.computeRetentionEligibleAt({
+      trigger: policy.trigger,
+      retentionDays: policy.retentionDays,
+      documentCreatedAt: document.createdAt,
+      matterClosedAt: document.matter.closedAt,
+    });
+
+    const updated = await this.prisma.document.update({
+      where: { id: document.id },
+      data: {
+        retentionPolicyId: policy.id,
+        retentionEligibleAt,
+      },
+      include: {
+        retentionPolicy: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.retention_policy.assigned',
+      entityType: 'document',
+      entityId: document.id,
+      metadata: {
+        retentionPolicyId: policy.id,
+        retentionEligibleAt: retentionEligibleAt.toISOString(),
+      },
+    });
+
+    return updated;
+  }
+
+  async placeLegalHold(input: {
+    user: AuthenticatedUser;
+    documentId: string;
+    reason: string;
+  }) {
+    const document = await this.prisma.document.findFirst({
+      where: {
+        id: input.documentId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+    if (document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Cannot place legal hold on a disposed document');
+    }
+    await this.access.assertMatterAccess(input.user, document.matterId, 'write');
+    if (!input.reason.trim()) {
+      throw new UnprocessableEntityException('Legal hold reason is required');
+    }
+
+    const existing = await this.prisma.documentLegalHold.findFirst({
+      where: {
+        organizationId: input.user.organizationId,
+        documentId: document.id,
+        status: DocumentLegalHoldStatus.ACTIVE,
+      },
+    });
+    if (existing) {
+      return existing;
+    }
+
+    const hold = await this.prisma.documentLegalHold.create({
+      data: {
+        organizationId: input.user.organizationId,
+        documentId: document.id,
+        matterId: document.matterId,
+        reason: input.reason.trim(),
+        status: DocumentLegalHoldStatus.ACTIVE,
+        placedByUserId: input.user.id,
+      },
+    });
+
+    await this.prisma.document.update({
+      where: { id: document.id },
+      data: {
+        legalHoldActive: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.legal_hold.placed',
+      entityType: 'document',
+      entityId: document.id,
+      metadata: {
+        legalHoldId: hold.id,
+        reason: hold.reason,
+      },
+    });
+
+    return hold;
+  }
+
+  async releaseLegalHold(input: {
+    user: AuthenticatedUser;
+    documentId: string;
+    reason?: string;
+  }) {
+    const document = await this.prisma.document.findFirst({
+      where: {
+        id: input.documentId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+    await this.access.assertMatterAccess(input.user, document.matterId, 'write');
+
+    const activeHold = await this.prisma.documentLegalHold.findFirst({
+      where: {
+        organizationId: input.user.organizationId,
+        documentId: document.id,
+        status: DocumentLegalHoldStatus.ACTIVE,
+      },
+      orderBy: {
+        placedAt: 'desc',
+      },
+    });
+    if (!activeHold) {
+      throw new NotFoundException('Active legal hold not found for document');
+    }
+
+    const released = await this.prisma.documentLegalHold.update({
+      where: { id: activeHold.id },
+      data: {
+        status: DocumentLegalHoldStatus.RELEASED,
+        releasedByUserId: input.user.id,
+        releasedAt: new Date(),
+        reason: input.reason?.trim()
+          ? `${activeHold.reason}\n\nRelease note: ${input.reason.trim()}`
+          : activeHold.reason,
+      },
+    });
+
+    await this.prisma.document.update({
+      where: { id: document.id },
+      data: {
+        legalHoldActive: false,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.legal_hold.released',
+      entityType: 'document',
+      entityId: document.id,
+      metadata: {
+        legalHoldId: released.id,
+        releaseReason: input.reason?.trim() || null,
+      },
+    });
+
+    return released;
+  }
+
+  async listDispositionRuns(user: AuthenticatedUser) {
+    return this.prisma.documentDispositionRun.findMany({
+      where: {
+        organizationId: user.organizationId,
+      },
+      include: {
+        policy: true,
+        items: {
+          include: {
+            document: {
+              select: {
+                id: true,
+                title: true,
+                matterId: true,
+                legalHoldActive: true,
+                dispositionStatus: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 25,
+    });
+  }
+
+  async createDispositionRun(input: {
+    user: AuthenticatedUser;
+    policyId?: string;
+    cutoffAt?: string;
+    notes?: string;
+  }) {
+    const cutoffAt = input.cutoffAt ? new Date(input.cutoffAt) : new Date();
+    if (Number.isNaN(cutoffAt.getTime())) {
+      throw new UnprocessableEntityException('Invalid cutoffAt');
+    }
+
+    let policy = null;
+    if (input.policyId) {
+      policy = await this.prisma.documentRetentionPolicy.findFirst({
+        where: {
+          id: input.policyId,
+          organizationId: input.user.organizationId,
+          isActive: true,
+        },
+      });
+      if (!policy) {
+        throw new NotFoundException('Retention policy not found');
+      }
+    }
+
+    const candidateDocuments = await this.prisma.document.findMany({
+      where: {
+        organizationId: input.user.organizationId,
+        dispositionStatus: {
+          not: DocumentDispositionStatus.DISPOSED,
+        },
+        retentionEligibleAt: {
+          lte: cutoffAt,
+        },
+        ...(policy ? { retentionPolicyId: policy.id } : {}),
+      },
+      select: {
+        id: true,
+        matterId: true,
+        legalHoldActive: true,
+      },
+    });
+
+    const accessibleCandidates: Array<{ id: string; legalHoldActive: boolean }> = [];
+    for (const candidate of candidateDocuments) {
+      try {
+        await this.access.assertMatterAccess(input.user, candidate.matterId, 'write');
+        accessibleCandidates.push({
+          id: candidate.id,
+          legalHoldActive: candidate.legalHoldActive,
+        });
+      } catch {
+        continue;
+      }
+    }
+
+    const runStatus = policy?.requireApproval ?? true
+      ? DocumentDispositionRunStatus.PENDING_APPROVAL
+      : DocumentDispositionRunStatus.APPROVED;
+
+    const run = await this.prisma.documentDispositionRun.create({
+      data: {
+        organizationId: input.user.organizationId,
+        policyId: policy?.id || null,
+        status: runStatus,
+        cutoffAt,
+        notes: input.notes?.trim() || null,
+        requestedByUserId: input.user.id,
+        items: {
+          create: accessibleCandidates.map((document) => ({
+            organizationId: input.user.organizationId,
+            documentId: document.id,
+            status: document.legalHoldActive
+              ? DocumentDispositionItemStatus.SKIPPED_LEGAL_HOLD
+              : DocumentDispositionItemStatus.PENDING,
+            note: document.legalHoldActive ? 'Skipped because legal hold is active.' : null,
+          })),
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    const pendingDocumentIds = run.items
+      .filter((item) => item.status === DocumentDispositionItemStatus.PENDING)
+      .map((item) => item.documentId);
+    if (pendingDocumentIds.length > 0) {
+      await this.prisma.document.updateMany({
+        where: {
+          id: { in: pendingDocumentIds },
+          organizationId: input.user.organizationId,
+          dispositionStatus: DocumentDispositionStatus.ACTIVE,
+        },
+        data: {
+          dispositionStatus: DocumentDispositionStatus.PENDING_DISPOSITION,
+        },
+      });
+    }
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.disposition_run.created',
+      entityType: 'documentDispositionRun',
+      entityId: run.id,
+      metadata: {
+        policyId: policy?.id || null,
+        cutoffAt: cutoffAt.toISOString(),
+        totalItems: run.items.length,
+        pendingItems: run.items.filter((item) => item.status === DocumentDispositionItemStatus.PENDING).length,
+        skippedForLegalHold: run.items.filter((item) => item.status === DocumentDispositionItemStatus.SKIPPED_LEGAL_HOLD).length,
+      },
+    });
+
+    return run;
+  }
+
+  async approveDispositionRun(input: {
+    user: AuthenticatedUser;
+    runId: string;
+    notes?: string;
+  }) {
+    const run = await this.prisma.documentDispositionRun.findFirst({
+      where: {
+        id: input.runId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!run) {
+      throw new NotFoundException('Disposition run not found');
+    }
+    if (run.status !== DocumentDispositionRunStatus.PENDING_APPROVAL && run.status !== DocumentDispositionRunStatus.DRAFT) {
+      throw new UnprocessableEntityException('Only draft or pending-approval runs can be approved');
+    }
+
+    const approved = await this.prisma.documentDispositionRun.update({
+      where: { id: run.id },
+      data: {
+        status: DocumentDispositionRunStatus.APPROVED,
+        approvedByUserId: input.user.id,
+        approvedAt: new Date(),
+        notes: this.combineNotes(run.notes, input.notes),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.disposition_run.approved',
+      entityType: 'documentDispositionRun',
+      entityId: approved.id,
+      metadata: {
+        approvedAt: approved.approvedAt,
+      },
+    });
+
+    return approved;
+  }
+
+  async executeDispositionRun(input: {
+    user: AuthenticatedUser;
+    runId: string;
+    notes?: string;
+  }) {
+    const run = await this.prisma.documentDispositionRun.findFirst({
+      where: {
+        id: input.runId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        items: true,
+      },
+    });
+    if (!run) {
+      throw new NotFoundException('Disposition run not found');
+    }
+    if (run.status !== DocumentDispositionRunStatus.APPROVED) {
+      throw new UnprocessableEntityException('Disposition run must be approved before execution');
+    }
+
+    const now = new Date();
+    const pendingItems = run.items.filter((item) => item.status === DocumentDispositionItemStatus.PENDING);
+    const pendingDocumentIds = pendingItems.map((item) => item.documentId);
+
+    if (pendingDocumentIds.length > 0) {
+      await this.prisma.document.updateMany({
+        where: {
+          id: { in: pendingDocumentIds },
+          organizationId: input.user.organizationId,
+        },
+        data: {
+          dispositionStatus: DocumentDispositionStatus.DISPOSED,
+          disposedAt: now,
+          sharedWithClient: false,
+        },
+      });
+
+      await this.prisma.documentShareLink.updateMany({
+        where: {
+          organizationId: input.user.organizationId,
+          documentId: { in: pendingDocumentIds },
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: now,
+        },
+      });
+
+      await this.prisma.documentDispositionItem.updateMany({
+        where: {
+          runId: run.id,
+          organizationId: input.user.organizationId,
+          status: DocumentDispositionItemStatus.PENDING,
+        },
+        data: {
+          status: DocumentDispositionItemStatus.DISPOSED,
+          appliedAt: now,
+        },
+      });
+    }
+
+    const completed = await this.prisma.documentDispositionRun.update({
+      where: { id: run.id },
+      data: {
+        status: DocumentDispositionRunStatus.COMPLETED,
+        executedByUserId: input.user.id,
+        executedAt: now,
+        notes: this.combineNotes(run.notes, input.notes),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.disposition_run.completed',
+      entityType: 'documentDispositionRun',
+      entityId: completed.id,
+      metadata: {
+        executedAt: now.toISOString(),
+        disposedCount: pendingDocumentIds.length,
+      },
+    });
+
+    return {
+      ...completed,
+      disposedDocumentCount: pendingDocumentIds.length,
+    };
   }
 
   async uploadNew(input: {
@@ -197,6 +773,9 @@ export class DocumentsService {
     if (!document) {
       throw new NotFoundException('Document not found');
     }
+    if (document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Cannot upload a new version for a disposed document');
+    }
 
     await this.access.assertMatterAccess(input.user, document.matterId, 'write');
 
@@ -245,6 +824,9 @@ export class DocumentsService {
     if (!version) {
       throw new NotFoundException('Document version not found');
     }
+    if (version.document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Disposed documents are not available for download');
+    }
 
     await this.access.assertMatterAccess(user, version.document.matterId);
 
@@ -264,6 +846,9 @@ export class DocumentsService {
 
     if (!document) {
       throw new NotFoundException('Document not found');
+    }
+    if (document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Cannot share a disposed document');
     }
 
     await this.access.assertMatterAccess(input.user, document.matterId, 'write');
@@ -305,6 +890,9 @@ export class DocumentsService {
     });
 
     if (!link || link.document.versions.length === 0) {
+      throw new NotFoundException('Share link not valid');
+    }
+    if (link.document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
       throw new NotFoundException('Share link not valid');
     }
 
@@ -491,6 +1079,39 @@ export class DocumentsService {
     });
 
     return generatedDocument;
+  }
+
+  private computeRetentionEligibleAt(input: {
+    trigger: RetentionTrigger;
+    retentionDays: number;
+    documentCreatedAt: Date;
+    matterClosedAt: Date | null;
+  }) {
+    const anchorDate =
+      input.trigger === RetentionTrigger.MATTER_CLOSED
+        ? input.matterClosedAt
+        : input.documentCreatedAt;
+
+    if (!anchorDate) {
+      throw new UnprocessableEntityException(
+        'Retention trigger requires a closed matter date, but the matter is not closed',
+      );
+    }
+
+    const eligibleAt = new Date(anchorDate);
+    eligibleAt.setUTCDate(eligibleAt.getUTCDate() + input.retentionDays);
+    return eligibleAt;
+  }
+
+  private combineNotes(existing: string | null | undefined, extra?: string) {
+    if (!extra?.trim()) {
+      return existing ?? null;
+    }
+    const normalized = extra.trim();
+    if (!existing?.trim()) {
+      return normalized;
+    }
+    return `${existing.trim()}\n\n${normalized}`;
   }
 
   private async buildTemplateMergeContext(user: AuthenticatedUser, matterId: string): Promise<TemplateMergeContext> {

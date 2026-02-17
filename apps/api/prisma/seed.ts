@@ -22,6 +22,10 @@ async function main() {
     prisma.stylePackSourceDoc.deleteMany(),
     prisma.stylePack.deleteMany(),
     prisma.eSignEnvelope.deleteMany(),
+    prisma.documentDispositionItem.deleteMany(),
+    prisma.documentDispositionRun.deleteMany(),
+    prisma.documentLegalHold.deleteMany(),
+    prisma.documentRetentionPolicy.deleteMany(),
     prisma.engagementLetterTemplate.deleteMany(),
     prisma.conflictCheckResult.deleteMany(),
     prisma.intakeSubmission.deleteMany(),
@@ -722,6 +726,49 @@ async function main() {
         uploadedByUserId: paralegalUser.id,
       },
     ],
+  });
+
+  const retentionPolicy = await prisma.documentRetentionPolicy.create({
+    data: {
+      organizationId: org.id,
+      name: 'Construction Litigation Standard - 7 Year',
+      description: 'Retain client matter documents for 7 years from upload unless legal hold is active.',
+      scope: 'ALL_DOCUMENTS',
+      retentionDays: 365 * 7,
+      trigger: 'DOCUMENT_UPLOADED',
+      requireApproval: true,
+      createdByUserId: adminUser.id,
+    },
+  });
+
+  await prisma.document.updateMany({
+    where: {
+      id: {
+        in: [contractDoc.id, changeOrderDoc.id, inspectionDoc.id, schedulingOrderDoc.id],
+      },
+    },
+    data: {
+      retentionPolicyId: retentionPolicy.id,
+      retentionEligibleAt: new Date('2033-01-01T00:00:00Z'),
+    },
+  });
+
+  await prisma.documentLegalHold.create({
+    data: {
+      organizationId: org.id,
+      documentId: inspectionDoc.id,
+      matterId: matter1.id,
+      reason: 'Preserve inspection media for pending mediation and potential trial exhibits.',
+      placedByUserId: attorneyUser.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  await prisma.document.update({
+    where: { id: inspectionDoc.id },
+    data: {
+      legalHoldActive: true,
+    },
   });
 
   await prisma.calendarEvent.createMany({

@@ -129,4 +129,129 @@ describe('DocumentsPage', () => {
       expect(screen.getByRole('cell', { name: 'Yes' })).toBeInTheDocument();
     });
   });
+
+  it('manages retention policy, legal hold, and disposition run actions', async () => {
+    const policy = {
+      id: 'policy-1',
+      name: 'Default 7-year retention',
+      scope: 'ALL_DOCUMENTS',
+      retentionDays: 2555,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: 'doc-1',
+            matterId: 'matter-1',
+            title: 'Inspection Report',
+            versions: [{ id: 'v1' }],
+            sharedWithClient: false,
+            legalHoldActive: false,
+            dispositionStatus: 'ACTIVE',
+            retentionPolicy: null,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse(policy))
+      .mockResolvedValueOnce(jsonResponse([policy]))
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse({ id: 'assign-ok' }))
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: 'doc-1',
+            matterId: 'matter-1',
+            title: 'Inspection Report',
+            versions: [{ id: 'v1' }],
+            sharedWithClient: false,
+            legalHoldActive: false,
+            dispositionStatus: 'ACTIVE',
+            retentionPolicy: policy,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: 'hold-ok' }))
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: 'doc-1',
+            matterId: 'matter-1',
+            title: 'Inspection Report',
+            versions: [{ id: 'v1' }],
+            sharedWithClient: false,
+            legalHoldActive: true,
+            dispositionStatus: 'ACTIVE',
+            retentionPolicy: policy,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: 'run-1' }))
+      .mockResolvedValueOnce(jsonResponse([policy]))
+      .mockResolvedValueOnce(jsonResponse([{ id: 'run-1', status: 'PENDING_APPROVAL', cutoffAt: '2026-02-01T00:00:00.000Z', items: [] }]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<DocumentsPage />);
+
+    await screen.findByRole('cell', { name: 'Inspection Report' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load Retention Data' }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/retention/policies',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/disposition/runs',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Policy' }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/retention/policies',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({ 'content-type': 'application/json' }),
+        }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Assign Policy' }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/doc-1/retention-policy',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({ 'content-type': 'application/json' }),
+        }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Place Hold' }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/doc-1/legal-hold',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({ 'content-type': 'application/json' }),
+        }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Disposition Run' }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/disposition/runs',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({ 'content-type': 'application/json' }),
+        }),
+      );
+      expect(screen.getByText('Created disposition run.')).toBeInTheDocument();
+    });
+  });
 });

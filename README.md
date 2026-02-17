@@ -18,7 +18,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Conflict rule profiles with weighted check scoring + attorney resolution/audit workflow
 - Tasks, calendar, jurisdictional deadline rules packs (preview/apply + override reason capture), ICS export, docket
 - Communications threads/messages + ranked full-text/fallback keyword search + configurable outbound providers (stub/Resend/Twilio) with persisted delivery metadata
-- Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows with template provenance + strict merge validation
+- Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + retention policies/legal holds/disposition runs + DOCX/PDF generation flows with template provenance + strict merge validation
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
 - Client portal snapshot/messages/intake + provider-based e-sign workflow (stub/sandbox) + secure attachment upload/download
 - Plugin import framework:
@@ -255,7 +255,6 @@ Live provider pull sync mode (optional, defaults to scaffold mode):
 
 ## Phase-2 Planned End-Goal Features
 
-- Document retention policies (including legal hold and disposition controls)
 - Advanced conflict rules (profile-based matching and conflict resolution workflow)
 - Trust reconciliation workflows (run lifecycle, discrepancy queue, sign-off)
 - LEDES/UTBMS export jobs (validation + standards-oriented outputs)

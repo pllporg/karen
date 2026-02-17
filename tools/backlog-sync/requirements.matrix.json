@@ -429,11 +429,11 @@
           "title": "Implement document retention policies with legal hold workflow",
           "requirementId": "REQ-COMM-004",
           "promptSection": "Documents / Evidence + Security controls for retention/legal hold",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "documents", "security", "phase-2"],
-          "problemStatement": "Document storage/versioning exists, but policy-driven retention and legal hold governance are not implemented.",
+          "problemStatement": "Retention policy lifecycle, legal hold controls, and approval-gated disposition workflows are now implemented across API + documents UI.",
           "requirementExcerpt": "Support retention policy assignment, legal hold precedence, disposition queue, and auditable retention actions.",
           "acceptanceCriteria": [
             "Create retention policy model with scope, trigger, and disposition rules.",
@@ -443,7 +443,7 @@
           "apiImpact": "Document management APIs gain retention policy assignment and disposition queue endpoints.",
           "securityImpact": "Improves defensible records governance and prevents unauthorized deletion.",
           "definitionOfDone": [
-            "Retention + legal hold lifecycle tests cover policy application, hold exclusion, and disposition approvals."
+            "Retention + legal hold + disposition lifecycle workflows are covered by API/Web tests with evidence in docs/parity/document-retention-workflows.md."
           ]
         }
       ]
