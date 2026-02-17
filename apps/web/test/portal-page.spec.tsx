@@ -54,8 +54,8 @@ describe('PortalPage', () => {
       );
     });
 
-    expect(screen.getByText('1 visible matters')).toBeInTheDocument();
-    expect(screen.getByText('2 shared docs')).toBeInTheDocument();
+    await screen.findByText('1 visible matters');
+    await screen.findByText('2 shared docs');
 
     fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));

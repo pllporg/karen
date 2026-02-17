@@ -316,21 +316,21 @@
           "title": "Implement advanced conflict rule profiles and resolution workflows",
           "requirementId": "REQ-MAT-004",
           "promptSection": "CRM / ConflictCheckResult + advanced conflict rule profiles",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "matters", "security", "phase-2"],
-          "problemStatement": "Conflict checks are present, but configurable weighted conflict rules and formal resolution policy logging are incomplete.",
+          "problemStatement": "Conflict profile configuration, weighted scoring checks, recommendation output, and attorney resolution audit workflow are now implemented across admin API + UI.",
           "requirementExcerpt": "Advanced conflict rules should support profile-based matching, relationship-aware scoring, and logged attorney override decisions.",
           "acceptanceCriteria": [
             "Create conflict rule profiles with weighted match criteria and scope by practice area/matter type.",
             "Conflict checks return rule-level hits, scores, and escalation recommendation (clear/warn/block).",
             "Attorney resolution decisions require rationale and are stored in an auditable history."
           ],
-          "apiImpact": "Conflict check endpoints include profile metadata, score breakdowns, and decision status fields.",
+          "apiImpact": "Added admin conflict rule profile CRUD, conflict check execution/list, and resolution endpoints with result payload scoring and resolution history fields.",
           "securityImpact": "Reduces conflict-of-interest risk and improves defensible compliance records.",
           "definitionOfDone": [
-            "Advanced conflict profile CRUD, execution path, and resolution audit tests are passing."
+            "Advanced conflict profile CRUD, scoring checks, and resolution audit tests are passing with evidence in docs/parity/conflict-rule-profiles.md."
           ]
         },
         {

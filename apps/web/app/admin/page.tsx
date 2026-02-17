@@ -16,12 +16,34 @@ export default function AdminPage() {
   const [auditEvents, setAuditEvents] = useState<Array<{ id: string; action: string; createdAt: string }>>([]);
   const [customFields, setCustomFields] = useState<Array<{ id: string; key: string; entityType: string; label: string }>>([]);
   const [sections, setSections] = useState<Array<{ id: string; name: string }>>([]);
+  const [conflictProfiles, setConflictProfiles] = useState<
+    Array<{ id: string; name: string; isDefault: boolean; thresholds: { warn: number; block: number } }>
+  >([]);
+  const [conflictChecks, setConflictChecks] = useState<
+    Array<{
+      id: string;
+      queryText: string;
+      createdAt: string;
+      resultJson?: {
+        recommendation?: 'CLEAR' | 'WARN' | 'BLOCK';
+        score?: number;
+        resolution?: { status?: string; decision?: string; rationale?: string };
+      };
+    }>
+  >([]);
   const [customFieldKey, setCustomFieldKey] = useState('project_address');
   const [customFieldLabel, setCustomFieldLabel] = useState('Project Address');
   const [sectionName, setSectionName] = useState('Defect Summary');
   const [participantRoleKey, setParticipantRoleKey] = useState('opposing_party');
   const [participantRoleLabel, setParticipantRoleLabel] = useState('Opposing Party');
   const [participantRoleSide, setParticipantRoleSide] = useState<'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT'>('OPPOSING_SIDE');
+  const [conflictProfileName, setConflictProfileName] = useState('Construction Litigation Default');
+  const [conflictWarnThreshold, setConflictWarnThreshold] = useState('45');
+  const [conflictBlockThreshold, setConflictBlockThreshold] = useState('70');
+  const [conflictQuery, setConflictQuery] = useState('Jane Doe');
+  const [selectedConflictProfileId, setSelectedConflictProfileId] = useState('');
+  const [resolutionDecision, setResolutionDecision] = useState<'CLEAR' | 'WAIVE' | 'BLOCK'>('WAIVE');
+  const [resolutionRationale, setResolutionRationale] = useState('Attorney override after review of unrelated prior engagement.');
 
   useEffect(() => {
     Promise.all([
@@ -35,8 +57,23 @@ export default function AdminPage() {
       apiFetch<Array<{ id: string; action: string; createdAt: string }>>('/audit?limit=25'),
       apiFetch<Array<{ id: string; key: string; entityType: string; label: string }>>('/config/custom-fields'),
       apiFetch<Array<{ id: string; name: string }>>('/config/sections'),
+      apiFetch<Array<{ id: string; name: string; isDefault: boolean; thresholds: { warn: number; block: number } }>>(
+        '/admin/conflict-rule-profiles',
+      ),
+      apiFetch<
+        Array<{
+          id: string;
+          queryText: string;
+          createdAt: string;
+          resultJson?: {
+            recommendation?: 'CLEAR' | 'WARN' | 'BLOCK';
+            score?: number;
+            resolution?: { status?: string; decision?: string; rationale?: string };
+          };
+        }>
+      >('/admin/conflict-checks?limit=15'),
     ])
-      .then(([o, u, r, s, pr, a, cf, sec]) => {
+      .then(([o, u, r, s, pr, a, cf, sec, cProfiles, cChecks]) => {
         setOrg(o);
         setUsers(u);
         setRoles(r);
@@ -45,6 +82,11 @@ export default function AdminPage() {
         setAuditEvents(a);
         setCustomFields(cf);
         setSections(sec);
+        setConflictProfiles(cProfiles);
+        setConflictChecks(cChecks);
+        if (cProfiles.length > 0) {
+          setSelectedConflictProfileId(cProfiles[0].id);
+        }
       })
       .catch(() => undefined);
   }, []);
@@ -91,6 +133,75 @@ export default function AdminPage() {
       await apiFetch<Array<{ id: string; key: string; label: string; sideDefault?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' }>>(
         '/admin/participant-roles',
       ),
+    );
+  }
+
+  async function createConflictProfile() {
+    await apiFetch('/admin/conflict-rule-profiles', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: conflictProfileName,
+        isDefault: true,
+        thresholds: {
+          warn: Number(conflictWarnThreshold) || 45,
+          block: Number(conflictBlockThreshold) || 70,
+        },
+      }),
+    });
+    const profiles = await apiFetch<Array<{ id: string; name: string; isDefault: boolean; thresholds: { warn: number; block: number } }>>(
+      '/admin/conflict-rule-profiles',
+    );
+    setConflictProfiles(profiles);
+    if (profiles.length > 0) {
+      setSelectedConflictProfileId(profiles[0].id);
+    }
+  }
+
+  async function runConflictCheck() {
+    await apiFetch('/admin/conflict-checks', {
+      method: 'POST',
+      body: JSON.stringify({
+        queryText: conflictQuery,
+        profileId: selectedConflictProfileId || undefined,
+      }),
+    });
+    setConflictChecks(
+      await apiFetch<
+        Array<{
+          id: string;
+          queryText: string;
+          createdAt: string;
+          resultJson?: {
+            recommendation?: 'CLEAR' | 'WARN' | 'BLOCK';
+            score?: number;
+            resolution?: { status?: string; decision?: string; rationale?: string };
+          };
+        }>
+      >('/admin/conflict-checks?limit=15'),
+    );
+  }
+
+  async function resolveConflictCheck(checkId: string) {
+    await apiFetch(`/admin/conflict-checks/${checkId}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify({
+        decision: resolutionDecision,
+        rationale: resolutionRationale,
+      }),
+    });
+    setConflictChecks(
+      await apiFetch<
+        Array<{
+          id: string;
+          queryText: string;
+          createdAt: string;
+          resultJson?: {
+            recommendation?: 'CLEAR' | 'WARN' | 'BLOCK';
+            score?: number;
+            resolution?: { status?: string; decision?: string; rationale?: string };
+          };
+        }>
+      >('/admin/conflict-checks?limit=15'),
     );
   }
 
@@ -241,6 +352,126 @@ export default function AdminPage() {
               <li key={section.id}>{section.name}</li>
             ))}
           </ul>
+        </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Conflict Rule Profiles</h3>
+          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 140px 140px auto', marginBottom: 12 }}>
+            <input
+              className="input"
+              value={conflictProfileName}
+              onChange={(e) => setConflictProfileName(e.target.value)}
+              placeholder="Profile name"
+            />
+            <input
+              className="input"
+              value={conflictWarnThreshold}
+              onChange={(e) => setConflictWarnThreshold(e.target.value)}
+              placeholder="Warn threshold"
+            />
+            <input
+              className="input"
+              value={conflictBlockThreshold}
+              onChange={(e) => setConflictBlockThreshold(e.target.value)}
+              placeholder="Block threshold"
+            />
+            <button className="button secondary" onClick={createConflictProfile}>Save Profile</button>
+          </div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Default</th>
+                <th>Warn</th>
+                <th>Block</th>
+              </tr>
+            </thead>
+            <tbody>
+              {conflictProfiles.map((profile) => (
+                <tr key={profile.id}>
+                  <td>{profile.name}</td>
+                  <td>{profile.isDefault ? 'Yes' : 'No'}</td>
+                  <td>{profile.thresholds?.warn ?? '-'}</td>
+                  <td>{profile.thresholds?.block ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Conflict Checks</h3>
+          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 260px auto', marginBottom: 12 }}>
+            <input
+              className="input"
+              value={conflictQuery}
+              onChange={(e) => setConflictQuery(e.target.value)}
+              placeholder="Conflict query text"
+            />
+            <select
+              className="select"
+              value={selectedConflictProfileId}
+              onChange={(e) => setSelectedConflictProfileId(e.target.value)}
+            >
+              <option value="">Auto-select profile</option>
+              {conflictProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+            <button className="button" onClick={runConflictCheck}>Run Check</button>
+          </div>
+
+          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '160px 1fr auto', marginBottom: 12 }}>
+            <select
+              className="select"
+              value={resolutionDecision}
+              onChange={(e) => setResolutionDecision(e.target.value as 'CLEAR' | 'WAIVE' | 'BLOCK')}
+            >
+              <option value="CLEAR">CLEAR</option>
+              <option value="WAIVE">WAIVE</option>
+              <option value="BLOCK">BLOCK</option>
+            </select>
+            <input
+              className="input"
+              value={resolutionRationale}
+              onChange={(e) => setResolutionRationale(e.target.value)}
+              placeholder="Resolution rationale"
+            />
+            <span style={{ color: 'var(--muted)', alignSelf: 'center' }}>Use Resolve on a row below</span>
+          </div>
+
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Query</th>
+                <th>Recommendation</th>
+                <th>Score</th>
+                <th>Resolution</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {conflictChecks.map((check) => (
+                <tr key={check.id}>
+                  <td>{check.queryText}</td>
+                  <td>{check.resultJson?.recommendation || 'CLEAR'}</td>
+                  <td>{check.resultJson?.score ?? 0}</td>
+                  <td>{check.resultJson?.resolution?.decision || check.resultJson?.resolution?.status || 'UNRESOLVED'}</td>
+                  <td>
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={() => resolveConflictCheck(check.id)}
+                    >
+                      Resolve
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </AppShell>
