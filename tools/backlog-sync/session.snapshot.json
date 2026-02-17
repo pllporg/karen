@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:25:54.610Z",
+  "generatedAt": "2026-02-17T16:39:21.596Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 22,
-      "Partial": 7,
+      "Complete": 23,
+      "Partial": 6,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 5,
-      "Partial:Medium": 7,
+      "Complete:Medium": 6,
+      "Partial:Medium": 6,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-001",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Implement production email/SMS providers behind provider interface",
-        "component": "API",
-        "epicCode": "PARITY-05",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-COMM-002",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "API",
         "epicCode": "PARITY-06",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-BILL-002",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Complete trust accounting reports and ledger invariants",
+        "component": "API",
+        "epicCode": "PARITY-06",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,8 +140,8 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 23,
-      "In Review": 2,
-      "Done": 19
+      "In Review": 1,
+      "Done": 20
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -149,8 +149,8 @@
       {
         "key": "KAR-35",
         "title": "Implement style pack management with source document governance",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T16:25:39.396Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T16:30:16.904Z",
         "requirementId": "REQ-AI-003"
       },
       {
@@ -219,14 +219,28 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:25:53.358Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:39:19.362Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3198edd117924ec1e8aa09cd0ff607227fea7e12",
+    "gitHead": "714f45baa44aa6c7dd5808c3389c7e53cc45ad94",
     "gitStatusShort": [
-      "## lin/KAR-35-style-pack-governance...origin/lin/KAR-35-style-pack-governance"
+      "## lin/KAR-23-production-message-providers",
+      " M .env.example",
+      " M README.md",
+      " M apps/api/.env.example",
+      " M apps/api/src/communications/communications.module.ts",
+      " M apps/api/src/communications/communications.service.ts",
+      " M apps/api/src/communications/providers/message-provider.interface.ts",
+      " M apps/api/src/communications/providers/stub-message.provider.ts",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? apps/api/src/communications/providers/message-dispatch.service.ts",
+      "?? apps/api/src/communications/providers/resend-email.provider.ts",
+      "?? apps/api/src/communications/providers/twilio-sms.provider.ts",
+      "?? apps/api/test/communications-delivery.spec.ts",
+      "?? apps/api/test/message-dispatch.spec.ts",
+      "?? docs/parity/communications-provider-adapters.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 14
   }
 }

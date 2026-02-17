@@ -4,10 +4,18 @@ export type SendMessageInput = {
   body: string;
 };
 
+export type SendMessageResult = {
+  id: string;
+  provider: string;
+  status: 'queued' | 'sent' | 'failed';
+  externalMessageId?: string;
+  raw?: Record<string, unknown>;
+};
+
 export interface EmailProvider {
-  sendEmail(input: SendMessageInput): Promise<{ id: string }>;
+  sendEmail(input: SendMessageInput): Promise<SendMessageResult>;
 }
 
 export interface SmsProvider {
-  sendSms(input: SendMessageInput): Promise<{ id: string }>;
+  sendSms(input: SendMessageInput): Promise<SendMessageResult>;
 }
