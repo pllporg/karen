@@ -12,6 +12,9 @@ import { toJsonValue } from '../common/utils/json.util';
 @Injectable()
 export class BillingService {
   private readonly stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+  private readonly allowNegativeTrustBalance = String(process.env.ALLOW_NEGATIVE_TRUST_BALANCE || '')
+    .toLowerCase()
+    .trim() === 'true';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -373,17 +376,7 @@ export class BillingService {
     description?: string;
   }) {
     await this.access.assertMatterAccess(input.user, input.matterId, 'write');
-
-    const tx = await this.prisma.trustTransaction.create({
-      data: {
-        organizationId: input.user.organizationId,
-        matterId: input.matterId,
-        trustAccountId: input.trustAccountId,
-        type: input.type,
-        amount: input.amount,
-        description: input.description,
-      },
-    });
+    await this.assertTrustAccountInOrganization(input.user.organizationId, input.trustAccountId);
 
     const current = await this.prisma.matterTrustLedger.findFirst({
       where: {
@@ -393,7 +386,20 @@ export class BillingService {
       },
     });
 
-    const delta = input.type === TrustTransactionType.WITHDRAWAL ? -input.amount : input.amount;
+    const delta = this.computeTrustDelta(input.type, input.amount);
+    const nextBalance = Number(((current?.balance || 0) + delta).toFixed(2));
+    this.assertTrustBalanceInvariant(nextBalance);
+
+    const tx = await this.prisma.trustTransaction.create({
+      data: {
+        organizationId: input.user.organizationId,
+        matterId: input.matterId,
+        trustAccountId: input.trustAccountId,
+        type: input.type,
+        amount: Math.abs(input.amount),
+        description: input.description,
+      },
+    });
 
     if (!current) {
       await this.prisma.matterTrustLedger.create({
@@ -401,17 +407,152 @@ export class BillingService {
           organizationId: input.user.organizationId,
           matterId: input.matterId,
           trustAccountId: input.trustAccountId,
-          balance: delta,
+          balance: nextBalance,
         },
       });
     } else {
       await this.prisma.matterTrustLedger.update({
         where: { id: current.id },
-        data: { balance: Number((current.balance + delta).toFixed(2)) },
+        data: { balance: nextBalance },
       });
     }
 
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: input.type === TrustTransactionType.ADJUSTMENT ? 'trust.adjustment.created' : 'trust.transaction.created',
+      entityType: 'trustTransaction',
+      entityId: tx.id,
+      metadata: {
+        matterId: input.matterId,
+        trustAccountId: input.trustAccountId,
+        type: input.type,
+        delta,
+        resultingBalance: nextBalance,
+      },
+    });
+
     return tx;
+  }
+
+  async transferTrust(input: {
+    user: AuthenticatedUser;
+    trustAccountId: string;
+    fromMatterId: string;
+    toMatterId: string;
+    amount: number;
+    description?: string;
+  }) {
+    if (input.fromMatterId === input.toMatterId) {
+      throw new Error('Transfer requires distinct source and destination matters');
+    }
+
+    await this.access.assertMatterAccess(input.user, input.fromMatterId, 'write');
+    await this.access.assertMatterAccess(input.user, input.toMatterId, 'write');
+    await this.assertTrustAccountInOrganization(input.user.organizationId, input.trustAccountId);
+
+    const amount = Number(Math.abs(input.amount).toFixed(2));
+    if (amount <= 0) throw new Error('Transfer amount must be greater than zero');
+
+    const sourceLedger = await this.prisma.matterTrustLedger.findFirst({
+      where: {
+        organizationId: input.user.organizationId,
+        matterId: input.fromMatterId,
+        trustAccountId: input.trustAccountId,
+      },
+    });
+    const sourceBalance = sourceLedger?.balance || 0;
+    const nextSourceBalance = Number((sourceBalance - amount).toFixed(2));
+    this.assertTrustBalanceInvariant(nextSourceBalance);
+
+    const destinationLedger = await this.prisma.matterTrustLedger.findFirst({
+      where: {
+        organizationId: input.user.organizationId,
+        matterId: input.toMatterId,
+        trustAccountId: input.trustAccountId,
+      },
+    });
+    const nextDestinationBalance = Number(((destinationLedger?.balance || 0) + amount).toFixed(2));
+
+    const transferId = `transfer:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+
+    const [withdrawalTx, depositTx] = await this.prisma.$transaction([
+      this.prisma.trustTransaction.create({
+        data: {
+          organizationId: input.user.organizationId,
+          trustAccountId: input.trustAccountId,
+          matterId: input.fromMatterId,
+          type: TrustTransactionType.TRANSFER,
+          amount,
+          description: `${input.description || 'Trust transfer'} | ${transferId} | out`,
+        },
+      }),
+      this.prisma.trustTransaction.create({
+        data: {
+          organizationId: input.user.organizationId,
+          trustAccountId: input.trustAccountId,
+          matterId: input.toMatterId,
+          type: TrustTransactionType.TRANSFER,
+          amount,
+          description: `${input.description || 'Trust transfer'} | ${transferId} | in`,
+        },
+      }),
+    ]);
+
+    if (!sourceLedger) {
+      await this.prisma.matterTrustLedger.create({
+        data: {
+          organizationId: input.user.organizationId,
+          matterId: input.fromMatterId,
+          trustAccountId: input.trustAccountId,
+          balance: nextSourceBalance,
+        },
+      });
+    } else {
+      await this.prisma.matterTrustLedger.update({
+        where: { id: sourceLedger.id },
+        data: { balance: nextSourceBalance },
+      });
+    }
+
+    if (!destinationLedger) {
+      await this.prisma.matterTrustLedger.create({
+        data: {
+          organizationId: input.user.organizationId,
+          matterId: input.toMatterId,
+          trustAccountId: input.trustAccountId,
+          balance: nextDestinationBalance,
+        },
+      });
+    } else {
+      await this.prisma.matterTrustLedger.update({
+        where: { id: destinationLedger.id },
+        data: { balance: nextDestinationBalance },
+      });
+    }
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'trust.transfer.completed',
+      entityType: 'trustTransaction',
+      entityId: withdrawalTx.id,
+      metadata: {
+        transferId,
+        trustAccountId: input.trustAccountId,
+        fromMatterId: input.fromMatterId,
+        toMatterId: input.toMatterId,
+        amount,
+      },
+    });
+
+    return {
+      transferId,
+      withdrawalTransactionId: withdrawalTx.id,
+      depositTransactionId: depositTx.id,
+      sourceBalance: nextSourceBalance,
+      destinationBalance: nextDestinationBalance,
+    };
   }
 
   async trustReport(user: AuthenticatedUser, trustAccountId?: string) {
@@ -432,6 +573,116 @@ export class BillingService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  async trustSummary(user: AuthenticatedUser, trustAccountId?: string) {
+    const ledgerRows = await this.trustReport(user, trustAccountId);
+
+    const accountMap = new Map<string, { trustAccountId: string; trustAccountName: string; totalBalance: number; matterCount: number }>();
+    const matterMap = new Map<string, { matterId: string; matterName: string; matterNumber: string; totalBalance: number; trustAccountCount: number }>();
+
+    for (const row of ledgerRows) {
+      const accountEntry = accountMap.get(row.trustAccountId) || {
+        trustAccountId: row.trustAccountId,
+        trustAccountName: row.trustAccount?.name || row.trustAccountId,
+        totalBalance: 0,
+        matterCount: 0,
+      };
+      accountEntry.totalBalance = Number((accountEntry.totalBalance + row.balance).toFixed(2));
+      accountEntry.matterCount += 1;
+      accountMap.set(row.trustAccountId, accountEntry);
+
+      const matterEntry = matterMap.get(row.matterId) || {
+        matterId: row.matterId,
+        matterName: row.matter?.name || row.matterId,
+        matterNumber: row.matter?.matterNumber || '',
+        totalBalance: 0,
+        trustAccountCount: 0,
+      };
+      matterEntry.totalBalance = Number((matterEntry.totalBalance + row.balance).toFixed(2));
+      matterEntry.trustAccountCount += 1;
+      matterMap.set(row.matterId, matterEntry);
+    }
+
+    const accountSummaries = [...accountMap.values()].sort((a, b) => a.trustAccountName.localeCompare(b.trustAccountName));
+    const matterSummaries = [...matterMap.values()].sort((a, b) => a.matterName.localeCompare(b.matterName));
+
+    return {
+      ledgerCount: ledgerRows.length,
+      totalTrustBalance: Number(
+        accountSummaries.reduce((sum, summary) => sum + summary.totalBalance, 0).toFixed(2),
+      ),
+      accountSummaries,
+      matterSummaries,
+    };
+  }
+
+  async trustReconciliation(user: AuthenticatedUser, trustAccountId?: string) {
+    const [ledgerRows, transactions] = await Promise.all([
+      this.trustReport(user, trustAccountId),
+      this.prisma.trustTransaction.findMany({
+        where: {
+          organizationId: user.organizationId,
+          ...(trustAccountId ? { trustAccountId } : {}),
+        },
+        orderBy: { occurredAt: 'asc' },
+      }),
+    ]);
+
+    const expectedByKey = new Map<string, number>();
+    for (const tx of transactions) {
+      const key = `${tx.trustAccountId}:${tx.matterId}`;
+      const current = expectedByKey.get(key) || 0;
+      const delta = this.computeTrustDelta(tx.type, tx.amount);
+      expectedByKey.set(key, Number((current + delta).toFixed(2)));
+    }
+
+    const ledgerByKey = new Map<string, (typeof ledgerRows)[number]>();
+    for (const row of ledgerRows) {
+      ledgerByKey.set(`${row.trustAccountId}:${row.matterId}`, row);
+    }
+
+    const keys = new Set([...expectedByKey.keys(), ...ledgerByKey.keys()]);
+    const mismatches: Array<{
+      trustAccountId: string;
+      trustAccountName: string;
+      matterId: string;
+      matterName: string;
+      expectedBalance: number;
+      ledgerBalance: number;
+      difference: number;
+    }> = [];
+
+    let negativeBalanceViolations = 0;
+    for (const key of keys) {
+      const [trustAccountId, matterId] = key.split(':');
+      const expectedBalance = Number((expectedByKey.get(key) || 0).toFixed(2));
+      const ledger = ledgerByKey.get(key);
+      const ledgerBalance = Number((ledger?.balance || 0).toFixed(2));
+      const difference = Number((ledgerBalance - expectedBalance).toFixed(2));
+
+      if (!this.allowNegativeTrustBalance && ledgerBalance < 0) negativeBalanceViolations += 1;
+      if (Math.abs(difference) > 0.009) {
+        mismatches.push({
+          trustAccountId,
+          trustAccountName: ledger?.trustAccount?.name || trustAccountId,
+          matterId,
+          matterName: ledger?.matter?.name || matterId,
+          expectedBalance,
+          ledgerBalance,
+          difference,
+        });
+      }
+    }
+
+    return {
+      checkedLedgers: ledgerRows.length,
+      checkedTransactions: transactions.length,
+      mismatchCount: mismatches.length,
+      negativeBalanceViolations,
+      allowNegativeTrustBalance: this.allowNegativeTrustBalance,
+      mismatches,
+    };
   }
 
   private async generateInvoicePdf(invoiceId: string): Promise<string> {
@@ -578,5 +829,48 @@ export class BillingService {
     });
 
     return { status: 'recorded', paymentId: payment.id };
+  }
+
+  private computeTrustDelta(type: TrustTransactionType, amountInput: number): number {
+    const amount = Number(amountInput);
+    if (!Number.isFinite(amount)) throw new Error('Trust transaction amount must be a finite number');
+    if (amount === 0) throw new Error('Trust transaction amount must be non-zero');
+
+    switch (type) {
+      case TrustTransactionType.DEPOSIT:
+        if (amount < 0) throw new Error('Deposit amount must be greater than zero');
+        return Number(Math.abs(amount).toFixed(2));
+      case TrustTransactionType.WITHDRAWAL:
+        if (amount < 0) throw new Error('Withdrawal amount must be greater than zero');
+        return Number((-Math.abs(amount)).toFixed(2));
+      case TrustTransactionType.TRANSFER:
+        if (amount < 0) throw new Error('Transfer amount must be greater than zero');
+        return Number((-Math.abs(amount)).toFixed(2));
+      case TrustTransactionType.ADJUSTMENT:
+        return Number(amount.toFixed(2));
+      default:
+        throw new Error(`Unsupported trust transaction type: ${type}`);
+    }
+  }
+
+  private assertTrustBalanceInvariant(nextBalance: number) {
+    if (!this.allowNegativeTrustBalance && nextBalance < 0) {
+      throw new Error(
+        'Trust balance invariant violation: resulting balance would be negative. Set ALLOW_NEGATIVE_TRUST_BALANCE=true to override policy.',
+      );
+    }
+  }
+
+  private async assertTrustAccountInOrganization(organizationId: string, trustAccountId: string) {
+    const account = await this.prisma.trustAccount.findFirst({
+      where: {
+        id: trustAccountId,
+        organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!account) throw new Error('Trust account not found for organization');
   }
 }

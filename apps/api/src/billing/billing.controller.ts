@@ -83,4 +83,32 @@ export class BillingController {
   trustReport(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
     return this.billingService.trustReport(user, trustAccountId);
   }
+
+  @Get('trust/summary')
+  @RequirePermissions('billing:read')
+  trustSummary(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
+    return this.billingService.trustSummary(user, trustAccountId);
+  }
+
+  @Get('trust/reconciliation')
+  @RequirePermissions('billing:read')
+  trustReconciliation(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
+    return this.billingService.trustReconciliation(user, trustAccountId);
+  }
+
+  @Post('trust/transfer')
+  @RequirePermissions('billing:write')
+  trustTransfer(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { trustAccountId: string; fromMatterId: string; toMatterId: string; amount: number; description?: string },
+  ) {
+    return this.billingService.transferTrust({
+      user,
+      trustAccountId: body.trustAccountId,
+      fromMatterId: body.fromMatterId,
+      toMatterId: body.toMatterId,
+      amount: body.amount,
+      description: body.description,
+    });
+  }
 }
