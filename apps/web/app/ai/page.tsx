@@ -32,6 +32,13 @@ type ArtifactMetadata = {
   citations?: Array<{ chunkId: string }>;
   excerptEvidence?: Array<{ chunkId: string; excerpt: string }>;
   deadlineCandidates?: DeadlineCandidate[];
+  stylePack?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    sourceDocumentVersionIds?: string[];
+    sourceDocCount?: number;
+  } | null;
 };
 
 type AiArtifact = {
@@ -56,11 +63,46 @@ type DeadlineSelection = {
   createEvent: boolean;
 };
 
+type StylePackSourceDoc = {
+  id: string;
+  documentVersionId: string;
+  documentVersion: {
+    id: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: string;
+    document: {
+      id: string;
+      matterId: string;
+      title: string;
+    };
+  };
+};
+
+type StylePack = {
+  id: string;
+  name: string;
+  description?: string | null;
+  sourceDocs: StylePackSourceDoc[];
+};
+
+type StylePackDraft = {
+  name: string;
+  description: string;
+  documentVersionId: string;
+};
+
 const DATE_TOKEN_REGEX =
   /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},\s+\d{4})\b/gi;
 
 export default function AiPage() {
   const [jobs, setJobs] = useState<AiJob[]>([]);
+  const [stylePacks, setStylePacks] = useState<StylePack[]>([]);
+  const [stylePackDrafts, setStylePackDrafts] = useState<Record<string, StylePackDraft>>({});
+  const [selectedStylePackId, setSelectedStylePackId] = useState('');
+  const [newStylePackName, setNewStylePackName] = useState('');
+  const [newStylePackDescription, setNewStylePackDescription] = useState('');
+  const [busyStylePackId, setBusyStylePackId] = useState<string | null>(null);
   const [matterId, setMatterId] = useState('');
   const [toolName, setToolName] = useState('case_summary');
   const [busyArtifactId, setBusyArtifactId] = useState<string | null>(null);
@@ -69,9 +111,17 @@ export default function AiPage() {
   const [deadlineSelections, setDeadlineSelections] = useState<Record<string, Record<string, DeadlineSelection>>>({});
 
   async function load() {
-    const nextJobs = await apiFetch<AiJob[]>('/ai/jobs');
+    const [nextJobs, nextStylePacks] = await Promise.all([
+      apiFetch<AiJob[]>('/ai/jobs'),
+      apiFetch<StylePack[]>('/ai/style-packs'),
+    ]);
     setJobs(nextJobs);
+    setStylePacks(nextStylePacks);
+    setStylePackDrafts((previous) => buildStylePackDrafts(nextStylePacks, previous));
     setDeadlineSelections((previous) => buildSelectionState(nextJobs, previous));
+    if (selectedStylePackId && !nextStylePacks.some((stylePack) => stylePack.id === selectedStylePackId)) {
+      setSelectedStylePackId('');
+    }
   }
 
   useEffect(() => {
@@ -83,13 +133,107 @@ export default function AiPage() {
     if (!matterId) return;
     setError(null);
     try {
+      const payload: { matterId: string; toolName: string; input: Record<string, unknown>; stylePackId?: string } = {
+        matterId,
+        toolName,
+        input: {},
+      };
+      if (selectedStylePackId) {
+        payload.stylePackId = selectedStylePackId;
+      }
       await apiFetch('/ai/jobs', {
         method: 'POST',
-        body: JSON.stringify({ matterId, toolName, input: {} }),
+        body: JSON.stringify(payload),
       });
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to create AI job');
+    }
+  }
+
+  async function createStylePack(e: FormEvent) {
+    e.preventDefault();
+    if (!newStylePackName.trim()) return;
+    setError(null);
+    setBusyStylePackId('new');
+    try {
+      await apiFetch('/ai/style-packs', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newStylePackName,
+          description: newStylePackDescription || undefined,
+        }),
+      });
+      setNewStylePackName('');
+      setNewStylePackDescription('');
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to create style pack');
+    } finally {
+      setBusyStylePackId(null);
+    }
+  }
+
+  async function saveStylePack(stylePackId: string) {
+    const draft = stylePackDrafts[stylePackId];
+    if (!draft) return;
+    setError(null);
+    setBusyStylePackId(stylePackId);
+    try {
+      await apiFetch(`/ai/style-packs/${stylePackId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: draft.name,
+          description: draft.description,
+        }),
+      });
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to update style pack');
+    } finally {
+      setBusyStylePackId(null);
+    }
+  }
+
+  async function attachStylePackSourceDoc(stylePackId: string) {
+    const draft = stylePackDrafts[stylePackId];
+    if (!draft?.documentVersionId.trim()) return;
+    setError(null);
+    setBusyStylePackId(stylePackId);
+    try {
+      await apiFetch(`/ai/style-packs/${stylePackId}/source-docs`, {
+        method: 'POST',
+        body: JSON.stringify({
+          documentVersionId: draft.documentVersionId.trim(),
+        }),
+      });
+      setStylePackDrafts((previous) => ({
+        ...previous,
+        [stylePackId]: {
+          ...previous[stylePackId],
+          documentVersionId: '',
+        },
+      }));
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to attach source document');
+    } finally {
+      setBusyStylePackId(null);
+    }
+  }
+
+  async function removeStylePackSourceDoc(stylePackId: string, documentVersionId: string) {
+    setError(null);
+    setBusyStylePackId(stylePackId);
+    try {
+      await apiFetch(`/ai/style-packs/${stylePackId}/source-docs/${documentVersionId}`, {
+        method: 'DELETE',
+      });
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to remove source document');
+    } finally {
+      setBusyStylePackId(null);
     }
   }
 
@@ -181,6 +325,20 @@ export default function AiPage() {
     });
   }
 
+  function updateStylePackDraft(stylePackId: string, key: keyof StylePackDraft, value: string) {
+    setStylePackDrafts((previous) => ({
+      ...previous,
+      [stylePackId]: {
+        ...(previous[stylePackId] || {
+          name: '',
+          description: '',
+          documentVersionId: '',
+        }),
+        [key]: value,
+      },
+    }));
+  }
+
   return (
     <AppShell>
       <PageHeader title="AI Workspace" subtitle="Draft-only legal AI workflows with provenance, citations, and review status." />
@@ -194,11 +352,131 @@ export default function AiPage() {
       {error ? <div className="error" style={{ marginBottom: 14 }}>{error}</div> : null}
 
       <div className="card" style={{ marginBottom: 14 }}>
-        <form onSubmit={createJob} style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 240px auto' }}>
+        <h3 style={{ margin: '0 0 10px' }}>Style Packs (Admin)</h3>
+        <form
+          onSubmit={createStylePack}
+          style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 1.2fr auto', marginBottom: 10 }}
+        >
+          <input
+            className="input"
+            value={newStylePackName}
+            onChange={(event) => setNewStylePackName(event.target.value)}
+            placeholder="Style pack name"
+          />
+          <input
+            className="input"
+            value={newStylePackDescription}
+            onChange={(event) => setNewStylePackDescription(event.target.value)}
+            placeholder="Description (optional)"
+          />
+          <button className="button" type="submit" disabled={busyStylePackId === 'new'}>
+            {busyStylePackId === 'new' ? 'Creating...' : 'Create Style Pack'}
+          </button>
+        </form>
+
+        {stylePacks.length === 0 ? <div className="notice">No style packs yet.</div> : null}
+        {stylePacks.map((stylePack) => {
+          const draft = stylePackDrafts[stylePack.id] || {
+            name: stylePack.name,
+            description: stylePack.description || '',
+            documentVersionId: '',
+          };
+          const isBusy = busyStylePackId === stylePack.id;
+          return (
+            <div key={stylePack.id} className="card" style={{ marginTop: 10, borderColor: '#1a2f2a1f' }}>
+              <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1.3fr auto', alignItems: 'center' }}>
+                <input
+                  className="input"
+                  value={draft.name}
+                  onChange={(event) => updateStylePackDraft(stylePack.id, 'name', event.target.value)}
+                  placeholder="Style pack name"
+                />
+                <input
+                  className="input"
+                  value={draft.description}
+                  onChange={(event) => updateStylePackDraft(stylePack.id, 'description', event.target.value)}
+                  placeholder="Description"
+                />
+                <button className="button secondary" type="button" disabled={isBusy} onClick={() => saveStylePack(stylePack.id)}>
+                  {isBusy ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+
+              <div style={{ marginTop: 8, display: 'grid', gap: 8, gridTemplateColumns: '1fr auto' }}>
+                <input
+                  className="input"
+                  value={draft.documentVersionId}
+                  onChange={(event) => updateStylePackDraft(stylePack.id, 'documentVersionId', event.target.value)}
+                  placeholder="Attach source document version ID"
+                />
+                <button
+                  className="button ghost"
+                  type="button"
+                  disabled={isBusy || !draft.documentVersionId.trim()}
+                  onClick={() => attachStylePackSourceDoc(stylePack.id)}
+                >
+                  Attach Source Doc
+                </button>
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <strong>Source Docs:</strong> {stylePack.sourceDocs.length}
+              </div>
+              {stylePack.sourceDocs.length > 0 ? (
+                <div style={{ marginTop: 6, display: 'grid', gap: 6 }}>
+                  {stylePack.sourceDocs.map((sourceDoc) => (
+                    <div
+                      key={sourceDoc.id}
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        border: '1px solid #1a2f2a1f',
+                        borderRadius: 8,
+                        padding: '6px 8px',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span>
+                        {sourceDoc.documentVersion.document.title} ({sourceDoc.documentVersionId})
+                      </span>
+                      <button
+                        className="button ghost"
+                        type="button"
+                        style={{ width: 120 }}
+                        disabled={isBusy}
+                        onClick={() => removeStylePackSourceDoc(stylePack.id, sourceDoc.documentVersionId)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="card" style={{ marginBottom: 14 }}>
+        <form onSubmit={createJob} style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 220px 260px auto' }}>
           <input className="input" value={matterId} onChange={(e) => setMatterId(e.target.value)} placeholder="Matter ID" />
           <select className="select" value={toolName} onChange={(e) => setToolName(e.target.value)}>
             {TOOLS.map((tool) => (
               <option key={tool} value={tool}>{tool}</option>
+            ))}
+          </select>
+          <select
+            className="select"
+            value={selectedStylePackId}
+            onChange={(event) => setSelectedStylePackId(event.target.value)}
+          >
+            <option value="">No style pack</option>
+            {stylePacks.map((stylePack) => (
+              <option key={stylePack.id} value={stylePack.id}>
+                {stylePack.name}
+              </option>
             ))}
           </select>
           <button className="button" type="submit">Create AI Job</button>
@@ -252,6 +530,13 @@ export default function AiPage() {
                           </div>
 
                           {metadata.banner ? <div className="notice" style={{ marginTop: 10 }}>{metadata.banner}</div> : null}
+                          {metadata.stylePack ? (
+                            <div style={{ marginTop: 8 }}>
+                              <span className="badge">
+                                Style Pack: {metadata.stylePack.name} ({metadata.stylePack.sourceDocCount || 0} source docs)
+                              </span>
+                            </div>
+                          ) : null}
                           <pre
                             style={{
                               marginTop: 10,
@@ -409,6 +694,22 @@ function buildSelectionState(
   }
 
   return nextSelections;
+}
+
+function buildStylePackDrafts(
+  stylePacks: StylePack[],
+  previous: Record<string, StylePackDraft>,
+): Record<string, StylePackDraft> {
+  const nextDrafts: Record<string, StylePackDraft> = {};
+  for (const stylePack of stylePacks) {
+    const existing = previous[stylePack.id];
+    nextDrafts[stylePack.id] = {
+      name: existing?.name ?? stylePack.name,
+      description: existing?.description ?? (stylePack.description || ''),
+      documentVersionId: existing?.documentVersionId ?? '',
+    };
+  }
+  return nextDrafts;
 }
 
 function getDeadlineCandidates(artifact: AiArtifact): DeadlineCandidate[] {

@@ -31,6 +31,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
   - draft artifacts with provenance + citations
   - review workflow (approve/reject/edit)
   - deadline confirmation flow
+  - style pack management + source-document governance + provenance
 - Public API surface with generated OpenAPI (`/openapi`)
 - Webhooks endpoint registration + delivery tracking
 - Integration connection framework with OAuth start/callback (Clio/MyCase), encrypted token storage, idempotent sync runs, and webhook subscription registry for Clio/MyCase/Filevine/PracticePanther/Gmail/Outlook/generic REST
@@ -157,6 +158,15 @@ Portal attachment security workflow:
 - `POST /portal/attachments/upload`
 - `GET /portal/attachments/:versionId/download-url`
 - `docs/parity/portal-attachments-security.md`
+
+AI style pack governance workflow:
+
+- `GET /ai/style-packs`
+- `POST /ai/style-packs`
+- `PATCH /ai/style-packs/:id`
+- `POST /ai/style-packs/:id/source-docs`
+- `DELETE /ai/style-packs/:id/source-docs/:documentVersionId`
+- `docs/parity/style-pack-governance.md`
 
 ## Tests
 

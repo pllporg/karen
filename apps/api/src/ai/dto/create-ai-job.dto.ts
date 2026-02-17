@@ -10,4 +10,8 @@ export class CreateAiJobDto {
   @IsObject()
   @IsOptional()
   input?: Record<string, unknown>;
+
+  @IsString()
+  @IsOptional()
+  stylePackId?: string;
 }
