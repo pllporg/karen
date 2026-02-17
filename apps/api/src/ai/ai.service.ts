@@ -9,6 +9,7 @@ import { AccessService } from '../access/access.service';
 import { AuditService } from '../audit/audit.service';
 import { toJsonValue } from '../common/utils/json.util';
 import { AiExcerptEvidence, deriveDeadlineCandidates } from './deadline-candidates.util';
+import { scanAndSanitizeUntrustedText } from './prompt-injection-filter.util';
 
 const AI_QUEUE = 'ai-jobs';
 
@@ -187,27 +188,64 @@ export class AiService implements OnModuleInit {
   }) {
     await this.access.assertMatterAccess(input.user, input.matterId, 'write');
 
-    const chunks = this.chunkText(this.sanitizeUntrustedDocText(input.text));
+    const chunks = this.chunkText(input.text);
+    let redactedSegments = 0;
+    let flaggedChunks = 0;
+    let blockedChunks = 0;
 
     for (const chunk of chunks) {
-      const embedding = await this.embedText(chunk.text);
+      const scan = scanAndSanitizeUntrustedText(chunk.text);
+      const embedding = await this.embedText(scan.sanitizedText);
+
+      redactedSegments += scan.redactionCount;
+      if (scan.detected) flaggedChunks += 1;
+      if (scan.blockedFromAiContext) blockedChunks += 1;
+
       await this.prisma.aiSourceChunk.create({
         data: {
           organizationId: input.user.organizationId,
           documentVersionId: input.documentVersionId,
-          chunkText: chunk.text,
+          chunkText: scan.sanitizedText,
           embeddingJson: (embedding ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           metadataJson: toJsonValue({
             ...input.metadata,
             start: chunk.start,
             end: chunk.end,
+            promptInjection: {
+              detected: scan.detected,
+              maxSeverity: scan.maxSeverity,
+              redactionCount: scan.redactionCount,
+              blockedFromAiContext: scan.blockedFromAiContext,
+              findingIds: scan.findings.map((finding) => finding.signalId),
+              findings: scan.findings,
+            },
           }),
+        },
+      });
+    }
+
+    if (flaggedChunks > 0) {
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'ai.ingest.prompt_injection_detected',
+        entityType: 'documentVersion',
+        entityId: input.documentVersionId,
+        metadata: {
+          matterId: input.matterId,
+          flaggedChunks,
+          blockedChunks,
+          redactedSegments,
         },
       });
     }
 
     return {
       ingestedChunks: chunks.length,
+      promptInjectionDetected: flaggedChunks > 0,
+      flaggedChunks,
+      blockedChunks,
+      redactedSegments,
     };
   }
 
@@ -397,7 +435,7 @@ export class AiService implements OnModuleInit {
     });
     if (!matter) throw new Error('Matter not found');
 
-    const chunks = await this.prisma.aiSourceChunk.findMany({
+    const rawChunks = await this.prisma.aiSourceChunk.findMany({
       where: {
         organizationId,
         documentVersion: {
@@ -410,9 +448,11 @@ export class AiService implements OnModuleInit {
           },
         },
       },
-      take: 25,
+      take: 50,
       orderBy: { createdAt: 'desc' },
     });
+
+    const chunks = rawChunks.filter((chunk) => !this.isChunkBlockedFromAiContext(chunk.metadataJson)).slice(0, 25);
 
     return { matter, chunks };
   }
@@ -431,15 +471,6 @@ export class AiService implements OnModuleInit {
     }
 
     return result;
-  }
-
-  private sanitizeUntrustedDocText(text: string): string {
-    const blockedPatterns = [/ignore\s+previous\s+instructions/gi, /reveal\s+system\s+prompt/gi, /developer\s+message/gi];
-    let cleaned = text;
-    for (const pattern of blockedPatterns) {
-      cleaned = cleaned.replace(pattern, '[REDACTED_PROMPT_INJECTION_ATTEMPT]');
-    }
-    return cleaned;
   }
 
   private async embedText(text: string): Promise<number[] | null> {
@@ -474,5 +505,19 @@ export class AiService implements OnModuleInit {
       hash = (hash * 31 + prompt.charCodeAt(i)) >>> 0;
     }
     return hash.toString(16);
+  }
+
+  private isChunkBlockedFromAiContext(metadata: Prisma.JsonValue | null): boolean {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
+
+    const promptInjection = (metadata as Record<string, unknown>).promptInjection;
+    if (!promptInjection || typeof promptInjection !== 'object' || Array.isArray(promptInjection)) return false;
+
+    const promptInjectionRecord = promptInjection as Record<string, unknown>;
+    if (typeof promptInjectionRecord.blockedFromAiContext === 'boolean') {
+      return promptInjectionRecord.blockedFromAiContext;
+    }
+
+    return String(promptInjectionRecord.maxSeverity || '').toLowerCase() === 'high';
   }
 }
