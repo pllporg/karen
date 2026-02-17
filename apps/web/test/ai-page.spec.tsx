@@ -126,6 +126,81 @@ describe('AiPage', () => {
     });
   });
 
+  it('shows validation error when selected deadline has no task/event outputs enabled', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: 'job-1',
+            toolName: 'deadline_extraction',
+            matterId: 'matter-1',
+            status: 'COMPLETED',
+            artifacts: [
+              {
+                id: 'artifact-1',
+                type: 'deadline_extraction',
+                content: 'Draft deadline table',
+                reviewedStatus: 'DRAFT',
+                metadataJson: {
+                  banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
+                  deadlineCandidates: [
+                    {
+                      id: 'deadline-1',
+                      date: '2026-03-01',
+                      description: 'Serve initial disclosures',
+                      chunkId: 'chunk-abc',
+                      excerpt: 'Within 14 days after Rule 26(f) conference.',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            message: 'Select at least one output (task/event) at row 1',
+          },
+          400,
+        ),
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AiPage />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/ai/jobs',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/ai/style-packs',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Confirm' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Create task' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Create event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Selected Deadlines' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/ai/artifacts/artifact-1/confirm-deadlines',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"createTask":false'),
+        }),
+      );
+      expect(screen.getByText(/Select at least one output/i)).toBeInTheDocument();
+    });
+  });
+
   it('approves artifact and reloads jobs', async () => {
     const fetchMock = vi
       .fn()

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T21:34:37.271Z",
+  "generatedAt": "2026-02-17T21:57:11.761Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 33,
+    "unresolvedRequirements": 32,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 28,
+      "phase-1": 27,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 33
+      "Complete": 32
     },
     "unresolvedCountsByRisk": {
-      "High": 16,
+      "High": 15,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 16,
+      "Complete:High": 15,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-AI-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
-        "component": "Web",
-        "epicCode": "PARITY-08",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-AI-002",
         "parityStatus": "Complete",
@@ -127,21 +118,37 @@
         "component": "API",
         "epicCode": "PARITY-03",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORT-002",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Finalize Clio CSV/XLSX template importer coverage",
+        "component": "API",
+        "epicCode": "PARITY-03",
+        "phase": "phase-1"
       }
     ]
   },
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 44,
+    "scopedIssueCount": 45,
     "stateCounts": {
-      "Done": 31,
+      "Done": 32,
       "In Review": 1,
       "Backlog": 12
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-52",
+        "title": "Strengthen REQ-OPS-001 web smoke coverage for critical user journey",
+        "state": "Done",
+        "updatedAt": "2026-02-17T21:39:45.716Z",
+        "requirementId": "REQ-OPS-001"
+      },
       {
         "key": "KAR-48",
         "title": "Implement LEDES/UTBMS export jobs with validation profiles",
@@ -204,29 +211,24 @@
         "state": "Done",
         "updatedAt": "2026-02-17T17:35:37.259Z",
         "requirementId": "REQ-DATA-003"
-      },
-      {
-        "key": "KAR-25",
-        "title": "Expand document automation coverage for merge fields and generated outputs",
-        "state": "Done",
-        "updatedAt": "2026-02-17T17:19:08.791Z",
-        "requirementId": "REQ-COMM-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:34:36.027Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:57:10.482Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "7fd6a48def0c35bc17c51034ebe1ec4f76ddb0ad",
+    "gitHead": "4196db25b0372396d0cdb95f64911703801ab096",
     "gitStatusShort": [
-      "## lin/KAR-52-web-smoke-journey-coverage",
+      "## lin/KAR-53-ai-deadline-verification-hardening",
+      " M apps/api/src/ai/ai.service.ts",
+      " M apps/web/test/ai-page.spec.tsx",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/web/test/smoke-user-journey.spec.tsx",
-      "?? docs/parity/web-smoke-journey-coverage.md"
+      "?? apps/api/test/ai-deadline-confirmation.spec.ts",
+      "?? docs/parity/ai-deadline-confirmation-verification.md"
     ],
-    "dirtyFileCount": 4
+    "dirtyFileCount": 6
   }
 }

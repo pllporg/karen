@@ -516,34 +516,63 @@ export class AiService implements OnModuleInit {
       },
     });
 
-    if (!artifact) throw new Error('Artifact not found');
+    if (!artifact) throw new NotFoundException('Artifact not found');
     await this.access.assertMatterAccess(input.user, artifact.job.matterId, 'write');
+
+    if (!Array.isArray(input.selections) || input.selections.length === 0) {
+      throw new BadRequestException('At least one confirmed deadline selection is required');
+    }
+
+    const normalizedSelections = input.selections.map((selection, index) => {
+      const dueDate = new Date(selection.date);
+      if (Number.isNaN(dueDate.getTime())) {
+        throw new BadRequestException(`Invalid deadline date at row ${index + 1}`);
+      }
+
+      const description = String(selection.description || '').trim();
+      if (!description) {
+        throw new BadRequestException(`Deadline description is required at row ${index + 1}`);
+      }
+
+      const createTask = selection.createTask !== false;
+      const createEvent = selection.createEvent !== false;
+      if (!createTask && !createEvent) {
+        throw new BadRequestException(`Select at least one output (task/event) at row ${index + 1}`);
+      }
+
+      return {
+        date: selection.date,
+        description,
+        createTask,
+        createEvent,
+        dueDate,
+      };
+    });
 
     const created: Array<{ type: 'task' | 'event'; id: string }> = [];
 
-    for (const selection of input.selections) {
-      const dueDate = new Date(selection.date);
-      if (selection.createTask !== false) {
+    for (const selection of normalizedSelections) {
+      if (selection.createTask) {
         const task = await this.prisma.task.create({
           data: {
             organizationId: input.user.organizationId,
             matterId: artifact.job.matterId,
             title: `[AI Confirmed Deadline] ${selection.description}`,
             description: `Confirmed from AI extraction artifact ${artifact.id}`,
-            dueAt: dueDate,
+            dueAt: selection.dueDate,
             createdByUserId: input.user.id,
           },
         });
         created.push({ type: 'task', id: task.id });
       }
 
-      if (selection.createEvent !== false) {
+      if (selection.createEvent) {
         const event = await this.prisma.calendarEvent.create({
           data: {
             organizationId: input.user.organizationId,
             matterId: artifact.job.matterId,
             type: 'Deadline',
-            startAt: dueDate,
+            startAt: selection.dueDate,
             description: `[AI Confirmed] ${selection.description}`,
             source: 'AI_DEADLINE_CONFIRMATION',
           },
@@ -551,6 +580,26 @@ export class AiService implements OnModuleInit {
         created.push({ type: 'event', id: event.id });
       }
     }
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'ai.deadlines.confirmed',
+      entityType: 'aiArtifact',
+      entityId: artifact.id,
+      metadata: {
+        matterId: artifact.job.matterId,
+        selectionCount: normalizedSelections.length,
+        createdCount: created.length,
+        selectedDeadlines: normalizedSelections.map((selection) => ({
+          date: selection.date,
+          description: selection.description,
+          createTask: selection.createTask,
+          createEvent: selection.createEvent,
+        })),
+        createdRecords: created,
+      },
+    });
 
     return { created };
   }

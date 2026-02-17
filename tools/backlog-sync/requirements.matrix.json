@@ -600,11 +600,11 @@
           "title": "Implement source-cited deadline extraction side-by-side evidence UI",
           "requirementId": "REQ-AI-001",
           "promptSection": "AI Workspace / Deadline extraction with side-by-side excerpt",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "ai-governance"],
-          "problemStatement": "Deadline extraction exists but UI evidence review needs stronger side-by-side verification.",
+          "problemStatement": "Deadline extraction UX, server-side confirmation guardrails, and auditable confirmation events are now verified end-to-end with regression coverage.",
           "requirementExcerpt": "Must show side-by-side excerpt for each extracted date and require confirmation before creating tasks/events.",
           "acceptanceCriteria": [
             "UI displays each extracted deadline with source excerpt and chunk link.",
@@ -614,7 +614,8 @@
           "apiImpact": "Artifact response includes structured evidence payload.",
           "securityImpact": "Preserves review-required governance controls.",
           "definitionOfDone": [
-            "Deadline confirmation UX validated with acceptance tests."
+            "Deadline confirmation UX validated with acceptance tests.",
+            "Confirmation validation + audit-trail tests are passing and documented in docs/parity/ai-deadline-confirmation-verification.md."
           ]
         },
         {
