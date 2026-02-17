@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MatterStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -92,6 +92,45 @@ export class MattersService {
         key: input.participantRoleKey,
       },
     });
+    if (!roleDef) {
+      throw new NotFoundException(`Participant role definition not found: ${input.participantRoleKey}`);
+    }
+
+    await this.assertContactInOrganization(
+      input.user.organizationId,
+      input.contactId,
+      `Participant contact not found: ${input.contactId}`,
+    );
+
+    if (input.representedByContactId) {
+      if (input.representedByContactId === input.contactId) {
+        throw new BadRequestException('representedByContactId cannot match contactId');
+      }
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        input.representedByContactId,
+        `Representing contact not found: ${input.representedByContactId}`,
+      );
+    }
+
+    if (input.lawFirmContactId) {
+      if (input.lawFirmContactId === input.contactId) {
+        throw new BadRequestException('lawFirmContactId cannot match contactId');
+      }
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        input.lawFirmContactId,
+        `Law firm contact not found: ${input.lawFirmContactId}`,
+      );
+    }
+
+    const counselRole = this.isCounselRole(roleDef.key, roleDef.label);
+    if (counselRole && input.representedByContactId) {
+      throw new BadRequestException('Counsel roles cannot use representedByContactId; add represented parties instead');
+    }
+    if (!counselRole && input.lawFirmContactId) {
+      throw new BadRequestException('lawFirmContactId is only valid for counsel roles');
+    }
 
     const participant = await this.prisma.matterParticipant.create({
       data: {
@@ -99,8 +138,8 @@ export class MattersService {
         matterId: input.matterId,
         contactId: input.contactId,
         participantRoleKey: input.participantRoleKey,
-        participantRoleDefinitionId: roleDef?.id,
-        side: input.side,
+        participantRoleDefinitionId: roleDef.id,
+        side: input.side ?? roleDef.sideDefault,
         isPrimary: input.isPrimary ?? false,
         representedByContactId: input.representedByContactId,
         lawFirmContactId: input.lawFirmContactId,
@@ -121,6 +160,28 @@ export class MattersService {
     });
 
     return participant;
+  }
+
+  private isCounselRole(roleKey: string, roleLabel?: string | null) {
+    const fingerprint = `${roleKey} ${roleLabel || ''}`.toLowerCase();
+    return /(counsel|attorney|lawyer)/.test(fingerprint);
+  }
+
+  private async assertContactInOrganization(
+    organizationId: string,
+    contactId: string,
+    errorMessage: string,
+  ) {
+    const contact = await this.prisma.contact.findFirst({
+      where: {
+        organizationId,
+        id: contactId,
+      },
+      select: { id: true },
+    });
+    if (!contact) {
+      throw new NotFoundException(errorMessage);
+    }
   }
 
   async dashboard(user: AuthenticatedUser, matterId: string) {

@@ -405,10 +405,22 @@ async function main() {
     data: [
       { organizationId: org.id, key: 'client', label: 'Client', sideDefault: MatterParticipantSide.CLIENT_SIDE },
       { organizationId: org.id, key: 'opposing_counsel', label: 'Opposing Counsel', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'opposing_party', label: 'Opposing Party', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'co_counsel', label: 'Co-Counsel', sideDefault: MatterParticipantSide.CLIENT_SIDE },
+      { organizationId: org.id, key: 'local_counsel', label: 'Local Counsel', sideDefault: MatterParticipantSide.CLIENT_SIDE },
       { organizationId: org.id, key: 'expert', label: 'Expert', sideDefault: MatterParticipantSide.NEUTRAL },
       { organizationId: org.id, key: 'inspector', label: 'Inspector', sideDefault: MatterParticipantSide.NEUTRAL },
+      { organizationId: org.id, key: 'mediator', label: 'Mediator', sideDefault: MatterParticipantSide.NEUTRAL },
+      { organizationId: org.id, key: 'arbitrator', label: 'Arbitrator', sideDefault: MatterParticipantSide.NEUTRAL },
+      { organizationId: org.id, key: 'witness', label: 'Witness', sideDefault: MatterParticipantSide.NEUTRAL },
+      { organizationId: org.id, key: 'process_server', label: 'Process Server', sideDefault: MatterParticipantSide.NEUTRAL },
       { organizationId: org.id, key: 'adjuster', label: 'Adjuster', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'insurer', label: 'Insurer', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'lien_claimant', label: 'Lien Claimant', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'subcontractor', label: 'Subcontractor', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
+      { organizationId: org.id, key: 'supplier', label: 'Supplier', sideDefault: MatterParticipantSide.OPPOSING_SIDE },
       { organizationId: org.id, key: 'judge', label: 'Judge', sideDefault: MatterParticipantSide.COURT },
+      { organizationId: org.id, key: 'court_staff', label: 'Court Staff', sideDefault: MatterParticipantSide.COURT },
     ],
   });
 

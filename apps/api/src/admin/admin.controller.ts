@@ -8,6 +8,7 @@ import { AuthenticatedUser } from '../common/types';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { CreateStageDto } from './dto/create-stage.dto';
+import { CreateParticipantRoleDto } from './dto/create-participant-role.dto';
 
 @Controller('admin')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -65,6 +66,25 @@ export class AdminController {
       name: dto.name,
       practiceArea: dto.practiceArea,
       orderIndex: dto.orderIndex,
+    });
+  }
+
+  @Get('participant-roles')
+  @RequirePermissions('roles:read')
+  participantRoles(@CurrentUser() user: AuthenticatedUser) {
+    return this.adminService.listParticipantRoles(user.organizationId);
+  }
+
+  @Post('participant-roles')
+  @RequirePermissions('roles:write')
+  createParticipantRole(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateParticipantRoleDto) {
+    return this.adminService.createParticipantRole({
+      organizationId: user.organizationId,
+      actorUserId: user.id,
+      key: dto.key,
+      label: dto.label,
+      description: dto.description,
+      sideDefault: dto.sideDefault,
     });
   }
 }

@@ -10,12 +10,18 @@ export default function AdminPage() {
   const [users, setUsers] = useState<Array<{ id: string; user: { email: string }; role?: { name: string } }>>([]);
   const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
   const [stages, setStages] = useState<Array<{ id: string; practiceArea: string; name: string }>>([]);
+  const [participantRoles, setParticipantRoles] = useState<
+    Array<{ id: string; key: string; label: string; sideDefault?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' }>
+  >([]);
   const [auditEvents, setAuditEvents] = useState<Array<{ id: string; action: string; createdAt: string }>>([]);
   const [customFields, setCustomFields] = useState<Array<{ id: string; key: string; entityType: string; label: string }>>([]);
   const [sections, setSections] = useState<Array<{ id: string; name: string }>>([]);
   const [customFieldKey, setCustomFieldKey] = useState('project_address');
   const [customFieldLabel, setCustomFieldLabel] = useState('Project Address');
   const [sectionName, setSectionName] = useState('Defect Summary');
+  const [participantRoleKey, setParticipantRoleKey] = useState('opposing_party');
+  const [participantRoleLabel, setParticipantRoleLabel] = useState('Opposing Party');
+  const [participantRoleSide, setParticipantRoleSide] = useState<'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT'>('OPPOSING_SIDE');
 
   useEffect(() => {
     Promise.all([
@@ -23,15 +29,19 @@ export default function AdminPage() {
       apiFetch<Array<{ id: string; user: { email: string }; role?: { name: string } }>>('/admin/users'),
       apiFetch<Array<{ id: string; name: string }>>('/admin/roles'),
       apiFetch<Array<{ id: string; practiceArea: string; name: string }>>('/admin/stages'),
+      apiFetch<Array<{ id: string; key: string; label: string; sideDefault?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' }>>(
+        '/admin/participant-roles',
+      ),
       apiFetch<Array<{ id: string; action: string; createdAt: string }>>('/audit?limit=25'),
       apiFetch<Array<{ id: string; key: string; entityType: string; label: string }>>('/config/custom-fields'),
       apiFetch<Array<{ id: string; name: string }>>('/config/sections'),
     ])
-      .then(([o, u, r, s, a, cf, sec]) => {
+      .then(([o, u, r, s, pr, a, cf, sec]) => {
         setOrg(o);
         setUsers(u);
         setRoles(r);
         setStages(s);
+        setParticipantRoles(pr);
         setAuditEvents(a);
         setCustomFields(cf);
         setSections(sec);
@@ -64,6 +74,24 @@ export default function AdminPage() {
     });
     setSectionName('');
     setSections(await apiFetch<Array<{ id: string; name: string }>>('/config/sections'));
+  }
+
+  async function createParticipantRole() {
+    await apiFetch('/admin/participant-roles', {
+      method: 'POST',
+      body: JSON.stringify({
+        key: participantRoleKey,
+        label: participantRoleLabel,
+        sideDefault: participantRoleSide,
+      }),
+    });
+    setParticipantRoleKey('');
+    setParticipantRoleLabel('');
+    setParticipantRoles(
+      await apiFetch<Array<{ id: string; key: string; label: string; sideDefault?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' }>>(
+        '/admin/participant-roles',
+      ),
+    );
   }
 
   return (
@@ -120,6 +148,54 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Participant Roles</h3>
+          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 220px auto', marginBottom: 12 }}>
+            <input
+              className="input"
+              value={participantRoleKey}
+              onChange={(e) => setParticipantRoleKey(e.target.value)}
+              placeholder="Role key (e.g. opposing_counsel)"
+            />
+            <input
+              className="input"
+              value={participantRoleLabel}
+              onChange={(e) => setParticipantRoleLabel(e.target.value)}
+              placeholder="Role label"
+            />
+            <select
+              className="input"
+              value={participantRoleSide}
+              onChange={(e) => setParticipantRoleSide(e.target.value as 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT')}
+            >
+              <option value="CLIENT_SIDE">CLIENT_SIDE</option>
+              <option value="OPPOSING_SIDE">OPPOSING_SIDE</option>
+              <option value="NEUTRAL">NEUTRAL</option>
+              <option value="COURT">COURT</option>
+            </select>
+            <button className="button secondary" onClick={createParticipantRole}>Save Role</button>
+          </div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Label</th>
+                <th>Default Side</th>
+              </tr>
+            </thead>
+            <tbody>
+              {participantRoles.map((role) => (
+                <tr key={role.id}>
+                  <td>{role.key}</td>
+                  <td>{role.label}</td>
+                  <td>{role.sideDefault || 'None'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Audit Log</h3>
           <table className="table">

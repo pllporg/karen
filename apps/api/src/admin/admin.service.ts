@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MatterParticipantSide } from '@prisma/client';
 import { toJsonValue } from '../common/utils/json.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -148,5 +149,53 @@ export class AdminService {
       },
       orderBy: [{ practiceArea: 'asc' }, { orderIndex: 'asc' }],
     });
+  }
+
+  async listParticipantRoles(organizationId: string) {
+    return this.prisma.participantRoleDefinition.findMany({
+      where: { organizationId },
+      orderBy: [{ label: 'asc' }, { key: 'asc' }],
+    });
+  }
+
+  async createParticipantRole(input: {
+    organizationId: string;
+    actorUserId: string;
+    key: string;
+    label: string;
+    description?: string;
+    sideDefault?: MatterParticipantSide;
+  }) {
+    const role = await this.prisma.participantRoleDefinition.upsert({
+      where: {
+        organizationId_key: {
+          organizationId: input.organizationId,
+          key: input.key,
+        },
+      },
+      update: {
+        label: input.label,
+        description: input.description,
+        sideDefault: input.sideDefault,
+      },
+      create: {
+        organizationId: input.organizationId,
+        key: input.key,
+        label: input.label,
+        description: input.description,
+        sideDefault: input.sideDefault,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: 'participant_role_definition.upserted',
+      entityType: 'participantRoleDefinition',
+      entityId: role.id,
+      metadata: role,
+    });
+
+    return role;
   }
 }

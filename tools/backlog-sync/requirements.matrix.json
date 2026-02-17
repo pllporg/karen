@@ -253,7 +253,7 @@
           "title": "Complete participant role configurability and side semantics coverage",
           "requirementId": "REQ-MAT-001",
           "promptSection": "MatterParticipant role model requirements",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "matters"],
@@ -267,7 +267,7 @@
           "apiImpact": "Role definition endpoints and validation rules strengthened.",
           "securityImpact": "Matter access checks remain enforced on participant mutations.",
           "definitionOfDone": [
-            "Participant role matrix test suite passes."
+            "Participant role matrix test suite passes and participant role definitions are configurable through admin endpoints."
           ]
         },
         {
