@@ -88,3 +88,4 @@ For each requirement slice:
 - 2026-02-16: Implemented `REQ-AI-001` deadline-extraction confirmation UX with side-by-side source excerpt evidence and explicit per-row confirmation before task/event creation, plus parser/unit tests for structured deadline candidates.
 - 2026-02-16: Implemented `REQ-AI-002` ingestion hardening with chunk-level prompt-injection filtering, metadata severity flags, blocked-chunk context exclusion, and adversarial test coverage.
 - 2026-02-16: Implemented `REQ-BILL-001` Stripe lifecycle hardening with checkout metadata propagation, public webhook reconciliation endpoint, idempotent payment-intent handling, and webhook reconciliation tests.
+- 2026-02-16: Implemented `REQ-BILL-002` trust ledger invariants (negative-balance guardrail), trust transfer workflow, account/matter summary reports, and reconciliation mismatch reporting with regression tests.
