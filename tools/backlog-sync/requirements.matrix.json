@@ -16,7 +16,7 @@
           "title": "Harden tenant isolation test coverage across all core entities",
           "requirementId": "REQ-SEC-001",
           "promptSection": "SECURITY REQUIREMENTS / Tenant isolation tests",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "security"],
@@ -90,7 +90,7 @@
           "title": "Validate all required entities and relation semantics against prompt",
           "requirementId": "REQ-DATA-001",
           "promptSection": "DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Data",
           "risk": "High",
           "labels": ["parity", "data-model"],
@@ -104,7 +104,7 @@
           "apiImpact": "Potential follow-on migrations only.",
           "securityImpact": "Improves data integrity and access policy enforcement confidence.",
           "definitionOfDone": [
-            "Checklist committed and referenced by backlog items."
+            "Checklist committed at docs/parity/data-model-checklist.md and referenced by backlog items."
           ]
         },
         {

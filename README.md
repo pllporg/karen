@@ -239,6 +239,7 @@ Handoff artifacts:
 - `docs/SESSION_HANDOFF.md` (session state + operational handoff)
 - `docs/WORKING_CONTRACT.md` (implementation protocol)
 - `tools/backlog-sync/session.snapshot.json` (machine-readable status snapshot)
+- `docs/parity/data-model-checklist.md` (prompt-entity to Prisma parity mapping and gap register)
 
 Policy notes:
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-16T22:36:15.234Z",
+  "generatedAt": "2026-02-17T00:48:31.625Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Partial": 26,
-      "Complete": 3,
+      "Complete": 5,
+      "Partial": 24,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,9 +33,9 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Partial:High": 15,
-      "Complete:High": 2,
+      "Complete:High": 4,
       "Partial:Medium": 11,
+      "Partial:High": 13,
       "Missing:Medium": 5,
       "Complete:Medium": 1
     }
@@ -77,15 +77,6 @@
         "title": "Complete trust accounting reports and ledger invariants",
         "component": "API",
         "epicCode": "PARITY-06",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-DATA-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Validate all required entities and relation semantics against prompt",
-        "component": "Data",
-        "epicCode": "PARITY-02",
         "phase": "phase-1"
       },
       {
@@ -132,6 +123,15 @@
         "component": "Web",
         "epicCode": "PARITY-10",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORT-001",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
+        "component": "API",
+        "epicCode": "PARITY-03",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,18 +140,39 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 36,
-      "In Review": 4,
-      "Done": 4
+      "Backlog": 33,
+      "In Review": 3,
+      "Done": 8
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-28",
+        "title": "Complete trust accounting reports and ledger invariants",
+        "state": "Done",
+        "updatedAt": "2026-02-17T00:39:12.905Z",
+        "requirementId": "REQ-BILL-002"
+      },
+      {
+        "key": "KAR-27",
+        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
+        "state": "Done",
+        "updatedAt": "2026-02-17T00:23:19.983Z",
+        "requirementId": "REQ-BILL-001"
+      },
+      {
+        "key": "KAR-34",
+        "title": "Implement prompt injection defense hardening for ingestion pipeline",
+        "state": "Done",
+        "updatedAt": "2026-02-17T00:13:22.799Z",
+        "requirementId": "REQ-AI-002"
+      },
+      {
         "key": "KAR-33",
         "title": "Implement source-cited deadline extraction side-by-side evidence UI",
-        "state": "In Review",
-        "updatedAt": "2026-02-16T22:35:53.179Z",
+        "state": "Done",
+        "updatedAt": "2026-02-16T22:39:11.183Z",
         "requirementId": "REQ-AI-001"
       },
       {
@@ -195,38 +216,17 @@
         "state": "Backlog",
         "updatedAt": "2026-02-16T20:39:07.918Z",
         "requirementId": "REQ-BILL-003"
-      },
-      {
-        "key": "KAR-26",
-        "title": "PARITY-06 Billing + Trust + Payments",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:07.918Z",
-        "requirementId": "PARITY-06"
-      },
-      {
-        "key": "KAR-46",
-        "title": "Implement document retention policies with legal hold workflow",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:07.376Z",
-        "requirementId": "REQ-COMM-004"
-      },
-      {
-        "key": "KAR-22",
-        "title": "PARITY-05 Communications + Documents",
-        "state": "Backlog",
-        "updatedAt": "2026-02-16T20:39:07.376Z",
-        "requirementId": "PARITY-05"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-16T22:36:14.000Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T00:48:26.377Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "0155932860e9cc7b6b9e0b9fb97aeaa412950e67",
+    "gitHead": "53caac54612fbbdb93b4d8cdcb90641f6c1e85ea",
     "gitStatusShort": [
-      "## lin/KAR-33-ai-deadline-confirmation...origin/lin/KAR-33-ai-deadline-confirmation"
+      "## lin/KAR-10-data-model-parity-validation...origin/lin/KAR-10-data-model-parity-validation"
     ],
     "dirtyFileCount": 0
   }
