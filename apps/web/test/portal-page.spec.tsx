@@ -13,6 +13,11 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 describe('PortalPage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('sends a portal message and refreshes snapshot counts', async () => {
     const fetchMock = vi
       .fn()
@@ -21,6 +26,7 @@ describe('PortalPage', () => {
           matters: [{ id: 'm1' }],
           keyDates: [{ id: 'd1' }],
           invoices: [{ id: 'i1' }],
+          messages: [],
           documents: [{ id: 'doc1' }, { id: 'doc2' }],
         }),
       )
@@ -30,6 +36,7 @@ describe('PortalPage', () => {
           matters: [{ id: 'm1' }, { id: 'm2' }],
           keyDates: [{ id: 'd1' }],
           invoices: [{ id: 'i1' }],
+          messages: [],
           documents: [{ id: 'doc1' }, { id: 'doc2' }, { id: 'doc3' }],
         }),
       );
@@ -78,7 +85,7 @@ describe('PortalPage', () => {
   it('submits intake and creates e-sign envelope from portal actions', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], documents: [] }))
+      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [] }))
       .mockResolvedValueOnce(jsonResponse({ id: 'intake-1' }))
       .mockResolvedValueOnce(jsonResponse({ id: 'esign-1' }));
     vi.stubGlobal('fetch', fetchMock);
@@ -133,5 +140,109 @@ describe('PortalPage', () => {
       engagementLetterTemplateId: 'letter-template-5',
       matterId: 'matter-22',
     });
+  });
+
+  it('uploads a portal attachment, links it to message, and downloads securely', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'matter-1' }],
+          keyDates: [],
+          invoices: [],
+          messages: [],
+          documents: [],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          document: { id: 'doc-uploaded' },
+          version: { id: 'ver-up' },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: 'msg-uploaded' }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'matter-1' }],
+          keyDates: [],
+          invoices: [],
+          documents: [
+            {
+              id: 'doc-uploaded',
+              matterId: 'matter-1',
+              title: 'Uploaded Portal Photo',
+              latestVersion: { id: 'ver-up' },
+            },
+          ],
+          messages: [
+            {
+              id: 'msg-uploaded',
+              body: 'See attached defect photo',
+              attachments: [
+                {
+                  documentVersionId: 'ver-up',
+                  title: 'Uploaded Portal Photo',
+                },
+              ],
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ url: 'https://download.local/ver-up' }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PortalPage />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/snapshot',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
+    fireEvent.change(screen.getByPlaceholderText('Message'), { target: { value: 'See attached defect photo' } });
+    fireEvent.change(screen.getByPlaceholderText('Attachment Title (optional)'), {
+      target: { value: 'Uploaded Portal Photo' },
+    });
+
+    const file = new File(['binary'], 'defect-photo.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText('Attachment File'), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/attachments/upload',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+    });
+
+    const sendCall = fetchMock.mock.calls[2];
+    expect(JSON.parse(sendCall[1]?.body as string)).toEqual({
+      matterId: 'matter-1',
+      body: 'See attached defect photo',
+      attachmentVersionIds: ['ver-up'],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Download Uploaded Portal Photo' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Download Uploaded Portal Photo' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/attachments/ver-up/download-url',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+      expect(openSpy).toHaveBeenCalledWith('https://download.local/ver-up', '_blank', 'noopener,noreferrer');
+    });
+
+    openSpy.mockRestore();
   });
 });

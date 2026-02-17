@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PortalService } from './portal.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../common/types';
+import { AuthenticatedUser, UploadedFile as UploadedBinary } from '../common/types';
 
 @Controller('portal')
 @UseGuards(SessionAuthGuard)
@@ -15,12 +16,41 @@ export class PortalController {
   }
 
   @Post('messages')
-  message(@CurrentUser() user: AuthenticatedUser, @Body() body: { matterId: string; subject?: string; body: string }) {
+  message(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { matterId: string; subject?: string; body: string; attachmentVersionIds?: string[] },
+  ) {
     return this.portalService.sendPortalMessage({
       user,
       matterId: body.matterId,
       subject: body.subject,
       body: body.body,
+      attachmentVersionIds: body.attachmentVersionIds,
+    });
+  }
+
+  @Post('attachments/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAttachment(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: UploadedBinary,
+    @Body() body: { matterId: string; title?: string; category?: string; tags?: string },
+  ) {
+    return this.portalService.uploadPortalAttachment({
+      user,
+      matterId: body.matterId,
+      title: body.title,
+      category: body.category,
+      tags: body.tags ? body.tags.split(',').map((tag) => tag.trim()) : [],
+      file,
+    });
+  }
+
+  @Get('attachments/:versionId/download-url')
+  attachmentDownload(@CurrentUser() user: AuthenticatedUser, @Param('versionId') versionId: string) {
+    return this.portalService.getPortalAttachmentDownloadUrl({
+      user,
+      documentVersionId: versionId,
     });
   }
 

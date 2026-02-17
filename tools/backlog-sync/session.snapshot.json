@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T04:29:01.990Z",
+  "generatedAt": "2026-02-17T15:58:41.940Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 20,
-      "Partial": 9,
+      "Complete": 21,
+      "Partial": 8,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,25 +33,15 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 16,
+      "Complete:High": 17,
       "Complete:Medium": 4,
       "Partial:Medium": 8,
-      "Missing:Medium": 5,
-      "Partial:High": 1
+      "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-PORTAL-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Implement secure portal attachments in message workflow",
-        "component": "Web",
-        "epicCode": "PARITY-07",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-AI-003",
         "parityStatus": "Partial",
@@ -132,6 +122,15 @@
         "component": "Web",
         "epicCode": "PARITY-08",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-AI-002",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement prompt injection defense hardening for ingestion pipeline",
+        "component": "API",
+        "epicCode": "PARITY-08",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,13 +139,30 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 26,
+      "Backlog": 24,
       "In Review": 1,
-      "Done": 17
+      "Done": 18,
+      "In Progress": 1
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-30"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-30",
+        "title": "Implement secure portal attachments in message workflow",
+        "state": "In Progress",
+        "updatedAt": "2026-02-17T15:54:48.865Z",
+        "requirementId": "REQ-PORTAL-001"
+      },
+      {
+        "key": "KAR-42",
+        "title": "Document deployment runbook and operational SLOs",
+        "state": "Done",
+        "updatedAt": "2026-02-17T04:33:44.828Z",
+        "requirementId": "REQ-OPS-002"
+      },
       {
         "key": "KAR-8",
         "title": "Implement encrypted OAuth token storage with key management",
@@ -202,32 +218,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T01:12:49.187Z",
         "requirementId": "REQ-MAT-001"
-      },
-      {
-        "key": "KAR-10",
-        "title": "Validate all required entities and relation semantics against prompt",
-        "state": "Done",
-        "updatedAt": "2026-02-17T00:52:13.393Z",
-        "requirementId": "REQ-DATA-001"
-      },
-      {
-        "key": "KAR-28",
-        "title": "Complete trust accounting reports and ledger invariants",
-        "state": "Done",
-        "updatedAt": "2026-02-17T00:39:12.905Z",
-        "requirementId": "REQ-BILL-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T04:29:00.498Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T15:58:40.084Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "e1a2216681dbb62bf82e0b04d08601242e013a3d",
+    "gitHead": "cc2e2aca978dad2c221dc9011b45128dd5a4eef3",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M tools/backlog-sync/requirements.matrix.json"
+      "## lin/KAR-30-secure-portal-attachments...origin/lin/KAR-30-secure-portal-attachments",
+      " M apps/web/test/portal-page.spec.tsx"
     ],
     "dirtyFileCount": 1
   }

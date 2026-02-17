@@ -19,7 +19,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Communications threads/messages + full-text search query
 - Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
-- Client portal snapshot/messages/intake/e-sign stub
+- Client portal snapshot/messages/intake/e-sign stub + secure attachment upload/download workflow
 - Plugin import framework:
   - `mycase_backup_zip`
   - `clio_template` (CSV/XLSX)
@@ -151,6 +151,12 @@ Export contract + conformance rules:
 
 - `apps/api/src/exports/full-backup-contract.ts`
 - `docs/parity/export-conformance.md`
+
+Portal attachment security workflow:
+
+- `POST /portal/attachments/upload`
+- `GET /portal/attachments/:versionId/download-url`
+- `docs/parity/portal-attachments-security.md`
 
 ## Tests
 

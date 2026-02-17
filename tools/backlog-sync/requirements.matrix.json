@@ -550,7 +550,7 @@
           "title": "Implement secure portal attachments in message workflow",
           "requirementId": "REQ-PORTAL-001",
           "promptSection": "Client Portal / Secure messaging with attachments",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "portal", "documents"],
