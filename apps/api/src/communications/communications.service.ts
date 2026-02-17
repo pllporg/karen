@@ -4,7 +4,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
 import { AuthenticatedUser } from '../common/types';
 import { AuditService } from '../audit/audit.service';
-import { StubMessageProvider } from './providers/stub-message.provider';
+import { MessageDispatchService } from './providers/message-dispatch.service';
+import { MessageProviderRequestError } from './providers/resend-email.provider';
+import { SendMessageResult } from './providers/message-provider.interface';
 
 @Injectable()
 export class CommunicationsService {
@@ -12,7 +14,7 @@ export class CommunicationsService {
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
     private readonly audit: AuditService,
-    private readonly messageProvider: StubMessageProvider,
+    private readonly messageDispatch: MessageDispatchService,
   ) {}
 
   async listThreads(user: AuthenticatedUser, matterId?: string) {
@@ -146,23 +148,20 @@ export class CommunicationsService {
       metadata: { type: input.type, direction: input.direction },
     });
 
-    if (input.direction === 'OUTBOUND') {
-      if (input.type === 'EMAIL') {
-        await this.messageProvider.sendEmail({
-          to: input.participants?.[0]?.contactId || 'contact-not-mapped',
-          subject: input.subject || 'Message from Karen Legal Suite',
-          body: input.body,
-        });
-      }
-      if (input.type === 'SMS') {
-        await this.messageProvider.sendSms({
-          to: input.participants?.[0]?.contactId || 'contact-not-mapped',
-          body: input.body,
-        });
-      }
+    let nextMessage = message;
+    if (input.direction === 'OUTBOUND' && (input.type === 'EMAIL' || input.type === 'SMS')) {
+      nextMessage = await this.dispatchOutboundMessage({
+        user: input.user,
+        thread,
+        message,
+        type: input.type,
+        subject: input.subject,
+        body: input.body,
+        participants: input.participants || [],
+      });
     }
 
-    return message;
+    return nextMessage;
   }
 
   async search(user: AuthenticatedUser, query: string, matterId?: string) {
@@ -217,5 +216,216 @@ export class CommunicationsService {
         throw new ForbiddenException('Portal message attachments must be marked shared-with-client');
       }
     }
+  }
+
+  private async dispatchOutboundMessage(input: {
+    user: AuthenticatedUser;
+    thread: { id: string; matterId: string | null };
+    message: { id: string; rawSourcePayload: Prisma.JsonValue | null };
+    type: 'EMAIL' | 'SMS';
+    subject?: string;
+    body: string;
+    participants: Array<{ contactId: string; role: 'FROM' | 'TO' | 'CC' | 'BCC' | 'OTHER' }>;
+  }) {
+    const recipient = await this.resolveRecipient(input.user.organizationId, input.type, input.participants);
+
+    if (!recipient.destination) {
+      return this.recordDeliveryFailure({
+        user: input.user,
+        messageId: input.message.id,
+        existingRaw: input.message.rawSourcePayload,
+        type: input.type,
+        provider: 'none',
+        errorMessage: recipient.failureReason || `Missing recipient ${input.type === 'EMAIL' ? 'email' : 'phone'}`,
+        statusCode: undefined,
+      });
+    }
+
+    try {
+      const sendResult =
+        input.type === 'EMAIL'
+          ? await this.messageDispatch.sendEmail({
+              to: recipient.destination,
+              subject: input.subject || 'Message from Karen Legal Suite',
+              body: input.body,
+            })
+          : await this.messageDispatch.sendSms({
+              to: recipient.destination,
+              body: input.body,
+            });
+
+      const updated = await this.prisma.communicationMessage.update({
+        where: { id: input.message.id },
+        data: {
+          rawSourcePayload: this.mergeRawPayload(input.message.rawSourcePayload, {
+            delivery: this.buildDeliverySnapshot({
+              sendResult,
+              type: input.type,
+              destination: recipient.destination,
+              destinationContactId: recipient.contactId,
+            }),
+          }),
+        },
+        include: {
+          participants: true,
+          attachments: true,
+        },
+      });
+
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'communication.delivery.updated',
+        entityType: 'communicationMessage',
+        entityId: input.message.id,
+        metadata: {
+          type: input.type,
+          provider: sendResult.provider,
+          status: sendResult.status,
+          providerMessageId: sendResult.externalMessageId || sendResult.id,
+        },
+      });
+
+      return updated;
+    } catch (error) {
+      const provider = error instanceof MessageProviderRequestError ? error.details.provider : 'unknown';
+      const statusCode = error instanceof MessageProviderRequestError ? error.details.statusCode : undefined;
+      const message = error instanceof Error ? error.message : 'Unknown provider dispatch failure';
+      return this.recordDeliveryFailure({
+        user: input.user,
+        messageId: input.message.id,
+        existingRaw: input.message.rawSourcePayload,
+        type: input.type,
+        provider,
+        errorMessage: message,
+        statusCode,
+      });
+    }
+  }
+
+  private async recordDeliveryFailure(input: {
+    user: AuthenticatedUser;
+    messageId: string;
+    existingRaw: Prisma.JsonValue | null;
+    type: 'EMAIL' | 'SMS';
+    provider: string;
+    errorMessage: string;
+    statusCode?: number;
+  }) {
+    const updated = await this.prisma.communicationMessage.update({
+      where: { id: input.messageId },
+      data: {
+        rawSourcePayload: this.mergeRawPayload(input.existingRaw, {
+          delivery: {
+            provider: input.provider,
+            status: 'failed',
+            errorMessage: input.errorMessage,
+            statusCode: input.statusCode || null,
+            attemptedAt: new Date().toISOString(),
+          },
+        }),
+      },
+      include: {
+        participants: true,
+        attachments: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'communication.delivery.failed',
+      entityType: 'communicationMessage',
+      entityId: input.messageId,
+      metadata: {
+        type: input.type,
+        provider: input.provider,
+        errorMessage: input.errorMessage,
+        statusCode: input.statusCode || null,
+      },
+    });
+
+    return updated;
+  }
+
+  private async resolveRecipient(
+    organizationId: string,
+    type: 'EMAIL' | 'SMS',
+    participants: Array<{ contactId: string; role: 'FROM' | 'TO' | 'CC' | 'BCC' | 'OTHER' }>,
+  ): Promise<{ contactId: string | null; destination: string | null; failureReason?: string }> {
+    const participant =
+      participants.find((item) => item.role === 'TO' && item.contactId) || participants.find((item) => Boolean(item.contactId));
+
+    if (!participant?.contactId) {
+      return {
+        contactId: null,
+        destination: null,
+        failureReason: 'No recipient participant with contactId was supplied',
+      };
+    }
+
+    const contact = await this.prisma.contact.findFirst({
+      where: {
+        id: participant.contactId,
+        organizationId,
+      },
+      select: {
+        id: true,
+        primaryEmail: true,
+        primaryPhone: true,
+      },
+    });
+
+    if (!contact) {
+      return {
+        contactId: participant.contactId,
+        destination: null,
+        failureReason: 'Recipient contact was not found in this organization',
+      };
+    }
+
+    const destination = type === 'EMAIL' ? contact.primaryEmail : contact.primaryPhone;
+    if (!destination) {
+      return {
+        contactId: contact.id,
+        destination: null,
+        failureReason: `Recipient contact is missing primary ${type === 'EMAIL' ? 'email' : 'phone'}`,
+      };
+    }
+
+    return {
+      contactId: contact.id,
+      destination,
+    };
+  }
+
+  private mergeRawPayload(existing: Prisma.JsonValue | null, patch: Record<string, unknown>): Prisma.InputJsonValue {
+    const base =
+      existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? { ...(existing as Record<string, unknown>) }
+        : {};
+    return {
+      ...base,
+      ...patch,
+    } as Prisma.InputJsonValue;
+  }
+
+  private buildDeliverySnapshot(input: {
+    sendResult: SendMessageResult;
+    type: 'EMAIL' | 'SMS';
+    destination: string;
+    destinationContactId: string | null;
+  }) {
+    return {
+      channel: input.type,
+      provider: input.sendResult.provider,
+      status: input.sendResult.status,
+      providerMessageId: input.sendResult.externalMessageId || input.sendResult.id,
+      destination: input.destination,
+      destinationContactId: input.destinationContactId,
+      attemptedAt: new Date().toISOString(),
+      deliveredAt: input.sendResult.status === 'sent' ? new Date().toISOString() : null,
+      providerResponse: input.sendResult.raw || null,
+    };
   }
 }

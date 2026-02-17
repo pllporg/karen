@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:25:54.610Z",
+  "generatedAt": "2026-02-17T16:41:33.412Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 22,
-      "Partial": 7,
+      "Complete": 23,
+      "Partial": 6,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 5,
-      "Partial:Medium": 7,
+      "Complete:Medium": 6,
+      "Partial:Medium": 6,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-001",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Implement production email/SMS providers behind provider interface",
-        "component": "API",
-        "epicCode": "PARITY-05",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-COMM-002",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "API",
         "epicCode": "PARITY-06",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-BILL-002",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Complete trust accounting reports and ledger invariants",
+        "component": "API",
+        "epicCode": "PARITY-06",
+        "phase": "phase-1"
       }
     ]
   },
@@ -139,18 +139,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 23,
+      "Backlog": 22,
       "In Review": 2,
-      "Done": 19
+      "Done": 20
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-23",
+        "title": "Implement production email/SMS providers behind provider interface",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T16:41:13.765Z",
+        "requirementId": "REQ-COMM-001"
+      },
+      {
         "key": "KAR-35",
         "title": "Implement style pack management with source document governance",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T16:25:39.396Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T16:30:16.904Z",
         "requirementId": "REQ-AI-003"
       },
       {
@@ -208,24 +215,17 @@
         "state": "Done",
         "updatedAt": "2026-02-17T03:38:31.785Z",
         "requirementId": "REQ-PORT-001"
-      },
-      {
-        "key": "KAR-21",
-        "title": "Complete construction litigation intake wizard domain coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-17T03:13:48.963Z",
-        "requirementId": "REQ-MAT-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:25:53.358Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:41:30.545Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3198edd117924ec1e8aa09cd0ff607227fea7e12",
+    "gitHead": "bd05f4ffec640041c220c90a7edcb991ec5b5b7d",
     "gitStatusShort": [
-      "## lin/KAR-35-style-pack-governance...origin/lin/KAR-35-style-pack-governance"
+      "## lin/KAR-23-production-message-providers...origin/lin/KAR-23-production-message-providers"
     ],
     "dirtyFileCount": 0
   }

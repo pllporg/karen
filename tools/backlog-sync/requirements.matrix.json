@@ -366,7 +366,7 @@
           "title": "Implement production email/SMS providers behind provider interface",
           "requirementId": "REQ-COMM-001",
           "promptSection": "Email/SMS provider interfaces + stub provider in MVP",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "communications"],
