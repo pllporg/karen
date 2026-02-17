@@ -295,7 +295,7 @@
           "title": "Complete construction litigation intake wizard domain coverage",
           "requirementId": "REQ-MAT-003",
           "promptSection": "Construction litigation domain extensions + intake wizard",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "domain-construction", "matters"],

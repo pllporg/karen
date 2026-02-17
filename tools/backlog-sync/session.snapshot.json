@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T01:29:22.368Z",
+  "generatedAt": "2026-02-17T01:33:41.691Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 7,
-      "Partial": 22,
+      "Complete": 8,
+      "Partial": 21,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,10 +33,10 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 5,
+      "Complete:High": 6,
       "Complete:Medium": 2,
       "Partial:Medium": 10,
-      "Partial:High": 12,
+      "Partial:High": 11,
       "Missing:Medium": 5
     }
   },
@@ -98,15 +98,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-MAT-003",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Complete construction litigation intake wizard domain coverage",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-OPS-001",
         "parityStatus": "Partial",
         "risk": "High",
@@ -130,6 +121,15 @@
         "risk": "High",
         "title": "Finalize Clio CSV/XLSX template importer coverage",
         "component": "API",
+        "epicCode": "PARITY-03",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORT-003",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Build user-confirm merge workflow for dedupe suggestions",
+        "component": "Web",
         "epicCode": "PARITY-03",
         "phase": "phase-1"
       }
@@ -227,21 +227,12 @@
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "ce59dbda49b04b9b67ba0d128e42726a5ce64453",
+    "gitHead": "9170a37a17ce701050575c984fb741074b44b3b5",
     "gitStatusShort": [
-      "## lin/KAR-21-construction-intake-wizard-coverage",
-      " M apps/api/src/matters/dto/intake-wizard.dto.ts",
-      " M apps/api/src/matters/matters.controller.ts",
-      " M apps/api/src/matters/matters.service.ts",
-      " M apps/api/test/matters.spec.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/app/matters/page.tsx",
-      " M apps/web/test/matters-page.spec.tsx",
-      " M docs/SESSION_HANDOFF.md",
+      "## lin/KAR-21-construction-intake-wizard-coverage...origin/lin/KAR-21-construction-intake-wizard-coverage",
       " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/matters/dto/save-intake-draft.dto.ts"
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 2
   }
 }
