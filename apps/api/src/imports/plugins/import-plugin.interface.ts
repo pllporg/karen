@@ -5,6 +5,7 @@ export type ParsedImportRow = {
   entityType: string;
   rowNumber: number;
   rawJson: Prisma.InputJsonObject;
+  warnings?: Prisma.InputJsonArray;
 };
 
 export type ImportPlugin = {
