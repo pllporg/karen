@@ -1,4 +1,17 @@
-import { PrismaClient, CommunicationDirection, CommunicationMessageType, InvoiceStatus, MatterParticipantSide, MatterStatus, TaskPriority, TaskStatus, TrustTransactionType } from '@prisma/client';
+import {
+  PrismaClient,
+  CommunicationDirection,
+  CommunicationMessageType,
+  ExportJobStatus,
+  InvoiceStatus,
+  LEDESFormat,
+  LEDESValidationStatus,
+  MatterParticipantSide,
+  MatterStatus,
+  TaskPriority,
+  TaskStatus,
+  TrustTransactionType,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -10,6 +23,8 @@ async function main() {
     prisma.integrationWebhookSubscription.deleteMany(),
     prisma.integrationSyncRun.deleteMany(),
     prisma.integrationConnection.deleteMany(),
+    prisma.lEDESExportJob.deleteMany(),
+    prisma.lEDESExportProfile.deleteMany(),
     prisma.exportJob.deleteMany(),
     prisma.externalReference.deleteMany(),
     prisma.importItem.deleteMany(),
@@ -544,8 +559,22 @@ async function main() {
       jurisdictionDisclaimer: 'Jurisdictional compliance required for trust and billing rules.',
       lineItems: {
         create: [
-          { description: 'Initial complaint draft', quantity: 4, unitPrice: 425, amount: 1700 },
-          { description: 'Court filing and courier', quantity: 1, unitPrice: 500, amount: 500 },
+          {
+            description: 'Initial complaint draft',
+            quantity: 4,
+            unitPrice: 425,
+            amount: 1700,
+            utbmsPhaseCode: 'L100',
+            utbmsTaskCode: 'L110',
+          },
+          {
+            description: 'Court filing and courier',
+            quantity: 1,
+            unitPrice: 500,
+            amount: 500,
+            utbmsPhaseCode: 'L100',
+            utbmsTaskCode: 'L120',
+          },
         ],
       },
     },
@@ -573,6 +602,8 @@ async function main() {
         durationMinutes: 120,
         billableRate: 425,
         amount: 850,
+        utbmsPhaseCode: 'L100',
+        utbmsTaskCode: 'L110',
       },
       {
         organizationId: org.id,
@@ -584,6 +615,8 @@ async function main() {
         durationMinutes: 90,
         billableRate: 210,
         amount: 315,
+        utbmsPhaseCode: 'L200',
+        utbmsTaskCode: 'L210',
       },
     ],
   });
@@ -646,6 +679,46 @@ async function main() {
       ledgerBalance: 3800,
       difference: -50,
       status: 'OPEN',
+    },
+  });
+
+  const ledesProfile = await prisma.lEDESExportProfile.create({
+    data: {
+      organizationId: org.id,
+      name: 'Default LEDES 1998B',
+      format: LEDESFormat.LEDES98B,
+      isDefault: true,
+      requireUtbmsPhaseCode: true,
+      requireUtbmsTaskCode: true,
+      includeExpenseLineItems: true,
+      createdByUserId: billingUser.id,
+      validationRulesJson: {
+        strictInvoiceNumber: true,
+      },
+    },
+  });
+
+  await prisma.lEDESExportJob.create({
+    data: {
+      organizationId: org.id,
+      profileId: ledesProfile.id,
+      requestedByUserId: billingUser.id,
+      matterId: matter1.id,
+      status: ExportJobStatus.COMPLETED,
+      validationStatus: LEDESValidationStatus.PASSED,
+      format: LEDESFormat.LEDES98B,
+      invoiceIds: [invoice1.id],
+      lineCount: 2,
+      totalAmount: 2200,
+      storageKey: `org/${org.id}/exports/ledes/seed.1998b.txt`,
+      checksumSha256: 'seed-ledes-checksum',
+      summaryJson: {
+        invoiceCount: 1,
+        lineItemCount: 2,
+        validationErrors: [],
+      },
+      startedAt: new Date('2026-01-15T08:00:00.000Z'),
+      finishedAt: new Date('2026-01-15T08:01:00.000Z'),
     },
   });
 

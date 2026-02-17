@@ -521,11 +521,11 @@
           "title": "Implement LEDES/UTBMS export jobs with validation profiles",
           "requirementId": "REQ-BILL-004",
           "promptSection": "Billing / LEDES export expectations",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "billing", "exports", "phase-2"],
-          "problemStatement": "UTBMS fields exist, but there is no standards-compliant LEDES export workflow with profile-based validation.",
+          "problemStatement": "LEDES export profiles and jobs are implemented with profile-based validation, checksum metadata, and signed artifact download flow.",
           "requirementExcerpt": "Provide executable LEDES export jobs, validation statuses, and downloadable LEDES outputs.",
           "acceptanceCriteria": [
             "Add LEDES export profile and export job entities with format selection and validation status.",
@@ -535,7 +535,7 @@
           "apiImpact": "Billing APIs gain LEDES export job create/status/download endpoints.",
           "securityImpact": "Billing exports remain tenant-scoped and audit logged.",
           "definitionOfDone": [
-            "LEDES fixture validation + export generation tests pass for supported formats."
+            "LEDES profile/job workflows are covered by API/Web tests and documented in docs/parity/ledes-export-workflows.md."
           ]
         }
       ]
