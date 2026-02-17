@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
@@ -86,6 +86,18 @@ export class CommunicationsService {
       await this.access.assertMatterAccess(input.user, thread.matterId, 'write');
     }
 
+    const attachmentVersionIds = [...new Set(input.attachmentVersionIds || [])];
+    if (input.type === 'PORTAL_MESSAGE' && attachmentVersionIds.length > 0) {
+      if (!thread.matterId) {
+        throw new UnprocessableEntityException('Portal message attachments require a matter-linked thread');
+      }
+      await this.assertPortalAttachmentEligibility({
+        organizationId: input.user.organizationId,
+        matterId: thread.matterId,
+        attachmentVersionIds,
+      });
+    }
+
     const message = await this.prisma.communicationMessage.create({
       data: {
         organizationId: input.user.organizationId,
@@ -102,10 +114,10 @@ export class CommunicationsService {
               },
             }
           : undefined,
-        attachments: input.attachmentVersionIds?.length
+        attachments: attachmentVersionIds.length
           ? {
               createMany: {
-                data: input.attachmentVersionIds.map((versionId) => ({
+                data: attachmentVersionIds.map((versionId) => ({
                   documentVersionId: versionId,
                 })),
               },
@@ -176,5 +188,34 @@ export class CommunicationsService {
     );
 
     return rows;
+  }
+
+  private async assertPortalAttachmentEligibility(input: {
+    organizationId: string;
+    matterId: string;
+    attachmentVersionIds: string[];
+  }) {
+    const versions = await this.prisma.documentVersion.findMany({
+      where: {
+        organizationId: input.organizationId,
+        id: { in: input.attachmentVersionIds },
+      },
+      include: {
+        document: true,
+      },
+    });
+
+    if (versions.length !== input.attachmentVersionIds.length) {
+      throw new NotFoundException('One or more portal attachment versions were not found');
+    }
+
+    for (const version of versions) {
+      if (version.document.matterId !== input.matterId) {
+        throw new ForbiddenException('Portal message attachments must belong to the thread matter');
+      }
+      if (!version.document.sharedWithClient) {
+        throw new ForbiddenException('Portal message attachments must be marked shared-with-client');
+      }
+    }
   }
 }
