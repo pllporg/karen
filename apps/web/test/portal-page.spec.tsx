@@ -13,6 +13,11 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 describe('PortalPage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('sends a portal message and refreshes snapshot counts', async () => {
     const fetchMock = vi
       .fn()
