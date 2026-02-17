@@ -55,7 +55,8 @@ export class AiService implements OnModuleInit {
       });
 
       try {
-        const context = await this.buildMatterContext(organizationId, matterId);
+        const retrievalQuery = this.buildRetrievalQuery(toolName, input);
+        const context = await this.buildMatterContext(organizationId, matterId, retrievalQuery);
         const stylePack = await this.resolveStylePackForGeneration({
           organizationId,
           stylePackId,
@@ -417,7 +418,7 @@ export class AiService implements OnModuleInit {
       if (scan.detected) flaggedChunks += 1;
       if (scan.blockedFromAiContext) blockedChunks += 1;
 
-      await this.prisma.aiSourceChunk.create({
+      const sourceChunk = await this.prisma.aiSourceChunk.create({
         data: {
           organizationId: input.user.organizationId,
           documentVersionId: input.documentVersionId,
@@ -438,6 +439,10 @@ export class AiService implements OnModuleInit {
           }),
         },
       });
+
+      if (embedding && embedding.length > 0) {
+        await this.persistChunkEmbeddingVector(sourceChunk.id, embedding);
+      }
     }
 
     if (flaggedChunks > 0) {
@@ -668,7 +673,7 @@ export class AiService implements OnModuleInit {
     return lines.join('\n');
   }
 
-  private async buildMatterContext(organizationId: string, matterId: string) {
+  private async buildMatterContext(organizationId: string, matterId: string, retrievalQuery?: string) {
     const matter = await this.prisma.matter.findFirst({
       where: {
         id: matterId,
@@ -677,26 +682,155 @@ export class AiService implements OnModuleInit {
     });
     if (!matter) throw new Error('Matter not found');
 
-    const rawChunks = await this.prisma.aiSourceChunk.findMany({
-      where: {
-        organizationId,
-        documentVersion: {
-          is: {
-            document: {
-              is: {
-                matterId,
+    let rawChunks: Array<{
+      id: string;
+      chunkText: string;
+      metadataJson: Prisma.JsonValue | null;
+      createdAt?: Date;
+    }> = [];
+    let retrievalMode: 'vector' | 'recent' = 'recent';
+    let retrievalReason = 'recent_default';
+
+    const vectorCandidates = await this.findVectorSimilarChunks({
+      organizationId,
+      matterId,
+      retrievalQuery,
+      limit: 50,
+    });
+    if (vectorCandidates.length > 0) {
+      rawChunks = vectorCandidates;
+      retrievalMode = 'vector';
+      retrievalReason = 'pgvector_similarity';
+    } else {
+      rawChunks = await this.prisma.aiSourceChunk.findMany({
+        where: {
+          organizationId,
+          documentVersion: {
+            is: {
+              document: {
+                is: {
+                  matterId,
+                },
               },
             },
           },
         },
-      },
-      take: 50,
-      orderBy: { createdAt: 'desc' },
-    });
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+      });
+      if (retrievalQuery && retrievalQuery.trim().length > 0) {
+        retrievalReason = 'vector_unavailable_or_empty';
+      }
+    }
 
     const chunks = rawChunks.filter((chunk) => !this.isChunkBlockedFromAiContext(chunk.metadataJson)).slice(0, 25);
 
-    return { matter, chunks };
+    return {
+      matter,
+      chunks,
+      retrieval: {
+        mode: retrievalMode,
+        reason: retrievalReason,
+        queryText: retrievalQuery ?? null,
+      },
+    };
+  }
+
+  private buildRetrievalQuery(toolName: string, payload: Record<string, unknown>) {
+    const payloadText = JSON.stringify(payload ?? {});
+    return `${toolName}\n${payloadText}`.slice(0, 3000);
+  }
+
+  private async findVectorSimilarChunks(input: {
+    organizationId: string;
+    matterId: string;
+    retrievalQuery?: string;
+    limit: number;
+  }): Promise<
+    Array<{
+      id: string;
+      chunkText: string;
+      metadataJson: Prisma.JsonValue | null;
+      createdAt: Date;
+    }>
+  > {
+    if (!input.retrievalQuery || !input.retrievalQuery.trim()) {
+      return [];
+    }
+
+    const queryEmbedding = await this.embedText(input.retrievalQuery);
+    if (!queryEmbedding || queryEmbedding.length === 0) {
+      return [];
+    }
+
+    const vectorLiteral = this.toPgVectorLiteral(queryEmbedding);
+    if (!vectorLiteral) {
+      return [];
+    }
+
+    try {
+      const rows = await this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          chunkText: string;
+          metadataJson: Prisma.JsonValue | null;
+          createdAt: Date;
+        }>
+      >(Prisma.sql`
+        SELECT
+          c."id",
+          c."chunkText",
+          c."metadataJson",
+          c."createdAt"
+        FROM "AiSourceChunk" c
+        INNER JOIN "DocumentVersion" dv ON dv."id" = c."documentVersionId"
+        INNER JOIN "Document" d ON d."id" = dv."documentId"
+        WHERE c."organizationId" = ${input.organizationId}
+          AND d."matterId" = ${input.matterId}
+          AND c."embedding" IS NOT NULL
+        ORDER BY c."embedding" <=> ${vectorLiteral}::vector
+        LIMIT ${input.limit}
+      `);
+      return rows;
+    } catch {
+      return [];
+    }
+  }
+
+  private async persistChunkEmbeddingVector(chunkId: string, embedding: number[]) {
+    const vectorLiteral = this.toPgVectorLiteral(embedding);
+    if (!vectorLiteral) {
+      return;
+    }
+
+    try {
+      await this.prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE "AiSourceChunk"
+          SET "embedding" = ${vectorLiteral}::vector
+          WHERE "id" = ${chunkId}
+        `,
+      );
+    } catch {
+      // Keep ingestion non-blocking in environments without vector index support.
+    }
+  }
+
+  private toPgVectorLiteral(embedding: number[]) {
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      return null;
+    }
+
+    const normalized = embedding
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value))
+      .map((value) => Number(value.toFixed(12)));
+
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    return `[${normalized.join(',')}]`;
   }
 
   private async getStylePackById(organizationId: string, stylePackId: string) {

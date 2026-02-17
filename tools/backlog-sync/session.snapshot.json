@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T17:15:02.663Z",
+  "generatedAt": "2026-02-17T17:25:16.540Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 25,
-      "Partial": 4,
+      "Complete": 26,
+      "Partial": 3,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 8,
-      "Partial:Medium": 4,
+      "Complete:Medium": 9,
+      "Partial:Medium": 3,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-DATA-003",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Add pgvector-backed similarity retrieval path for source chunks",
-        "component": "Data",
-        "epicCode": "PARITY-02",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-MAT-002",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "Integrations",
         "epicCode": "PARITY-09",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-INT-002",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+        "component": "Integrations",
+        "epicCode": "PARITY-09",
+        "phase": "phase-1"
       }
     ]
   },
@@ -139,13 +139,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 21,
+      "Backlog": 20,
       "In Review": 1,
-      "Done": 22
+      "Done": 23
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-25",
+        "title": "Expand document automation coverage for merge fields and generated outputs",
+        "state": "Done",
+        "updatedAt": "2026-02-17T17:19:08.791Z",
+        "requirementId": "REQ-COMM-003"
+      },
       {
         "key": "KAR-24",
         "title": "Complete communication search relevance and indexing strategy",
@@ -208,35 +215,24 @@
         "state": "Done",
         "updatedAt": "2026-02-17T04:02:02.184Z",
         "requirementId": "REQ-PORT-003"
-      },
-      {
-        "key": "KAR-15",
-        "title": "Finalize Clio CSV/XLSX template importer coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-17T03:51:06.319Z",
-        "requirementId": "REQ-PORT-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:15:01.310Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:25:15.141Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "b6d57bdf2df7197301380caff6dfe401e17dca52",
+    "gitHead": "8ab608dd172a8e3cfd22a28103c597229f06843c",
     "gitStatusShort": [
-      "## lin/KAR-25-document-automation-coverage",
+      "## lin/KAR-12-pgvector-retrieval-path",
       " M README.md",
-      " M apps/api/package.json",
-      " M apps/api/src/documents/documents.controller.ts",
-      " M apps/api/src/documents/documents.service.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M pnpm-lock.yaml",
+      " M apps/api/src/ai/ai.service.ts",
       " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/test/documents-template-merge.spec.ts",
-      "?? docs/parity/document-automation-coverage.md"
+      "?? apps/api/prisma/migrations/20260217173000_ai_source_chunk_vector_index/",
+      "?? apps/api/test/ai-vector-retrieval.spec.ts",
+      "?? docs/parity/pgvector-retrieval.md"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 6
   }
 }
