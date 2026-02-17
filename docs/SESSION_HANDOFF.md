@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T16:41:33.412Z`
+- Snapshot Timestamp: `2026-02-17T16:53:23.713Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T16:41:30.545Z`
+- Last Successful Mirror Verify: `2026-02-17T16:53:21.675Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Completed `REQ-COMM-002` communications search relevance/indexing with ranked `websearch_to_tsquery` full-text path, snippet generation, substring fallback, and a dedicated GIN FTS index migration plus regression coverage (`docs/parity/communications-search-indexing.md`).
 - 2026-02-17: Completed `REQ-COMM-001` production communication adapters with configurable Resend (email) + Twilio (SMS) providers behind a dispatch interface, retry/fail-open policy, persisted outbound delivery/provider metadata on `CommunicationMessage.rawSourcePayload`, and new delivery-regression tests (`docs/parity/communications-provider-adapters.md`).
 - 2026-02-17: Completed `REQ-AI-003` style-pack governance with admin CRUD/source-doc attachment endpoints, AI job `stylePackId` selection, style-pack provenance persisted in artifact + execution metadata, AI workspace style-pack management UI, and API/Web regression coverage (`docs/parity/style-pack-governance.md`).
 - 2026-02-17: Implemented `REQ-PORTAL-001` secure portal attachment workflow: client-scoped attachment upload/download endpoints, portal message attachment linking, strict server-side matter + `sharedWithClient` checks in both portal and staff communications paths, and new API/Web regression coverage (`docs/parity/portal-attachments-security.md`).

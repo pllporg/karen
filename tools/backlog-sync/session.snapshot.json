@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:41:33.412Z",
+  "generatedAt": "2026-02-17T16:53:23.713Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 23,
-      "Partial": 6,
+      "Complete": 24,
+      "Partial": 5,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 6,
-      "Partial:Medium": 6,
+      "Complete:Medium": 7,
+      "Partial:Medium": 5,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-002",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Complete communication search relevance and indexing strategy",
-        "component": "Data",
-        "epicCode": "PARITY-05",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-COMM-003",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "API",
         "epicCode": "PARITY-06",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Validate all required entities and relation semantics against prompt",
+        "component": "Data",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
       }
     ]
   },
@@ -139,18 +139,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 22,
+      "Backlog": 21,
       "In Review": 2,
-      "Done": 20
+      "Done": 21
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-24",
+        "title": "Complete communication search relevance and indexing strategy",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T16:53:02.355Z",
+        "requirementId": "REQ-COMM-002"
+      },
+      {
         "key": "KAR-23",
         "title": "Implement production email/SMS providers behind provider interface",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T16:41:13.765Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T16:44:47.650Z",
         "requirementId": "REQ-COMM-001"
       },
       {
@@ -208,24 +215,17 @@
         "state": "Done",
         "updatedAt": "2026-02-17T03:51:06.319Z",
         "requirementId": "REQ-PORT-002"
-      },
-      {
-        "key": "KAR-14",
-        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
-        "state": "Done",
-        "updatedAt": "2026-02-17T03:38:31.785Z",
-        "requirementId": "REQ-PORT-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:41:30.545Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:53:21.675Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "bd05f4ffec640041c220c90a7edcb991ec5b5b7d",
+    "gitHead": "70d88775dc627611ddd1916c0c240c86f442d2b8",
     "gitStatusShort": [
-      "## lin/KAR-23-production-message-providers...origin/lin/KAR-23-production-message-providers"
+      "## lin/KAR-24-communications-search-indexing...origin/lin/KAR-24-communications-search-indexing"
     ],
     "dirtyFileCount": 0
   }
