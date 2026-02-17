@@ -337,11 +337,11 @@
           "title": "Implement jurisdictional deadline rules packs and rule selection flow",
           "requirementId": "REQ-MAT-005",
           "promptSection": "Calendar / DeadlineRuleTemplate + Phase 2 advanced docket rules packs",
-          "parityStatus": "Missing",
-          "component": "Data",
+          "parityStatus": "Complete",
+          "component": "API",
           "risk": "Medium",
           "labels": ["parity", "matters", "phase-2"],
-          "problemStatement": "Deadline templates exist, but there is no versioned jurisdiction/court rules-pack framework for reusable deadline computation.",
+          "problemStatement": "Jurisdiction/court/procedure deadline rules packs with versioning, preview-before-apply flow, and override governance are now implemented across API + matter dashboard UI.",
           "requirementExcerpt": "Jurisdictional deadline rules packs should be versioned and selectable by jurisdiction/court/procedure with attorney override controls.",
           "acceptanceCriteria": [
             "Define rules-pack entities keyed by jurisdiction, court, and procedure with effective date versioning.",
@@ -351,7 +351,7 @@
           "apiImpact": "Deadline APIs gain rules-pack selection and preview/apply endpoints.",
           "securityImpact": "No direct confidentiality change; improves litigation deadline reliability and auditability.",
           "definitionOfDone": [
-            "Rules-pack CRUD and deadline generation tests pass with deterministic fixtures."
+            "Rules-pack CRUD and deadline preview/apply flows are covered by API + web tests with evidence in docs/parity/deadline-rules-packs.md."
           ]
         }
       ]

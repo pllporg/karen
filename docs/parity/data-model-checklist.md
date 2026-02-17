@@ -72,7 +72,7 @@ This checklist maps prompt-required entities/capabilities to Prisma models in `a
 | --- | --- | --- | --- | --- |
 | Calendar event | `CalendarEvent` | Complete | Matter-scoped date ranges, attendees JSON, source metadata. | — |
 | Deadline rule template | `DeadlineRuleTemplate` | Complete | Trigger + offset metadata for derived deadlines. | — |
-| Jurisdictional deadline rules pack | `JurisdictionalDeadlineRulePack` | Missing | No dedicated jurisdiction/court/procedure versioned rule-pack model yet. | `REQ-MAT-005` |
+| Jurisdictional deadline rules pack | `DeadlineRuleTemplate` (`triggerType='RULES_PACK'`) | Complete | Versioned jurisdiction/court/procedure packs represented in `configJson.pack` + rule set in `configJson.rules`, with preview/apply workflow and override governance. | — |
 | Service event | `ServiceEvent` | Complete | Trigger events for deadline logic. | — |
 | Docket entry | `DocketEntry` | Complete | Filing record with optional source document linkage. | — |
 | ICS export capability | API/export logic | Complete | Implemented as export behavior; not a dedicated Prisma model. | — |
@@ -185,7 +185,6 @@ These gaps are explicitly tracked in the parity matrix and Linear backlog:
 | Pgvector retrieval production path for AI chunks | `REQ-DATA-003` | Storage exists; retrieval ranking path still partial. |
 | Participant role workflow semantics completeness | `REQ-MAT-001` | Core schema exists; end-to-end role semantics still partial. |
 | Advanced conflict rule profiles + resolution decision logging | `REQ-MAT-004` | Missing first-class conflict profile/decision entities. |
-| Jurisdictional deadline rule packs | `REQ-MAT-005` | Missing versioned jurisdiction/court/procedure rule-pack entity. |
 | Document retention/legal hold/disposition lifecycle models | `REQ-COMM-004` | Retention policy + legal hold + disposition entities missing. |
 | Trust reconciliation run + discrepancy queue | `REQ-BILL-003` | Reconciliation models missing from schema. |
 | LEDES profile/job entities | `REQ-BILL-004` | Standards-oriented profile/job data model missing. |

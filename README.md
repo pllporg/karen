@@ -16,7 +16,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Contacts graph (person/org profiles, relationships, dedupe suggestions)
 - Matters with participants, dashboard aggregation, intake wizard + construction domain profiles
 - Conflict rule profiles with weighted check scoring + attorney resolution/audit workflow
-- Tasks, calendar, ICS export, docket
+- Tasks, calendar, jurisdictional deadline rules packs (preview/apply + override reason capture), ICS export, docket
 - Communications threads/messages + ranked full-text/fallback keyword search + configurable outbound providers (stub/Resend/Twilio) with persisted delivery metadata
 - Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows with template provenance + strict merge validation
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
