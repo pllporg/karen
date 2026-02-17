@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T01:02:52.090Z",
+  "generatedAt": "2026-02-17T01:06:37.062Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -141,8 +141,8 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 31,
-      "In Review": 4,
-      "Done": 9
+      "In Review": 3,
+      "Done": 10
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -150,8 +150,8 @@
       {
         "key": "KAR-19",
         "title": "Complete participant role configurability and side semantics coverage",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T01:02:30.511Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T01:06:14.745Z",
         "requirementId": "REQ-MAT-001"
       },
       {
@@ -220,25 +220,14 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T01:02:45.092Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T01:06:35.855Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "60dc39b859fa938b5b6929f6f5ae4f8ad5a6c7b7",
+    "gitHead": "63f53be4cf871577e60d455b887c09699d09572f",
     "gitStatusShort": [
-      "## lin/KAR-19-participant-role-semantics-coverage",
-      " M apps/api/prisma/seed.ts",
-      " M apps/api/src/admin/admin.controller.ts",
-      " M apps/api/src/admin/admin.service.ts",
-      " M apps/api/src/matters/matters.service.ts",
-      " M apps/api/test/matters.spec.ts",
-      " M apps/web/app/admin/page.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/admin/dto/create-participant-role.dto.ts",
-      "?? apps/api/test/admin.spec.ts"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 0
   }
 }
