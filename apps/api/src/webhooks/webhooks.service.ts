@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, createHmac } from 'node:crypto';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { toJsonValue } from '../common/utils/json.util';
 
@@ -31,6 +32,114 @@ export class WebhooksService {
       where: { organizationId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async listDeliveries(
+    organizationId: string,
+    options?: {
+      endpointId?: string;
+      status?: string;
+      limit?: number;
+    },
+  ) {
+    const where: Prisma.WebhookDeliveryWhereInput = {
+      webhookEndpoint: {
+        organizationId,
+      },
+    };
+    if (options?.endpointId) {
+      where.webhookEndpointId = options.endpointId;
+    }
+    if (options?.status) {
+      where.status = options.status;
+    }
+
+    return this.prisma.webhookDelivery.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }],
+      take: this.normalizeListLimit(options?.limit),
+      include: {
+        webhookEndpoint: {
+          select: {
+            id: true,
+            url: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+  }
+
+  async retryDelivery(organizationId: string, deliveryId: string) {
+    const delivery = await this.prisma.webhookDelivery.findFirst({
+      where: {
+        id: deliveryId,
+        webhookEndpoint: {
+          organizationId,
+        },
+      },
+      include: {
+        webhookEndpoint: {
+          select: {
+            id: true,
+            url: true,
+            secret: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!delivery) {
+      throw new NotFoundException('Webhook delivery not found');
+    }
+    if (!delivery.webhookEndpoint.isActive) {
+      throw new BadRequestException('Webhook endpoint is inactive');
+    }
+    if (!this.isRetryableStatus(delivery.status)) {
+      throw new BadRequestException('Only FAILED or RETRYING deliveries can be retried');
+    }
+
+    await this.prisma.webhookDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        status: 'PENDING',
+        attemptCount: 0,
+        responseCode: null,
+        lastAttemptAt: null,
+      },
+    });
+
+    await this.deliverWithRetries({
+      deliveryId: delivery.id,
+      endpoint: {
+        id: delivery.webhookEndpoint.id,
+        url: delivery.webhookEndpoint.url,
+        secret: delivery.webhookEndpoint.secret,
+      },
+      eventType: delivery.eventType,
+      idempotencyKey: delivery.idempotencyKey,
+      payload: this.readPayload(delivery.payloadJson),
+    });
+
+    const refreshed = await this.prisma.webhookDelivery.findUnique({
+      where: { id: delivery.id },
+      include: {
+        webhookEndpoint: {
+          select: {
+            id: true,
+            url: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!refreshed) {
+      throw new NotFoundException('Webhook delivery not found');
+    }
+
+    return refreshed;
   }
 
   async emit(
@@ -162,6 +271,24 @@ export class WebhooksService {
   private computePayloadFingerprint(eventType: string, payload: Record<string, unknown>) {
     const serialized = JSON.stringify(payload);
     return createHash('sha256').update(`${eventType}:${serialized}`).digest('hex');
+  }
+
+  private readPayload(payloadJson: unknown): Record<string, unknown> {
+    if (!payloadJson || typeof payloadJson !== 'object' || Array.isArray(payloadJson)) {
+      throw new BadRequestException('Webhook delivery payload is invalid');
+    }
+    return payloadJson as Record<string, unknown>;
+  }
+
+  private isRetryableStatus(status: string) {
+    return status === 'FAILED' || status === 'RETRYING';
+  }
+
+  private normalizeListLimit(limit?: number) {
+    if (!Number.isFinite(limit) || !limit || limit <= 0) {
+      return 50;
+    }
+    return Math.min(limit, 200);
   }
 
   private signPayload(secret: string, timestamp: string, body: string) {

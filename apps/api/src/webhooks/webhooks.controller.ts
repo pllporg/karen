@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
@@ -29,5 +29,26 @@ export class WebhooksController {
       secret: body.secret,
       events: body.events,
     });
+  }
+
+  @Get('deliveries')
+  @RequirePermissions('webhooks:read')
+  listDeliveries(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('endpointId') endpointId?: string,
+    @Query('status') status?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.webhooksService.listDeliveries(user.organizationId, {
+      endpointId,
+      status,
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  @Post('deliveries/:deliveryId/retry')
+  @RequirePermissions('webhooks:write')
+  retryDelivery(@CurrentUser() user: AuthenticatedUser, @Param('deliveryId') deliveryId: string) {
+    return this.webhooksService.retryDelivery(user.organizationId, deliveryId);
   }
 }
