@@ -622,11 +622,11 @@
           "title": "Implement prompt injection defense hardening for ingestion pipeline",
           "requirementId": "REQ-AI-002",
           "promptSection": "AI Governance / Red-team prompt injection defenses",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "ai-governance", "security"],
-          "problemStatement": "Basic redaction is present; robust defense-in-depth policy is still needed.",
+          "problemStatement": "Ingestion hardening now has defense-in-depth verification with citation-policy enforcement, quarantined chunk metadata, audit events, and adversarial regression coverage.",
           "requirementExcerpt": "Isolate system prompts, filter malicious instructions, always cite sources used.",
           "acceptanceCriteria": [
             "Ingestion pipeline flags and quarantines high-risk instruction patterns.",
@@ -636,7 +636,8 @@
           "apiImpact": "AI job outputs include policy compliance metadata.",
           "securityImpact": "Reduces prompt injection risk and hallucination blast radius.",
           "definitionOfDone": [
-            "AI security test pack added to CI."
+            "AI security tests verify quarantine metadata, blocked-chunk exclusion, and citation-policy enforcement audit events.",
+            "Verification artifact documented at docs/parity/ai-ingestion-security-verification.md."
           ]
         },
         {

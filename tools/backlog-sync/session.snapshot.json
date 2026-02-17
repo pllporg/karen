@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T22:01:17.961Z",
+  "generatedAt": "2026-02-17T22:29:36.614Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 32,
+    "unresolvedRequirements": 31,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 27,
+      "phase-1": 26,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 32
+      "Complete": 31
     },
     "unresolvedCountsByRisk": {
-      "High": 15,
+      "High": 14,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 15,
+      "Complete:High": 14,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-AI-002",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement prompt injection defense hardening for ingestion pipeline",
-        "component": "API",
-        "epicCode": "PARITY-08",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-BILL-001",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "API",
         "epicCode": "PARITY-03",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORT-003",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Build user-confirm merge workflow for dedupe suggestions",
+        "component": "Web",
+        "epicCode": "PARITY-03",
+        "phase": "phase-1"
       }
     ]
   },
@@ -135,18 +135,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 46,
     "stateCounts": {
-      "Done": 33,
-      "In Review": 1,
+      "Done": 32,
+      "In Review": 2,
       "Backlog": 12
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-34",
+        "title": "Implement prompt injection defense hardening for ingestion pipeline",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T22:29:16.066Z",
+        "requirementId": "REQ-AI-002"
+      },
+      {
         "key": "KAR-53",
         "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
         "state": "Done",
-        "updatedAt": "2026-02-17T22:01:03.681Z",
+        "updatedAt": "2026-02-17T22:09:32.751Z",
         "requirementId": "REQ-AI-001"
       },
       {
@@ -204,25 +211,23 @@
         "state": "Done",
         "updatedAt": "2026-02-17T18:12:32.131Z",
         "requirementId": "REQ-PORTAL-002"
-      },
-      {
-        "key": "KAR-20",
-        "title": "Enhance contact relationship graph visualization and filtering",
-        "state": "Done",
-        "updatedAt": "2026-02-17T17:54:26.789Z",
-        "requirementId": "REQ-MAT-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:01:16.701Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:29:35.336Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "8939e2689f58e51ce381c444ba451c785eb995ad",
+    "gitHead": "4b25cccb5b739c915d984e3ab54031380701bfbf",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-34-ai-ingestion-verification-hardening...origin/lin/KAR-34-ai-ingestion-verification-hardening",
+      "?? Brandguide.md",
+      "?? agents.md",
+      "?? brand/",
+      "?? brandguidetailwindsnipped.js",
+      "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 5
   }
 }
