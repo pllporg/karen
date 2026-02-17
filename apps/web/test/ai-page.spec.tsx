@@ -162,7 +162,8 @@ describe('AiPage', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    const approveButton = await screen.findByRole('button', { name: 'Approve' });
+    fireEvent.click(approveButton);
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
