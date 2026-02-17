@@ -21,6 +21,17 @@ type StylePackContext = {
   sourceDocHints: string[];
 } | null;
 
+type CitationEnforcementMode = 'not-required' | 'embedded' | 'appended';
+
+type CitationPolicyCompliance = {
+  citationRequired: boolean;
+  citationSatisfied: boolean;
+  citationMode: CitationEnforcementMode;
+  citationCount: number;
+  contextChunkCount: number;
+  blockedChunkCount: number;
+};
+
 @Injectable()
 export class AiService implements OnModuleInit {
   private readonly openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
@@ -87,6 +98,8 @@ export class AiService implements OnModuleInit {
               citations: result.citations,
               excerptEvidence: result.excerpts,
               deadlineCandidates,
+              policyCompliance: result.policyCompliance,
+              retrieval: context.retrieval,
               model: this.model,
               toolName,
               stylePack: stylePack
@@ -112,6 +125,8 @@ export class AiService implements OnModuleInit {
             modelParamsJson: toJsonValue({
               model: this.model,
               toolName,
+              citationPolicy: result.policyCompliance,
+              retrieval: context.retrieval,
               stylePackId: stylePack?.id ?? null,
               stylePackName: stylePack?.name ?? null,
               stylePackSourceDocCount: stylePack?.sourceDocumentVersionIds.length ?? 0,
@@ -120,6 +135,23 @@ export class AiService implements OnModuleInit {
             systemPromptHash: this.hashPrompt(result.systemPrompt),
           },
         });
+
+        if (result.policyCompliance.citationMode === 'appended') {
+          await this.audit.appendEvent({
+            organizationId,
+            actorUserId: createdByUserId,
+            action: 'ai.output.citation_policy_enforced',
+            entityType: 'aiArtifact',
+            entityId: artifact.id,
+            metadata: {
+              aiJobId,
+              matterId,
+              toolName,
+              citationCount: result.policyCompliance.citationCount,
+              contextChunkCount: result.policyCompliance.contextChunkCount,
+            },
+          });
+        }
 
         await this.prisma.aiJob.update({
           where: { id: aiJobId },
@@ -434,6 +466,7 @@ export class AiService implements OnModuleInit {
               maxSeverity: scan.maxSeverity,
               redactionCount: scan.redactionCount,
               blockedFromAiContext: scan.blockedFromAiContext,
+              quarantinedFromContext: scan.blockedFromAiContext,
               findingIds: scan.findings.map((finding) => finding.signalId),
               findings: scan.findings,
             },
@@ -457,6 +490,7 @@ export class AiService implements OnModuleInit {
           matterId: input.matterId,
           flaggedChunks,
           blockedChunks,
+          quarantinedChunks: blockedChunks,
           redactedSegments,
         },
       });
@@ -467,6 +501,7 @@ export class AiService implements OnModuleInit {
       promptInjectionDetected: flaggedChunks > 0,
       flaggedChunks,
       blockedChunks,
+      quarantinedChunks: blockedChunks,
       redactedSegments,
     };
   }
@@ -617,6 +652,7 @@ export class AiService implements OnModuleInit {
     content: string;
     citations: Array<{ chunkId: string }>;
     excerpts: AiExcerptEvidence[];
+    policyCompliance: CitationPolicyCompliance;
     prompt: string;
     systemPrompt: string;
   }> {
@@ -660,11 +696,20 @@ export class AiService implements OnModuleInit {
       chunkId: chunk.id,
       excerpt: chunk.chunkText.slice(0, 300),
     }));
+    const citationPolicy = this.enforceCitationPolicy(content, citations);
 
     return {
-      content,
+      content: citationPolicy.content,
       citations,
       excerpts,
+      policyCompliance: {
+        citationRequired: citationPolicy.citationRequired,
+        citationSatisfied: citationPolicy.citationSatisfied,
+        citationMode: citationPolicy.citationMode,
+        citationCount: citations.length,
+        contextChunkCount: input.context.chunks.length,
+        blockedChunkCount: input.context.retrieval.blockedChunkCount,
+      },
       prompt,
       systemPrompt,
     };
@@ -773,7 +818,9 @@ export class AiService implements OnModuleInit {
       }
     }
 
-    const chunks = rawChunks.filter((chunk) => !this.isChunkBlockedFromAiContext(chunk.metadataJson)).slice(0, 25);
+    const allowedChunks = rawChunks.filter((chunk) => !this.isChunkBlockedFromAiContext(chunk.metadataJson));
+    const chunks = allowedChunks.slice(0, 25);
+    const blockedChunkCount = rawChunks.length - allowedChunks.length;
 
     return {
       matter,
@@ -782,6 +829,9 @@ export class AiService implements OnModuleInit {
         mode: retrievalMode,
         reason: retrievalReason,
         queryText: retrievalQuery ?? null,
+        totalCandidateChunkCount: rawChunks.length,
+        blockedChunkCount,
+        returnedChunkCount: chunks.length,
       },
     };
   }
@@ -1053,5 +1103,52 @@ export class AiService implements OnModuleInit {
     }
 
     return String(promptInjectionRecord.maxSeverity || '').toLowerCase() === 'high';
+  }
+
+  private enforceCitationPolicy(content: string, citations: Array<{ chunkId: string }>): {
+    content: string;
+    citationRequired: boolean;
+    citationSatisfied: boolean;
+    citationMode: CitationEnforcementMode;
+  } {
+    const canonicalCitations = Array.from(
+      new Set(
+        citations
+          .map((citation) => String(citation.chunkId || '').trim())
+          .filter((chunkId) => chunkId.length > 0)
+          .map((chunkId) => `[chunk:${chunkId}]`),
+      ),
+    );
+    const citationRequired = canonicalCitations.length > 0;
+
+    if (!citationRequired) {
+      return {
+        content,
+        citationRequired: false,
+        citationSatisfied: true,
+        citationMode: 'not-required',
+      };
+    }
+
+    const trustedCitations = new Set(canonicalCitations.map((token) => token.slice(7, -1)));
+    const embeddedMatches = Array.from(content.matchAll(/\[chunk:([A-Za-z0-9-]+)\]/g));
+    const hasTrustedEmbeddedCitation = embeddedMatches.some((match) => trustedCitations.has(match[1] || ''));
+    if (hasTrustedEmbeddedCitation) {
+      return {
+        content,
+        citationRequired: true,
+        citationSatisfied: true,
+        citationMode: 'embedded',
+      };
+    }
+
+    const normalized = content.trimEnd();
+    const citationLine = `\n\nSources: ${canonicalCitations.join(', ')}`;
+    return {
+      content: `${normalized}${citationLine}`,
+      citationRequired: true,
+      citationSatisfied: true,
+      citationMode: 'appended',
+    };
   }
 }

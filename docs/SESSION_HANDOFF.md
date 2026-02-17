@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T22:01:17.961Z`
+- Snapshot Timestamp: `2026-02-17T22:27:34.033Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T22:01:16.701Z`
+- Last Successful Mirror Verify: `2026-02-17T22:27:32.790Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Verified `REQ-AI-002` by hardening ingestion/generation governance with explicit `quarantinedFromContext` metadata, citation-policy enforcement that appends trusted chunk citations when missing, `policyCompliance` artifact metadata, `ai.output.citation_policy_enforced` audit events, and expanded adversarial API coverage (`docs/parity/ai-ingestion-security-verification.md`).
 - 2026-02-17: Verified `REQ-AI-001` by hardening deadline-confirmation server validation (non-empty selections, valid dates, at-least-one output), adding explicit `ai.deadlines.confirmed` audit events with selection/created-record metadata, and extending API/Web regression coverage (`docs/parity/ai-deadline-confirmation-verification.md`).
 - 2026-02-17: Verified `REQ-OPS-001` with a new cross-module web smoke journey test (`login -> dashboard -> matter create -> portal message`) plus full-suite test/build validation, documented at `docs/parity/web-smoke-journey-coverage.md`.
 - 2026-02-17: Added webhook delivery observability + manual retry controls with org-scoped delivery list/retry API endpoints, admin monitor/filter/retry UI, and regression coverage (`docs/parity/webhook-delivery-observability.md`).

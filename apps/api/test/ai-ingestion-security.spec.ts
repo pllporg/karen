@@ -48,6 +48,7 @@ describe('AiService ingestion hardening', () => {
           detected: true,
           maxSeverity: 'high',
           blockedFromAiContext: true,
+          quarantinedFromContext: true,
         }),
       }),
     );
@@ -60,6 +61,7 @@ describe('AiService ingestion hardening', () => {
         metadata: expect.objectContaining({
           matterId: 'matter-1',
           flaggedChunks: expect.any(Number),
+          quarantinedChunks: expect.any(Number),
         }),
       }),
     );
@@ -70,6 +72,7 @@ describe('AiService ingestion hardening', () => {
         promptInjectionDetected: true,
         flaggedChunks: 1,
         blockedChunks: 1,
+        quarantinedChunks: 1,
       }),
     );
   });
@@ -130,5 +133,170 @@ describe('AiService ingestion hardening', () => {
     expect(context.chunks).toHaveLength(1);
     expect(context.chunks[0]?.id).toBe('chunk-safe');
   });
-});
 
+  it('appends trusted citations when model output omits chunk references', async () => {
+    const service = new AiService(
+      {} as any,
+      { createWorker: jest.fn(), addJob: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    Object.defineProperty(service as unknown as Record<string, unknown>, 'openai', {
+      value: {
+        responses: {
+          create: jest.fn().mockResolvedValue({
+            output_text: 'Draft summary with liability and damages analysis.',
+          }),
+        },
+      },
+      configurable: true,
+    });
+
+    const result = await (service as any).runTool('case_summary', {
+      context: {
+        matter: {
+          id: 'matter-1',
+          organizationId: 'org-1',
+          matterNumber: 'M-001',
+          name: 'Kitchen Remodel Defect',
+        },
+        chunks: [
+          {
+            id: 'chunk-safe',
+            chunkText: 'Inspection report shows recurring roof leak and mold growth.',
+          },
+        ],
+        retrieval: {
+          mode: 'recent',
+          reason: 'recent_default',
+          queryText: null,
+          totalCandidateChunkCount: 2,
+          blockedChunkCount: 1,
+          returnedChunkCount: 1,
+        },
+      },
+      input: {},
+      organizationId: 'org-1',
+      matterId: 'matter-1',
+      stylePack: null,
+    });
+
+    expect(result.content).toContain('Sources: [chunk:chunk-safe]');
+    expect(result.policyCompliance).toEqual(
+      expect.objectContaining({
+        citationRequired: true,
+        citationSatisfied: true,
+        citationMode: 'appended',
+        citationCount: 1,
+        contextChunkCount: 1,
+        blockedChunkCount: 1,
+      }),
+    );
+  });
+
+  it('writes a citation-policy enforcement audit event when output lacks trusted citations', async () => {
+    const prisma = {
+      aiJob: {
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+      matter: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'matter-1',
+          organizationId: 'org-1',
+          matterNumber: 'M-001',
+          name: 'Kitchen Remodel Defect',
+        }),
+      },
+      aiSourceChunk: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'chunk-safe',
+            chunkText: 'Scheduling order hearing set for 2026-04-10.',
+            metadataJson: null,
+            createdAt: new Date('2026-02-17T00:00:00.000Z'),
+          },
+        ]),
+      },
+      aiArtifact: {
+        create: jest.fn().mockResolvedValue({ id: 'artifact-1' }),
+      },
+      aiExecutionLog: {
+        create: jest.fn().mockResolvedValue({ id: 'exec-1' }),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    } as any;
+
+    const queue = {
+      createWorker: jest.fn(),
+      addJob: jest.fn(),
+    } as any;
+    const audit = {
+      appendEvent: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
+    const service = new AiService(
+      prisma,
+      queue,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      audit,
+    );
+
+    Object.defineProperty(service as unknown as Record<string, unknown>, 'openai', {
+      value: {
+        responses: {
+          create: jest.fn().mockResolvedValue({
+            output_text: 'Draft case summary with no explicit citation references.',
+          }),
+        },
+        embeddings: {
+          create: jest.fn().mockResolvedValue({
+            data: [{ embedding: Array.from({ length: 1536 }, () => 0.01) }],
+          }),
+        },
+      },
+      configurable: true,
+    });
+
+    service.onModuleInit();
+    const worker = queue.createWorker.mock.calls[0][1];
+
+    await worker({
+      data: {
+        aiJobId: 'job-1',
+        organizationId: 'org-1',
+        matterId: 'matter-1',
+        toolName: 'case_summary',
+        input: {},
+        createdByUserId: 'user-1',
+      },
+    });
+
+    expect(prisma.aiArtifact.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadataJson: expect.objectContaining({
+            policyCompliance: expect.objectContaining({
+              citationMode: 'appended',
+              citationRequired: true,
+            }),
+          }),
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'ai.output.citation_policy_enforced',
+        entityType: 'aiArtifact',
+        entityId: 'artifact-1',
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'ai.job.completed',
+        entityType: 'aiJob',
+        entityId: 'job-1',
+      }),
+    );
+  });
+});
