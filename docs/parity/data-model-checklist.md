@@ -95,9 +95,9 @@ This checklist maps prompt-required entities/capabilities to Prisma models in `a
 | Document folder | `DocumentFolder` | Complete | Nested folder hierarchy with parent/child references. | — |
 | Share link | `DocumentShareLink` | Complete | Expiring/revocable signed-share tokens. | — |
 | Evidence item | `EvidenceItem` | Complete | Evidence wrapper linking to document version. | — |
-| Document retention policy | `DocumentRetentionPolicy` | Missing | No policy table for retention trigger/period/disposition/legal hold override. | `REQ-COMM-004` |
-| Legal hold | `LegalHold` | Missing | No legal hold entity for retention freeze lifecycle yet. | `REQ-COMM-004` |
-| Retention disposition event | `RetentionDispositionEvent` | Missing | No disposition execution/audit record model yet. | `REQ-COMM-004` |
+| Document retention policy | `DocumentRetentionPolicy` | Complete | Policy supports scope (`ALL_DOCUMENTS`/`MATTER`/`CATEGORY`), trigger (`DOCUMENT_UPLOADED`/`MATTER_CLOSED`), retention period, approval gate, and assignment to documents. | — |
+| Legal hold | `DocumentLegalHold` | Complete | Active/released hold lifecycle with placed/released user attribution, hold reason, and document-level legal-hold enforcement. | — |
+| Retention disposition workflow | `DocumentDispositionRun`, `DocumentDispositionItem`, `Document.dispositionStatus` | Complete | Approval-gated disposition queue, legal-hold skip behavior, execution metadata, and document disposition status tracking with audit events. | — |
 
 ## 9) Time / Billing / Trust
 
@@ -185,7 +185,6 @@ These gaps are explicitly tracked in the parity matrix and Linear backlog:
 | Pgvector retrieval production path for AI chunks | `REQ-DATA-003` | Storage exists; retrieval ranking path still partial. |
 | Participant role workflow semantics completeness | `REQ-MAT-001` | Core schema exists; end-to-end role semantics still partial. |
 | Advanced conflict rule profiles + resolution decision logging | `REQ-MAT-004` | Missing first-class conflict profile/decision entities. |
-| Document retention/legal hold/disposition lifecycle models | `REQ-COMM-004` | Retention policy + legal hold + disposition entities missing. |
 | Trust reconciliation run + discrepancy queue | `REQ-BILL-003` | Reconciliation models missing from schema. |
 | LEDES profile/job entities | `REQ-BILL-004` | Standards-oriented profile/job data model missing. |
 | Dedupe user-confirm merge workflow | `REQ-PORT-003` | Import framework exists; user-confirm merge flow still partial. |

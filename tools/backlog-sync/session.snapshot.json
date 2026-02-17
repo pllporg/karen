@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T18:55:58.248Z",
+  "generatedAt": "2026-02-17T19:55:09.359Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 31,
-      "Missing": 3
+      "Complete": 32,
+      "Missing": 2
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -33,8 +33,8 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 14,
-      "Missing:Medium": 3
+      "Complete:Medium": 15,
+      "Missing:Medium": 2
     }
   },
   "priority": {
@@ -137,13 +137,30 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 16,
-      "Done": 27,
+      "Backlog": 14,
+      "In Progress": 1,
+      "Done": 28,
       "In Review": 1
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-46"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-46",
+        "title": "Implement document retention policies with legal hold workflow",
+        "state": "In Progress",
+        "updatedAt": "2026-02-17T19:44:13.950Z",
+        "requirementId": "REQ-COMM-004"
+      },
+      {
+        "key": "KAR-45",
+        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
+        "state": "Done",
+        "updatedAt": "2026-02-17T19:03:45.185Z",
+        "requirementId": "REQ-MAT-005"
+      },
       {
         "key": "KAR-44",
         "title": "Implement advanced conflict rule profiles and resolution workflows",
@@ -199,47 +216,34 @@
         "state": "Done",
         "updatedAt": "2026-02-17T16:44:47.650Z",
         "requirementId": "REQ-COMM-001"
-      },
-      {
-        "key": "KAR-35",
-        "title": "Implement style pack management with source document governance",
-        "state": "Done",
-        "updatedAt": "2026-02-17T16:30:16.904Z",
-        "requirementId": "REQ-AI-003"
-      },
-      {
-        "key": "KAR-30",
-        "title": "Implement secure portal attachments in message workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-17T16:05:48.344Z",
-        "requirementId": "REQ-PORTAL-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T18:55:56.809Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T19:55:07.212Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "434be4de1014be1625d7e787c222bf5432d79333",
+    "gitHead": "8960d96417b6358c8960eeeb74381c1518de2c7f",
     "gitStatusShort": [
-      "## lin/KAR-45-jurisdictional-deadline-rules-packs",
+      "## lin/KAR-46-document-retention-legal-hold-workflow",
       " M README.md",
-      " M apps/api/src/calendar/calendar.controller.ts",
-      " M apps/api/src/calendar/calendar.service.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/test/setup.tsx",
-      " M docs/SESSION_HANDOFF.md",
+      " M apps/api/prisma/schema.prisma",
+      " M apps/api/prisma/seed.ts",
+      " M apps/api/src/documents/documents.controller.ts",
+      " M apps/api/src/documents/documents.service.ts",
+      " M apps/web/app/documents/page.tsx",
+      " M apps/web/test/documents-page.spec.tsx",
       " M docs/parity/data-model-checklist.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/calendar/dto/apply-deadline-preview.dto.ts",
-      "?? apps/api/src/calendar/dto/create-rules-pack.dto.ts",
-      "?? apps/api/src/calendar/dto/preview-deadlines.dto.ts",
-      "?? apps/api/test/deadline-rules-packs.spec.ts",
-      "?? apps/web/test/matter-dashboard-page.spec.tsx",
-      "?? docs/parity/deadline-rules-packs.md"
+      "?? apps/api/prisma/migrations/20260217191000_document_retention_workflows/",
+      "?? apps/api/src/documents/dto/assign-retention-policy.dto.ts",
+      "?? apps/api/src/documents/dto/create-retention-policy.dto.ts",
+      "?? apps/api/src/documents/dto/disposition-run.dto.ts",
+      "?? apps/api/src/documents/dto/legal-hold.dto.ts",
+      "?? apps/api/test/document-retention.spec.ts",
+      "?? docs/parity/document-retention-workflows.md"
     ],
-    "dirtyFileCount": 15
+    "dirtyFileCount": 16
   }
 }

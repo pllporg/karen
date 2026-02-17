@@ -84,6 +84,42 @@ enum DocumentConfidentiality {
   HIGHLY_CONFIDENTIAL
 }
 
+enum DocumentDispositionStatus {
+  ACTIVE
+  PENDING_DISPOSITION
+  DISPOSED
+}
+
+enum RetentionScope {
+  ALL_DOCUMENTS
+  MATTER
+  CATEGORY
+}
+
+enum RetentionTrigger {
+  DOCUMENT_UPLOADED
+  MATTER_CLOSED
+}
+
+enum DocumentLegalHoldStatus {
+  ACTIVE
+  RELEASED
+}
+
+enum DocumentDispositionRunStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  COMPLETED
+  CANCELED
+}
+
+enum DocumentDispositionItemStatus {
+  PENDING
+  SKIPPED_LEGAL_HOLD
+  DISPOSED
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -211,6 +247,12 @@ model User {
   documentsCreated   Document[]
   documentVersions   DocumentVersion[]
   documentShareLinks DocumentShareLink[]
+  retentionPoliciesCreated DocumentRetentionPolicy[]
+  documentLegalHoldsPlaced DocumentLegalHold[] @relation("DocumentLegalHoldPlacedBy")
+  documentLegalHoldsReleased DocumentLegalHold[] @relation("DocumentLegalHoldReleasedBy")
+  documentDispositionRunsRequested DocumentDispositionRun[] @relation("DocumentDispositionRunRequestedBy")
+  documentDispositionRunsApproved DocumentDispositionRun[] @relation("DocumentDispositionRunApprovedBy")
+  documentDispositionRunsExecuted DocumentDispositionRun[] @relation("DocumentDispositionRunExecutedBy")
   timeEntries        TimeEntry[]
   expenses           Expense[]
   leadsAssigned      Lead[]
@@ -468,6 +510,8 @@ model Matter {
   communicationThreads CommunicationThread[]
   documentFolders     DocumentFolder[]
   documents            Document[]
+  documentRetentionPolicies DocumentRetentionPolicy[]
+  documentLegalHolds  DocumentLegalHold[]
   evidenceItems        EvidenceItem[]
   timeEntries          TimeEntry[]
   expenses             Expense[]
@@ -837,26 +881,36 @@ model Document {
   organizationId       String                 @db.Uuid
   matterId             String                 @db.Uuid
   folderId             String?                @db.Uuid
+  retentionPolicyId    String?                @db.Uuid
   title                String
   category             String?
   tags                 String[]               @default([])
   confidentialityLevel DocumentConfidentiality @default(CONFIDENTIAL)
   sharedWithClient     Boolean                @default(false)
+  retentionEligibleAt  DateTime?
+  legalHoldActive      Boolean                @default(false)
+  dispositionStatus    DocumentDispositionStatus @default(ACTIVE)
+  disposedAt           DateTime?
   createdByUserId      String?                @db.Uuid
   rawSourcePayload     Json?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   matter               Matter                 @relation(fields: [matterId], references: [id], onDelete: Cascade)
   folder               DocumentFolder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  retentionPolicy      DocumentRetentionPolicy? @relation(fields: [retentionPolicyId], references: [id], onDelete: SetNull)
   createdBy            User?                  @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   versions             DocumentVersion[]
   shareLinks           DocumentShareLink[]
+  legalHolds           DocumentLegalHold[]
+  dispositionItems     DocumentDispositionItem[]
   docketEntries        DocketEntry[]
   lienModels           LienModel[]
   expertEngagements    ExpertEngagement[]
   eSignEnvelopes       ESignEnvelope[]
 
   @@index([organizationId, matterId])
+  @@index([organizationId, retentionEligibleAt])
+  @@index([organizationId, dispositionStatus])
 }
 
 model DocumentVersion {
@@ -891,6 +945,93 @@ model DocumentShareLink {
   createdAt      DateTime @default(now())
   document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   createdBy      User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+}
+
+model DocumentRetentionPolicy {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  matterId       String?        @db.Uuid
+  name           String
+  description    String?
+  scope          RetentionScope @default(ALL_DOCUMENTS)
+  category       String?
+  retentionDays  Int
+  trigger        RetentionTrigger @default(DOCUMENT_UPLOADED)
+  requireApproval Boolean       @default(true)
+  isActive       Boolean        @default(true)
+  createdByUserId String?       @db.Uuid
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  matter         Matter?        @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  createdBy      User?          @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  documents      Document[]
+  dispositionRuns DocumentDispositionRun[]
+
+  @@index([organizationId, isActive])
+  @@index([organizationId, scope])
+}
+
+model DocumentLegalHold {
+  id               String                 @id @default(uuid()) @db.Uuid
+  organizationId   String                 @db.Uuid
+  documentId       String                 @db.Uuid
+  matterId         String?                @db.Uuid
+  reason           String
+  status           DocumentLegalHoldStatus @default(ACTIVE)
+  placedByUserId   String?                @db.Uuid
+  releasedByUserId String?                @db.Uuid
+  placedAt         DateTime               @default(now())
+  releasedAt       DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  document         Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  matter           Matter?                @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  placedBy         User?                  @relation("DocumentLegalHoldPlacedBy", fields: [placedByUserId], references: [id], onDelete: SetNull)
+  releasedBy       User?                  @relation("DocumentLegalHoldReleasedBy", fields: [releasedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, placedAt])
+  @@index([organizationId, documentId])
+}
+
+model DocumentDispositionRun {
+  id               String                     @id @default(uuid()) @db.Uuid
+  organizationId   String                     @db.Uuid
+  policyId         String?                    @db.Uuid
+  status           DocumentDispositionRunStatus @default(DRAFT)
+  cutoffAt         DateTime
+  notes            String?
+  requestedByUserId String?                   @db.Uuid
+  approvedByUserId String?                    @db.Uuid
+  approvedAt       DateTime?
+  executedByUserId String?                    @db.Uuid
+  executedAt       DateTime?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  policy           DocumentRetentionPolicy?   @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  requestedBy      User?                      @relation("DocumentDispositionRunRequestedBy", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  approvedBy       User?                      @relation("DocumentDispositionRunApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  executedBy       User?                      @relation("DocumentDispositionRunExecutedBy", fields: [executedByUserId], references: [id], onDelete: SetNull)
+  items            DocumentDispositionItem[]
+
+  @@index([organizationId, status, createdAt])
+}
+
+model DocumentDispositionItem {
+  id             String                       @id @default(uuid()) @db.Uuid
+  organizationId String                       @db.Uuid
+  runId          String                       @db.Uuid
+  documentId     String                       @db.Uuid
+  status         DocumentDispositionItemStatus @default(PENDING)
+  scheduledAt    DateTime                     @default(now())
+  appliedAt      DateTime?
+  note           String?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  run            DocumentDispositionRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  document       Document                     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, documentId])
+  @@index([organizationId, status, scheduledAt])
 }
 
 model EvidenceItem {
