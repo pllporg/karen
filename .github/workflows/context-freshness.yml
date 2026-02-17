@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   handoff-freshness:
-    if: ${{ secrets.LINEAR_API_TOKEN != '' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -20,14 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Generate context snapshot
-        env:
-          LINEAR_API_TOKEN: ${{ secrets.LINEAR_API_TOKEN }}
-          LINEAR_TEAM_KEY: ${{ vars.LINEAR_TEAM_KEY }}
-          LINEAR_PROJECT_NAME: ${{ vars.LINEAR_PROJECT_NAME }}
-          LINEAR_SCOPE_LABEL: ${{ vars.LINEAR_SCOPE_LABEL }}
-        run: node tools/backlog-sync/backlog_snapshot.mjs
 
       - name: Validate handoff freshness and evidence discipline
         env:

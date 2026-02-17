@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class IntakeWizardDto {
   @IsString()
@@ -48,5 +48,52 @@ export class IntakeWizardDto {
     actualDate?: string;
     status?: string;
     notes?: string;
+  }>;
+
+  @IsArray()
+  @IsOptional()
+  damages?: Array<{
+    category: string;
+    repairEstimate?: number;
+    paidAmount?: number;
+    completionCost?: number;
+    consequentialAmount?: number;
+    notes?: string;
+  }>;
+
+  @IsArray()
+  @IsOptional()
+  liens?: Array<{
+    claimantContactId?: string;
+    claimantName?: string;
+    amount?: number;
+    recordingDate?: string;
+    releaseDate?: string;
+    status?: string;
+    notes?: string;
+  }>;
+
+  @IsArray()
+  @IsOptional()
+  insuranceClaims?: Array<{
+    policyNumber?: string;
+    claimNumber?: string;
+    adjusterContactId?: string;
+    adjusterName?: string;
+    insurerContactId?: string;
+    insurerName?: string;
+    coverageNotes?: string;
+    status?: string;
+  }>;
+
+  @IsArray()
+  @IsOptional()
+  expertEngagements?: Array<{
+    expertContactId?: string;
+    expertName?: string;
+    scope?: string;
+    feeArrangement?: string;
+    reportDocumentId?: string;
+    status?: string;
   }>;
 }

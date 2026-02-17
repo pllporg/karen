@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T01:06:37.062Z",
+  "generatedAt": "2026-02-17T01:33:41.691Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 6,
-      "Partial": 23,
+      "Complete": 8,
+      "Partial": 21,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,11 +33,11 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 5,
-      "Partial:Medium": 11,
-      "Partial:High": 12,
-      "Missing:Medium": 5,
-      "Complete:Medium": 1
+      "Complete:High": 6,
+      "Complete:Medium": 2,
+      "Partial:Medium": 10,
+      "Partial:High": 11,
+      "Missing:Medium": 5
     }
   },
   "priority": {
@@ -98,15 +98,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-MAT-003",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Complete construction litigation intake wizard domain coverage",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-OPS-001",
         "parityStatus": "Partial",
         "risk": "High",
@@ -132,6 +123,15 @@
         "component": "API",
         "epicCode": "PARITY-03",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORT-003",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Build user-confirm merge workflow for dedupe suggestions",
+        "component": "Web",
+        "epicCode": "PARITY-03",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,18 +140,28 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 31,
+      "Backlog": 30,
       "In Review": 3,
-      "Done": 10
+      "Done": 10,
+      "In Progress": 1
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-21"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-21",
+        "title": "Complete construction litigation intake wizard domain coverage",
+        "state": "In Progress",
+        "updatedAt": "2026-02-17T01:29:04.782Z",
+        "requirementId": "REQ-MAT-003"
+      },
       {
         "key": "KAR-19",
         "title": "Complete participant role configurability and side semantics coverage",
         "state": "Done",
-        "updatedAt": "2026-02-17T01:06:14.745Z",
+        "updatedAt": "2026-02-17T01:12:49.187Z",
         "requirementId": "REQ-MAT-001"
       },
       {
@@ -209,25 +219,20 @@
         "state": "Done",
         "updatedAt": "2026-02-16T21:50:13.462Z",
         "requirementId": "REQ-INT-002"
-      },
-      {
-        "key": "KAR-39",
-        "title": "Implement Filevine and PracticePanther connector production adapters",
-        "state": "Done",
-        "updatedAt": "2026-02-16T21:48:24.385Z",
-        "requirementId": "REQ-INT-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T01:06:35.855Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T01:29:21.101Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "63f53be4cf871577e60d455b887c09699d09572f",
+    "gitHead": "9170a37a17ce701050575c984fb741074b44b3b5",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-21-construction-intake-wizard-coverage...origin/lin/KAR-21-construction-intake-wizard-coverage",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 2
   }
 }

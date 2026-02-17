@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T01:06:37.062Z`
+- Snapshot Timestamp: `2026-02-17T01:33:41.691Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T01:06:35.855Z`
+- Last Successful Mirror Verify: `2026-02-17T01:29:21.101Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Completed `REQ-MAT-003` with full construction-intake domain capture (damages/liens/insurance/expert in wizard + API), draft save/resume endpoints and UI flow, and matter dashboard domain completeness indicators with API/Web regression tests.
 - 2026-02-17: Completed `REQ-MAT-001` with org-configurable participant role definition endpoints, represented-by/law-firm semantic validation in matter participant creation, and matrix tests spanning all required participant categories.
 - 2026-02-17: Completed `REQ-DATA-001` parity audit artifact at `docs/parity/data-model-checklist.md` with prompt-entity/model mapping and explicit gap linkage to active requirement IDs.
 - 2026-02-16: Established new-chat continuity protocol, snapshot tooling, and freshness checks for context-compaction resilience.
