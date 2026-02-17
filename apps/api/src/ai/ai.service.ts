@@ -26,6 +26,7 @@ export class AiService implements OnModuleInit {
   private readonly openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
   private readonly model = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
   private readonly embeddingModel = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
+  private readonly vectorDimensions = Number(process.env.AI_VECTOR_DIMENSIONS || '1536');
 
   constructor(
     private readonly prisma: PrismaService,
@@ -762,6 +763,9 @@ export class AiService implements OnModuleInit {
     if (!queryEmbedding || queryEmbedding.length === 0) {
       return [];
     }
+    if (queryEmbedding.length !== this.vectorDimensions) {
+      return [];
+    }
 
     const vectorLiteral = this.toPgVectorLiteral(queryEmbedding);
     if (!vectorLiteral) {
@@ -798,6 +802,10 @@ export class AiService implements OnModuleInit {
   }
 
   private async persistChunkEmbeddingVector(chunkId: string, embedding: number[]) {
+    if (embedding.length !== this.vectorDimensions) {
+      return;
+    }
+
     const vectorLiteral = this.toPgVectorLiteral(embedding);
     if (!vectorLiteral) {
       return;

@@ -1,6 +1,8 @@
 import { AiService } from '../src/ai/ai.service';
 
 describe('AiService pgvector retrieval', () => {
+  const vector = (value: number) => Array.from({ length: 1536 }, () => value);
+
   it('uses vector similarity retrieval when query embeddings are available', async () => {
     const prisma = {
       matter: {
@@ -49,7 +51,7 @@ describe('AiService pgvector retrieval', () => {
       { appendEvent: jest.fn() } as any,
     );
 
-    (service as any).embedText = jest.fn().mockResolvedValue([0.1, 0.2, 0.3]);
+    (service as any).embedText = jest.fn().mockResolvedValue(vector(0.1));
 
     const context = await (service as any).buildMatterContext(
       'org-1',
@@ -99,7 +101,7 @@ describe('AiService pgvector retrieval', () => {
       { appendEvent: jest.fn() } as any,
     );
 
-    (service as any).embedText = jest.fn().mockResolvedValue([0.4, 0.5, 0.6]);
+    (service as any).embedText = jest.fn().mockResolvedValue(vector(0.4));
 
     const context = await (service as any).buildMatterContext(
       'org-1',
@@ -143,7 +145,7 @@ describe('AiService pgvector retrieval', () => {
       { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
     );
 
-    (service as any).embedText = jest.fn().mockResolvedValue([0.01, 0.02, 0.03]);
+    (service as any).embedText = jest.fn().mockResolvedValue(vector(0.01));
 
     await service.ingestDocument({
       user: { id: 'user-1', organizationId: 'org-1' } as any,

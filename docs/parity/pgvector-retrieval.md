@@ -14,10 +14,11 @@ Prompt section: `Vector: pgvector / AI Layer`
   - retrieval metadata (`mode`, `reason`, `queryText`) returned in context for observability
 - Added embedding persistence for pgvector column:
   - ingestion still stores JSON embeddings (`embeddingJson`)
-  - when embeddings are present, ingestion also writes vector column for similarity search
+  - when embeddings are present (matching configured vector dimensions), ingestion also writes vector column for similarity search
   - vector write failures are fail-soft to avoid breaking ingestion in constrained environments
 - Added pgvector index migration:
   - `apps/api/prisma/migrations/20260217173000_ai_source_chunk_vector_index/migration.sql`
+  - `AiSourceChunk.embedding` column normalized to `vector(1536)`
   - IVFFlat cosine index on `AiSourceChunk.embedding` (partial index on non-null vectors)
 
 ## Verification

@@ -1167,7 +1167,7 @@ model AiSourceChunk {
   organizationId    String      @db.Uuid
   documentVersionId String      @db.Uuid
   chunkText         String
-  embedding         Unsupported("vector")?
+  embedding         Unsupported("vector(1536)")?
   embeddingJson     Json?
   metadataJson      Json?
   createdAt         DateTime    @default(now())
