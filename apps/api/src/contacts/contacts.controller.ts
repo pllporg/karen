@@ -61,4 +61,19 @@ export class ContactsController {
       duplicateId: body.duplicateId,
     });
   }
+
+  @Post('dedupe/decisions')
+  @RequirePermissions('contacts:write')
+  dedupeDecision(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { primaryId: string; duplicateId: string; decision: 'OPEN' | 'IGNORE' | 'DEFER' },
+  ) {
+    return this.contactsService.setDedupeDecision({
+      organizationId: user.organizationId,
+      actorUserId: user.id,
+      primaryId: body.primaryId,
+      duplicateId: body.duplicateId,
+      decision: body.decision,
+    });
+  }
 }

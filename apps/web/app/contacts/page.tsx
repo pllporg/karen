@@ -13,16 +13,45 @@ type Contact = {
   primaryPhone?: string;
 };
 
+type DedupeSuggestion = {
+  primaryId: string;
+  duplicateId: string;
+  pairKey: string;
+  score: number;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  decision: 'OPEN' | 'IGNORE' | 'DEFER';
+  reasons: string[];
+  primary: {
+    id: string;
+    displayName: string;
+    kind: 'PERSON' | 'ORGANIZATION';
+    primaryEmail?: string | null;
+    primaryPhone?: string | null;
+    tags?: string[];
+  };
+  duplicate: {
+    id: string;
+    displayName: string;
+    kind: 'PERSON' | 'ORGANIZATION';
+    primaryEmail?: string | null;
+    primaryPhone?: string | null;
+    tags?: string[];
+  };
+  fieldDiffs: Array<{ field: string; primaryValue: string | null; duplicateValue: string | null }>;
+};
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [dedupe, setDedupe] = useState<Array<{ primaryId: string; duplicateId: string; score: number; reasons: string[] }>>([]);
+  const [dedupe, setDedupe] = useState<DedupeSuggestion[]>([]);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<'PERSON' | 'ORGANIZATION'>('PERSON');
+  const [includeResolved, setIncludeResolved] = useState(false);
+  const [actionKey, setActionKey] = useState<string | null>(null);
 
   async function load() {
     const [contactData, dedupeData] = await Promise.all([
       apiFetch<Contact[]>('/contacts'),
-      apiFetch<Array<{ primaryId: string; duplicateId: string; score: number; reasons: string[] }>>('/contacts/dedupe/suggestions'),
+      apiFetch<DedupeSuggestion[]>('/contacts/dedupe/suggestions'),
     ]);
     setContacts(contactData);
     setDedupe(dedupeData);
@@ -42,13 +71,44 @@ export default function ContactsPage() {
     await load();
   }
 
-  async function merge(primaryId: string, duplicateId: string) {
-    await apiFetch('/contacts/dedupe/merge', {
-      method: 'POST',
-      body: JSON.stringify({ primaryId, duplicateId }),
-    });
-    await load();
+  async function merge(item: DedupeSuggestion) {
+    const confirmed = window.confirm(
+      `Merge ${item.duplicate.displayName} into ${item.primary.displayName}? This cannot be automatically undone.`,
+    );
+    if (!confirmed) return;
+    const key = `${item.pairKey}:merge`;
+    setActionKey(key);
+    try {
+      await apiFetch('/contacts/dedupe/merge', {
+        method: 'POST',
+        body: JSON.stringify({ primaryId: item.primaryId, duplicateId: item.duplicateId }),
+      });
+      await load();
+    } finally {
+      setActionKey(null);
+    }
   }
+
+  async function decision(item: DedupeSuggestion, nextDecision: 'OPEN' | 'IGNORE' | 'DEFER') {
+    const label = nextDecision === 'IGNORE' ? 'ignore' : nextDecision === 'DEFER' ? 'defer' : 'reopen';
+    const confirmed = window.confirm(
+      `Confirm ${label} decision for duplicate pair ${item.primary.displayName} ↔ ${item.duplicate.displayName}?`,
+    );
+    if (!confirmed) return;
+    const key = `${item.pairKey}:${nextDecision}`;
+    setActionKey(key);
+    try {
+      await apiFetch('/contacts/dedupe/decisions', {
+        method: 'POST',
+        body: JSON.stringify({ primaryId: item.primaryId, duplicateId: item.duplicateId, decision: nextDecision }),
+      });
+      await load();
+    } finally {
+      setActionKey(null);
+    }
+  }
+
+  const visibleDedupe = includeResolved ? dedupe : dedupe.filter((item) => item.decision === 'OPEN');
 
   return (
     <AppShell>
@@ -92,17 +152,73 @@ export default function ContactsPage() {
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Dedupe Suggestions</h3>
-          {dedupe.length === 0 ? <p>No suggestions</p> : null}
-          {dedupe.map((item) => (
+          <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+            <input type="checkbox" checked={includeResolved} onChange={(e) => setIncludeResolved(e.target.checked)} />
+            Show deferred/ignored pairs
+          </label>
+          {visibleDedupe.length === 0 ? <p>No suggestions</p> : null}
+          {visibleDedupe.map((item) => (
             <div key={`${item.primaryId}-${item.duplicateId}`} style={{ marginBottom: 8 }}>
               <div>
-                {item.primaryId.slice(0, 8)} ↔ {item.duplicateId.slice(0, 8)} ({Math.round(item.score * 100)}%)
+                {item.primary.displayName} ↔ {item.duplicate.displayName} ({Math.round(item.score * 100)}%)
               </div>
-              <small style={{ color: 'var(--muted)' }}>{item.reasons.join(', ')}</small>
-              <div>
-                <button className="button ghost" style={{ marginTop: 6 }} onClick={() => merge(item.primaryId, item.duplicateId)}>
-                  Merge
+              <small style={{ color: 'var(--muted)' }}>
+                Confidence: {item.confidence} | Status: {item.decision} | {item.reasons.join(', ')}
+              </small>
+              {item.fieldDiffs.length > 0 ? (
+                <table className="table" style={{ marginTop: 6 }}>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Primary</th>
+                      <th>Duplicate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {item.fieldDiffs.map((diff) => (
+                      <tr key={`${item.pairKey}:${diff.field}`}>
+                        <td>{diff.field}</td>
+                        <td>{diff.primaryValue || '-'}</td>
+                        <td>{diff.duplicateValue || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  className="button ghost"
+                  onClick={() => merge(item)}
+                  disabled={actionKey !== null}
+                >
+                  {actionKey === `${item.pairKey}:merge` ? 'Merging...' : 'Merge'}
                 </button>
+                {item.decision === 'OPEN' ? (
+                  <>
+                    <button
+                      className="button ghost"
+                      onClick={() => decision(item, 'DEFER')}
+                      disabled={actionKey !== null}
+                    >
+                      {actionKey === `${item.pairKey}:DEFER` ? 'Saving...' : 'Defer'}
+                    </button>
+                    <button
+                      className="button ghost"
+                      onClick={() => decision(item, 'IGNORE')}
+                      disabled={actionKey !== null}
+                    >
+                      {actionKey === `${item.pairKey}:IGNORE` ? 'Saving...' : 'Ignore'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="button ghost"
+                    onClick={() => decision(item, 'OPEN')}
+                    disabled={actionKey !== null}
+                  >
+                    {actionKey === `${item.pairKey}:OPEN` ? 'Saving...' : 'Reopen'}
+                  </button>
+                )}
               </div>
             </div>
           ))}

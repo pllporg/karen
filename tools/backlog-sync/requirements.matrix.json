@@ -203,7 +203,7 @@
           "title": "Build user-confirm merge workflow for dedupe suggestions",
           "requirementId": "REQ-PORT-003",
           "promptSection": "Import Framework / Dedupe engine + user-confirm merge UI",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "migration", "imports", "contacts"],
