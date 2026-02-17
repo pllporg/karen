@@ -184,9 +184,10 @@ describe('AiPage', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Confirm' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Create task' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Create event' }));
+    await screen.findByText('Serve initial disclosures');
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Confirm' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Create task' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Create event' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Selected Deadlines' }));
 
     await waitFor(() => {

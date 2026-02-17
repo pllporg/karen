@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T21:57:11.761Z",
+  "generatedAt": "2026-02-17T22:01:17.961Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -133,15 +133,22 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 45,
+    "scopedIssueCount": 46,
     "stateCounts": {
-      "Done": 32,
+      "Done": 33,
       "In Review": 1,
       "Backlog": 12
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-53",
+        "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-17T22:01:03.681Z",
+        "requirementId": "REQ-AI-001"
+      },
       {
         "key": "KAR-52",
         "title": "Strengthen REQ-OPS-001 web smoke coverage for critical user journey",
@@ -204,31 +211,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T17:54:26.789Z",
         "requirementId": "REQ-MAT-002"
-      },
-      {
-        "key": "KAR-12",
-        "title": "Add pgvector-backed similarity retrieval path for source chunks",
-        "state": "Done",
-        "updatedAt": "2026-02-17T17:35:37.259Z",
-        "requirementId": "REQ-DATA-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T21:57:10.482Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:01:16.701Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "4196db25b0372396d0cdb95f64911703801ab096",
+    "gitHead": "8939e2689f58e51ce381c444ba451c785eb995ad",
     "gitStatusShort": [
-      "## lin/KAR-53-ai-deadline-verification-hardening",
-      " M apps/api/src/ai/ai.service.ts",
-      " M apps/web/test/ai-page.spec.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/test/ai-deadline-confirmation.spec.ts",
-      "?? docs/parity/ai-deadline-confirmation-verification.md"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 6
+    "dirtyFileCount": 0
   }
 }
