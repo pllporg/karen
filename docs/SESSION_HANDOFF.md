@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T17:49:36.868Z`
+- Snapshot Timestamp: `2026-02-17T18:08:03.926Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T17:49:30.574Z`
+- Last Successful Mirror Verify: `2026-02-17T18:08:01.133Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Completed `REQ-PORTAL-002` by replacing stub-only e-sign with provider abstraction (`stub` fallback + `sandbox` provider), adding envelope list/refresh endpoints, signed provider webhook callback handling, persisted envelope status history/event tracking, and portal UI status surfacing with API/Web regression coverage (`docs/parity/esign-provider-abstraction.md`).
 - 2026-02-17: Completed `REQ-MAT-002` with compound contact tag filters (`include/exclude + any/all`), relationship graph search/type filtering on API + web, and inline dedupe confidence indicators on contact rows, plus API/Web regression coverage (`docs/parity/contacts-graph-filtering.md`).
 - 2026-02-17: Completed `REQ-DATA-003` by adding matter-scoped pgvector similarity retrieval for AI source chunks, vector-column persistence during ingestion, explicit recency fallback when embeddings/vector query are unavailable, and dedicated retrieval regression tests plus index migration (`docs/parity/pgvector-retrieval.md`).
 - 2026-02-17: Completed `REQ-COMM-003` document automation coverage by adding nested DOCX merge context (matter/participants/custom fields), strict missing-placeholder validation before generation, and generated artifact provenance/audit events for template merges and generated PDFs (`docs/parity/document-automation-coverage.md`).

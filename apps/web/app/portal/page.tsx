@@ -15,6 +15,7 @@ export default function PortalPage() {
   const [attachmentTitle, setAttachmentTitle] = useState('');
   const [intakeFormDefinitionId, setIntakeFormDefinitionId] = useState('');
   const [engagementLetterTemplateId, setEngagementLetterTemplateId] = useState('');
+  const [eSignProvider, setEsignProvider] = useState('stub');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,17 +82,27 @@ export default function PortalPage() {
         data: { homeownerGoal: 'Resolve defect damages and warranty claims' },
       }),
     });
+    setSnapshot(await apiFetch('/portal/snapshot'));
   }
 
-  async function createEsignStub() {
+  async function createEsignEnvelope() {
     if (!engagementLetterTemplateId) return;
     await apiFetch('/portal/esign', {
       method: 'POST',
       body: JSON.stringify({
         engagementLetterTemplateId,
         matterId: matterId || undefined,
+        provider: eSignProvider,
       }),
     });
+    setSnapshot(await apiFetch('/portal/snapshot'));
+  }
+
+  async function refreshEsignEnvelope(envelopeId: string) {
+    await apiFetch(`/portal/esign/${envelopeId}/refresh`, {
+      method: 'POST',
+    });
+    setSnapshot(await apiFetch('/portal/snapshot'));
   }
 
   return (
@@ -113,6 +124,10 @@ export default function PortalPage() {
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Shared Documents</h3>
           <p>{snapshot?.documents?.length || 0} shared docs</p>
+        </div>
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>E-Sign Envelopes</h3>
+          <p>{snapshot?.eSignEnvelopes?.length || 0} envelopes</p>
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Secure Message</h3>
@@ -181,12 +196,37 @@ export default function PortalPage() {
           ))}
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
-          <h3 style={{ marginTop: 0 }}>Intake + E-Sign Stubs</h3>
+          <h3 style={{ marginTop: 0 }}>Intake + E-Sign</h3>
           <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto' }}>
             <input className="input" value={intakeFormDefinitionId} onChange={(e) => setIntakeFormDefinitionId(e.target.value)} placeholder="Intake Form Definition ID" />
             <button className="button ghost" onClick={submitIntake}>Submit Intake</button>
             <input className="input" value={engagementLetterTemplateId} onChange={(e) => setEngagementLetterTemplateId(e.target.value)} placeholder="Engagement Letter Template ID" />
-            <button className="button ghost" onClick={createEsignStub}>Create E-Sign Envelope</button>
+            <select
+              className="select"
+              aria-label="E-Sign Provider"
+              value={eSignProvider}
+              onChange={(e) => setEsignProvider(e.target.value)}
+            >
+              <option value="stub">Stub Provider</option>
+              <option value="sandbox">Sandbox Provider</option>
+            </select>
+            <button className="button ghost" onClick={createEsignEnvelope}>Create E-Sign Envelope</button>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            {(snapshot?.eSignEnvelopes || []).length === 0 ? <p>No e-sign envelopes yet.</p> : null}
+            {(snapshot?.eSignEnvelopes || []).map((envelope: any) => (
+              <div key={envelope.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div>
+                  <strong>{envelope.engagementLetterTemplate?.name || 'Engagement Letter'}</strong>
+                  <div style={{ fontSize: 12, opacity: 0.75 }}>
+                    Status: {envelope.status} | Provider: {envelope.provider}
+                  </div>
+                </div>
+                <button className="button ghost" type="button" onClick={() => refreshEsignEnvelope(envelope.id)}>
+                  Refresh Status
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

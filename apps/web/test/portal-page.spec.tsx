@@ -85,9 +85,11 @@ describe('PortalPage', () => {
   it('submits intake and creates e-sign envelope from portal actions', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [] }))
+      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [] }))
       .mockResolvedValueOnce(jsonResponse({ id: 'intake-1' }))
-      .mockResolvedValueOnce(jsonResponse({ id: 'esign-1' }));
+      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [] }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'esign-1' }))
+      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [{ id: 'esign-1' }] }));
     vi.stubGlobal('fetch', fetchMock);
 
     render(<PortalPage />);
@@ -127,18 +129,21 @@ describe('PortalPage', () => {
       );
     });
 
-    const intakeCall = fetchMock.mock.calls[1];
-    expect(JSON.parse(intakeCall[1]?.body as string)).toEqual(
+    const intakeCall = fetchMock.mock.calls.find(([url]) => String(url) === 'http://localhost:4000/portal/intake-submissions');
+    expect(intakeCall).toBeDefined();
+    expect(JSON.parse((intakeCall?.[1]?.body as string) || '{}')).toEqual(
       expect.objectContaining({
         intakeFormDefinitionId: 'intake-def-1',
         matterId: 'matter-22',
       }),
     );
 
-    const esignCall = fetchMock.mock.calls[2];
-    expect(JSON.parse(esignCall[1]?.body as string)).toEqual({
+    const esignCall = fetchMock.mock.calls.find(([url]) => String(url) === 'http://localhost:4000/portal/esign');
+    expect(esignCall).toBeDefined();
+    expect(JSON.parse((esignCall?.[1]?.body as string) || '{}')).toEqual({
       engagementLetterTemplateId: 'letter-template-5',
       matterId: 'matter-22',
+      provider: 'stub',
     });
   });
 

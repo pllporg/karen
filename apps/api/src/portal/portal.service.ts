@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { S3Service } from '../files/s3.service';
 import { MalwareScanService } from '../files/malware-scan.service';
 import { AuthenticatedUser, UploadedFile } from '../common/types';
 import { toJsonValue } from '../common/utils/json.util';
+import { EsignProviderRegistry } from './esign/esign-provider.registry';
+import {
+  EsignProviderEnvelopeContext,
+  EsignWebhookResult,
+  normalizeWebhookHeaders,
+} from './esign/esign-provider.interface';
 
 @Injectable()
 export class PortalService {
@@ -15,6 +22,8 @@ export class PortalService {
     private readonly malwareScan: MalwareScanService,
     private readonly audit: AuditService,
   ) {}
+
+  private readonly esignProviders = new EsignProviderRegistry();
 
   async getPortalSnapshot(user: AuthenticatedUser) {
     this.assertClientRole(user);
@@ -29,7 +38,7 @@ export class PortalService {
       return this.emptySnapshot();
     }
 
-    const [matters, keyDates, invoices, messages, documents] = await Promise.all([
+    const [matters, keyDates, invoices, messages, documents, eSignEnvelopes] = await Promise.all([
       this.prisma.matter.findMany({
         where: { organizationId: user.organizationId, id: { in: matterIds } },
         include: { stage: true },
@@ -77,6 +86,22 @@ export class PortalService {
           versions: { orderBy: { uploadedAt: 'desc' }, take: 1 },
         },
       }),
+      this.prisma.eSignEnvelope.findMany({
+        where: {
+          organizationId: user.organizationId,
+          matterId: { in: matterIds },
+        },
+        include: {
+          engagementLetterTemplate: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 25,
+      }),
     ]);
 
     const payments = invoices.flatMap((invoice) => invoice.payments);
@@ -119,6 +144,17 @@ export class PortalService {
       };
     });
 
+    const envelopes = eSignEnvelopes.map((envelope) => ({
+      id: envelope.id,
+      matterId: envelope.matterId,
+      status: envelope.status,
+      provider: envelope.provider,
+      externalId: envelope.externalId,
+      engagementLetterTemplate: envelope.engagementLetterTemplate,
+      createdAt: envelope.createdAt,
+      updatedAt: envelope.updatedAt,
+    }));
+
     return {
       matters,
       keyDates,
@@ -126,6 +162,7 @@ export class PortalService {
       payments,
       messages: portalMessages,
       documents: sharedDocuments,
+      eSignEnvelopes: envelopes,
     };
   }
 
@@ -318,25 +355,328 @@ export class PortalService {
     });
   }
 
-  async createEsignStub(input: {
+  async createEsignEnvelope(input: {
     user: AuthenticatedUser;
     engagementLetterTemplateId: string;
     matterId?: string;
+    provider?: string;
   }) {
     this.assertClientRole(input.user);
+    const contactId = this.requireClientContactId(input.user);
+    if (input.matterId) {
+      await this.assertClientMatterAccess(input.user.organizationId, contactId, input.matterId);
+    }
 
-    return this.prisma.eSignEnvelope.create({
+    const template = await this.prisma.engagementLetterTemplate.findFirst({
+      where: {
+        id: input.engagementLetterTemplateId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!template) {
+      throw new NotFoundException('Engagement letter template not found');
+    }
+
+    const provider = this.esignProviders.resolve(input.provider);
+    const envelope = await this.prisma.eSignEnvelope.create({
       data: {
         organizationId: input.user.organizationId,
         engagementLetterTemplateId: input.engagementLetterTemplateId,
         matterId: input.matterId,
-        status: 'PENDING_SIGNATURE',
-        provider: 'stub',
+        status: 'DRAFT',
+        provider: provider.key,
         payloadJson: toJsonValue({
-          note: 'E-sign integration stub. Replace with provider integration in production.',
+          statusHistory: [
+            {
+              from: null,
+              to: 'DRAFT',
+              source: 'system',
+              at: new Date().toISOString(),
+            },
+          ],
+          webhookEvents: [],
         }),
       },
     });
+
+    const created = await provider.createEnvelope({
+      envelopeId: envelope.id,
+      organizationId: input.user.organizationId,
+      engagementLetterTemplateId: template.id,
+      engagementLetterTemplateName: template.name,
+      engagementLetterBody: template.bodyTemplate,
+      matterId: input.matterId,
+      clientContactId: contactId,
+    });
+
+    const updated = await this.updateEnvelopeStatusWithHistory({
+      envelopeId: envelope.id,
+      organizationId: input.user.organizationId,
+      toStatus: created.status,
+      source: 'provider_create',
+      eventId: null,
+      externalId: created.externalId,
+      mergePayload: {
+        signingUrl: created.signingUrl,
+        provider: {
+          ...(created.metadata || {}),
+          createdAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'portal.esign.created',
+      entityType: 'e_sign_envelope',
+      entityId: updated.id,
+      metadata: {
+        provider: provider.key,
+        status: updated.status,
+        matterId: updated.matterId,
+      },
+    });
+
+    return updated;
+  }
+
+  async listPortalEsignEnvelopes(input: { user: AuthenticatedUser; matterId?: string }) {
+    this.assertClientRole(input.user);
+    const contactId = this.requireClientContactId(input.user);
+    const matterIds = await this.getClientMatterIds(input.user.organizationId, contactId);
+    const scopedMatterIds = input.matterId ? matterIds.filter((id) => id === input.matterId) : matterIds;
+    if (input.matterId && scopedMatterIds.length === 0) {
+      throw new ForbiddenException('Matter is not available in your client portal');
+    }
+    if (scopedMatterIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.eSignEnvelope.findMany({
+      where: {
+        organizationId: input.user.organizationId,
+        matterId: { in: scopedMatterIds },
+      },
+      include: {
+        engagementLetterTemplate: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  async refreshPortalEsignEnvelope(input: { user: AuthenticatedUser; envelopeId: string }) {
+    this.assertClientRole(input.user);
+    const contactId = this.requireClientContactId(input.user);
+    const envelope = await this.prisma.eSignEnvelope.findFirst({
+      where: {
+        id: input.envelopeId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!envelope) {
+      throw new NotFoundException('E-sign envelope not found');
+    }
+    if (!envelope.matterId) {
+      throw new ForbiddenException('Envelope is not scoped to a portal-visible matter');
+    }
+    await this.assertClientMatterAccess(input.user.organizationId, contactId, envelope.matterId);
+
+    const provider = this.esignProviders.resolve(envelope.provider);
+    const status = await provider.getEnvelopeStatus(this.toProviderEnvelopeContext(envelope));
+    const updated = await this.updateEnvelopeStatusWithHistory({
+      envelopeId: envelope.id,
+      organizationId: envelope.organizationId,
+      toStatus: status.status,
+      source: 'provider_poll',
+      eventId: null,
+      mergePayload: {
+        providerPoll: {
+          at: new Date().toISOString(),
+          ...(status.metadata || {}),
+        },
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'portal.esign.status.refreshed',
+      entityType: 'e_sign_envelope',
+      entityId: envelope.id,
+      metadata: {
+        previousStatus: envelope.status,
+        status: updated.status,
+        provider: envelope.provider,
+      },
+    });
+
+    return updated;
+  }
+
+  async handleEsignWebhook(input: {
+    providerKey: string;
+    headers: Record<string, string | string[] | undefined>;
+    payload: unknown;
+  }) {
+    const provider = this.esignProviders.resolve(input.providerKey);
+    let webhook: EsignWebhookResult;
+    try {
+      webhook = provider.parseWebhook({
+        headers: normalizeWebhookHeaders(input.headers),
+        payload: input.payload,
+      });
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
+
+    const envelope = await this.prisma.eSignEnvelope.findFirst({
+      where: {
+        provider: provider.key,
+        externalId: webhook.externalId,
+      },
+    });
+    if (!envelope) {
+      throw new NotFoundException('E-sign envelope not found for webhook event');
+    }
+
+    const updated = await this.updateEnvelopeStatusWithHistory({
+      envelopeId: envelope.id,
+      organizationId: envelope.organizationId,
+      toStatus: webhook.status,
+      source: 'provider_webhook',
+      eventId: webhook.eventId ?? null,
+      mergePayload: {
+        providerWebhook: {
+          at: new Date().toISOString(),
+          ...(webhook.metadata || {}),
+        },
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: envelope.organizationId,
+      actorUserId: undefined,
+      action: 'portal.esign.webhook.processed',
+      entityType: 'e_sign_envelope',
+      entityId: envelope.id,
+      metadata: {
+        provider: provider.key,
+        eventId: webhook.eventId,
+        status: webhook.status,
+      },
+    });
+
+    return {
+      ok: true,
+      envelopeId: updated.id,
+      status: updated.status,
+    };
+  }
+
+  private toProviderEnvelopeContext(envelope: {
+    id: string;
+    organizationId: string;
+    externalId: string | null;
+    status: string;
+    payloadJson: Prisma.JsonValue | null;
+  }): EsignProviderEnvelopeContext {
+    if (!envelope.externalId) {
+      throw new UnprocessableEntityException('E-sign envelope is missing provider external id');
+    }
+    return {
+      id: envelope.id,
+      organizationId: envelope.organizationId,
+      externalId: envelope.externalId,
+      status: envelope.status,
+      payloadJson: envelope.payloadJson ?? undefined,
+    };
+  }
+
+  private async updateEnvelopeStatusWithHistory(input: {
+    envelopeId: string;
+    organizationId: string;
+    toStatus: string;
+    source: 'provider_create' | 'provider_poll' | 'provider_webhook' | 'system';
+    eventId: string | null;
+    externalId?: string;
+    mergePayload?: Record<string, unknown>;
+  }) {
+    const envelope = await this.prisma.eSignEnvelope.findFirst({
+      where: {
+        id: input.envelopeId,
+        organizationId: input.organizationId,
+      },
+    });
+    if (!envelope) {
+      throw new NotFoundException('E-sign envelope not found');
+    }
+
+    const payload = this.readEnvelopePayload(envelope.payloadJson);
+    const webhookEvents = this.readWebhookEvents(payload.webhookEvents);
+    if (input.eventId && webhookEvents.includes(input.eventId)) {
+      return envelope;
+    }
+
+    const statusHistory = this.readStatusHistory(payload.statusHistory);
+    const normalizedStatus = input.toStatus.trim().toUpperCase();
+    if (envelope.status !== normalizedStatus) {
+      statusHistory.push({
+        from: envelope.status || null,
+        to: normalizedStatus,
+        source: input.source,
+        at: new Date().toISOString(),
+        eventId: input.eventId,
+      });
+    }
+
+    if (input.eventId) {
+      webhookEvents.push(input.eventId);
+    }
+
+    const nextPayload: Record<string, unknown> = {
+      ...payload,
+      ...(input.mergePayload || {}),
+      statusHistory,
+      webhookEvents,
+    };
+
+    return this.prisma.eSignEnvelope.update({
+      where: { id: envelope.id },
+      data: {
+        status: normalizedStatus,
+        externalId: input.externalId ?? envelope.externalId,
+        payloadJson: toJsonValue(nextPayload),
+      },
+    });
+  }
+
+  private readEnvelopePayload(payloadJson: Prisma.JsonValue | null): Record<string, unknown> {
+    if (!payloadJson || typeof payloadJson !== 'object' || Array.isArray(payloadJson)) {
+      return {};
+    }
+    return payloadJson as Record<string, unknown>;
+  }
+
+  private readStatusHistory(raw: unknown): Array<Record<string, unknown>> {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw
+      .filter((entry) => entry && typeof entry === 'object' && !Array.isArray(entry))
+      .map((entry) => entry as Record<string, unknown>);
+  }
+
+  private readWebhookEvents(raw: unknown): string[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
   }
 
   private assertClientRole(user: AuthenticatedUser) {
@@ -353,6 +693,7 @@ export class PortalService {
       payments: [],
       messages: [],
       documents: [],
+      eSignEnvelopes: [],
     };
   }
 

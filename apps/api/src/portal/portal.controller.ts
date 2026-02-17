@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PortalService } from './portal.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
@@ -68,11 +68,31 @@ export class PortalController {
   }
 
   @Post('esign')
-  esign(@CurrentUser() user: AuthenticatedUser, @Body() body: { engagementLetterTemplateId: string; matterId?: string }) {
-    return this.portalService.createEsignStub({
+  esign(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { engagementLetterTemplateId: string; matterId?: string; provider?: string },
+  ) {
+    return this.portalService.createEsignEnvelope({
       user,
       engagementLetterTemplateId: body.engagementLetterTemplateId,
       matterId: body.matterId,
+      provider: body.provider,
+    });
+  }
+
+  @Get('esign/envelopes')
+  esignEnvelopes(@CurrentUser() user: AuthenticatedUser, @Query('matterId') matterId?: string) {
+    return this.portalService.listPortalEsignEnvelopes({
+      user,
+      matterId,
+    });
+  }
+
+  @Post('esign/:envelopeId/refresh')
+  refreshEsignEnvelope(@CurrentUser() user: AuthenticatedUser, @Param('envelopeId') envelopeId: string) {
+    return this.portalService.refreshPortalEsignEnvelope({
+      user,
+      envelopeId,
     });
   }
 }
