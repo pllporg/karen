@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T22:27:34.033Z",
+  "generatedAt": "2026-02-17T22:29:36.614Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -135,13 +135,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 46,
     "stateCounts": {
-      "Done": 33,
-      "In Review": 1,
+      "Done": 32,
+      "In Review": 2,
       "Backlog": 12
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-34",
+        "title": "Implement prompt injection defense hardening for ingestion pipeline",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T22:29:16.066Z",
+        "requirementId": "REQ-AI-002"
+      },
       {
         "key": "KAR-53",
         "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
@@ -204,36 +211,23 @@
         "state": "Done",
         "updatedAt": "2026-02-17T18:12:32.131Z",
         "requirementId": "REQ-PORTAL-002"
-      },
-      {
-        "key": "KAR-20",
-        "title": "Enhance contact relationship graph visualization and filtering",
-        "state": "Done",
-        "updatedAt": "2026-02-17T17:54:26.789Z",
-        "requirementId": "REQ-MAT-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:27:32.790Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:29:35.336Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "b9ed5f4bc6e85d67a8f0544a97c84d5fea53376d",
+    "gitHead": "4b25cccb5b739c915d984e3ab54031380701bfbf",
     "gitStatusShort": [
-      "## lin/KAR-34-ai-ingestion-verification-hardening",
-      " M apps/api/src/ai/ai.service.ts",
-      " M apps/api/test/ai-ingestion-security.spec.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
+      "## lin/KAR-34-ai-ingestion-verification-hardening...origin/lin/KAR-34-ai-ingestion-verification-hardening",
       "?? Brandguide.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/ai-ingestion-security-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 5
   }
 }
