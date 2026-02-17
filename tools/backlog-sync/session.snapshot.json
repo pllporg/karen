@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T20:43:23.048Z",
+  "generatedAt": "2026-02-17T20:45:16.255Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -135,13 +135,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 13,
+      "In Review": 2,
       "Done": 30,
-      "In Review": 1
+      "Backlog": 12
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-48",
+        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T20:44:48.911Z",
+        "requirementId": "REQ-BILL-004"
+      },
       {
         "key": "KAR-47",
         "title": "Implement trust reconciliation workflows with discrepancy resolution",
@@ -204,40 +211,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T17:19:08.791Z",
         "requirementId": "REQ-COMM-003"
-      },
-      {
-        "key": "KAR-24",
-        "title": "Complete communication search relevance and indexing strategy",
-        "state": "Done",
-        "updatedAt": "2026-02-17T16:56:32.091Z",
-        "requirementId": "REQ-COMM-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:28:52.482Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:45:15.063Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "22c8be0e13c20aa41ed7435d04aa8983fe164ce1",
+    "gitHead": "19d67695ce17ed68fe35041e83bd1e11ebf5dd55",
     "gitStatusShort": [
-      "## lin/KAR-48-ledes-export-jobs",
-      " M README.md",
-      " M apps/api/prisma/schema.prisma",
-      " M apps/api/prisma/seed.ts",
-      " M apps/api/src/billing/billing.controller.ts",
-      " M apps/api/src/billing/billing.service.ts",
-      " M apps/web/app/billing/page.tsx",
-      " M apps/web/test/billing-page.spec.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/data-model-checklist.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/prisma/migrations/20260217204500_ledes_export_workflows/",
-      "?? apps/api/src/billing/dto/create-ledes-export-job.dto.ts",
-      "?? apps/api/src/billing/dto/create-ledes-export-profile.dto.ts",
-      "?? apps/api/test/billing-ledes-export.spec.ts",
-      "?? docs/parity/ledes-export-workflows.md"
+      "## lin/KAR-48-ledes-export-jobs...origin/lin/KAR-48-ledes-export-jobs"
     ],
-    "dirtyFileCount": 15
+    "dirtyFileCount": 0
   }
 }
