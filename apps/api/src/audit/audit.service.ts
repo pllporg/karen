@@ -47,18 +47,22 @@ export class AuditService {
     });
 
     if (this.webhooks) {
+      const webhookPayload = {
+        auditEventId: event.id,
+        auditEventHash: event.eventHash,
+        eventCreatedAt: event.createdAt.toISOString(),
+        entityType: input.entityType,
+        entityId: input.entityId,
+        action: input.action,
+      };
       if (input.action.includes('created')) {
-        await this.webhooks.emit(input.organizationId, 'record.created', {
-          entityType: input.entityType,
-          entityId: input.entityId,
-          action: input.action,
+        await this.webhooks.emit(input.organizationId, 'record.created', webhookPayload, {
+          idempotencyKey: event.id,
         });
       }
       if (input.action.includes('updated')) {
-        await this.webhooks.emit(input.organizationId, 'record.updated', {
-          entityType: input.entityType,
-          entityId: input.entityId,
-          action: input.action,
+        await this.webhooks.emit(input.organizationId, 'record.updated', webhookPayload, {
+          idempotencyKey: event.id,
         });
       }
     }
