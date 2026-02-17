@@ -31,6 +31,8 @@ async function main() {
     prisma.intakeSubmission.deleteMany(),
     prisma.intakeFormDefinition.deleteMany(),
     prisma.lead.deleteMany(),
+    prisma.trustReconciliationDiscrepancy.deleteMany(),
+    prisma.trustReconciliationRun.deleteMany(),
     prisma.matterTrustLedger.deleteMany(),
     prisma.trustTransaction.deleteMany(),
     prisma.trustAccount.deleteMany(),
@@ -613,6 +615,37 @@ async function main() {
       matterId: matter1.id,
       trustAccountId: trustAccount.id,
       balance: 3800,
+    },
+  });
+
+  const seededReconciliationRun = await prisma.trustReconciliationRun.create({
+    data: {
+      organizationId: org.id,
+      trustAccountId: trustAccount.id,
+      statementStartAt: new Date('2026-01-01T00:00:00.000Z'),
+      statementEndAt: new Date('2026-01-31T23:59:59.999Z'),
+      status: 'IN_REVIEW',
+      createdByUserId: billingUser.id,
+      summaryJson: {
+        checkedLedgers: 1,
+        checkedTransactions: 2,
+        discrepancyCount: 1,
+      },
+      notes: 'Seeded monthly reconciliation run',
+    },
+  });
+
+  await prisma.trustReconciliationDiscrepancy.create({
+    data: {
+      organizationId: org.id,
+      runId: seededReconciliationRun.id,
+      trustAccountId: trustAccount.id,
+      matterId: matter1.id,
+      reasonCode: 'BALANCE_MISMATCH',
+      expectedBalance: 3850,
+      ledgerBalance: 3800,
+      difference: -50,
+      status: 'OPEN',
     },
   });
 

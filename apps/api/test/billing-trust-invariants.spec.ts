@@ -185,5 +185,127 @@ describe('BillingService trust invariants + reports', () => {
       }),
     );
   });
-});
 
+  it('creates trust reconciliation run with discrepancy records', async () => {
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const prisma = {
+      matterTrustLedger: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'l1',
+            trustAccountId: 'ta-1',
+            matterId: 'm-1',
+            balance: 300,
+            trustAccount: { name: 'IOLTA Account' },
+            matter: { name: 'Matter A' },
+          },
+        ]),
+      },
+      trustTransaction: {
+        findMany: jest.fn().mockResolvedValue([
+          { trustAccountId: 'ta-1', matterId: 'm-1', type: 'DEPOSIT', amount: 500, occurredAt: new Date('2026-01-01') },
+          { trustAccountId: 'ta-1', matterId: 'm-1', type: 'WITHDRAWAL', amount: 150, occurredAt: new Date('2026-01-05') },
+        ]),
+      },
+      trustReconciliationRun: {
+        create: jest.fn().mockResolvedValue({
+          id: 'run-1',
+          discrepancies: [{ id: 'disc-1' }],
+        }),
+      },
+    } as any;
+
+    const service = new BillingService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      audit,
+      { upload: jest.fn() } as any,
+    );
+
+    const run = await service.createTrustReconciliationRun({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      statementStartAt: '2026-01-01T00:00:00.000Z',
+      statementEndAt: '2026-01-31T23:59:59.999Z',
+    });
+
+    expect(run.id).toBe('run-1');
+    expect(prisma.trustReconciliationRun.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'DRAFT',
+          discrepancies: expect.any(Object),
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'trust.reconciliation.run.created',
+        entityType: 'trustReconciliationRun',
+      }),
+    );
+  });
+
+  it('requires discrepancy resolution before reconciliation run completion and records sign-off', async () => {
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const prisma = {
+      trustReconciliationRun: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({
+            id: 'run-1',
+            organizationId: 'org-1',
+            status: 'IN_REVIEW',
+            notes: null,
+            discrepancies: [{ id: 'disc-1', status: 'OPEN' }],
+          })
+          .mockResolvedValueOnce({
+            id: 'run-1',
+            organizationId: 'org-1',
+            status: 'IN_REVIEW',
+            notes: null,
+            discrepancies: [{ id: 'disc-1', status: 'RESOLVED' }],
+          }),
+        update: jest.fn().mockResolvedValue({
+          id: 'run-1',
+          status: 'COMPLETED',
+          signedOffAt: new Date('2026-01-31T12:00:00.000Z'),
+        }),
+      },
+    } as any;
+
+    const service = new BillingService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      audit,
+      { upload: jest.fn() } as any,
+    );
+
+    await expect(
+      service.completeTrustReconciliationRun({
+        user: { id: 'u1', organizationId: 'org-1' } as any,
+        runId: 'run-1',
+      }),
+    ).rejects.toThrow('All discrepancies must be resolved or waived before completion');
+
+    const completed = await service.completeTrustReconciliationRun({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      runId: 'run-1',
+      notes: 'Attorney sign-off complete',
+    });
+
+    expect(completed.status).toBe('COMPLETED');
+    expect(prisma.trustReconciliationRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'COMPLETED',
+          signedOffByUserId: 'u1',
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'trust.reconciliation.run.completed',
+      }),
+    );
+  });
+});

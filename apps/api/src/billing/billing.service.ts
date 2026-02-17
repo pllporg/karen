@@ -1,5 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { InvoiceStatus, PaymentMethod, TrustTransactionType } from '@prisma/client';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  InvoiceStatus,
+  PaymentMethod,
+  TrustReconciliationDiscrepancyStatus,
+  TrustReconciliationRunStatus,
+  TrustTransactionType,
+} from '@prisma/client';
 import Stripe from 'stripe';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { PrismaService } from '../prisma/prisma.service';
@@ -685,6 +691,317 @@ export class BillingService {
     };
   }
 
+  async listTrustReconciliationRuns(user: AuthenticatedUser, trustAccountId?: string) {
+    if (trustAccountId) {
+      await this.assertTrustAccountInOrganization(user.organizationId, trustAccountId);
+    }
+    return this.prisma.trustReconciliationRun.findMany({
+      where: {
+        organizationId: user.organizationId,
+        ...(trustAccountId ? { trustAccountId } : {}),
+      },
+      include: {
+        trustAccount: true,
+        discrepancies: {
+          include: {
+            matter: {
+              select: {
+                id: true,
+                name: true,
+                matterNumber: true,
+              },
+            },
+            trustAccount: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 25,
+    });
+  }
+
+  async createTrustReconciliationRun(input: {
+    user: AuthenticatedUser;
+    trustAccountId?: string;
+    statementStartAt?: string;
+    statementEndAt?: string;
+    notes?: string;
+  }) {
+    if (input.trustAccountId) {
+      await this.assertTrustAccountInOrganization(input.user.organizationId, input.trustAccountId);
+    }
+
+    const statementEndAt = input.statementEndAt ? new Date(input.statementEndAt) : new Date();
+    const statementStartAt = input.statementStartAt
+      ? new Date(input.statementStartAt)
+      : new Date(new Date(statementEndAt).setUTCDate(1));
+    if (Number.isNaN(statementStartAt.getTime()) || Number.isNaN(statementEndAt.getTime())) {
+      throw new UnprocessableEntityException('Invalid reconciliation statement period');
+    }
+    if (statementEndAt < statementStartAt) {
+      throw new UnprocessableEntityException('statementEndAt must be greater than or equal to statementStartAt');
+    }
+
+    const [ledgerRows, transactions] = await Promise.all([
+      this.trustReport(input.user, input.trustAccountId),
+      this.prisma.trustTransaction.findMany({
+        where: {
+          organizationId: input.user.organizationId,
+          ...(input.trustAccountId ? { trustAccountId: input.trustAccountId } : {}),
+          occurredAt: { lte: statementEndAt },
+        },
+        orderBy: { occurredAt: 'asc' },
+      }),
+    ]);
+
+    const expectedByKey = new Map<string, number>();
+    for (const tx of transactions) {
+      const key = `${tx.trustAccountId}:${tx.matterId}`;
+      const current = expectedByKey.get(key) || 0;
+      const delta = this.computeTrustDelta(tx.type, tx.amount);
+      expectedByKey.set(key, Number((current + delta).toFixed(2)));
+    }
+
+    const ledgerByKey = new Map<string, (typeof ledgerRows)[number]>();
+    for (const row of ledgerRows) {
+      ledgerByKey.set(`${row.trustAccountId}:${row.matterId}`, row);
+    }
+
+    const keys = new Set([...expectedByKey.keys(), ...ledgerByKey.keys()]);
+    const discrepancyPayloads: Array<{
+      organizationId: string;
+      trustAccountId: string;
+      matterId: string;
+      reasonCode: string;
+      expectedBalance: number;
+      ledgerBalance: number;
+      difference: number;
+    }> = [];
+    let negativeBalanceViolations = 0;
+
+    for (const key of keys) {
+      const [trustAccountId, matterId] = key.split(':');
+      const expectedBalance = Number((expectedByKey.get(key) || 0).toFixed(2));
+      const ledger = ledgerByKey.get(key);
+      const ledgerBalance = Number((ledger?.balance || 0).toFixed(2));
+      const difference = Number((ledgerBalance - expectedBalance).toFixed(2));
+      if (!this.allowNegativeTrustBalance && ledgerBalance < 0) {
+        negativeBalanceViolations += 1;
+        discrepancyPayloads.push({
+          organizationId: input.user.organizationId,
+          trustAccountId,
+          matterId,
+          reasonCode: 'NEGATIVE_BALANCE',
+          expectedBalance,
+          ledgerBalance,
+          difference,
+        });
+        continue;
+      }
+      if (Math.abs(difference) > 0.009) {
+        discrepancyPayloads.push({
+          organizationId: input.user.organizationId,
+          trustAccountId,
+          matterId,
+          reasonCode: 'BALANCE_MISMATCH',
+          expectedBalance,
+          ledgerBalance,
+          difference,
+        });
+      }
+    }
+
+    const run = await this.prisma.trustReconciliationRun.create({
+      data: {
+        organizationId: input.user.organizationId,
+        trustAccountId: input.trustAccountId || null,
+        statementStartAt,
+        statementEndAt,
+        status: TrustReconciliationRunStatus.DRAFT,
+        notes: input.notes?.trim() || null,
+        createdByUserId: input.user.id,
+        summaryJson: toJsonValue({
+          checkedLedgers: ledgerRows.length,
+          checkedTransactions: transactions.length,
+          discrepancyCount: discrepancyPayloads.length,
+          negativeBalanceViolations,
+        }),
+        discrepancies: {
+          create: discrepancyPayloads.map((discrepancy) => ({
+            organizationId: discrepancy.organizationId,
+            trustAccountId: discrepancy.trustAccountId,
+            matterId: discrepancy.matterId,
+            reasonCode: discrepancy.reasonCode,
+            expectedBalance: discrepancy.expectedBalance,
+            ledgerBalance: discrepancy.ledgerBalance,
+            difference: discrepancy.difference,
+            status: TrustReconciliationDiscrepancyStatus.OPEN,
+          })),
+        },
+      },
+      include: {
+        discrepancies: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'trust.reconciliation.run.created',
+      entityType: 'trustReconciliationRun',
+      entityId: run.id,
+      metadata: {
+        statementStartAt: statementStartAt.toISOString(),
+        statementEndAt: statementEndAt.toISOString(),
+        discrepancyCount: run.discrepancies.length,
+      },
+    });
+
+    return run;
+  }
+
+  async submitTrustReconciliationRun(input: {
+    user: AuthenticatedUser;
+    runId: string;
+    notes?: string;
+  }) {
+    const run = await this.prisma.trustReconciliationRun.findFirst({
+      where: {
+        id: input.runId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!run) throw new NotFoundException('Trust reconciliation run not found');
+    if (run.status !== TrustReconciliationRunStatus.DRAFT) {
+      throw new UnprocessableEntityException('Only draft runs can be submitted for review');
+    }
+
+    const submitted = await this.prisma.trustReconciliationRun.update({
+      where: { id: run.id },
+      data: {
+        status: TrustReconciliationRunStatus.IN_REVIEW,
+        notes: this.combineOptionalNotes(run.notes, input.notes),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'trust.reconciliation.run.submitted',
+      entityType: 'trustReconciliationRun',
+      entityId: run.id,
+      metadata: {
+        status: submitted.status,
+      },
+    });
+
+    return submitted;
+  }
+
+  async resolveTrustReconciliationDiscrepancy(input: {
+    user: AuthenticatedUser;
+    discrepancyId: string;
+    status: TrustReconciliationDiscrepancyStatus;
+    resolutionNote: string;
+  }) {
+    if (!input.resolutionNote?.trim()) {
+      throw new UnprocessableEntityException('resolutionNote is required');
+    }
+
+    const discrepancy = await this.prisma.trustReconciliationDiscrepancy.findFirst({
+      where: {
+        id: input.discrepancyId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        run: true,
+      },
+    });
+    if (!discrepancy) throw new NotFoundException('Trust reconciliation discrepancy not found');
+    if (discrepancy.run.status !== TrustReconciliationRunStatus.IN_REVIEW) {
+      throw new UnprocessableEntityException('Discrepancies can only be resolved while run is in review');
+    }
+
+    const resolved = await this.prisma.trustReconciliationDiscrepancy.update({
+      where: { id: discrepancy.id },
+      data: {
+        status: input.status,
+        resolutionNote: input.resolutionNote.trim(),
+        resolvedByUserId: input.user.id,
+        resolvedAt: new Date(),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'trust.reconciliation.discrepancy.resolved',
+      entityType: 'trustReconciliationDiscrepancy',
+      entityId: discrepancy.id,
+      metadata: {
+        runId: discrepancy.runId,
+        status: resolved.status,
+      },
+    });
+
+    return resolved;
+  }
+
+  async completeTrustReconciliationRun(input: {
+    user: AuthenticatedUser;
+    runId: string;
+    notes?: string;
+  }) {
+    const run = await this.prisma.trustReconciliationRun.findFirst({
+      where: {
+        id: input.runId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        discrepancies: true,
+      },
+    });
+    if (!run) throw new NotFoundException('Trust reconciliation run not found');
+    if (run.status !== TrustReconciliationRunStatus.IN_REVIEW) {
+      throw new UnprocessableEntityException('Only in-review runs can be completed');
+    }
+
+    const unresolved = run.discrepancies.filter((discrepancy) => discrepancy.status === TrustReconciliationDiscrepancyStatus.OPEN);
+    if (unresolved.length > 0) {
+      throw new UnprocessableEntityException('All discrepancies must be resolved or waived before completion');
+    }
+
+    const completed = await this.prisma.trustReconciliationRun.update({
+      where: { id: run.id },
+      data: {
+        status: TrustReconciliationRunStatus.COMPLETED,
+        signedOffByUserId: input.user.id,
+        signedOffAt: new Date(),
+        notes: this.combineOptionalNotes(run.notes, input.notes),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'trust.reconciliation.run.completed',
+      entityType: 'trustReconciliationRun',
+      entityId: run.id,
+      metadata: {
+        discrepancyCount: run.discrepancies.length,
+        signedOffAt: completed.signedOffAt,
+      },
+    });
+
+    return completed;
+  }
+
   private async generateInvoicePdf(invoiceId: string): Promise<string> {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -872,5 +1189,15 @@ export class BillingService {
       },
     });
     if (!account) throw new Error('Trust account not found for organization');
+  }
+
+  private combineOptionalNotes(existing: string | null | undefined, extra?: string) {
+    if (!extra?.trim()) {
+      return existing ?? null;
+    }
+    if (!existing?.trim()) {
+      return extra.trim();
+    }
+    return `${existing.trim()}\n\n${extra.trim()}`;
   }
 }

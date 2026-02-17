@@ -144,6 +144,18 @@ enum TrustTransactionType {
   ADJUSTMENT
 }
 
+enum TrustReconciliationRunStatus {
+  DRAFT
+  IN_REVIEW
+  COMPLETED
+}
+
+enum TrustReconciliationDiscrepancyStatus {
+  OPEN
+  RESOLVED
+  WAIVED
+}
+
 enum LeadStage {
   NEW
   SCREENING
@@ -263,6 +275,9 @@ model User {
   sectionInstancesUpdated SectionInstance[]
   importBatchesStarted ImportBatch[]
   exportJobsRequested ExportJob[]
+  trustReconciliationRunsCreated TrustReconciliationRun[] @relation("TrustReconciliationRunCreatedBy")
+  trustReconciliationRunsSignedOff TrustReconciliationRun[] @relation("TrustReconciliationRunSignedOffBy")
+  trustReconciliationDiscrepanciesResolved TrustReconciliationDiscrepancy[] @relation("TrustReconciliationDiscrepancyResolvedBy")
 }
 
 model Membership {
@@ -518,6 +533,7 @@ model Matter {
   invoices             Invoice[]
   trustTransactions    TrustTransaction[]
   trustLedgers         MatterTrustLedger[]
+  trustReconciliationDiscrepancies TrustReconciliationDiscrepancy[]
   intakeSubmissions    IntakeSubmission[]
   eSignEnvelopes       ESignEnvelope[]
   aiJobs               AiJob[]
@@ -1157,6 +1173,8 @@ model TrustAccount {
   updatedAt          DateTime          @updatedAt
   transactions       TrustTransaction[]
   ledgers            MatterTrustLedger[]
+  trustReconciliationRuns TrustReconciliationRun[]
+  trustReconciliationDiscrepancies TrustReconciliationDiscrepancy[]
 }
 
 model TrustTransaction {
@@ -1187,6 +1205,53 @@ model MatterTrustLedger {
   trustAccount   TrustAccount @relation(fields: [trustAccountId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, matterId, trustAccountId])
+}
+
+model TrustReconciliationRun {
+  id               String                       @id @default(uuid()) @db.Uuid
+  organizationId   String                       @db.Uuid
+  trustAccountId   String?                      @db.Uuid
+  statementStartAt DateTime
+  statementEndAt   DateTime
+  status           TrustReconciliationRunStatus @default(DRAFT)
+  summaryJson      Json?
+  notes            String?
+  createdByUserId  String?                      @db.Uuid
+  signedOffByUserId String?                     @db.Uuid
+  signedOffAt      DateTime?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+  trustAccount     TrustAccount?                @relation(fields: [trustAccountId], references: [id], onDelete: SetNull)
+  createdBy        User?                        @relation("TrustReconciliationRunCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  signedOffBy      User?                        @relation("TrustReconciliationRunSignedOffBy", fields: [signedOffByUserId], references: [id], onDelete: SetNull)
+  discrepancies    TrustReconciliationDiscrepancy[]
+
+  @@index([organizationId, status, createdAt])
+}
+
+model TrustReconciliationDiscrepancy {
+  id                String                                @id @default(uuid()) @db.Uuid
+  organizationId    String                                @db.Uuid
+  runId             String                                @db.Uuid
+  trustAccountId    String?                               @db.Uuid
+  matterId          String?                               @db.Uuid
+  reasonCode        String
+  expectedBalance   Float
+  ledgerBalance     Float
+  difference        Float
+  status            TrustReconciliationDiscrepancyStatus  @default(OPEN)
+  resolutionNote    String?
+  resolvedByUserId  String?                               @db.Uuid
+  resolvedAt        DateTime?
+  createdAt         DateTime                              @default(now())
+  updatedAt         DateTime                              @updatedAt
+  run               TrustReconciliationRun                @relation(fields: [runId], references: [id], onDelete: Cascade)
+  trustAccount      TrustAccount?                         @relation(fields: [trustAccountId], references: [id], onDelete: SetNull)
+  matter            Matter?                               @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  resolvedBy        User?                                 @relation("TrustReconciliationDiscrepancyResolvedBy", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, createdAt])
+  @@index([runId])
 }
 
 model Lead {

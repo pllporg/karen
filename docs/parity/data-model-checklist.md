@@ -111,8 +111,8 @@ This checklist maps prompt-required entities/capabilities to Prisma models in `a
 | Trust account | `TrustAccount` | Complete | Bank/trust account metadata. | — |
 | Trust transaction | `TrustTransaction` | Complete | Account + matter-linked trust movement records. | — |
 | Matter trust ledger | `MatterTrustLedger` | Complete | Per-matter trust balance snapshots by account. | — |
-| Trust reconciliation run | `TrustReconciliationRun` | Missing | No run lifecycle model for statement-period reconciliation workflow yet. | `REQ-BILL-003` |
-| Trust reconciliation discrepancy | `TrustReconciliationDiscrepancy` | Missing | No discrepancy queue/resolution model for reconciliation workflow yet. | `REQ-BILL-003` |
+| Trust reconciliation run | `TrustReconciliationRun` | Complete | Trust-account scoped statement-period run lifecycle with preparer/sign-off user attribution, period totals, and completion controls. | — |
+| Trust reconciliation discrepancy | `TrustReconciliationDiscrepancy` | Complete | Run-linked discrepancy queue with amount deltas, reason code/notes, resolver attribution, and resolved/waived outcomes. | — |
 | LEDES export profile | `LEDESExportProfile` | Missing | No profile model for LEDES formatting + validation defaults yet. | `REQ-BILL-004` |
 | LEDES export job | `LEDESExportJob` | Missing | Generic `ExportJob` exists, but no invoice/profile-specific LEDES job model. | `REQ-BILL-004` |
 
@@ -185,7 +185,6 @@ These gaps are explicitly tracked in the parity matrix and Linear backlog:
 | Pgvector retrieval production path for AI chunks | `REQ-DATA-003` | Storage exists; retrieval ranking path still partial. |
 | Participant role workflow semantics completeness | `REQ-MAT-001` | Core schema exists; end-to-end role semantics still partial. |
 | Advanced conflict rule profiles + resolution decision logging | `REQ-MAT-004` | Missing first-class conflict profile/decision entities. |
-| Trust reconciliation run + discrepancy queue | `REQ-BILL-003` | Reconciliation models missing from schema. |
 | LEDES profile/job entities | `REQ-BILL-004` | Standards-oriented profile/job data model missing. |
 | Dedupe user-confirm merge workflow | `REQ-PORT-003` | Import framework exists; user-confirm merge flow still partial. |
 | Import payload coverage consistency | `REQ-PORT-001`, `REQ-PORT-002` | Raw payload and mapping coverage not fully uniform yet. |

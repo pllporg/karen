@@ -9,6 +9,11 @@ import { AuthenticatedUser } from '../common/types';
 import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { CreateTrustReconciliationRunDto } from './dto/create-trust-reconciliation-run.dto';
+import {
+  ResolveTrustReconciliationDiscrepancyDto,
+  UpdateTrustReconciliationRunDto,
+} from './dto/update-trust-reconciliation.dto';
 
 @Controller('billing')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -94,6 +99,70 @@ export class BillingController {
   @RequirePermissions('billing:read')
   trustReconciliation(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
     return this.billingService.trustReconciliation(user, trustAccountId);
+  }
+
+  @Get('trust/reconciliation/runs')
+  @RequirePermissions('billing:read')
+  listTrustReconciliationRuns(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
+    return this.billingService.listTrustReconciliationRuns(user, trustAccountId);
+  }
+
+  @Post('trust/reconciliation/runs')
+  @RequirePermissions('billing:write')
+  createTrustReconciliationRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateTrustReconciliationRunDto,
+  ) {
+    return this.billingService.createTrustReconciliationRun({
+      user,
+      trustAccountId: dto.trustAccountId,
+      statementStartAt: dto.statementStartAt,
+      statementEndAt: dto.statementEndAt,
+      notes: dto.notes,
+    });
+  }
+
+  @Post('trust/reconciliation/runs/:id/submit')
+  @RequirePermissions('billing:write')
+  submitTrustReconciliationRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') runId: string,
+    @Body() dto: UpdateTrustReconciliationRunDto,
+  ) {
+    return this.billingService.submitTrustReconciliationRun({
+      user,
+      runId,
+      notes: dto.notes,
+    });
+  }
+
+  @Post('trust/reconciliation/discrepancies/:id/resolve')
+  @RequirePermissions('billing:write')
+  resolveTrustReconciliationDiscrepancy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') discrepancyId: string,
+    @Body() dto: ResolveTrustReconciliationDiscrepancyDto,
+  ) {
+    return this.billingService.resolveTrustReconciliationDiscrepancy({
+      user,
+      discrepancyId,
+      status: dto.status,
+      resolutionNote: dto.resolutionNote,
+    });
+  }
+
+  @Post('trust/reconciliation/runs/:id/complete')
+  @RequirePermissions('billing:write')
+  completeTrustReconciliationRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') runId: string,
+    @Body() dto: UpdateTrustReconciliationRunDto,
+  ) {
+    return this.billingService.completeTrustReconciliationRun({
+      user,
+      runId,
+      notes: dto.notes,
+    });
   }
 
   @Post('trust/transfer')

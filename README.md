@@ -256,7 +256,7 @@ Live provider pull sync mode (optional, defaults to scaffold mode):
 ## Phase-2 Planned End-Goal Features
 
 - Advanced conflict rules (profile-based matching and conflict resolution workflow)
-- Trust reconciliation workflows (run lifecycle, discrepancy queue, sign-off)
+- Trust reconciliation workflows (implemented; retained here as part of expanded end-goal scope)
 - LEDES/UTBMS export jobs (validation + standards-oriented outputs)
 - Jurisdictional deadline rules packs (versioned by jurisdiction/court/procedure)
 
