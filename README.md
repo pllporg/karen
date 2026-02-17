@@ -167,6 +167,12 @@ Communications provider workflow:
 - `MESSAGE_SMS_PROVIDER=stub|twilio`
 - delivery metadata persisted in `CommunicationMessage.rawSourcePayload.delivery`
 
+Webhook delivery hardening controls:
+
+- `WEBHOOK_DELIVERY_MAX_ATTEMPTS` (default `3`)
+- `WEBHOOK_DELIVERY_RETRY_BASE_DELAY_MS` (default `100`)
+- outbound headers include `x-karen-signature-v1`, `x-karen-signature-timestamp`, `x-karen-delivery-id`, and `x-karen-idempotency-key`
+
 Document template merge workflow:
 
 - `POST /documents/template-merge`
