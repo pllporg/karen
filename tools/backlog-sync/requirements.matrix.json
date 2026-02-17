@@ -408,7 +408,7 @@
           "title": "Expand document automation coverage for merge fields and generated outputs",
           "requirementId": "REQ-COMM-003",
           "promptSection": "Document Management + Automation",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "documents"],

@@ -17,7 +17,7 @@ Production-oriented monorepo scaffold for a multi-tenant legal practice manageme
 - Matters with participants, dashboard aggregation, intake wizard + construction domain profiles
 - Tasks, calendar, ICS export, docket
 - Communications threads/messages + ranked full-text/fallback keyword search + configurable outbound providers (stub/Resend/Twilio) with persisted delivery metadata
-- Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows
+- Documents upload/version/share/signed URLs + configurable malware scanning (stub/ClamAV) + DOCX/PDF generation flows with template provenance + strict merge validation
 - Billing/time/expenses/invoices/payments + Stripe checkout link + trust ledger
 - Client portal snapshot/messages/intake/e-sign stub + secure attachment upload/download workflow
 - Plugin import framework:
@@ -164,6 +164,15 @@ Communications provider workflow:
 - `MESSAGE_EMAIL_PROVIDER=stub|resend`
 - `MESSAGE_SMS_PROVIDER=stub|twilio`
 - delivery metadata persisted in `CommunicationMessage.rawSourcePayload.delivery`
+
+Document template merge workflow:
+
+- `POST /documents/template-merge`
+  - accepts optional `mergeData` overrides
+  - defaults to strict missing-placeholder validation (`strictValidation=true`)
+- merge context includes matter/contact/custom-field graph for nested placeholders
+- generated metadata persisted in `Document.rawSourcePayload` with template/source provenance
+- parity evidence: `docs/parity/document-automation-coverage.md`
 
 AI style pack governance workflow:
 

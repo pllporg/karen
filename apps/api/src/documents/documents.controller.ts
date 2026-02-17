@@ -96,12 +96,20 @@ export class DocumentsController {
   @RequirePermissions('documents:write')
   templateMerge(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { templateVersionId: string; mergeData: Record<string, unknown>; matterId: string; title: string },
+    @Body()
+    body: {
+      templateVersionId: string;
+      mergeData?: Record<string, unknown>;
+      strictValidation?: boolean;
+      matterId: string;
+      title: string;
+    },
   ) {
     return this.documentsService.mergeDocxTemplate({
       user,
       templateVersionId: body.templateVersionId,
       mergeData: body.mergeData,
+      strictValidation: body.strictValidation,
       matterId: body.matterId,
       title: body.title,
     });

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import { ContactKind, DocumentConfidentiality } from '@prisma/client';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
@@ -10,6 +11,82 @@ import { AuthenticatedUser, UploadedFile } from '../common/types';
 import { S3Service } from '../files/s3.service';
 import { MalwareScanService } from '../files/malware-scan.service';
 import { AuditService } from '../audit/audit.service';
+
+// Docxtemplater nested expressions (matter.name, customFields.matter.key, etc.)
+// are enabled via the angular expression parser.
+const expressionParser = require('docxtemplater/expressions.js');
+
+type MergeContact = {
+  id: string;
+  kind: ContactKind;
+  displayName: string;
+  primaryEmail: string | null;
+  primaryPhone: string | null;
+  tags: string[];
+  person: {
+    firstName: string | null;
+    lastName: string | null;
+    title: string | null;
+    barNumber: string | null;
+    licenseJurisdiction: string | null;
+  } | null;
+  organization: {
+    legalName: string;
+    dba: string | null;
+    website: string | null;
+  } | null;
+  customFields: Record<string, unknown>;
+};
+
+type TemplateMergeContext = {
+  generated: {
+    at: string;
+    byUserId: string;
+  };
+  matter: {
+    id: string;
+    matterNumber: string;
+    name: string;
+    practiceArea: string;
+    jurisdiction: string | null;
+    venue: string | null;
+    status: string;
+    openedAt: string;
+    closedAt: string | null;
+    stage: {
+      id: string;
+      name: string;
+      practiceArea: string;
+    } | null;
+    matterType: {
+      id: string;
+      name: string;
+    } | null;
+  };
+  participants: Array<{
+    id: string;
+    roleKey: string;
+    roleLabel: string;
+    side: string | null;
+    isPrimary: boolean;
+    notes: string | null;
+    contact: MergeContact;
+    representedBy: MergeContact | null;
+    lawFirm: MergeContact | null;
+  }>;
+  contacts: {
+    primaryClient: MergeContact | null;
+    clientSide: MergeContact[];
+    opposingSide: MergeContact[];
+    neutral: MergeContact[];
+    court: MergeContact[];
+    all: MergeContact[];
+  };
+  customFields: {
+    matter: Record<string, unknown>;
+    contacts: Record<string, Record<string, unknown>>;
+  };
+};
 
 @Injectable()
 export class DocumentsService {
@@ -44,6 +121,8 @@ export class DocumentsService {
     category?: string;
     tags?: string[];
     sharedWithClient?: boolean;
+    confidentialityLevel?: DocumentConfidentiality;
+    rawSourcePayload?: Record<string, unknown>;
     file: UploadedFile;
   }) {
     await this.access.assertMatterAccess(input.user, input.matterId, 'write');
@@ -71,6 +150,8 @@ export class DocumentsService {
         category: input.category,
         tags: input.tags ?? [],
         sharedWithClient: input.sharedWithClient ?? false,
+        confidentialityLevel: input.confidentialityLevel,
+        rawSourcePayload: input.rawSourcePayload as object | undefined,
         createdByUserId: input.user.id,
       },
     });
@@ -237,7 +318,8 @@ export class DocumentsService {
   async mergeDocxTemplate(input: {
     user: AuthenticatedUser;
     templateVersionId: string;
-    mergeData: Record<string, unknown>;
+    mergeData?: Record<string, unknown>;
+    strictValidation?: boolean;
     matterId: string;
     title: string;
   }) {
@@ -257,18 +339,73 @@ export class DocumentsService {
       throw new NotFoundException('Template document version not found');
     }
 
+    const strictValidation = input.strictValidation ?? true;
+    const baseMergeContext = await this.buildTemplateMergeContext(input.user, input.matterId);
+    const mergeContext = this.deepMergeRecords(baseMergeContext, input.mergeData ?? {});
+
     const templateBuffer = await this.s3.getObjectBuffer(template.storageKey);
     const zip = new PizZip(templateBuffer);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-    doc.render(input.mergeData);
-    const generated = doc.getZip().generate({ type: 'nodebuffer' });
+    const unresolvedMergeFieldSet = new Set<string>();
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      parser: expressionParser,
+      nullGetter: (part: { value?: string }) => {
+        if (part?.value) {
+          unresolvedMergeFieldSet.add(String(part.value));
+        }
+        return '';
+      },
+    });
 
-    return this.uploadNew({
+    try {
+      doc.render(mergeContext);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Template render failed';
+      throw new UnprocessableEntityException(`Template render failed: ${message}`);
+    }
+
+    const unresolvedMergeFields = this.normalizeMissingTemplateFields(unresolvedMergeFieldSet);
+    if (strictValidation && unresolvedMergeFields.length > 0) {
+      throw new UnprocessableEntityException(
+        `Template merge validation failed. Missing merge fields: ${unresolvedMergeFields.join(', ')}`,
+      );
+    }
+
+    const generated = doc.getZip().generate({ type: 'nodebuffer' });
+    const generatedAt = new Date().toISOString();
+    const provenance = {
+      generatedBy: 'template-merge',
+      generatedAt,
+      templateDocumentId: template.document.id,
+      templateVersionId: template.id,
+      strictValidation,
+      unresolvedMergeFields,
+      providedMergeDataKeys: Object.keys(input.mergeData ?? {}),
+      mergeContextSummary: {
+        participantCount: baseMergeContext.participants.length,
+        matterCustomFieldCount: Object.keys(baseMergeContext.customFields.matter).length,
+        contactCustomFieldContactCount: Object.keys(baseMergeContext.customFields.contacts).length,
+      },
+    };
+
+    const generatedDocument = await this.uploadNew({
       user: input.user,
       matterId: input.matterId,
       title: input.title,
       category: 'Generated',
-      tags: ['generated', 'docx'],
+      tags: ['generated', 'docx', 'template-merge'],
+      sharedWithClient: template.document.sharedWithClient,
+      confidentialityLevel: template.document.confidentialityLevel,
+      rawSourcePayload: {
+        source: 'template-merge',
+        template: {
+          documentId: template.document.id,
+          versionId: template.id,
+          storageKey: template.storageKey,
+        },
+        provenance,
+      },
       file: {
         buffer: generated,
         mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -276,6 +413,24 @@ export class DocumentsService {
         size: generated.byteLength,
       } as UploadedFile,
     });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.template.generated',
+      entityType: 'document',
+      entityId: generatedDocument.document.id,
+      metadata: provenance,
+    });
+
+    return {
+      ...generatedDocument,
+      mergeSummary: {
+        strictValidation,
+        unresolvedMergeFields,
+        mergeContextSummary: provenance.mergeContextSummary,
+      },
+    };
   }
 
   async generateSimplePdf(input: {
@@ -301,12 +456,20 @@ export class DocumentsService {
     }
 
     const bytes = await pdf.save();
-    return this.uploadNew({
+    const generatedAt = new Date().toISOString();
+    const generatedDocument = await this.uploadNew({
       user: input.user,
       matterId: input.matterId,
       title: input.title,
       category: 'Generated',
       tags: ['generated', 'pdf'],
+      rawSourcePayload: {
+        source: 'simple-pdf',
+        provenance: {
+          generatedAt,
+          lineCount: input.lines.length,
+        },
+      },
       file: {
         buffer: Buffer.from(bytes),
         mimetype: 'application/pdf',
@@ -314,6 +477,299 @@ export class DocumentsService {
         size: bytes.byteLength,
       } as UploadedFile,
     });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.pdf.generated',
+      entityType: 'document',
+      entityId: generatedDocument.document.id,
+      metadata: {
+        generatedAt,
+        lineCount: input.lines.length,
+      },
+    });
+
+    return generatedDocument;
+  }
+
+  private async buildTemplateMergeContext(user: AuthenticatedUser, matterId: string): Promise<TemplateMergeContext> {
+    const matter = await this.prisma.matter.findFirst({
+      where: {
+        id: matterId,
+        organizationId: user.organizationId,
+      },
+      include: {
+        stage: true,
+        matterType: true,
+        participants: {
+          include: {
+            participantRoleDefinition: true,
+            contact: {
+              include: {
+                personProfile: true,
+                organizationProfile: true,
+              },
+            },
+            representedByContact: {
+              include: {
+                personProfile: true,
+                organizationProfile: true,
+              },
+            },
+            lawFirmContact: {
+              include: {
+                personProfile: true,
+                organizationProfile: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!matter) {
+      throw new NotFoundException('Matter not found');
+    }
+
+    const contactIds = new Set<string>();
+    for (const participant of matter.participants) {
+      contactIds.add(participant.contactId);
+      if (participant.representedByContactId) {
+        contactIds.add(participant.representedByContactId);
+      }
+      if (participant.lawFirmContactId) {
+        contactIds.add(participant.lawFirmContactId);
+      }
+    }
+
+    const customFieldOrClauses: Array<{ entityType: string; entityId: string | { in: string[] } }> = [
+      {
+        entityType: 'matter',
+        entityId: matter.id,
+      },
+    ];
+    if (contactIds.size > 0) {
+      customFieldOrClauses.push({
+        entityType: 'contact',
+        entityId: { in: Array.from(contactIds) },
+      });
+    }
+
+    const customFieldValues = await this.prisma.customFieldValue.findMany({
+      where: {
+        organizationId: user.organizationId,
+        OR: customFieldOrClauses,
+      },
+      include: {
+        fieldDefinition: {
+          select: {
+            key: true,
+          },
+        },
+      },
+    });
+
+    const matterCustomFields: Record<string, unknown> = {};
+    const contactCustomFields: Record<string, Record<string, unknown>> = {};
+    for (const customField of customFieldValues) {
+      const fieldKey = customField.fieldDefinition.key;
+      if (customField.entityType === 'matter') {
+        matterCustomFields[fieldKey] = customField.valueJson as unknown;
+        continue;
+      }
+
+      if (customField.entityType !== 'contact') {
+        continue;
+      }
+
+      if (!contactCustomFields[customField.entityId]) {
+        contactCustomFields[customField.entityId] = {};
+      }
+      contactCustomFields[customField.entityId][fieldKey] = customField.valueJson as unknown;
+    }
+
+    const participants = matter.participants.map((participant) => ({
+      id: participant.id,
+      roleKey: participant.participantRoleKey,
+      roleLabel: participant.participantRoleDefinition?.label ?? participant.participantRoleKey,
+      side: participant.side,
+      isPrimary: participant.isPrimary,
+      notes: participant.notes,
+      contact: this.toMergeContact(participant.contact, contactCustomFields[participant.contact.id]),
+      representedBy: participant.representedByContact
+        ? this.toMergeContact(
+            participant.representedByContact,
+            contactCustomFields[participant.representedByContact.id],
+          )
+        : null,
+      lawFirm: participant.lawFirmContact
+        ? this.toMergeContact(participant.lawFirmContact, contactCustomFields[participant.lawFirmContact.id])
+        : null,
+    }));
+
+    const clientSide = this.uniqueContacts(
+      participants.filter((participant) => participant.side === 'CLIENT_SIDE').map((participant) => participant.contact),
+    );
+    const opposingSide = this.uniqueContacts(
+      participants
+        .filter((participant) => participant.side === 'OPPOSING_SIDE')
+        .map((participant) => participant.contact),
+    );
+    const neutral = this.uniqueContacts(
+      participants.filter((participant) => participant.side === 'NEUTRAL').map((participant) => participant.contact),
+    );
+    const court = this.uniqueContacts(
+      participants.filter((participant) => participant.side === 'COURT').map((participant) => participant.contact),
+    );
+
+    const all = this.uniqueContacts(
+      participants.flatMap((participant) =>
+        [participant.contact, participant.representedBy, participant.lawFirm].filter(
+          (entry): entry is MergeContact => entry !== null,
+        ),
+      ),
+    );
+
+    const primaryClient = participants.find((participant) => participant.side === 'CLIENT_SIDE' && participant.isPrimary)
+      ?.contact ?? clientSide[0] ?? null;
+
+    return {
+      generated: {
+        at: new Date().toISOString(),
+        byUserId: user.id,
+      },
+      matter: {
+        id: matter.id,
+        matterNumber: matter.matterNumber,
+        name: matter.name,
+        practiceArea: matter.practiceArea,
+        jurisdiction: matter.jurisdiction,
+        venue: matter.venue,
+        status: matter.status,
+        openedAt: matter.openedAt.toISOString(),
+        closedAt: matter.closedAt ? matter.closedAt.toISOString() : null,
+        stage: matter.stage
+          ? {
+              id: matter.stage.id,
+              name: matter.stage.name,
+              practiceArea: matter.stage.practiceArea,
+            }
+          : null,
+        matterType: matter.matterType
+          ? {
+              id: matter.matterType.id,
+              name: matter.matterType.name,
+            }
+          : null,
+      },
+      participants,
+      contacts: {
+        primaryClient,
+        clientSide,
+        opposingSide,
+        neutral,
+        court,
+        all,
+      },
+      customFields: {
+        matter: matterCustomFields,
+        contacts: contactCustomFields,
+      },
+    };
+  }
+
+  private toMergeContact(
+    contact: {
+      id: string;
+      kind: ContactKind;
+      displayName: string;
+      primaryEmail: string | null;
+      primaryPhone: string | null;
+      tags: string[];
+      personProfile?: {
+        firstName: string | null;
+        lastName: string | null;
+        title: string | null;
+        barNumber: string | null;
+        licenseJurisdiction: string | null;
+      } | null;
+      organizationProfile?: {
+        legalName: string;
+        dba: string | null;
+        website: string | null;
+      } | null;
+    },
+    customFields: Record<string, unknown> = {},
+  ): MergeContact {
+    return {
+      id: contact.id,
+      kind: contact.kind,
+      displayName: contact.displayName,
+      primaryEmail: contact.primaryEmail,
+      primaryPhone: contact.primaryPhone,
+      tags: contact.tags,
+      person: contact.personProfile
+        ? {
+            firstName: contact.personProfile.firstName,
+            lastName: contact.personProfile.lastName,
+            title: contact.personProfile.title,
+            barNumber: contact.personProfile.barNumber,
+            licenseJurisdiction: contact.personProfile.licenseJurisdiction,
+          }
+        : null,
+      organization: contact.organizationProfile
+        ? {
+            legalName: contact.organizationProfile.legalName,
+            dba: contact.organizationProfile.dba,
+            website: contact.organizationProfile.website,
+          }
+        : null,
+      customFields,
+    };
+  }
+
+  private uniqueContacts(contacts: MergeContact[]) {
+    const unique = new Map<string, MergeContact>();
+    for (const contact of contacts) {
+      unique.set(contact.id, contact);
+    }
+    return Array.from(unique.values());
+  }
+
+  private normalizeMissingTemplateFields(rawFields: Iterable<string>) {
+    const normalized = new Set<string>();
+    for (const rawField of rawFields) {
+      const value = rawField.trim();
+      if (!value) {
+        continue;
+      }
+      if (!/^[a-zA-Z0-9_.[\]-]+$/.test(value)) {
+        continue;
+      }
+      normalized.add(value);
+    }
+    return Array.from(normalized).sort((a, b) => a.localeCompare(b));
+  }
+
+  private deepMergeRecords<T extends Record<string, unknown>>(base: T, patch: Record<string, unknown>): T {
+    const merged: Record<string, unknown> = { ...base };
+    for (const [key, value] of Object.entries(patch)) {
+      if (this.isRecord(value) && this.isRecord(merged[key])) {
+        merged[key] = this.deepMergeRecords(
+          merged[key] as Record<string, unknown>,
+          value as Record<string, unknown>,
+        );
+        continue;
+      }
+      merged[key] = value;
+    }
+    return merged as T;
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
   }
 
   private async auditBlockedUpload(
