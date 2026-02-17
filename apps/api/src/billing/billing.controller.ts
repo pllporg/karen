@@ -14,6 +14,8 @@ import {
   ResolveTrustReconciliationDiscrepancyDto,
   UpdateTrustReconciliationRunDto,
 } from './dto/update-trust-reconciliation.dto';
+import { CreateLedesExportProfileDto } from './dto/create-ledes-export-profile.dto';
+import { CreateLedesExportJobDto } from './dto/create-ledes-export-job.dto';
 
 @Controller('billing')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -105,6 +107,60 @@ export class BillingController {
   @RequirePermissions('billing:read')
   listTrustReconciliationRuns(@CurrentUser() user: AuthenticatedUser, @Query('trustAccountId') trustAccountId?: string) {
     return this.billingService.listTrustReconciliationRuns(user, trustAccountId);
+  }
+
+  @Get('ledes/profiles')
+  @RequirePermissions('billing:read')
+  listLedesExportProfiles(@CurrentUser() user: AuthenticatedUser) {
+    return this.billingService.listLedesExportProfiles(user);
+  }
+
+  @Post('ledes/profiles')
+  @RequirePermissions('billing:write')
+  createLedesExportProfile(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateLedesExportProfileDto) {
+    return this.billingService.createLedesExportProfile({
+      user,
+      name: dto.name,
+      format: dto.format,
+      isDefault: dto.isDefault,
+      requireUtbmsPhaseCode: dto.requireUtbmsPhaseCode,
+      requireUtbmsTaskCode: dto.requireUtbmsTaskCode,
+      includeExpenseLineItems: dto.includeExpenseLineItems,
+      validationRulesJson: dto.validationRulesJson,
+    });
+  }
+
+  @Get('ledes/jobs')
+  @RequirePermissions('billing:read')
+  listLedesExportJobs(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('profileId') profileId?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.billingService.listLedesExportJobs(user, { profileId, status });
+  }
+
+  @Get('ledes/jobs/:id')
+  @RequirePermissions('billing:read')
+  getLedesExportJob(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.billingService.getLedesExportJob(user, id);
+  }
+
+  @Post('ledes/jobs')
+  @RequirePermissions('billing:write')
+  createLedesExportJob(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateLedesExportJobDto) {
+    return this.billingService.createLedesExportJob({
+      user,
+      profileId: dto.profileId,
+      matterId: dto.matterId,
+      invoiceIds: dto.invoiceIds,
+    });
+  }
+
+  @Get('ledes/jobs/:id/download')
+  @RequirePermissions('billing:read')
+  getLedesExportDownloadUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.billingService.getLedesExportDownloadUrl(user, id);
   }
 
   @Post('trust/reconciliation/runs')

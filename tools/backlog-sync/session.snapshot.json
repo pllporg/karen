@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T20:14:30.509Z",
+  "generatedAt": "2026-02-17T20:43:23.048Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,7 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 33,
-      "Missing": 1
+      "Complete": 34
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -33,8 +32,7 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 16,
-      "Missing:Medium": 1
+      "Complete:Medium": 17
     }
   },
   "priority": {
@@ -138,8 +136,8 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 13,
-      "In Review": 2,
-      "Done": 29
+      "Done": 30,
+      "In Review": 1
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -147,8 +145,8 @@
       {
         "key": "KAR-47",
         "title": "Implement trust reconciliation workflows with discrepancy resolution",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T20:13:58.956Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T20:28:07.658Z",
         "requirementId": "REQ-BILL-003"
       },
       {
@@ -217,14 +215,29 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:14:28.222Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:28:52.482Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "786148d1998c1b1642a1439a5db29ebc11a6e9f3",
+    "gitHead": "22c8be0e13c20aa41ed7435d04aa8983fe164ce1",
     "gitStatusShort": [
-      "## lin/KAR-47-trust-reconciliation-workflows...origin/lin/KAR-47-trust-reconciliation-workflows"
+      "## lin/KAR-48-ledes-export-jobs",
+      " M README.md",
+      " M apps/api/prisma/schema.prisma",
+      " M apps/api/prisma/seed.ts",
+      " M apps/api/src/billing/billing.controller.ts",
+      " M apps/api/src/billing/billing.service.ts",
+      " M apps/web/app/billing/page.tsx",
+      " M apps/web/test/billing-page.spec.tsx",
+      " M docs/SESSION_HANDOFF.md",
+      " M docs/parity/data-model-checklist.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? apps/api/prisma/migrations/20260217204500_ledes_export_workflows/",
+      "?? apps/api/src/billing/dto/create-ledes-export-job.dto.ts",
+      "?? apps/api/src/billing/dto/create-ledes-export-profile.dto.ts",
+      "?? apps/api/test/billing-ledes-export.spec.ts",
+      "?? docs/parity/ledes-export-workflows.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 15
   }
 }

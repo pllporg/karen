@@ -257,7 +257,7 @@ Live provider pull sync mode (optional, defaults to scaffold mode):
 
 - Advanced conflict rules (profile-based matching and conflict resolution workflow)
 - Trust reconciliation workflows (implemented; retained here as part of expanded end-goal scope)
-- LEDES/UTBMS export jobs (validation + standards-oriented outputs)
+- LEDES/UTBMS export jobs (implemented; retained here as part of expanded end-goal scope)
 - Jurisdictional deadline rules packs (versioned by jurisdiction/court/procedure)
 
 ## New Chat Bootstrap

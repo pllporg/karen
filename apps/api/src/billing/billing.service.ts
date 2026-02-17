@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
+  ExportJobStatus,
   InvoiceStatus,
+  LEDESFormat,
+  LEDESValidationStatus,
   PaymentMethod,
   TrustReconciliationDiscrepancyStatus,
   TrustReconciliationRunStatus,
@@ -8,12 +11,28 @@ import {
 } from '@prisma/client';
 import Stripe from 'stripe';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
 import { AuthenticatedUser } from '../common/types';
 import { AuditService } from '../audit/audit.service';
 import { S3Service } from '../files/s3.service';
 import { toJsonValue } from '../common/utils/json.util';
+
+type LedesValidationError = {
+  invoiceId: string;
+  invoiceNumber: string;
+  lineItemId: string;
+  code: 'missing_phase_code' | 'missing_task_code' | 'missing_description' | 'non_positive_line_total';
+  message: string;
+};
+
+type LedesBuildResult = {
+  content: string;
+  lineCount: number;
+  invoiceCount: number;
+  totalAmount: number;
+};
 
 @Injectable()
 export class BillingService {
@@ -726,6 +745,307 @@ export class BillingService {
     });
   }
 
+  async listLedesExportProfiles(user: AuthenticatedUser) {
+    return this.prisma.lEDESExportProfile.findMany({
+      where: { organizationId: user.organizationId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  async createLedesExportProfile(input: {
+    user: AuthenticatedUser;
+    name: string;
+    format?: LEDESFormat;
+    isDefault?: boolean;
+    requireUtbmsPhaseCode?: boolean;
+    requireUtbmsTaskCode?: boolean;
+    includeExpenseLineItems?: boolean;
+    validationRulesJson?: Record<string, unknown>;
+  }) {
+    const name = input.name?.trim();
+    if (!name) throw new UnprocessableEntityException('Profile name is required');
+
+    const format = input.format || LEDESFormat.LEDES98B;
+    const profile = await this.prisma.$transaction(async (tx) => {
+      if (input.isDefault) {
+        await tx.lEDESExportProfile.updateMany({
+          where: { organizationId: input.user.organizationId, isDefault: true },
+          data: { isDefault: false },
+        });
+      }
+      return tx.lEDESExportProfile.create({
+        data: {
+          organizationId: input.user.organizationId,
+          name,
+          format,
+          isDefault: input.isDefault ?? false,
+          requireUtbmsPhaseCode: input.requireUtbmsPhaseCode ?? true,
+          requireUtbmsTaskCode: input.requireUtbmsTaskCode ?? true,
+          includeExpenseLineItems: input.includeExpenseLineItems ?? true,
+          validationRulesJson: toJsonValue(input.validationRulesJson || null),
+          createdByUserId: input.user.id,
+        },
+      });
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'billing.ledes.profile.created',
+      entityType: 'ledesExportProfile',
+      entityId: profile.id,
+      metadata: {
+        name: profile.name,
+        format: profile.format,
+        isDefault: profile.isDefault,
+      },
+    });
+
+    return profile;
+  }
+
+  async listLedesExportJobs(user: AuthenticatedUser, filters?: { profileId?: string; status?: string }) {
+    const status = filters?.status?.trim();
+    if (status && !Object.values(ExportJobStatus).includes(status as ExportJobStatus)) {
+      throw new UnprocessableEntityException(`Invalid status filter: ${status}`);
+    }
+    if (filters?.profileId) {
+      const profile = await this.prisma.lEDESExportProfile.findFirst({
+        where: { id: filters.profileId, organizationId: user.organizationId },
+        select: { id: true },
+      });
+      if (!profile) throw new NotFoundException('LEDES export profile not found');
+    }
+
+    return this.prisma.lEDESExportJob.findMany({
+      where: {
+        organizationId: user.organizationId,
+        ...(filters?.profileId ? { profileId: filters.profileId } : {}),
+        ...(status ? { status: status as ExportJobStatus } : {}),
+      },
+      include: {
+        profile: true,
+        matter: {
+          select: {
+            id: true,
+            name: true,
+            matterNumber: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async getLedesExportJob(user: AuthenticatedUser, jobId: string) {
+    const job = await this.prisma.lEDESExportJob.findFirst({
+      where: {
+        id: jobId,
+        organizationId: user.organizationId,
+      },
+      include: {
+        profile: true,
+        matter: {
+          select: {
+            id: true,
+            name: true,
+            matterNumber: true,
+          },
+        },
+      },
+    });
+    if (!job) throw new NotFoundException('LEDES export job not found');
+    return job;
+  }
+
+  async createLedesExportJob(input: {
+    user: AuthenticatedUser;
+    profileId: string;
+    matterId?: string;
+    invoiceIds?: string[];
+  }) {
+    const profile = await this.prisma.lEDESExportProfile.findFirst({
+      where: {
+        id: input.profileId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!profile) throw new NotFoundException('LEDES export profile not found');
+
+    if (input.matterId) {
+      await this.access.assertMatterAccess(input.user, input.matterId, 'read');
+    }
+
+    const selectedInvoiceIds = [...new Set((input.invoiceIds || []).map((id) => id.trim()).filter(Boolean))];
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        organizationId: input.user.organizationId,
+        ...(input.matterId ? { matterId: input.matterId } : {}),
+        ...(selectedInvoiceIds.length > 0 ? { id: { in: selectedInvoiceIds } } : {}),
+      },
+      include: {
+        matter: {
+          select: {
+            id: true,
+            name: true,
+            matterNumber: true,
+          },
+        },
+        lineItems: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: [{ issuedAt: 'asc' }, { invoiceNumber: 'asc' }],
+    });
+
+    if (selectedInvoiceIds.length > 0) {
+      const foundIds = new Set(invoices.map((invoice) => invoice.id));
+      const missingInvoiceIds = selectedInvoiceIds.filter((invoiceId) => !foundIds.has(invoiceId));
+      if (missingInvoiceIds.length > 0) {
+        throw new NotFoundException(`Invoice(s) not found for export: ${missingInvoiceIds.join(', ')}`);
+      }
+    }
+
+    if (invoices.length === 0) {
+      throw new UnprocessableEntityException('No invoices matched the export criteria');
+    }
+
+    const job = await this.prisma.lEDESExportJob.create({
+      data: {
+        organizationId: input.user.organizationId,
+        profileId: profile.id,
+        requestedByUserId: input.user.id,
+        matterId: input.matterId || null,
+        status: ExportJobStatus.RUNNING,
+        format: profile.format,
+        invoiceIds: invoices.map((invoice) => invoice.id),
+        startedAt: new Date(),
+      },
+    });
+
+    const validationErrors = this.validateLedesInvoices(profile, invoices);
+    if (validationErrors.length > 0) {
+      const failed = await this.prisma.lEDESExportJob.update({
+        where: { id: job.id },
+        data: {
+          status: ExportJobStatus.FAILED,
+          validationStatus: LEDESValidationStatus.FAILED,
+          summaryJson: toJsonValue({
+            invoiceCount: invoices.length,
+            validationErrorCount: validationErrors.length,
+            validationErrors,
+          }),
+          error: `Validation failed for ${validationErrors.length} line item(s)`,
+          finishedAt: new Date(),
+        },
+      });
+
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'billing.ledes.export.failed',
+        entityType: 'ledesExportJob',
+        entityId: failed.id,
+        metadata: {
+          reason: 'validation_failed',
+          validationErrorCount: validationErrors.length,
+        },
+      });
+
+      return failed;
+    }
+
+    try {
+      const built = this.buildLedes1998b(invoices, profile);
+      const contentBuffer = Buffer.from(built.content, 'utf8');
+      const checksumSha256 = createHash('sha256').update(contentBuffer).digest('hex');
+      const uploaded = await this.s3.upload(contentBuffer, 'text/plain', `org/${input.user.organizationId}/exports/ledes`);
+
+      const completed = await this.prisma.lEDESExportJob.update({
+        where: { id: job.id },
+        data: {
+          status: ExportJobStatus.COMPLETED,
+          validationStatus: LEDESValidationStatus.PASSED,
+          lineCount: built.lineCount,
+          totalAmount: built.totalAmount,
+          storageKey: uploaded.key,
+          checksumSha256,
+          summaryJson: toJsonValue({
+            format: profile.format,
+            invoiceCount: built.invoiceCount,
+            lineCount: built.lineCount,
+            totalAmount: built.totalAmount,
+            validationErrors: [],
+          }),
+          finishedAt: new Date(),
+        },
+      });
+
+      const downloadUrl = await this.s3.signedDownloadUrl(uploaded.key, 60 * 60);
+
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'billing.ledes.export.completed',
+        entityType: 'ledesExportJob',
+        entityId: completed.id,
+        metadata: {
+          lineCount: completed.lineCount,
+          totalAmount: completed.totalAmount,
+          checksumSha256: completed.checksumSha256,
+        },
+      });
+
+      return {
+        ...completed,
+        downloadUrl,
+      };
+    } catch (error) {
+      const failed = await this.prisma.lEDESExportJob.update({
+        where: { id: job.id },
+        data: {
+          status: ExportJobStatus.FAILED,
+          validationStatus: LEDESValidationStatus.FAILED,
+          error: error instanceof Error ? error.message : 'Unknown LEDES export failure',
+          finishedAt: new Date(),
+        },
+      });
+
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'billing.ledes.export.failed',
+        entityType: 'ledesExportJob',
+        entityId: failed.id,
+        metadata: {
+          reason: 'runtime_failure',
+        },
+      });
+
+      throw error;
+    }
+  }
+
+  async getLedesExportDownloadUrl(user: AuthenticatedUser, jobId: string) {
+    const job = await this.prisma.lEDESExportJob.findFirst({
+      where: {
+        id: jobId,
+        organizationId: user.organizationId,
+      },
+    });
+    if (!job) throw new NotFoundException('LEDES export job not found');
+    if (job.status !== ExportJobStatus.COMPLETED || !job.storageKey) {
+      throw new UnprocessableEntityException('Download is only available for completed LEDES export jobs');
+    }
+
+    const downloadUrl = await this.s3.signedDownloadUrl(job.storageKey, 60 * 60);
+    return {
+      jobId: job.id,
+      downloadUrl,
+    };
+  }
+
   async createTrustReconciliationRun(input: {
     user: AuthenticatedUser;
     trustAccountId?: string;
@@ -1002,6 +1322,161 @@ export class BillingService {
     return completed;
   }
 
+  private validateLedesInvoices(
+    profile: {
+      requireUtbmsPhaseCode: boolean;
+      requireUtbmsTaskCode: boolean;
+      includeExpenseLineItems: boolean;
+    },
+    invoices: Array<{
+      id: string;
+      invoiceNumber: string;
+      lineItems: Array<{
+        id: string;
+        description: string;
+        amount: number;
+        expenseId: string | null;
+        utbmsPhaseCode: string | null;
+        utbmsTaskCode: string | null;
+      }>;
+    }>,
+  ): LedesValidationError[] {
+    const errors: LedesValidationError[] = [];
+    for (const invoice of invoices) {
+      const relevantLineItems = profile.includeExpenseLineItems
+        ? invoice.lineItems
+        : invoice.lineItems.filter((lineItem) => !lineItem.expenseId);
+
+      for (const lineItem of relevantLineItems) {
+        if (!lineItem.description?.trim()) {
+          errors.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            lineItemId: lineItem.id,
+            code: 'missing_description',
+            message: 'Line item description is required for LEDES export.',
+          });
+        }
+        if (lineItem.amount <= 0) {
+          errors.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            lineItemId: lineItem.id,
+            code: 'non_positive_line_total',
+            message: 'Line item total must be greater than zero for LEDES export.',
+          });
+        }
+        if (profile.requireUtbmsPhaseCode && !lineItem.utbmsPhaseCode?.trim()) {
+          errors.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            lineItemId: lineItem.id,
+            code: 'missing_phase_code',
+            message: 'UTBMS phase code is required by profile validation.',
+          });
+        }
+        if (profile.requireUtbmsTaskCode && !lineItem.utbmsTaskCode?.trim()) {
+          errors.push({
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            lineItemId: lineItem.id,
+            code: 'missing_task_code',
+            message: 'UTBMS task code is required by profile validation.',
+          });
+        }
+      }
+    }
+    return errors;
+  }
+
+  private buildLedes1998b(
+    invoices: Array<{
+      id: string;
+      invoiceNumber: string;
+      issuedAt: Date;
+      matter: {
+        id: string;
+        matterNumber: string;
+      };
+      lineItems: Array<{
+        id: string;
+        quantity: number;
+        amount: number;
+        description: string;
+        expenseId: string | null;
+        utbmsPhaseCode: string | null;
+        utbmsTaskCode: string | null;
+      }>;
+    }>,
+    profile: {
+      includeExpenseLineItems: boolean;
+    },
+  ): LedesBuildResult {
+    const columns = [
+      'INVOICE_NUMBER',
+      'CLIENT_ID',
+      'LAW_FIRM_MATTER_ID',
+      'INVOICE_DATE',
+      'LINE_ITEM_NUMBER',
+      'EXP/FEE/INV_ADJ_TYPE',
+      'LINE_ITEM_NUMBER_OF_UNITS',
+      'LINE_ITEM_ADJUSTMENT_AMOUNT',
+      'LINE_ITEM_TOTAL',
+      'LINE_ITEM_DESCRIPTION',
+      'LINE_ITEM_DATE',
+      'LINE_ITEM_TASK_CODE',
+      'LINE_ITEM_ACTIVITY_CODE',
+      'TIMEKEEPER_NAME',
+    ];
+
+    const rows: string[] = [];
+    let lineCount = 0;
+    let totalAmount = 0;
+    let invoiceCount = 0;
+
+    for (const invoice of invoices) {
+      const relevantLineItems = profile.includeExpenseLineItems
+        ? invoice.lineItems
+        : invoice.lineItems.filter((lineItem) => !lineItem.expenseId);
+      if (relevantLineItems.length === 0) continue;
+
+      invoiceCount += 1;
+      let invoiceLineNumber = 0;
+      for (const lineItem of relevantLineItems) {
+        invoiceLineNumber += 1;
+        lineCount += 1;
+        totalAmount = Number((totalAmount + lineItem.amount).toFixed(2));
+
+        const row = [
+          invoice.invoiceNumber,
+          invoice.matter.matterNumber || invoice.matter.id,
+          invoice.matter.id,
+          this.formatLedesDate(invoice.issuedAt),
+          String(invoiceLineNumber),
+          lineItem.expenseId ? 'E' : 'F',
+          Number(lineItem.quantity).toFixed(2),
+          '0.00',
+          Number(lineItem.amount).toFixed(2),
+          this.sanitizeLedesField(lineItem.description),
+          this.formatLedesDate(invoice.issuedAt),
+          this.sanitizeLedesField(lineItem.utbmsPhaseCode || ''),
+          this.sanitizeLedesField(lineItem.utbmsTaskCode || ''),
+          '',
+        ];
+        rows.push(row.join('|'));
+      }
+    }
+
+    const header = columns.join('|');
+    const content = ['LEDES1998B[]', header, ...rows].join('\n') + '\n';
+    return {
+      content,
+      lineCount,
+      invoiceCount,
+      totalAmount,
+    };
+  }
+
   private async generateInvoicePdf(invoiceId: string): Promise<string> {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -1199,5 +1674,16 @@ export class BillingService {
       return extra.trim();
     }
     return `${existing.trim()}\n\n${extra.trim()}`;
+  }
+
+  private sanitizeLedesField(value: string) {
+    return value.replace(/[|\r\n]+/g, ' ').trim();
+  }
+
+  private formatLedesDate(value: Date) {
+    const year = value.getUTCFullYear();
+    const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(value.getUTCDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
   }
 }

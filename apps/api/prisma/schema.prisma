@@ -229,6 +229,15 @@ enum ExportJobStatus {
   FAILED
 }
 
+enum LEDESFormat {
+  LEDES98B
+}
+
+enum LEDESValidationStatus {
+  PASSED
+  FAILED
+}
+
 model Organization {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -275,6 +284,8 @@ model User {
   sectionInstancesUpdated SectionInstance[]
   importBatchesStarted ImportBatch[]
   exportJobsRequested ExportJob[]
+  ledesExportProfilesCreated LEDESExportProfile[] @relation("LEDESExportProfileCreatedBy")
+  ledesExportJobsRequested LEDESExportJob[] @relation("LEDESExportJobRequestedBy")
   trustReconciliationRunsCreated TrustReconciliationRun[] @relation("TrustReconciliationRunCreatedBy")
   trustReconciliationRunsSignedOff TrustReconciliationRun[] @relation("TrustReconciliationRunSignedOffBy")
   trustReconciliationDiscrepanciesResolved TrustReconciliationDiscrepancy[] @relation("TrustReconciliationDiscrepancyResolvedBy")
@@ -531,6 +542,7 @@ model Matter {
   timeEntries          TimeEntry[]
   expenses             Expense[]
   invoices             Invoice[]
+  ledesExportJobs      LEDESExportJob[]
   trustTransactions    TrustTransaction[]
   trustLedgers         MatterTrustLedger[]
   trustReconciliationDiscrepancies TrustReconciliationDiscrepancy[]
@@ -1703,4 +1715,51 @@ model ExportJob {
   requestedBy      User?         @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])
+}
+
+model LEDESExportProfile {
+  id                       String      @id @default(uuid()) @db.Uuid
+  organizationId           String      @db.Uuid
+  name                     String
+  format                   LEDESFormat @default(LEDES98B)
+  isDefault                Boolean     @default(false)
+  requireUtbmsPhaseCode    Boolean     @default(true)
+  requireUtbmsTaskCode     Boolean     @default(true)
+  includeExpenseLineItems  Boolean     @default(true)
+  validationRulesJson      Json?
+  createdByUserId          String?     @db.Uuid
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+  createdBy                User?       @relation("LEDESExportProfileCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  jobs                     LEDESExportJob[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, isDefault])
+}
+
+model LEDESExportJob {
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @db.Uuid
+  profileId         String               @db.Uuid
+  requestedByUserId String?              @db.Uuid
+  matterId          String?              @db.Uuid
+  status            ExportJobStatus      @default(QUEUED)
+  validationStatus  LEDESValidationStatus?
+  format            LEDESFormat
+  invoiceIds        String[]             @default([])
+  lineCount         Int                  @default(0)
+  totalAmount       Float                @default(0)
+  storageKey        String?
+  checksumSha256    String?
+  summaryJson       Json?
+  error             String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime             @default(now())
+  profile           LEDESExportProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  requestedBy       User?                @relation("LEDESExportJobRequestedBy", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  matter            Matter?              @relation(fields: [matterId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, createdAt])
+  @@index([profileId])
 }

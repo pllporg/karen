@@ -9,21 +9,36 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [trustRows, setTrustRows] = useState<any[]>([]);
   const [reconciliationRuns, setReconciliationRuns] = useState<any[]>([]);
+  const [ledesProfiles, setLedesProfiles] = useState<any[]>([]);
+  const [ledesJobs, setLedesJobs] = useState<any[]>([]);
   const [matterId, setMatterId] = useState('');
   const [reconciliationTrustAccountId, setReconciliationTrustAccountId] = useState('');
   const [statementStartAt, setStatementStartAt] = useState('');
   const [statementEndAt, setStatementEndAt] = useState('');
   const [reconciliationStatus, setReconciliationStatus] = useState<string | null>(null);
+  const [ledesProfileName, setLedesProfileName] = useState('Default LEDES 1998B');
+  const [selectedLedesProfileId, setSelectedLedesProfileId] = useState('');
+  const [ledesInvoiceIds, setLedesInvoiceIds] = useState('');
+  const [ledesStatus, setLedesStatus] = useState<string | null>(null);
 
   async function load() {
-    const [invoiceData, trustData, reconciliationData] = await Promise.all([
+    const [invoiceData, trustData, reconciliationData, profileData, ledesJobData] = await Promise.all([
       apiFetch<any[]>('/billing/invoices'),
       apiFetch<any[]>('/billing/trust/report'),
       apiFetch<any[]>('/billing/trust/reconciliation/runs'),
+      apiFetch<any[]>('/billing/ledes/profiles'),
+      apiFetch<any[]>('/billing/ledes/jobs'),
     ]);
     setInvoices(invoiceData);
     setTrustRows(trustData);
     setReconciliationRuns(reconciliationData);
+    setLedesProfiles(profileData);
+    setLedesJobs(ledesJobData);
+    setSelectedLedesProfileId((current) => {
+      if (current) return current;
+      const defaultProfile = profileData.find((profile) => profile.isDefault);
+      return defaultProfile?.id || profileData[0]?.id || '';
+    });
   }
 
   useEffect(() => {
@@ -85,6 +100,59 @@ export default function BillingPage() {
     });
     setReconciliationStatus(`Completed reconciliation run ${runId}.`);
     await load();
+  }
+
+  async function createLedesProfile() {
+    if (!ledesProfileName.trim()) return;
+    await apiFetch('/billing/ledes/profiles', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: ledesProfileName.trim(),
+        format: 'LEDES98B',
+        isDefault: true,
+        requireUtbmsPhaseCode: true,
+        requireUtbmsTaskCode: true,
+        includeExpenseLineItems: true,
+      }),
+    });
+    setLedesStatus(`Created LEDES profile "${ledesProfileName.trim()}".`);
+    await load();
+  }
+
+  async function createLedesJob() {
+    if (!selectedLedesProfileId) {
+      setLedesStatus('Select a LEDES profile before running export.');
+      return;
+    }
+
+    const invoiceIds = ledesInvoiceIds
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const created = await apiFetch<any>('/billing/ledes/jobs', {
+      method: 'POST',
+      body: JSON.stringify({
+        profileId: selectedLedesProfileId,
+        invoiceIds: invoiceIds.length > 0 ? invoiceIds : undefined,
+      }),
+    });
+
+    if (created.status === 'FAILED') {
+      const count = created.summaryJson?.validationErrorCount || 0;
+      setLedesStatus(`LEDES export validation failed (${count} issues).`);
+    } else {
+      setLedesStatus(`Created LEDES export job ${created.id}.`);
+    }
+    await load();
+  }
+
+  async function downloadLedesJob(jobId: string) {
+    const result = await apiFetch<{ downloadUrl: string }>(`/billing/ledes/jobs/${jobId}/download`);
+    if (typeof window !== 'undefined') {
+      window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
+    }
+    setLedesStatus(`Generated download URL for LEDES job ${jobId}.`);
   }
 
   return (
@@ -219,6 +287,79 @@ export default function BillingPage() {
                       </button>
                     ) : null}
                   </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="card" style={{ marginTop: 14 }}>
+        <h3 style={{ marginTop: 0 }}>LEDES / UTBMS Export</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 10 }}>
+          <input
+            className="input"
+            placeholder="New LEDES profile name"
+            value={ledesProfileName}
+            onChange={(event) => setLedesProfileName(event.target.value)}
+          />
+          <button className="button secondary" type="button" onClick={createLedesProfile}>
+            Create Profile
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 10, marginBottom: 10 }}>
+          <select
+            className="input"
+            aria-label="LEDES Profile"
+            value={selectedLedesProfileId}
+            onChange={(event) => setSelectedLedesProfileId(event.target.value)}
+          >
+            <option value="">Select LEDES profile</option>
+            {ledesProfiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.name} ({profile.format}){profile.isDefault ? ' - default' : ''}
+              </option>
+            ))}
+          </select>
+          <input
+            className="input"
+            placeholder="Invoice IDs (comma separated, optional)"
+            value={ledesInvoiceIds}
+            onChange={(event) => setLedesInvoiceIds(event.target.value)}
+          />
+          <button className="button secondary" type="button" onClick={createLedesJob}>
+            Run LEDES Export
+          </button>
+        </div>
+        {ledesStatus ? <p style={{ color: 'var(--muted)' }}>{ledesStatus}</p> : null}
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Profile</th>
+              <th>Status</th>
+              <th>Validation</th>
+              <th>Lines</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ledesJobs.map((job) => (
+              <tr key={job.id}>
+                <td>{job.id}</td>
+                <td>{job.profile?.name || job.profileId}</td>
+                <td>{job.status}</td>
+                <td>{job.validationStatus || '-'}</td>
+                <td>{job.lineCount}</td>
+                <td>${job.totalAmount}</td>
+                <td>
+                  {job.status === 'COMPLETED' ? (
+                    <button className="button secondary" type="button" onClick={() => downloadLedesJob(job.id)}>
+                      Download
+                    </button>
+                  ) : (
+                    <span style={{ color: 'var(--muted)' }}>-</span>
+                  )}
                 </td>
               </tr>
             ))}
