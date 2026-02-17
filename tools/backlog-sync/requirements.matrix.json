@@ -182,7 +182,7 @@
           "title": "Finalize Clio CSV/XLSX template importer coverage",
           "requirementId": "REQ-PORT-002",
           "promptSection": "MVP Importers / Clio Migration Template Import",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],

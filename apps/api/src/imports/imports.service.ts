@@ -106,11 +106,15 @@ export class ImportsService implements OnModuleInit {
     let imported = 0;
     let failed = 0;
     let warningCount = 0;
+    const warningCodeCounts: Record<string, number> = {};
+    const unmappedColumnsBySource: Record<string, Set<string>> = {};
 
     for (const row of orderedRows) {
       const entityType = input.entityTypeOverride || row.entityType;
       const rowContext = this.buildRowContext(entityType, row);
       const rowWarnings = this.normalizeWarnings(row.warnings, rowContext);
+      warningCount += rowWarnings.length;
+      this.captureWarningStats(rowWarnings, warningCodeCounts, unmappedColumnsBySource);
       try {
         const resolvedEntityId = await this.importRow({
           organizationId: input.user.organizationId,
@@ -132,7 +136,6 @@ export class ImportsService implements OnModuleInit {
             },
         });
         imported += 1;
-        warningCount += rowWarnings.length;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown import error';
         await this.prisma.importItem.create({
@@ -147,7 +150,6 @@ export class ImportsService implements OnModuleInit {
             },
           });
         failed += 1;
-        warningCount += rowWarnings.length;
       }
     }
 
@@ -164,6 +166,8 @@ export class ImportsService implements OnModuleInit {
           imported,
           failed,
           warnings: warningCount,
+          warningCodeCounts,
+          unmappedColumnsBySource: this.serializeUnmappedColumns(unmappedColumnsBySource),
         }),
       },
     });
@@ -180,6 +184,8 @@ export class ImportsService implements OnModuleInit {
         imported,
         failed,
         warnings: warningCount,
+        warningCodeCounts,
+        unmappedColumnsBySource: this.serializeUnmappedColumns(unmappedColumnsBySource),
       },
     });
 
@@ -756,6 +762,49 @@ export class ImportsService implements OnModuleInit {
       });
     }
     return normalized;
+  }
+
+  private captureWarningStats(
+    warnings: ImportWarning[],
+    warningCodeCounts: Record<string, number>,
+    unmappedColumnsBySource: Record<string, Set<string>>,
+  ) {
+    for (const warning of warnings) {
+      const code = this.asString((warning as Record<string, unknown>).code || 'import_warning');
+      warningCodeCounts[code] = (warningCodeCounts[code] || 0) + 1;
+
+      const warningContext = (warning as Record<string, unknown>).context;
+      if (!warningContext || typeof warningContext !== 'object' || Array.isArray(warningContext)) continue;
+      const contextRecord = warningContext as Record<string, unknown>;
+      if (code !== 'unmapped_columns') continue;
+
+      const rowContext =
+        contextRecord.rowContext && typeof contextRecord.rowContext === 'object' && !Array.isArray(contextRecord.rowContext)
+          ? (contextRecord.rowContext as Record<string, unknown>)
+          : {};
+      const sourceFile = this.asString(rowContext.sourceFile || 'unknown-source');
+
+      const columns =
+        Array.isArray(contextRecord.unmappedColumns) && contextRecord.unmappedColumns.length > 0
+          ? contextRecord.unmappedColumns.map((value) => this.asString(value)).filter(Boolean)
+          : [];
+      if (columns.length === 0) continue;
+
+      if (!unmappedColumnsBySource[sourceFile]) {
+        unmappedColumnsBySource[sourceFile] = new Set<string>();
+      }
+      for (const column of columns) {
+        unmappedColumnsBySource[sourceFile].add(column);
+      }
+    }
+  }
+
+  private serializeUnmappedColumns(input: Record<string, Set<string>>) {
+    const output: Record<string, string[]> = {};
+    for (const [sourceFile, columns] of Object.entries(input)) {
+      output[sourceFile] = [...columns].sort();
+    }
+    return output;
   }
 
   private buildRowContext(entityType: string, row: { rowNumber: number; rawJson: Prisma.InputJsonObject }): Prisma.InputJsonObject {

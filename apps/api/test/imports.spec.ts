@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import AdmZip from 'adm-zip';
 import { ImportsService } from '../src/imports/imports.service';
+import { ClioTemplateImportPlugin } from '../src/imports/plugins/clio-template.plugin';
 import { MyCaseZipImportPlugin } from '../src/imports/plugins/mycase-zip.plugin';
 
 function buildImportPrismaMock() {
@@ -334,5 +335,83 @@ describe('ImportsService', () => {
     expect(state.calendarEvents[0].matterId).toBe(state.matters[0].id);
     expect(state.timeEntries[0].matterId).toBe(state.matters[0].id);
     expect(state.payments[0].invoiceId).toBe(state.invoices[0].id);
+  });
+
+  it('parses Clio CSV fixture for all documented template entity types', async () => {
+    const plugin = new ClioTemplateImportPlugin();
+    const fixture = readFileSync(join(__dirname, 'fixtures/import-export/clio-template-full.csv'));
+    const rows = await plugin.parse({
+      buffer: fixture,
+      originalname: 'clio-template-full.csv',
+      mimetype: 'text/csv',
+      size: fixture.length,
+      fieldname: 'file',
+      encoding: '7bit',
+    } as any);
+
+    const counts = rows.reduce<Record<string, number>>((acc, row) => {
+      acc[row.entityType] = (acc[row.entityType] || 0) + 1;
+      return acc;
+    }, {});
+
+    expect(counts).toMatchObject({
+      contact: 1,
+      matter: 1,
+      task: 1,
+      calendar_event: 1,
+      time_entry: 1,
+      communication_message: 3,
+    });
+
+    expect(rows[0].warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unmapped_columns',
+        }),
+      ]),
+    );
+  });
+
+  it('imports Clio XLSX workbook with sheet parity and unmapped-column diagnostics', async () => {
+    const workbookBuffer = readFileSync(join(__dirname, 'fixtures/import-export/clio-template.xlsx'));
+
+    const { prisma, state } = buildImportPrismaMock();
+    const service = new ImportsService(prisma, { appendEvent: jest.fn() } as any);
+    service.registerPlugin(new ClioTemplateImportPlugin());
+
+    const batch = await service.runImport({
+      user: { id: 'u1', organizationId: 'org1' } as any,
+      sourceSystem: 'clio_template',
+      file: {
+        buffer: workbookBuffer,
+        originalname: 'clio-template.xlsx',
+        mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        size: workbookBuffer.length,
+        fieldname: 'file',
+        encoding: '7bit',
+      } as any,
+    });
+
+    expect(batch?.summaryJson).toMatchObject({
+      imported: 8,
+      failed: 0,
+    });
+
+    expect((batch?.summaryJson as Record<string, unknown>)?.warningCodeCounts).toEqual(
+      expect.objectContaining({
+        unmapped_columns: 8,
+      }),
+    );
+
+    const unmappedColumnsBySource = (batch?.summaryJson as Record<string, any>)?.unmappedColumnsBySource;
+    expect(unmappedColumnsBySource['clio-template.xlsx#Contacts']).toContain('legacy_column');
+    expect(unmappedColumnsBySource['clio-template.xlsx#Matters']).toContain('legacy_column');
+
+    expect(state.contacts).toHaveLength(1);
+    expect(state.matters).toHaveLength(1);
+    expect(state.tasks).toHaveLength(1);
+    expect(state.calendarEvents).toHaveLength(1);
+    expect(state.timeEntries).toHaveLength(1);
+    expect(state.communicationMessages).toHaveLength(3);
   });
 });

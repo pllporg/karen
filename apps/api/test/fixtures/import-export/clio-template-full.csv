@@ -1,0 +1,9 @@
+entity_type,id,matter_id,name,matter_number,practice_area,title,due_date,start_time,end_time,location,description,minutes,rate,amount,subject,body,note,email,phone,legacy_column
+contacts,c1,,Jane Doe,,,,,,,,,,,,,,,jane@example.com,555-200-1001,legacy-contact
+matters,m1,,Ortega v BrightBuild,SCL-CLIO-001,Construction Litigation,,,,,,,,,,,,,,,legacy-matter
+tasks,t1,m1,,,,Prepare Complaint,2026-05-01,,,,,,,,,,,,,legacy-task
+calendar,e1,m1,,,,Case Mgmt Conference,,2026-05-02T09:00:00Z,2026-05-02T10:00:00Z,Courtroom 3,,,,,,,,,,legacy-calendar
+activities,a1,m1,,,,,,,,,Drafting motion,90,250,375,,,,,,legacy-activity
+notes,n1,m1,,,,Client Intake Note,,,,,,,,,,Homeowner reported leaks,Followed up after inspection,,,legacy-note
+phone_logs,p1,m1,,,,Adjuster Call Log,,,,,,,,,,Adjuster left voicemail,Callback requested,,,legacy-phone
+emails,em1,m1,,,,Carrier Update Email,,,,,,,,,,Carrier requested estimate package,Email received from carrier,,,legacy-email
