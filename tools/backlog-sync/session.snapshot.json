@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T19:55:09.359Z",
+  "generatedAt": "2026-02-17T20:14:30.509Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 32,
-      "Missing": 2
+      "Complete": 33,
+      "Missing": 1
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -33,8 +33,8 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 15,
-      "Missing:Medium": 2
+      "Complete:Medium": 16,
+      "Missing:Medium": 1
     }
   },
   "priority": {
@@ -137,21 +137,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 14,
-      "In Progress": 1,
-      "Done": 28,
-      "In Review": 1
+      "Backlog": 13,
+      "In Review": 2,
+      "Done": 29
     },
-    "inProgressIssueKeys": [
-      "KAR-46"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-47",
+        "title": "Implement trust reconciliation workflows with discrepancy resolution",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T20:13:58.956Z",
+        "requirementId": "REQ-BILL-003"
+      },
+      {
         "key": "KAR-46",
         "title": "Implement document retention policies with legal hold workflow",
-        "state": "In Progress",
-        "updatedAt": "2026-02-17T19:44:13.950Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T19:58:58.930Z",
         "requirementId": "REQ-COMM-004"
       },
       {
@@ -209,41 +213,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T16:56:32.091Z",
         "requirementId": "REQ-COMM-002"
-      },
-      {
-        "key": "KAR-23",
-        "title": "Implement production email/SMS providers behind provider interface",
-        "state": "Done",
-        "updatedAt": "2026-02-17T16:44:47.650Z",
-        "requirementId": "REQ-COMM-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T19:55:07.212Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T20:14:28.222Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "8960d96417b6358c8960eeeb74381c1518de2c7f",
+    "gitHead": "786148d1998c1b1642a1439a5db29ebc11a6e9f3",
     "gitStatusShort": [
-      "## lin/KAR-46-document-retention-legal-hold-workflow",
-      " M README.md",
-      " M apps/api/prisma/schema.prisma",
-      " M apps/api/prisma/seed.ts",
-      " M apps/api/src/documents/documents.controller.ts",
-      " M apps/api/src/documents/documents.service.ts",
-      " M apps/web/app/documents/page.tsx",
-      " M apps/web/test/documents-page.spec.tsx",
-      " M docs/parity/data-model-checklist.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/prisma/migrations/20260217191000_document_retention_workflows/",
-      "?? apps/api/src/documents/dto/assign-retention-policy.dto.ts",
-      "?? apps/api/src/documents/dto/create-retention-policy.dto.ts",
-      "?? apps/api/src/documents/dto/disposition-run.dto.ts",
-      "?? apps/api/src/documents/dto/legal-hold.dto.ts",
-      "?? apps/api/test/document-retention.spec.ts",
-      "?? docs/parity/document-retention-workflows.md"
+      "## lin/KAR-47-trust-reconciliation-workflows...origin/lin/KAR-47-trust-reconciliation-workflows"
     ],
-    "dirtyFileCount": 16
+    "dirtyFileCount": 0
   }
 }
