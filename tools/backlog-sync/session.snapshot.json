@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:51:30.003Z",
+  "generatedAt": "2026-02-17T16:53:23.713Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -139,13 +139,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 22,
-      "In Review": 1,
+      "Backlog": 21,
+      "In Review": 2,
       "Done": 21
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-24",
+        "title": "Complete communication search relevance and indexing strategy",
+        "state": "In Review",
+        "updatedAt": "2026-02-17T16:53:02.355Z",
+        "requirementId": "REQ-COMM-002"
+      },
       {
         "key": "KAR-23",
         "title": "Implement production email/SMS providers behind provider interface",
@@ -208,33 +215,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T03:51:06.319Z",
         "requirementId": "REQ-PORT-002"
-      },
-      {
-        "key": "KAR-14",
-        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
-        "state": "Done",
-        "updatedAt": "2026-02-17T03:38:31.785Z",
-        "requirementId": "REQ-PORT-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:51:24.313Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:53:21.675Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "56bde5315bd1c9ab959776efd4abae53a4c4e29f",
+    "gitHead": "70d88775dc627611ddd1916c0c240c86f442d2b8",
     "gitStatusShort": [
-      "## lin/KAR-24-communications-search-indexing",
-      " M README.md",
-      " M apps/api/src/communications/communications.service.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/prisma/migrations/20260217165500_communication_search_indexing/",
-      "?? apps/api/test/communications-search.spec.ts",
-      "?? docs/parity/communications-search-indexing.md"
+      "## lin/KAR-24-communications-search-indexing...origin/lin/KAR-24-communications-search-indexing"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 0
   }
 }
