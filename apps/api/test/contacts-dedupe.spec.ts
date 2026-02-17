@@ -2,6 +2,121 @@ import { ContactKind } from '@prisma/client';
 import { ContactsService } from '../src/contacts/contacts.service';
 
 describe('ContactsService dedupe workflow', () => {
+  it('supports compound tag filters on contact listing', async () => {
+    const prisma = {
+      contact: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    } as any;
+
+    const service = new ContactsService(prisma, { appendEvent: jest.fn() } as any);
+    await service.list('org1', {
+      search: 'jane',
+      includeTags: ['client', 'vip'],
+      excludeTags: ['blocked'],
+      tagMode: 'all',
+    });
+
+    expect(prisma.contact.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          { organizationId: 'org1' },
+          {
+            OR: [
+              { displayName: { contains: 'jane', mode: 'insensitive' } },
+              { primaryEmail: { contains: 'jane', mode: 'insensitive' } },
+              { primaryPhone: { contains: 'jane', mode: 'insensitive' } },
+            ],
+          },
+          { tags: { has: 'client' } },
+          { tags: { has: 'vip' } },
+          { NOT: { tags: { has: 'blocked' } } },
+        ],
+      },
+      include: {
+        personProfile: true,
+        organizationProfile: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  });
+
+  it('returns filtered relationship graph with nodes, edges, and available relationship types', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'c1',
+          organizationId: 'org1',
+          kind: ContactKind.PERSON,
+          displayName: 'Jane Doe',
+          primaryEmail: 'jane@example.com',
+          primaryPhone: '555-1000',
+          tags: ['client'],
+        }),
+      },
+      contactRelationship: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([
+            {
+              id: 'rel1',
+              fromContactId: 'c1',
+              toContactId: 'c2',
+              relationshipType: 'opposing_counsel',
+              notes: 'Primary defense counsel',
+              fromContact: {
+                id: 'c1',
+                displayName: 'Jane Doe',
+                kind: ContactKind.PERSON,
+                primaryEmail: 'jane@example.com',
+                primaryPhone: '555-1000',
+                tags: ['client'],
+              },
+              toContact: {
+                id: 'c2',
+                displayName: 'Avery Defense',
+                kind: ContactKind.PERSON,
+                primaryEmail: 'avery@defense.test',
+                primaryPhone: '555-2000',
+                tags: ['opposing-counsel'],
+              },
+            },
+          ])
+          .mockResolvedValueOnce([
+            { relationshipType: 'insurer' },
+            { relationshipType: 'opposing_counsel' },
+          ]),
+      },
+    } as any;
+
+    const service = new ContactsService(prisma, { appendEvent: jest.fn() } as any);
+    const graph = await service.graph('org1', 'c1', {
+      search: 'defense',
+      relationshipTypes: ['opposing_counsel'],
+    });
+
+    expect(prisma.contactRelationship.findMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: 'org1',
+        }),
+      }),
+    );
+    expect(graph.summary).toEqual({ nodeCount: 2, edgeCount: 1 });
+    expect(graph.availableRelationshipTypes).toEqual(['insurer', 'opposing_counsel']);
+    expect(graph.edges[0]).toEqual(
+      expect.objectContaining({
+        relationshipType: 'opposing_counsel',
+        direction: 'OUTGOING',
+        relatedContact: expect.objectContaining({
+          id: 'c2',
+          displayName: 'Avery Defense',
+        }),
+      }),
+    );
+  });
+
   it('returns dedupe suggestions with confidence, decision state, and field diffs', async () => {
     const prisma = {
       contact: {

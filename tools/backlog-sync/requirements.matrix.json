@@ -274,21 +274,21 @@
           "title": "Enhance contact relationship graph visualization and filtering",
           "requirementId": "REQ-MAT-002",
           "promptSection": "Contacts / relationship graph + tags + filters",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "Medium",
           "labels": ["parity", "contacts"],
-          "problemStatement": "Relationship data is available but UI ergonomics and filtering depth are limited.",
+          "problemStatement": "Contacts graph and filter workflows now support compound tag filters, graph relationship-type/search filters, and inline dedupe indicators in the main table.",
           "requirementExcerpt": "People/org contacts with relationship graph and tags/filters.",
           "acceptanceCriteria": [
             "Graph view supports relationship-type filters and search.",
             "Tag filters support compound conditions.",
             "Dedupe suggestion indicators surfaced directly in contacts UI."
           ],
-          "apiImpact": "No major API changes expected.",
+          "apiImpact": "Contacts list/graph endpoints now support compound filter params (include/exclude tags, tag mode, relationship type, search).",
           "securityImpact": "Tenant and permission checks enforced for graph API.",
           "definitionOfDone": [
-            "Contacts UX reviewed against parity checklist."
+            "Contacts graph and filtering UI/API path is covered by API + web regression tests and documented in docs/parity/contacts-graph-filtering.md."
           ]
         },
         {

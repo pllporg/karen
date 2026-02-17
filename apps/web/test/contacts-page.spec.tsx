@@ -13,8 +13,22 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 const contactsFixture = [
-  { id: 'c1', kind: 'PERSON', displayName: 'Jane Doe', primaryEmail: 'jane@example.com', primaryPhone: '555-000-1111' },
-  { id: 'c2', kind: 'PERSON', displayName: 'J. Doe', primaryEmail: 'jane.alt@example.com', primaryPhone: '555-000-1111' },
+  {
+    id: 'c1',
+    kind: 'PERSON',
+    displayName: 'Jane Doe',
+    primaryEmail: 'jane@example.com',
+    primaryPhone: '555-000-1111',
+    tags: ['client', 'vip'],
+  },
+  {
+    id: 'c2',
+    kind: 'PERSON',
+    displayName: 'J. Doe',
+    primaryEmail: 'jane.alt@example.com',
+    primaryPhone: '555-000-1111',
+    tags: ['client'],
+  },
 ];
 
 const dedupeOpenFixture = [
@@ -48,6 +62,31 @@ const dedupeOpenFixture = [
     ],
   },
 ];
+
+const graphFixture = {
+  contact: contactsFixture[0],
+  nodes: contactsFixture,
+  edges: [
+    {
+      id: 'rel-1',
+      fromContactId: 'c1',
+      toContactId: 'c2',
+      relationshipType: 'opposing_counsel',
+      notes: null,
+      direction: 'OUTGOING',
+      relatedContact: contactsFixture[1],
+    },
+  ],
+  availableRelationshipTypes: ['opposing_counsel', 'insurer'],
+  summary: {
+    nodeCount: 2,
+    edgeCount: 1,
+  },
+  filters: {
+    relationshipTypes: [],
+    search: '',
+  },
+};
 
 describe('ContactsPage', () => {
   beforeEach(() => {
@@ -114,6 +153,79 @@ describe('ContactsPage', () => {
           body: JSON.stringify({ primaryId: 'c1', duplicateId: 'c2' }),
         }),
       );
+    });
+  });
+
+  it('applies compound contact tag filters and surfaces dedupe indicators in table', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(contactsFixture))
+      .mockResolvedValueOnce(jsonResponse(dedupeOpenFixture))
+      .mockResolvedValueOnce(jsonResponse([contactsFixture[0]]))
+      .mockResolvedValueOnce(jsonResponse(dedupeOpenFixture));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ContactsPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('1 open (HIGH)').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.change(screen.getByLabelText('Include Tags'), { target: { value: 'client,vip' } });
+    fireEvent.change(screen.getByLabelText('Exclude Tags'), { target: { value: 'blocked' } });
+    fireEvent.change(screen.getByLabelText('Tag Mode'), { target: { value: 'all' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply Filters' }));
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([url]) => String(url) === 'http://localhost:4000/contacts?includeTags=client%2Cvip&excludeTags=blocked&tagMode=all',
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it('loads graph view and applies relationship type + search filters', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(contactsFixture))
+      .mockResolvedValueOnce(jsonResponse(dedupeOpenFixture))
+      .mockResolvedValueOnce(jsonResponse(graphFixture))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          ...graphFixture,
+          filters: {
+            relationshipTypes: ['opposing_counsel'],
+            search: 'defense',
+          },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ContactsPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'View Graph' }).length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'View Graph' })[0]);
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([url]) => String(url) === 'http://localhost:4000/contacts/c1/graph')).toBe(true);
+      expect(screen.getByRole('cell', { name: 'opposing_counsel' })).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Graph Search'), { target: { value: 'defense' } });
+    fireEvent.change(screen.getByLabelText('Relationship Type Filter'), { target: { value: 'opposing_counsel' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([url]) =>
+            String(url) === 'http://localhost:4000/contacts/c1/graph?search=defense&relationshipTypes=opposing_counsel',
+        ),
+      ).toBe(true);
     });
   });
 });

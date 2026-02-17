@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContactKind } from '@prisma/client';
+import { ContactKind, Prisma } from '@prisma/client';
 import { distance } from 'fastest-levenshtein';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -15,6 +15,18 @@ type ContactSnapshot = {
   tags: string[];
 };
 
+type ListFilters = {
+  search?: string;
+  includeTags?: string[];
+  excludeTags?: string[];
+  tagMode?: 'any' | 'all';
+};
+
+type GraphFilters = {
+  search?: string;
+  relationshipTypes?: string[];
+};
+
 @Injectable()
 export class ContactsService {
   constructor(
@@ -22,21 +34,48 @@ export class ContactsService {
     private readonly audit: AuditService,
   ) {}
 
-  async list(organizationId: string, search?: string, tag?: string) {
+  async list(organizationId: string, filters: ListFilters = {}) {
+    const includeTags = (filters.includeTags || []).filter(Boolean);
+    const excludeTags = (filters.excludeTags || []).filter(Boolean);
+    const tagMode = filters.tagMode || 'any';
+
+    const andWhere: Prisma.ContactWhereInput[] = [{ organizationId }];
+
+    if (filters.search?.trim()) {
+      const search = filters.search.trim();
+      andWhere.push({
+        OR: [
+          { displayName: { contains: search, mode: 'insensitive' } },
+          { primaryEmail: { contains: search, mode: 'insensitive' } },
+          { primaryPhone: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (includeTags.length > 0) {
+      if (tagMode === 'all') {
+        for (const tag of includeTags) {
+          andWhere.push({ tags: { has: tag } });
+        }
+      } else {
+        andWhere.push({
+          OR: includeTags.map((tag) => ({ tags: { has: tag } })),
+        });
+      }
+    }
+
+    if (excludeTags.length > 0) {
+      for (const tag of excludeTags) {
+        andWhere.push({
+          NOT: {
+            tags: { has: tag },
+          },
+        });
+      }
+    }
+
     return this.prisma.contact.findMany({
-      where: {
-        organizationId,
-        ...(search
-          ? {
-              OR: [
-                { displayName: { contains: search, mode: 'insensitive' } },
-                { primaryEmail: { contains: search, mode: 'insensitive' } },
-                { primaryPhone: { contains: search, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
-        ...(tag ? { tags: { has: tag } } : {}),
-      },
+      where: { AND: andWhere },
       include: {
         personProfile: true,
         organizationProfile: true,
@@ -143,28 +182,147 @@ export class ContactsService {
     return relationship;
   }
 
-  async graph(organizationId: string, contactId: string) {
+  async graph(organizationId: string, contactId: string, filters: GraphFilters = {}) {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, organizationId },
-      include: {
-        outgoingRelationships: {
-          include: {
-            toContact: true,
-          },
-        },
-        incomingRelationships: {
-          include: {
-            fromContact: true,
-          },
-        },
-      },
+      include: { personProfile: true, organizationProfile: true },
     });
 
     if (!contact) {
       throw new NotFoundException('Contact not found');
     }
 
-    return contact;
+    const relationshipTypes = (filters.relationshipTypes || []).filter(Boolean);
+    const search = filters.search?.trim();
+
+    const relationships = await this.prisma.contactRelationship.findMany({
+      where: {
+        organizationId,
+        OR: [
+          {
+            fromContactId: contact.id,
+            ...(relationshipTypes.length > 0
+              ? { relationshipType: { in: relationshipTypes } }
+              : {}),
+            ...(search
+              ? {
+                  toContact: {
+                    displayName: {
+                      contains: search,
+                      mode: 'insensitive',
+                    },
+                  },
+                }
+              : {}),
+          },
+          {
+            toContactId: contact.id,
+            ...(relationshipTypes.length > 0
+              ? { relationshipType: { in: relationshipTypes } }
+              : {}),
+            ...(search
+              ? {
+                  fromContact: {
+                    displayName: {
+                      contains: search,
+                      mode: 'insensitive',
+                    },
+                  },
+                }
+              : {}),
+          },
+        ],
+      },
+      include: {
+        fromContact: true,
+        toContact: true,
+      },
+      orderBy: [{ relationshipType: 'asc' }, { createdAt: 'desc' }],
+    });
+
+    const availableRelationshipTypesRows = await this.prisma.contactRelationship.findMany({
+      where: {
+        organizationId,
+        OR: [{ fromContactId: contact.id }, { toContactId: contact.id }],
+      },
+      select: {
+        relationshipType: true,
+      },
+      distinct: ['relationshipType'],
+      orderBy: {
+        relationshipType: 'asc',
+      },
+    });
+
+    const nodesById = new Map<
+      string,
+      {
+        id: string;
+        displayName: string;
+        kind: ContactKind;
+        primaryEmail: string | null;
+        primaryPhone: string | null;
+        tags: string[];
+        isRoot: boolean;
+      }
+    >();
+
+    nodesById.set(contact.id, {
+      id: contact.id,
+      displayName: contact.displayName,
+      kind: contact.kind,
+      primaryEmail: contact.primaryEmail,
+      primaryPhone: contact.primaryPhone,
+      tags: contact.tags || [],
+      isRoot: true,
+    });
+
+    const edges = relationships.map((relationship) => {
+      nodesById.set(relationship.fromContact.id, {
+        id: relationship.fromContact.id,
+        displayName: relationship.fromContact.displayName,
+        kind: relationship.fromContact.kind,
+        primaryEmail: relationship.fromContact.primaryEmail,
+        primaryPhone: relationship.fromContact.primaryPhone,
+        tags: relationship.fromContact.tags || [],
+        isRoot: relationship.fromContact.id === contact.id,
+      });
+      nodesById.set(relationship.toContact.id, {
+        id: relationship.toContact.id,
+        displayName: relationship.toContact.displayName,
+        kind: relationship.toContact.kind,
+        primaryEmail: relationship.toContact.primaryEmail,
+        primaryPhone: relationship.toContact.primaryPhone,
+        tags: relationship.toContact.tags || [],
+        isRoot: relationship.toContact.id === contact.id,
+      });
+
+      return {
+        id: relationship.id,
+        fromContactId: relationship.fromContactId,
+        toContactId: relationship.toContactId,
+        relationshipType: relationship.relationshipType,
+        notes: relationship.notes,
+        direction: relationship.fromContactId === contact.id ? 'OUTGOING' : 'INCOMING',
+        relatedContact:
+          relationship.fromContactId === contact.id ? relationship.toContact : relationship.fromContact,
+      };
+    });
+
+    return {
+      contact,
+      nodes: Array.from(nodesById.values()),
+      edges,
+      availableRelationshipTypes: availableRelationshipTypesRows.map((row) => row.relationshipType),
+      filters: {
+        relationshipTypes,
+        search: search || '',
+      },
+      summary: {
+        nodeCount: nodesById.size,
+        edgeCount: edges.length,
+      },
+    };
   }
 
   async dedupeSuggestions(organizationId: string) {
