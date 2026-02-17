@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:53:23.713Z",
+  "generatedAt": "2026-02-17T17:15:02.663Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 24,
-      "Partial": 5,
+      "Complete": 25,
+      "Partial": 4,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 7,
-      "Partial:Medium": 5,
+      "Complete:Medium": 8,
+      "Partial:Medium": 4,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-003",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Expand document automation coverage for merge fields and generated outputs",
-        "component": "API",
-        "epicCode": "PARITY-05",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-DATA-003",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "Data",
         "epicCode": "PARITY-02",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-INT-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
+        "component": "Integrations",
+        "epicCode": "PARITY-09",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,8 +140,8 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 21,
-      "In Review": 2,
-      "Done": 21
+      "In Review": 1,
+      "Done": 22
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -149,8 +149,8 @@
       {
         "key": "KAR-24",
         "title": "Complete communication search relevance and indexing strategy",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T16:53:02.355Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T16:56:32.091Z",
         "requirementId": "REQ-COMM-002"
       },
       {
@@ -219,14 +219,24 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:53:21.675Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:15:01.310Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "70d88775dc627611ddd1916c0c240c86f442d2b8",
+    "gitHead": "b6d57bdf2df7197301380caff6dfe401e17dca52",
     "gitStatusShort": [
-      "## lin/KAR-24-communications-search-indexing...origin/lin/KAR-24-communications-search-indexing"
+      "## lin/KAR-25-document-automation-coverage",
+      " M README.md",
+      " M apps/api/package.json",
+      " M apps/api/src/documents/documents.controller.ts",
+      " M apps/api/src/documents/documents.service.ts",
+      " M docs/SESSION_HANDOFF.md",
+      " M pnpm-lock.yaml",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? apps/api/test/documents-template-merge.spec.ts",
+      "?? docs/parity/document-automation-coverage.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 10
   }
 }

@@ -44,6 +44,9 @@ importers:
       adm-zip:
         specifier: ^0.5.16
         version: 0.5.16
+      angular-expressions:
+        specifier: ^1.5.1
+        version: 1.5.1
       archiver:
         specifier: ^7.0.1
         version: 7.0.1
@@ -1944,6 +1947,9 @@ packages:
   agentkeepalive@4.6.0:
     resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
     engines: {node: '>= 8.0.0'}
+
+  angular-expressions@1.5.1:
+    resolution: {integrity: sha512-Ukcyuye0eb15zuvMFR7Kziuf7gV0gYAZXMevNI40rXF8f9k+/yk8+r5edFWRFOwnqSvAEFoP2bKNXaXgYa+Ayw==}
 
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
@@ -6463,6 +6469,8 @@ snapshots:
   agentkeepalive@4.6.0:
     dependencies:
       humanize-ms: 1.2.1
+
+  angular-expressions@1.5.1: {}
 
   ansi-escapes@4.3.2:
     dependencies:
