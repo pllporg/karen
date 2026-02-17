@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T04:19:11.136Z",
+  "generatedAt": "2026-02-17T04:29:01.990Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 12,
-      "Partial": 17,
+      "Complete": 20,
+      "Partial": 9,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -33,79 +33,16 @@
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 9,
-      "Complete:Medium": 3,
-      "Partial:Medium": 9,
+      "Complete:High": 16,
+      "Complete:Medium": 4,
+      "Partial:Medium": 8,
       "Missing:Medium": 5,
-      "Partial:High": 8
+      "Partial:High": 1
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-AI-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
-        "component": "Web",
-        "epicCode": "PARITY-08",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-AI-002",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Implement prompt injection defense hardening for ingestion pipeline",
-        "component": "API",
-        "epicCode": "PARITY-08",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-BILL-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-BILL-002",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Complete trust accounting reports and ledger invariants",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-INT-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
-        "component": "Integrations",
-        "epicCode": "PARITY-09",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-INT-002",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
-        "component": "Integrations",
-        "epicCode": "PARITY-09",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-OPS-001",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Add web application automated test suite for critical workflows",
-        "component": "Web",
-        "epicCode": "PARITY-10",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-PORTAL-001",
         "parityStatus": "Partial",
@@ -132,6 +69,69 @@
         "component": "API",
         "epicCode": "PARITY-05",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-002",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Complete communication search relevance and indexing strategy",
+        "component": "Data",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-003",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Expand document automation coverage for merge fields and generated outputs",
+        "component": "API",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-003",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Add pgvector-backed similarity retrieval path for source chunks",
+        "component": "Data",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-002",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Enhance contact relationship graph visualization and filtering",
+        "component": "Web",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-OPS-002",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Document deployment runbook and operational SLOs",
+        "component": "Infra",
+        "epicCode": "PARITY-10",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORTAL-002",
+        "parityStatus": "Partial",
+        "risk": "Medium",
+        "title": "Replace e-sign stub with provider abstraction implementation",
+        "component": "API",
+        "epicCode": "PARITY-07",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-AI-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+        "component": "Web",
+        "epicCode": "PARITY-08",
+        "phase": "phase-1"
       }
     ]
   },
@@ -141,17 +141,31 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 26,
-      "In Review": 4,
-      "Done": 14
+      "In Review": 1,
+      "Done": 17
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-8",
+        "title": "Implement encrypted OAuth token storage with key management",
+        "state": "Done",
+        "updatedAt": "2026-02-17T04:28:33.599Z",
+        "requirementId": "REQ-SEC-003"
+      },
+      {
+        "key": "KAR-7",
+        "title": "Implement upload malware scanning provider integration",
+        "state": "Done",
+        "updatedAt": "2026-02-17T04:28:33.351Z",
+        "requirementId": "REQ-SEC-002"
+      },
+      {
         "key": "KAR-17",
         "title": "Implement full backup export package conformance checks",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T04:18:56.564Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T04:24:23.102Z",
         "requirementId": "REQ-PORT-004"
       },
       {
@@ -202,42 +216,19 @@
         "state": "Done",
         "updatedAt": "2026-02-17T00:39:12.905Z",
         "requirementId": "REQ-BILL-002"
-      },
-      {
-        "key": "KAR-27",
-        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
-        "state": "Done",
-        "updatedAt": "2026-02-17T00:23:19.983Z",
-        "requirementId": "REQ-BILL-001"
-      },
-      {
-        "key": "KAR-34",
-        "title": "Implement prompt injection defense hardening for ingestion pipeline",
-        "state": "Done",
-        "updatedAt": "2026-02-17T00:13:22.799Z",
-        "requirementId": "REQ-AI-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T04:19:09.936Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T04:29:00.498Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "02311749c3644dd1aa7f41e1480898db10c6664f",
+    "gitHead": "e1a2216681dbb62bf82e0b04d08601242e013a3d",
     "gitStatusShort": [
-      "## lin/KAR-17-export-conformance-checks",
-      " M README.md",
-      " M apps/api/src/exports/exports.service.ts",
-      " M apps/api/test/roundtrip.spec.ts",
-      " M apps/web/app/data-dictionary/page.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/exports/full-backup-contract.ts",
-      "?? apps/api/test/exports-conformance.spec.ts",
-      "?? docs/parity/export-conformance.md"
+      "## main...origin/main",
+      " M tools/backlog-sync/requirements.matrix.json"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 1
   }
 }
