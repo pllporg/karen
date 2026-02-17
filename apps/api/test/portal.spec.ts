@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PortalService } from '../src/portal/portal.service';
 
@@ -15,6 +16,12 @@ function buildClientUser() {
 }
 
 describe('PortalService', () => {
+  afterEach(() => {
+    delete process.env.ESIGN_PROVIDER;
+    delete process.env.ESIGN_STUB_WEBHOOK_SECRET;
+    delete process.env.ESIGN_SANDBOX_WEBHOOK_SECRET;
+  });
+
   it('rejects portal message when matter is not in client participant scope', async () => {
     const prisma = {
       matterParticipant: {
@@ -212,5 +219,239 @@ describe('PortalService', () => {
         documentVersionId: 'ver-secret',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('creates an e-sign envelope through provider abstraction with stub fallback', async () => {
+    process.env.ESIGN_PROVIDER = 'stub';
+
+    const prisma = {
+      matterParticipant: {
+        findMany: jest.fn().mockResolvedValue([{ matterId: 'matter-1' }]),
+      },
+      engagementLetterTemplate: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'tpl-1',
+          name: 'Engagement Letter',
+          bodyTemplate: 'Terms...',
+        }),
+      },
+      eSignEnvelope: {
+        create: jest.fn().mockResolvedValue({
+          id: 'env-1',
+          organizationId: 'org-1',
+          engagementLetterTemplateId: 'tpl-1',
+          matterId: 'matter-1',
+          status: 'DRAFT',
+          provider: 'stub',
+          externalId: null,
+          payloadJson: {
+            statusHistory: [{ from: null, to: 'DRAFT', source: 'system' }],
+            webhookEvents: [],
+          },
+        }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'env-1',
+          organizationId: 'org-1',
+          engagementLetterTemplateId: 'tpl-1',
+          matterId: 'matter-1',
+          status: 'DRAFT',
+          provider: 'stub',
+          externalId: null,
+          payloadJson: {
+            statusHistory: [{ from: null, to: 'DRAFT', source: 'system' }],
+            webhookEvents: [],
+          },
+        }),
+        update: jest.fn().mockResolvedValue({
+          id: 'env-1',
+          organizationId: 'org-1',
+          engagementLetterTemplateId: 'tpl-1',
+          matterId: 'matter-1',
+          status: 'PENDING_SIGNATURE',
+          provider: 'stub',
+          externalId: 'stub-env-1-abc12345',
+          payloadJson: {},
+        }),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const created = await service.createEsignEnvelope({
+      user: buildClientUser(),
+      engagementLetterTemplateId: 'tpl-1',
+      matterId: 'matter-1',
+    });
+
+    expect(prisma.eSignEnvelope.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          provider: 'stub',
+          status: 'DRAFT',
+        }),
+      }),
+    );
+    expect(prisma.eSignEnvelope.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'PENDING_SIGNATURE',
+          externalId: expect.stringMatching(/^stub-env-1-/),
+        }),
+      }),
+    );
+    expect(created.status).toBe('PENDING_SIGNATURE');
+  });
+
+  it('refreshes envelope status via sandbox provider poll', async () => {
+    const prisma = {
+      matterParticipant: {
+        findMany: jest.fn().mockResolvedValue([{ matterId: 'matter-1' }]),
+      },
+      eSignEnvelope: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({
+            id: 'env-2',
+            organizationId: 'org-1',
+            matterId: 'matter-1',
+            status: 'SENT',
+            provider: 'sandbox',
+            externalId: 'sandbox-1',
+            payloadJson: {
+              sandboxStatus: 'SIGNED',
+              statusHistory: [{ from: 'DRAFT', to: 'SENT', source: 'provider_create' }],
+              webhookEvents: [],
+            },
+          })
+          .mockResolvedValueOnce({
+            id: 'env-2',
+            organizationId: 'org-1',
+            matterId: 'matter-1',
+            status: 'SENT',
+            provider: 'sandbox',
+            externalId: 'sandbox-1',
+            payloadJson: {
+              sandboxStatus: 'SIGNED',
+              statusHistory: [{ from: 'DRAFT', to: 'SENT', source: 'provider_create' }],
+              webhookEvents: [],
+            },
+          }),
+        update: jest.fn().mockResolvedValue({
+          id: 'env-2',
+          organizationId: 'org-1',
+          matterId: 'matter-1',
+          status: 'SIGNED',
+          provider: 'sandbox',
+          externalId: 'sandbox-1',
+          payloadJson: {},
+        }),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const refreshed = await service.refreshPortalEsignEnvelope({
+      user: buildClientUser(),
+      envelopeId: 'env-2',
+    });
+
+    expect(prisma.eSignEnvelope.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'SIGNED',
+        }),
+      }),
+    );
+    expect(refreshed.status).toBe('SIGNED');
+  });
+
+  it('processes sandbox provider webhook with signed payload', async () => {
+    process.env.ESIGN_SANDBOX_WEBHOOK_SECRET = 'sandbox-secret';
+    const payload = {
+      externalId: 'sandbox-ext-1',
+      status: 'SIGNED',
+      eventId: 'evt-1',
+    };
+    const signature = createHmac('sha256', process.env.ESIGN_SANDBOX_WEBHOOK_SECRET)
+      .update(JSON.stringify(payload))
+      .digest('hex');
+
+    const prisma = {
+      eSignEnvelope: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({
+            id: 'env-3',
+            organizationId: 'org-1',
+            matterId: 'matter-1',
+            status: 'SENT',
+            provider: 'sandbox',
+            externalId: 'sandbox-ext-1',
+            payloadJson: {
+              statusHistory: [{ from: 'DRAFT', to: 'SENT', source: 'provider_create' }],
+              webhookEvents: [],
+            },
+          })
+          .mockResolvedValueOnce({
+            id: 'env-3',
+            organizationId: 'org-1',
+            matterId: 'matter-1',
+            status: 'SENT',
+            provider: 'sandbox',
+            externalId: 'sandbox-ext-1',
+            payloadJson: {
+              statusHistory: [{ from: 'DRAFT', to: 'SENT', source: 'provider_create' }],
+              webhookEvents: [],
+            },
+          }),
+        update: jest.fn().mockResolvedValue({
+          id: 'env-3',
+          organizationId: 'org-1',
+          matterId: 'matter-1',
+          status: 'SIGNED',
+          provider: 'sandbox',
+          externalId: 'sandbox-ext-1',
+          payloadJson: {},
+        }),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const result = await service.handleEsignWebhook({
+      providerKey: 'sandbox',
+      headers: {
+        'x-esign-signature': signature,
+      },
+      payload,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      envelopeId: 'env-3',
+      status: 'SIGNED',
+    });
+    expect(prisma.eSignEnvelope.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'SIGNED',
+        }),
+      }),
+    );
   });
 });

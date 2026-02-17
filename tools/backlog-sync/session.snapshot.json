@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T17:49:36.868Z",
+  "generatedAt": "2026-02-17T18:08:03.926Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,9 +24,9 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 27,
+      "Complete": 28,
       "Missing": 5,
-      "Partial": 2
+      "Partial": 1
     },
     "unresolvedCountsByRisk": {
       "High": 17,
@@ -34,9 +34,9 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 10,
+      "Complete:Medium": 11,
       "Missing:Medium": 5,
-      "Partial:Medium": 2
+      "Partial:Medium": 1
     }
   },
   "priority": {
@@ -49,15 +49,6 @@
         "title": "Document deployment runbook and operational SLOs",
         "component": "Infra",
         "epicCode": "PARITY-10",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-PORTAL-002",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Replace e-sign stub with provider abstraction implementation",
-        "component": "API",
-        "epicCode": "PARITY-07",
         "phase": "phase-1"
       },
       {
@@ -131,6 +122,15 @@
         "component": "API",
         "epicCode": "PARITY-04",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-003",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Complete construction litigation intake wizard domain coverage",
+        "component": "Web",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
       }
     ]
   },
@@ -139,13 +139,20 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 44,
     "stateCounts": {
-      "Backlog": 19,
+      "Backlog": 18,
       "In Review": 1,
-      "Done": 24
+      "Done": 25
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-20",
+        "title": "Enhance contact relationship graph visualization and filtering",
+        "state": "Done",
+        "updatedAt": "2026-02-17T17:54:26.789Z",
+        "requirementId": "REQ-MAT-002"
+      },
       {
         "key": "KAR-12",
         "title": "Add pgvector-backed similarity retrieval path for source chunks",
@@ -208,34 +215,31 @@
         "state": "Done",
         "updatedAt": "2026-02-17T04:28:33.351Z",
         "requirementId": "REQ-SEC-002"
-      },
-      {
-        "key": "KAR-17",
-        "title": "Implement full backup export package conformance checks",
-        "state": "Done",
-        "updatedAt": "2026-02-17T04:24:23.102Z",
-        "requirementId": "REQ-PORT-004"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T17:49:30.574Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T18:08:01.133Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "6401d1339d86b4a9054db6116a827f5679722f32",
+    "gitHead": "ab3f5852c59fba26001662bbcac1e79ad77cab2d",
     "gitStatusShort": [
-      "## lin/KAR-20-contacts-graph-filtering",
-      " M apps/api/src/contacts/contacts.controller.ts",
-      " M apps/api/src/contacts/contacts.service.ts",
-      " M apps/api/test/contacts-dedupe.spec.ts",
-      " M apps/api/test/tenant-isolation.spec.ts",
-      " M apps/web/app/contacts/page.tsx",
-      " M apps/web/test/contacts-page.spec.tsx",
+      "## lin/KAR-31-esign-provider-abstraction",
+      " M .env.example",
+      " M apps/api/.env.example",
+      " M apps/api/src/portal/portal.controller.ts",
+      " M apps/api/src/portal/portal.module.ts",
+      " M apps/api/src/portal/portal.service.ts",
+      " M apps/api/test/portal.spec.ts",
+      " M apps/web/app/portal/page.tsx",
+      " M apps/web/test/portal-page.spec.tsx",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? docs/parity/contacts-graph-filtering.md"
+      "?? apps/api/src/portal/esign/",
+      "?? apps/api/src/portal/portal-esign-webhook.controller.ts",
+      "?? docs/parity/esign-provider-abstraction.md"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 13
   }
 }
