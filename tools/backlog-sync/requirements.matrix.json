@@ -387,7 +387,7 @@
           "title": "Complete communication search relevance and indexing strategy",
           "requirementId": "REQ-COMM-002",
           "promptSection": "Communications / search by keyword (Postgres full-text)",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Data",
           "risk": "Medium",
           "labels": ["parity", "communications"],

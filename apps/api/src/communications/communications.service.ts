@@ -169,10 +169,71 @@ export class CommunicationsService {
       await this.access.assertMatterAccess(user, matterId, 'read');
     }
 
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) return [];
+
     const matterFilter = matterId ? Prisma.sql`AND t."matterId" = ${matterId}` : Prisma.sql``;
+    const likePattern = `%${this.escapeLikePattern(normalizedQuery)}%`;
 
     const rows = await this.prisma.$queryRaw<
-      Array<{ id: string; threadId: string; subject: string | null; body: string; occurredAt: Date }>
+      Array<{
+        id: string;
+        threadId: string;
+        subject: string | null;
+        body: string;
+        occurredAt: Date;
+        rank: number;
+        snippet: string | null;
+      }>
+    >(
+      Prisma.sql`
+        WITH query AS (
+          SELECT websearch_to_tsquery('english', ${normalizedQuery}) AS q
+        )
+        SELECT
+          m.id,
+          m."threadId",
+          m.subject,
+          m.body,
+          m."occurredAt",
+          ts_rank_cd(
+            to_tsvector('english', coalesce(m.subject,'') || ' ' || coalesce(m.body,'')),
+            query.q
+          ) AS rank,
+          ts_headline(
+            'english',
+            coalesce(m.subject,'') || ' ' || coalesce(m.body,''),
+            query.q,
+            'MaxFragments=2, MinWords=3, MaxWords=12, FragmentDelimiter= … '
+          ) AS snippet
+        FROM "CommunicationMessage" m
+        JOIN "CommunicationThread" t ON t.id = m."threadId"
+        CROSS JOIN query
+        WHERE m."organizationId" = ${user.organizationId}
+        ${matterFilter}
+        AND query.q <> ''::tsquery
+        AND to_tsvector('english', coalesce(m.subject,'') || ' ' || coalesce(m.body,'')) @@ query.q
+        ORDER BY rank DESC, m."occurredAt" DESC
+        LIMIT 100
+      `,
+    );
+
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        ...row,
+        rank: row.rank,
+        matchStrategy: 'full_text' as const,
+      }));
+    }
+
+    const fallbackRows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        threadId: string;
+        subject: string | null;
+        body: string;
+        occurredAt: Date;
+      }>
     >(
       Prisma.sql`
         SELECT m.id, m."threadId", m.subject, m.body, m."occurredAt"
@@ -180,13 +241,21 @@ export class CommunicationsService {
         JOIN "CommunicationThread" t ON t.id = m."threadId"
         WHERE m."organizationId" = ${user.organizationId}
         ${matterFilter}
-        AND to_tsvector('english', coalesce(m.subject,'') || ' ' || coalesce(m.body,'')) @@ plainto_tsquery('english', ${query})
+        AND (
+          coalesce(m.subject,'') ILIKE ${likePattern} ESCAPE '\\'
+          OR coalesce(m.body,'') ILIKE ${likePattern} ESCAPE '\\'
+        )
         ORDER BY m."occurredAt" DESC
         LIMIT 100
       `,
     );
 
-    return rows;
+    return fallbackRows.map((row) => ({
+      ...row,
+      rank: 0,
+      snippet: row.subject || row.body.slice(0, 220),
+      matchStrategy: 'substring' as const,
+    }));
   }
 
   private async assertPortalAttachmentEligibility(input: {
@@ -427,5 +496,9 @@ export class CommunicationsService {
       deliveredAt: input.sendResult.status === 'sent' ? new Date().toISOString() : null,
       providerResponse: input.sendResult.raw || null,
     };
+  }
+
+  private escapeLikePattern(value: string) {
+    return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
   }
 }

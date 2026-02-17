@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T16:41:33.412Z",
+  "generatedAt": "2026-02-17T16:51:30.003Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -24,8 +24,8 @@
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 23,
-      "Partial": 6,
+      "Complete": 24,
+      "Partial": 5,
       "Missing": 5
     },
     "unresolvedCountsByRisk": {
@@ -34,23 +34,14 @@
     },
     "unresolvedCountsByStatusAndRisk": {
       "Complete:High": 17,
-      "Complete:Medium": 6,
-      "Partial:Medium": 6,
+      "Complete:Medium": 7,
+      "Partial:Medium": 5,
       "Missing:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-002",
-        "parityStatus": "Partial",
-        "risk": "Medium",
-        "title": "Complete communication search relevance and indexing strategy",
-        "component": "Data",
-        "epicCode": "PARITY-05",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-COMM-003",
         "parityStatus": "Partial",
@@ -131,6 +122,15 @@
         "component": "API",
         "epicCode": "PARITY-06",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Validate all required entities and relation semantics against prompt",
+        "component": "Data",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,8 +140,8 @@
     "scopedIssueCount": 44,
     "stateCounts": {
       "Backlog": 22,
-      "In Review": 2,
-      "Done": 20
+      "In Review": 1,
+      "Done": 21
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -149,8 +149,8 @@
       {
         "key": "KAR-23",
         "title": "Implement production email/SMS providers behind provider interface",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T16:41:13.765Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T16:44:47.650Z",
         "requirementId": "REQ-COMM-001"
       },
       {
@@ -219,14 +219,22 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:41:30.545Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T16:51:24.313Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "bd05f4ffec640041c220c90a7edcb991ec5b5b7d",
+    "gitHead": "56bde5315bd1c9ab959776efd4abae53a4c4e29f",
     "gitStatusShort": [
-      "## lin/KAR-23-production-message-providers...origin/lin/KAR-23-production-message-providers"
+      "## lin/KAR-24-communications-search-indexing",
+      " M README.md",
+      " M apps/api/src/communications/communications.service.ts",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? apps/api/prisma/migrations/20260217165500_communication_search_indexing/",
+      "?? apps/api/test/communications-search.spec.ts",
+      "?? docs/parity/communications-search-indexing.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 8
   }
 }
