@@ -5,6 +5,28 @@ import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { apiFetch } from '../../lib/api';
 
+type WebhookEndpointSummary = {
+  id: string;
+  url: string;
+  isActive: boolean;
+  events: string[];
+};
+
+type WebhookDeliverySummary = {
+  id: string;
+  eventType: string;
+  status: string;
+  attemptCount: number;
+  responseCode?: number | null;
+  createdAt: string;
+  lastAttemptAt?: string | null;
+  webhookEndpoint: {
+    id: string;
+    url: string;
+    isActive: boolean;
+  };
+};
+
 export default function AdminPage() {
   const [org, setOrg] = useState<{ name: string; slug: string } | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; user: { email: string }; role?: { name: string } }>>([]);
@@ -31,6 +53,8 @@ export default function AdminPage() {
       };
     }>
   >([]);
+  const [webhookEndpoints, setWebhookEndpoints] = useState<WebhookEndpointSummary[]>([]);
+  const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDeliverySummary[]>([]);
   const [customFieldKey, setCustomFieldKey] = useState('project_address');
   const [customFieldLabel, setCustomFieldLabel] = useState('Project Address');
   const [sectionName, setSectionName] = useState('Defect Summary');
@@ -44,6 +68,9 @@ export default function AdminPage() {
   const [selectedConflictProfileId, setSelectedConflictProfileId] = useState('');
   const [resolutionDecision, setResolutionDecision] = useState<'CLEAR' | 'WAIVE' | 'BLOCK'>('WAIVE');
   const [resolutionRationale, setResolutionRationale] = useState('Attorney override after review of unrelated prior engagement.');
+  const [webhookStatusFilter, setWebhookStatusFilter] = useState<'ALL' | 'PENDING' | 'RETRYING' | 'FAILED' | 'DELIVERED'>('FAILED');
+  const [webhookError, setWebhookError] = useState<string | null>(null);
+  const [retryingDeliveryId, setRetryingDeliveryId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -72,8 +99,10 @@ export default function AdminPage() {
           };
         }>
       >('/admin/conflict-checks?limit=15'),
+      apiFetch<WebhookEndpointSummary[]>('/webhooks/endpoints'),
+      apiFetch<WebhookDeliverySummary[]>('/webhooks/deliveries?status=FAILED&limit=25'),
     ])
-      .then(([o, u, r, s, pr, a, cf, sec, cProfiles, cChecks]) => {
+      .then(([o, u, r, s, pr, a, cf, sec, cProfiles, cChecks, wEndpoints, wDeliveries]) => {
         setOrg(o);
         setUsers(u);
         setRoles(r);
@@ -84,6 +113,8 @@ export default function AdminPage() {
         setSections(sec);
         setConflictProfiles(cProfiles);
         setConflictChecks(cChecks);
+        setWebhookEndpoints(wEndpoints);
+        setWebhookDeliveries(wDeliveries);
         if (cProfiles.length > 0) {
           setSelectedConflictProfileId(cProfiles[0].id);
         }
@@ -203,6 +234,38 @@ export default function AdminPage() {
         }>
       >('/admin/conflict-checks?limit=15'),
     );
+  }
+
+  async function refreshWebhookDeliveries(nextFilter = webhookStatusFilter) {
+    const params = new URLSearchParams({ limit: '25' });
+    if (nextFilter !== 'ALL') {
+      params.set('status', nextFilter);
+    }
+    setWebhookDeliveries(await apiFetch<WebhookDeliverySummary[]>(`/webhooks/deliveries?${params.toString()}`));
+  }
+
+  async function updateWebhookFilter(nextFilter: 'ALL' | 'PENDING' | 'RETRYING' | 'FAILED' | 'DELIVERED') {
+    setWebhookStatusFilter(nextFilter);
+    setWebhookError(null);
+    await refreshWebhookDeliveries(nextFilter);
+  }
+
+  async function retryWebhookDelivery(deliveryId: string) {
+    setWebhookError(null);
+    setRetryingDeliveryId(deliveryId);
+    try {
+      await apiFetch(`/webhooks/deliveries/${deliveryId}/retry`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      const endpoints = await apiFetch<WebhookEndpointSummary[]>('/webhooks/endpoints');
+      setWebhookEndpoints(endpoints);
+      await refreshWebhookDeliveries();
+    } catch (error) {
+      setWebhookError(error instanceof Error ? error.message : 'Failed to retry webhook delivery');
+    } finally {
+      setRetryingDeliveryId(null);
+    }
   }
 
   return (
@@ -470,6 +533,82 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Webhook Delivery Monitor</h3>
+          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
+            Track endpoint health and retry failed deliveries with full server-side organization scoping.
+          </p>
+
+          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '220px 1fr', marginBottom: 12 }}>
+            <select
+              className="select"
+              value={webhookStatusFilter}
+              onChange={(e) => updateWebhookFilter(e.target.value as 'ALL' | 'PENDING' | 'RETRYING' | 'FAILED' | 'DELIVERED')}
+            >
+              <option value="ALL">ALL</option>
+              <option value="PENDING">PENDING</option>
+              <option value="RETRYING">RETRYING</option>
+              <option value="FAILED">FAILED</option>
+              <option value="DELIVERED">DELIVERED</option>
+            </select>
+            <span style={{ alignSelf: 'center', color: 'var(--muted)' }}>
+              Active endpoints: {webhookEndpoints.filter((endpoint) => endpoint.isActive).length} / {webhookEndpoints.length}
+            </span>
+          </div>
+
+          {webhookError ? (
+            <p style={{ color: '#c62828', marginTop: 0 }}>
+              {webhookError}
+            </p>
+          ) : null}
+
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Event</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Response</th>
+                <th>Last Attempt</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {webhookDeliveries.map((delivery) => {
+                const retryable = delivery.status === 'FAILED' || delivery.status === 'RETRYING';
+                return (
+                  <tr key={delivery.id}>
+                    <td>{delivery.webhookEndpoint.url}</td>
+                    <td>{delivery.eventType}</td>
+                    <td>{delivery.status}</td>
+                    <td>{delivery.attemptCount}</td>
+                    <td>{delivery.responseCode ?? '-'}</td>
+                    <td>{delivery.lastAttemptAt ? new Date(delivery.lastAttemptAt).toLocaleString() : '-'}</td>
+                    <td>
+                      <button
+                        className="button ghost"
+                        type="button"
+                        disabled={!retryable || retryingDeliveryId === delivery.id}
+                        onClick={() => retryWebhookDelivery(delivery.id)}
+                      >
+                        {retryingDeliveryId === delivery.id ? 'Retrying...' : 'Retry'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {webhookDeliveries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ color: 'var(--muted)' }}>
+                    No deliveries for current filter.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

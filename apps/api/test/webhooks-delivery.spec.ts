@@ -128,4 +128,130 @@ describe('WebhooksService delivery hardening', () => {
     expect(headers['x-karen-event-type']).toBe('record.updated');
     expect(signature).toBe(expectedSignature);
   });
+
+  it('lists deliveries scoped to organization with optional filters', async () => {
+    const prisma = {
+      webhookDelivery: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    } as any;
+
+    const service = new WebhooksService(prisma);
+    await service.listDeliveries('org-1', {
+      endpointId: 'endpoint-1',
+      status: 'FAILED',
+      limit: 25,
+    });
+
+    expect(prisma.webhookDelivery.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          webhookEndpoint: expect.objectContaining({
+            organizationId: 'org-1',
+          }),
+          webhookEndpointId: 'endpoint-1',
+          status: 'FAILED',
+        }),
+        take: 25,
+      }),
+    );
+  });
+
+  it('retries a failed delivery and returns refreshed delivery details', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+    (global as any).fetch = fetchMock;
+
+    const delivery = {
+      id: 'delivery-1',
+      status: 'FAILED',
+      eventType: 'record.updated',
+      idempotencyKey: 'record.updated:endpoint-1:evt-1',
+      payloadJson: { entityType: 'matter', entityId: 'matter-1' },
+      webhookEndpoint: {
+        id: 'endpoint-1',
+        url: 'https://webhook.test/receive',
+        secret: 'retry-secret',
+        isActive: true,
+      },
+    };
+    const prisma = {
+      webhookDelivery: {
+        findFirst: jest.fn().mockResolvedValue(delivery),
+        update: jest.fn().mockResolvedValue({ id: 'delivery-1' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'delivery-1',
+          status: 'DELIVERED',
+          attemptCount: 1,
+          responseCode: 200,
+          webhookEndpoint: {
+            id: 'endpoint-1',
+            url: 'https://webhook.test/receive',
+            isActive: true,
+          },
+        }),
+      },
+    } as any;
+
+    const service = new WebhooksService(prisma);
+    const result = await service.retryDelivery('org-1', 'delivery-1');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(prisma.webhookDelivery.update.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        where: { id: 'delivery-1' },
+        data: expect.objectContaining({
+          status: 'PENDING',
+          attemptCount: 0,
+        }),
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'delivery-1',
+        status: 'DELIVERED',
+      }),
+    );
+  });
+
+  it('rejects manual retry for non-retryable delivery status', async () => {
+    const prisma = {
+      webhookDelivery: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'delivery-1',
+          status: 'DELIVERED',
+          eventType: 'record.updated',
+          idempotencyKey: 'record.updated:endpoint-1:evt-1',
+          payloadJson: { entityType: 'matter', entityId: 'matter-1' },
+          webhookEndpoint: {
+            id: 'endpoint-1',
+            url: 'https://webhook.test/receive',
+            secret: 'retry-secret',
+            isActive: true,
+          },
+        }),
+        update: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    } as any;
+
+    const service = new WebhooksService(prisma);
+    await expect(service.retryDelivery('org-1', 'delivery-1')).rejects.toThrow(
+      'Only FAILED or RETRYING deliveries can be retried',
+    );
+    expect(prisma.webhookDelivery.update).not.toHaveBeenCalled();
+  });
+
+  it('enforces organization isolation for manual retry', async () => {
+    const prisma = {
+      webhookDelivery: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        update: jest.fn(),
+        findUnique: jest.fn(),
+      },
+    } as any;
+
+    const service = new WebhooksService(prisma);
+    await expect(service.retryDelivery('org-1', 'delivery-foreign')).rejects.toThrow('Webhook delivery not found');
+    expect(prisma.webhookDelivery.update).not.toHaveBeenCalled();
+  });
 });

@@ -236,6 +236,7 @@ describe('Tenant isolation', () => {
       matterStage: { findMany: jest.fn().mockResolvedValue([]) },
       auditLogEvent: { findMany: jest.fn().mockResolvedValue([]) },
       webhookEndpoint: { findMany: jest.fn().mockResolvedValue([]) },
+      webhookDelivery: { findMany: jest.fn().mockResolvedValue([]) },
     } as any;
 
     const admin = new AdminService(prisma, { appendEvent: jest.fn() } as any);
@@ -247,6 +248,7 @@ describe('Tenant isolation', () => {
     await admin.listStages('org-isolated', 'Construction Litigation');
     await audit.listByOrganization('org-isolated', 50);
     await webhooks.listEndpoints('org-isolated');
+    await webhooks.listDeliveries('org-isolated', { status: 'FAILED', limit: 10 });
 
     expect(prisma.membership.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { organizationId: 'org-isolated' } }));
     expect(prisma.role.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { organizationId: 'org-isolated' } }));
@@ -257,6 +259,14 @@ describe('Tenant isolation', () => {
     );
     expect(prisma.auditLogEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { organizationId: 'org-isolated' } }));
     expect(prisma.webhookEndpoint.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { organizationId: 'org-isolated' } }));
+    expect(prisma.webhookDelivery.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          webhookEndpoint: expect.objectContaining({ organizationId: 'org-isolated' }),
+          status: 'FAILED',
+        }),
+      }),
+    );
   });
 
   it('queries organization-scoped custom fields/sections and reporting data', async () => {
