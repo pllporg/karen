@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:59:15.135Z",
+  "generatedAt": "2026-02-18T21:09:54.767Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,27 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 6,
+    "unresolvedRequirements": 5,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 5,
-      "phase-1": 1
+      "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 6
+      "Complete": 5
     },
     "unresolvedCountsByRisk": {
-      "Medium": 6
+      "Medium": 5
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 6
+      "Complete:Medium": 5
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-PORTAL-002",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Replace e-sign stub with provider abstraction implementation",
-        "component": "API",
-        "epicCode": "PARITY-07",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-BILL-003",
         "parityStatus": "Complete",
@@ -103,6 +93,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-43",
+        "title": "Enforce Linear key branch/PR policy in CI",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:03:00.059Z",
+        "requirementId": "REQ-OPS-003"
+      },
       {
         "key": "KAR-42",
         "title": "Document deployment runbook and operational SLOs",
@@ -165,31 +162,26 @@
         "state": "Done",
         "updatedAt": "2026-02-18T19:14:05.739Z",
         "requirementId": "REQ-COMM-003"
-      },
-      {
-        "key": "KAR-24",
-        "title": "Complete communication search relevance and indexing strategy",
-        "state": "Done",
-        "updatedAt": "2026-02-18T19:06:10.494Z",
-        "requirementId": "REQ-COMM-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:59:13.599Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:09:53.396Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2ed6df801e9a6487147d262e0243f00e664531f2",
+    "gitHead": "4ebc313d2d918b5f39b658655c017abc06226898",
     "gitStatusShort": [
-      "## lin/KAR-43-pr-policy-verification-hardening",
+      "## lin/KAR-31-portal-esign-verification-hardening",
+      " M apps/web/test/portal-page.spec.tsx",
+      " M docs/SESSION_HANDOFF.md",
+      " M docs/parity/esign-provider-abstraction.md",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
-      "?? apps/api/test/pr-linear-policy.spec.ts",
+      "?? apps/api/test/portal-esign-verification.spec.ts",
       "?? brand/",
-      "?? docs/parity/pr-linear-policy-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 6
+    "dirtyFileCount": 8
   }
 }

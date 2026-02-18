@@ -47,10 +47,21 @@ Scope: replace portal e-sign stub-only flow with provider abstraction, lifecycle
 
 - API:
   - `apps/api/test/portal.spec.ts`
+  - `apps/api/test/portal-esign-verification.spec.ts`
   - coverage includes:
     - envelope creation with provider abstraction + stub fallback
     - sandbox status polling transitions
     - signed sandbox webhook processing
+    - envelope list scope enforcement for client-visible matters
+    - webhook idempotency for duplicate provider event IDs
+    - refresh lifecycle persistence (`statusHistory` + `providerPoll` metadata)
+    - invalid signature rejection before envelope lookup
 - Web:
   - `apps/web/test/portal-page.spec.tsx`
   - verifies portal action flow for intake + e-sign envelope creation payload including provider.
+  - verifies envelope status refresh calls provider refresh endpoint and updates surfaced status.
+
+## Verification Command
+
+- `pnpm --filter api test -- portal.spec.ts portal-esign-verification.spec.ts`
+- `pnpm --filter web test -- portal-page.spec.tsx`

@@ -598,11 +598,11 @@
           "title": "Replace e-sign stub with provider abstraction implementation",
           "requirementId": "REQ-PORTAL-002",
           "promptSection": "Client Portal / e-sign stub flow",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "portal"],
-          "problemStatement": "Portal e-sign flow now uses provider abstraction with signed webhook processing, provider polling, lifecycle transition history, and fallback stub support.",
+          "problemStatement": "Portal e-sign flow is verification-hardened with provider abstraction lifecycle coverage, idempotent webhook handling, invalid-signature rejection, and portal-side status refresh assertions.",
           "requirementExcerpt": "E-sign interface required; stub acceptable for MVP but parity backlog needs production-ready integration path.",
           "acceptanceCriteria": [
             "Provider abstraction supports create envelope, status polling, webhook callback.",
@@ -612,7 +612,9 @@
           "apiImpact": "Portal endpoints now include envelope list/status refresh and provider-specific webhook callback processing.",
           "securityImpact": "Signature payload integrity and webhook auth required.",
           "definitionOfDone": [
-            "Sandbox provider flow and signed webhook lifecycle tests are passing, with evidence in docs/parity/esign-provider-abstraction.md."
+            "Sandbox provider flow and signed webhook lifecycle tests are passing with idempotency + invalid-signature verification coverage.",
+            "Portal UI tests confirm envelope refresh updates surfaced lifecycle status.",
+            "Verification artifact is documented at docs/parity/esign-provider-abstraction.md."
           ]
         }
       ]

@@ -147,6 +147,64 @@ describe('PortalPage', () => {
     });
   });
 
+  it('refreshes an e-sign envelope status from the portal list', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'matter-9' }],
+          keyDates: [],
+          invoices: [],
+          messages: [],
+          documents: [],
+          eSignEnvelopes: [
+            {
+              id: 'env-9',
+              status: 'SENT',
+              provider: 'sandbox',
+              engagementLetterTemplate: { id: 'tpl-9', name: 'Engagement Letter v9' },
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: 'env-9', status: 'SIGNED', provider: 'sandbox' }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          matters: [{ id: 'matter-9' }],
+          keyDates: [],
+          invoices: [],
+          messages: [],
+          documents: [],
+          eSignEnvelopes: [
+            {
+              id: 'env-9',
+              status: 'SIGNED',
+              provider: 'sandbox',
+              engagementLetterTemplate: { id: 'tpl-9', name: 'Engagement Letter v9' },
+            },
+          ],
+        }),
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PortalPage />);
+
+    await screen.findByText('Status: SENT | Provider: sandbox');
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Status' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/portal/esign/env-9/refresh',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+    });
+
+    await screen.findByText('Status: SIGNED | Provider: sandbox');
+  });
+
   it('uploads a portal attachment, links it to message, and downloads securely', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const fetchMock = vi
