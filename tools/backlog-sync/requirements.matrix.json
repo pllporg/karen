@@ -299,11 +299,11 @@
           "title": "Complete construction litigation intake wizard domain coverage",
           "requirementId": "REQ-MAT-003",
           "promptSection": "Construction litigation domain extensions + intake wizard",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "domain-construction", "matters"],
-          "problemStatement": "Domain entities exist, but intake flow needs complete guided capture and validation.",
+          "problemStatement": "Intake wizard coverage is now verified with API + web regression checks for required domain validation gates, draft save/resume behavior, full section payload composition, and fallback contact resolution for lien/insurance/expert records.",
           "requirementExcerpt": "Intake wizard must populate property, contract, defects, damages, lien, insurance, expert sections.",
           "acceptanceCriteria": [
             "Wizard captures all required domain sections with validation.",
@@ -313,7 +313,9 @@
           "apiImpact": "Potential intake payload schema expansion.",
           "securityImpact": "Field-level PII protections retained.",
           "definitionOfDone": [
-            "End-to-end intake scenario with seeded demo matter passes."
+            "API regression suite covers required intake validation errors, domain persistence, draft lifecycle, and fallback contact generation semantics.",
+            "Web regression suite validates full intake payload composition plus draft resume repopulation across domain sections.",
+            "Verification artifact documented at docs/parity/intake-wizard-domain-verification.md."
           ]
         },
         {

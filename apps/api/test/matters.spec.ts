@@ -439,6 +439,150 @@ describe('MattersService', () => {
     expect(prisma.expertEngagement.create).toHaveBeenCalled();
   });
 
+  it('intake wizard enforces required domain coverage validations', async () => {
+    const service = new MattersService(
+      {} as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+    const createSpy = jest.spyOn(service, 'create').mockResolvedValue({ id: 'matter-1' } as any);
+
+    const basePayload = {
+      user: baseUser,
+      name: 'Kitchen Defect',
+      matterNumber: 'M-21',
+      practiceArea: 'Construction Litigation',
+      property: { addressLine1: '100 Main' },
+      contract: { contractPrice: 120000 },
+      defects: [{ category: 'Water Intrusion', severity: 'High' }],
+      damages: [{ category: 'Repair Estimate', repairEstimate: 28000 }],
+      liens: [{ claimantName: 'Sunset Carpentry', amount: 15000, status: 'RECORDED' }],
+      insuranceClaims: [{ claimNumber: 'CLM-1', insurerName: 'Blue Harbor Insurance' }],
+      expertEngagements: [{ expertName: 'Dr. Maya Expert', scope: 'Causation analysis' }],
+    };
+
+    const cases: Array<{ mutate: (payload: any) => void; message: string }> = [
+      {
+        mutate: (payload) => {
+          payload.property.addressLine1 = '';
+        },
+        message: 'Property address is required for intake wizard',
+      },
+      {
+        mutate: (payload) => {
+          payload.contract.contractPrice = 0;
+        },
+        message: 'Contract price must be greater than zero',
+      },
+      {
+        mutate: (payload) => {
+          payload.defects = [];
+        },
+        message: 'At least one defect entry is required',
+      },
+      {
+        mutate: (payload) => {
+          payload.damages[0].repairEstimate = -1;
+        },
+        message: 'Damages repair estimate must be a non-negative number',
+      },
+      {
+        mutate: (payload) => {
+          payload.liens[0].claimantName = '';
+          payload.liens[0].claimantContactId = undefined;
+        },
+        message: 'Lien claimant contact or claimant name is required',
+      },
+      {
+        mutate: (payload) => {
+          payload.insuranceClaims[0].claimNumber = '';
+          payload.insuranceClaims[0].policyNumber = '';
+        },
+        message: 'Insurance claim requires a claim number or policy number',
+      },
+      {
+        mutate: (payload) => {
+          payload.expertEngagements[0].scope = '';
+        },
+        message: 'Expert engagement scope is required',
+      },
+    ];
+
+    for (const entry of cases) {
+      const candidate = structuredClone(basePayload);
+      entry.mutate(candidate);
+      await expect(service.intakeWizard(candidate as any)).rejects.toThrow(entry.message);
+    }
+
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('intake wizard resolves fallback contacts from names and reuses existing contacts', async () => {
+    const contactCreate = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'claimant-generated' })
+      .mockResolvedValueOnce({ id: 'adjuster-generated' })
+      .mockResolvedValueOnce({ id: 'expert-generated' });
+    const insuranceClaimCreate = jest.fn().mockResolvedValue({ id: 'claim-1' });
+
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockImplementation(async ({ where }: any) => {
+          if (where?.displayName === 'Blue Harbor Insurance') {
+            return { id: 'insurer-existing' };
+          }
+          return null;
+        }),
+        create: contactCreate,
+      },
+      personProfile: { create: jest.fn().mockResolvedValue({ id: 'person-profile' }) },
+      organizationProfile: { create: jest.fn().mockResolvedValue({ id: 'org-profile' }) },
+      propertyProfile: { create: jest.fn().mockResolvedValue({ id: 'property-1' }) },
+      contractProfile: { create: jest.fn().mockResolvedValue({ id: 'contract-1' }) },
+      defectIssue: { create: jest.fn().mockResolvedValue({ id: 'defect-1' }) },
+      projectMilestone: { create: jest.fn().mockResolvedValue({ id: 'milestone-1' }) },
+      damagesItem: { create: jest.fn().mockResolvedValue({ id: 'damage-1' }) },
+      lienModel: { create: jest.fn().mockResolvedValue({ id: 'lien-1' }) },
+      insuranceClaim: { create: insuranceClaimCreate },
+      expertEngagement: { create: jest.fn().mockResolvedValue({ id: 'expert-1' }) },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+    jest.spyOn(service, 'create').mockResolvedValue({ id: 'matter-1' } as any);
+    jest.spyOn(service, 'dashboard').mockResolvedValue({ id: 'matter-1' } as any);
+
+    await service.intakeWizard({
+      user: baseUser,
+      name: 'Kitchen Defect',
+      matterNumber: 'M-21',
+      practiceArea: 'Construction Litigation',
+      property: { addressLine1: '100 Main', city: 'Pasadena', state: 'CA' },
+      contract: { contractPrice: 120000, contractDate: '2025-02-10' },
+      defects: [{ category: 'Water Intrusion', severity: 'High' }],
+      milestones: [{ name: 'Initial inspection complete', status: 'OPEN' }],
+      damages: [{ category: 'Repair Estimate', repairEstimate: 28000 }],
+      liens: [{ claimantName: 'Sunset Carpentry', amount: 15000, status: 'RECORDED' }],
+      insuranceClaims: [{ claimNumber: 'CLM-1', insurerName: 'Blue Harbor Insurance', adjusterName: 'Jordan Adjuster' }],
+      expertEngagements: [{ expertName: 'Dr. Maya Expert', scope: 'Causation analysis' }],
+    });
+
+    expect(contactCreate).toHaveBeenCalledTimes(3);
+    expect(prisma.organizationProfile.create).toHaveBeenCalledTimes(1);
+    expect(prisma.personProfile.create).toHaveBeenCalledTimes(2);
+    expect(insuranceClaimCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          insurerContactId: 'insurer-existing',
+          adjusterContactId: 'adjuster-generated',
+        }),
+      }),
+    );
+  });
+
   it('dashboard returns domain completeness indicators', async () => {
     const prisma = {
       matter: {
