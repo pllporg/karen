@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:19:30.517Z",
+  "generatedAt": "2026-02-18T20:28:53.052Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 10,
+    "unresolvedRequirements": 9,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 5,
+      "phase-1": 4,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 10
+      "Complete": 9
     },
     "unresolvedCountsByRisk": {
-      "Medium": 10
+      "Medium": 9
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 10
+      "Complete:Medium": 9
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-INT-003",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement Filevine and PracticePanther connector production adapters",
-        "component": "Integrations",
-        "epicCode": "PARITY-09",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-MAT-002",
         "parityStatus": "Complete",
@@ -140,6 +131,13 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-35",
+        "title": "Implement style pack management with source document governance",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:23:02.152Z",
+        "requirementId": "REQ-AI-003"
+      },
+      {
         "key": "KAR-17",
         "title": "Implement full backup export package conformance checks",
         "state": "Done",
@@ -152,13 +150,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T20:03:28.782Z",
         "requirementId": "REQ-PORTAL-001"
-      },
-      {
-        "key": "KAR-35",
-        "title": "Implement style pack management with source document governance",
-        "state": "Done",
-        "updatedAt": "2026-02-18T19:48:45.056Z",
-        "requirementId": "REQ-AI-003"
       },
       {
         "key": "KAR-16",
@@ -212,20 +203,24 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:19:28.479Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:28:51.655Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "eba216b96ad461b7e3b772af3abb7accf58d9ffa",
+    "gitHead": "a838b5ec1aa2797c0238393d977e8354df04ccf7",
     "gitStatusShort": [
-      "## lin/KAR-35-style-pack-verification-finalize",
+      "## lin/KAR-39-filevine-practicepanther-verification-hardening",
+      " M apps/api/src/integrations/connectors/filevine.connector.ts",
+      " M apps/api/src/integrations/connectors/practicepanther.connector.ts",
+      " M apps/api/test/connector-provider-sync.spec.ts",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
       "?? brand/",
+      "?? docs/parity/filevine-practicepanther-connector-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 6
+    "dirtyFileCount": 10
   }
 }

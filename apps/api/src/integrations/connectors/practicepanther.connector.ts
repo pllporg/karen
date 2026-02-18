@@ -73,9 +73,43 @@ export class PracticePantherConnector implements IncrementalSyncConnector {
       throw new Error('PracticePanther webhook subscription requires an access token when INTEGRATION_SYNC_ENABLE_LIVE=true');
     }
 
-    return {
-      subscriptionId: `practicepanther-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
-    };
+    if (!isLiveSyncEnabled()) {
+      return this.fallbackSubscription(params);
+    }
+
+    const config = parseConnectorConfig(params.config);
+    const registrationUrl =
+      readConfigString(config, 'webhookRegistrationUrl') || process.env.PRACTICEPANTHER_WEBHOOK_REGISTER_URL || '';
+    if (!registrationUrl) {
+      return this.fallbackSubscription(params);
+    }
+
+    const response = await fetch(registrationUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${params.accessToken}`,
+        Accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        event: params.event,
+        target_url: params.targetUrl,
+        connection_id: params.connectionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`PracticePanther webhook registration failed (${response.status}): ${this.clipMessage(text)}`);
+    }
+
+    const payload = (await response.json()) as unknown;
+    const externalId = this.extractSubscriptionId(payload);
+    if (externalId) {
+      return { subscriptionId: externalId };
+    }
+
+    return this.fallbackSubscription(params);
   }
 
   private slug(value: string): string {
@@ -84,5 +118,42 @@ export class PracticePantherConnector implements IncrementalSyncConnector {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 32);
+  }
+
+  private fallbackSubscription(params: ConnectorWebhookParams): { subscriptionId: string } {
+    return {
+      subscriptionId: `practicepanther-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
+    };
+  }
+
+  private extractSubscriptionId(payload: unknown): string | null {
+    const root = this.asRecord(payload);
+    if (!root) return null;
+
+    const direct = this.asString(root.id) || this.asString(root.subscription_id) || this.asString(root.subscriptionId);
+    if (direct) return direct;
+
+    const data = this.asRecord(root.data);
+    if (!data) return null;
+    return this.asString(data.id) || this.asString(data.subscription_id) || this.asString(data.subscriptionId);
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return null;
+  }
+
+  private asString(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private clipMessage(message: string): string {
+    const normalized = String(message || '').replace(/\s+/g, ' ').trim();
+    if (normalized.length <= 240) return normalized;
+    return `${normalized.slice(0, 237)}...`;
   }
 }

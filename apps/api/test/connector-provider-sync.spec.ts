@@ -18,7 +18,9 @@ describe('Provider connector sync adapters', () => {
     process.env = { ...originalEnv };
     delete process.env.INTEGRATION_SYNC_ENABLE_LIVE;
     delete process.env.FILEVINE_API_BASE_URL;
+    delete process.env.FILEVINE_WEBHOOK_REGISTER_URL;
     delete process.env.PRACTICEPANTHER_API_BASE_URL;
+    delete process.env.PRACTICEPANTHER_WEBHOOK_REGISTER_URL;
     (global as { fetch?: unknown }).fetch = jest.fn();
   });
 
@@ -122,5 +124,95 @@ describe('Provider connector sync adapters', () => {
     expect(result.warnings).toContain(
       'PracticePanther sync currently maps contacts and matters only; additional entity pulls remain pending.',
     );
+  });
+
+  it('registers Filevine webhooks in live mode when registration url is configured', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    process.env.FILEVINE_WEBHOOK_REGISTER_URL = 'https://filevine.example/webhooks';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      mockResponse(201, {
+        data: { subscription_id: 'fv-sub-123' },
+      }),
+    );
+
+    const connector = new FilevineConnector();
+    const result = await connector.subscribeWebhooks({
+      connectionId: 'conn-filevine',
+      event: 'matter.updated',
+      targetUrl: 'https://karen.example/webhooks/filevine',
+      accessToken: 'filevine-token',
+    });
+
+    expect(result.subscriptionId).toBe('fv-sub-123');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://filevine.example/webhooks',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer filevine-token',
+        }),
+      }),
+    );
+  });
+
+  it('requires access token for Filevine webhook registration in live mode', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    const connector = new FilevineConnector();
+
+    await expect(
+      connector.subscribeWebhooks({
+        connectionId: 'conn-filevine',
+        event: 'matter.updated',
+        targetUrl: 'https://karen.example/webhooks/filevine',
+      }),
+    ).rejects.toThrow('Filevine webhook subscription requires an access token');
+  });
+
+  it('registers PracticePanther webhooks in live mode with config override', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      mockResponse(200, {
+        subscriptionId: 'pp-sub-777',
+      }),
+    );
+
+    const connector = new PracticePantherConnector();
+    const result = await connector.subscribeWebhooks({
+      connectionId: 'conn-practicepanther',
+      event: 'contact.created',
+      targetUrl: 'https://karen.example/webhooks/practicepanther',
+      accessToken: 'pp-token',
+      config: {
+        webhookRegistrationUrl: 'https://practicepanther.example/webhooks',
+      },
+    });
+
+    expect(result.subscriptionId).toBe('pp-sub-777');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://practicepanther.example/webhooks',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer pp-token',
+        }),
+      }),
+    );
+  });
+
+  it('surfaces PracticePanther webhook registration failures in live mode', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    process.env.PRACTICEPANTHER_WEBHOOK_REGISTER_URL = 'https://practicepanther.example/webhooks';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse(502, 'upstream unavailable'));
+
+    const connector = new PracticePantherConnector();
+
+    await expect(
+      connector.subscribeWebhooks({
+        connectionId: 'conn-practicepanther',
+        event: 'matter.updated',
+        targetUrl: 'https://karen.example/webhooks/practicepanther',
+        accessToken: 'pp-token',
+      }),
+    ).rejects.toThrow('PracticePanther webhook registration failed (502)');
   });
 });
