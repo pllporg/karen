@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ContactKind, Prisma } from '@prisma/client';
 import { distance } from 'fastest-levenshtein';
 import { PrismaService } from '../prisma/prisma.service';
@@ -399,6 +399,10 @@ export class ContactsService {
     primaryId: string;
     duplicateId: string;
   }) {
+    if (input.primaryId === input.duplicateId) {
+      throw new UnprocessableEntityException('Primary and duplicate contacts must be different');
+    }
+
     const primary = await this.prisma.contact.findFirst({ where: { id: input.primaryId, organizationId: input.organizationId } });
     const duplicate = await this.prisma.contact.findFirst({ where: { id: input.duplicateId, organizationId: input.organizationId } });
 
@@ -410,6 +414,16 @@ export class ContactsService {
       await tx.matterParticipant.updateMany({
         where: { contactId: duplicate.id },
         data: { contactId: primary.id },
+      });
+
+      await tx.matterParticipant.updateMany({
+        where: { representedByContactId: duplicate.id },
+        data: { representedByContactId: primary.id },
+      });
+
+      await tx.matterParticipant.updateMany({
+        where: { lawFirmContactId: duplicate.id },
+        data: { lawFirmContactId: primary.id },
       });
 
       await tx.contactMethod.updateMany({
@@ -436,6 +450,41 @@ export class ContactsService {
         data: {
           entityId: primary.id,
         },
+      });
+
+      await tx.communicationThread.updateMany({
+        where: { contactId: duplicate.id },
+        data: { contactId: primary.id },
+      });
+
+      await tx.communicationParticipant.updateMany({
+        where: { contactId: duplicate.id },
+        data: { contactId: primary.id },
+      });
+
+      await tx.lead.updateMany({
+        where: { referralContactId: duplicate.id },
+        data: { referralContactId: primary.id },
+      });
+
+      await tx.lienModel.updateMany({
+        where: { claimantContactId: duplicate.id },
+        data: { claimantContactId: primary.id },
+      });
+
+      await tx.insuranceClaim.updateMany({
+        where: { adjusterContactId: duplicate.id },
+        data: { adjusterContactId: primary.id },
+      });
+
+      await tx.insuranceClaim.updateMany({
+        where: { insurerContactId: duplicate.id },
+        data: { insurerContactId: primary.id },
+      });
+
+      await tx.expertEngagement.updateMany({
+        where: { expertContactId: duplicate.id },
+        data: { expertContactId: primary.id },
       });
 
       await tx.contact.delete({ where: { id: duplicate.id } });
@@ -475,6 +524,10 @@ export class ContactsService {
     duplicateId: string;
     decision: DedupeDecision;
   }) {
+    if (input.primaryId === input.duplicateId) {
+      throw new UnprocessableEntityException('Primary and duplicate contacts must be different');
+    }
+
     const primary = await this.prisma.contact.findFirst({ where: { id: input.primaryId, organizationId: input.organizationId } });
     const duplicate = await this.prisma.contact.findFirst({ where: { id: input.duplicateId, organizationId: input.organizationId } });
 
