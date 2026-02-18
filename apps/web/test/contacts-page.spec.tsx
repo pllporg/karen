@@ -156,6 +156,31 @@ describe('ContactsPage', () => {
     });
   });
 
+  it('does not post merge action when reviewer cancels confirmation', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(contactsFixture))
+      .mockResolvedValueOnce(jsonResponse(dedupeOpenFixture));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ContactsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Merge' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Merge' }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(fetchMock).not.toHaveBeenCalledWith(
+        'http://localhost:4000/contacts/dedupe/merge',
+        expect.anything(),
+      );
+    });
+  });
+
   it('applies compound contact tag filters and surfaces dedupe indicators in table', async () => {
     const fetchMock = vi
       .fn()

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T16:27:34.487Z",
+  "generatedAt": "2026-02-18T16:36:27.089Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,24 +14,24 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 21,
+    "unresolvedRequirements": 20,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 16,
+      "phase-1": 15,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 21
+      "Complete": 20
     },
     "unresolvedCountsByRisk": {
-      "Medium": 17,
+      "Medium": 16,
       "High": 4
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 17,
+      "Complete:Medium": 16,
       "Complete:High": 4
     }
   },
@@ -111,21 +111,21 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-DATA-002",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Complete ABAC policy abstraction for matter-level ethical walls",
-        "component": "API",
-        "epicCode": "PARITY-02",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-DATA-003",
         "parityStatus": "Complete",
         "risk": "Medium",
         "title": "Add pgvector-backed similarity retrieval path for source chunks",
         "component": "Data",
         "epicCode": "PARITY-02",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-INT-003",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Implement Filevine and PracticePanther connector production adapters",
+        "component": "Integrations",
+        "epicCode": "PARITY-09",
         "phase": "phase-1"
       }
     ]
@@ -140,15 +140,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-15"
+      "KAR-16"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-16",
+        "title": "Build user-confirm merge workflow for dedupe suggestions",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T16:35:49.787Z",
+        "requirementId": "REQ-PORT-003"
+      },
+      {
         "key": "KAR-15",
         "title": "Finalize Clio CSV/XLSX template importer coverage",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T16:24:43.068Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T16:31:33.202Z",
         "requirementId": "REQ-PORT-002"
       },
       {
@@ -206,35 +213,29 @@
         "state": "Done",
         "updatedAt": "2026-02-18T01:08:56.302Z",
         "requirementId": "REQ-SEC-001"
-      },
-      {
-        "key": "KAR-62",
-        "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-18T00:55:57.563Z",
-        "requirementId": "REQ-BILL-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:27:32.852Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:36:25.880Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "5bc63e57c299858c5971a131f934046fbfb94411",
+    "gitHead": "41851aee48cd88cac486195ce0c3577b71c50747",
     "gitStatusShort": [
-      "## lin/KAR-15-clio-import-verification-hardening",
-      " M apps/api/src/imports/plugins/clio-template.plugin.ts",
-      " M apps/api/test/imports.spec.ts",
+      "## lin/KAR-16-dedupe-merge-verification-hardening",
+      " M apps/api/src/contacts/contacts.service.ts",
+      " M apps/api/test/contacts-dedupe.spec.ts",
+      " M apps/web/test/contacts-page.spec.tsx",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/clio-import-verification.md",
+      "?? docs/parity/dedupe-merge-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 11
   }
 }

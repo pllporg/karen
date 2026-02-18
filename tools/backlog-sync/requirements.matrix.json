@@ -113,7 +113,7 @@
           "title": "Complete ABAC policy abstraction for matter-level ethical walls",
           "requirementId": "REQ-DATA-002",
           "promptSection": "Tenancy / AccessPolicy / ABAC hooks",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "security", "matters"],
@@ -213,7 +213,7 @@
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "migration", "imports", "contacts"],
-          "problemStatement": "Dedupe suggestions exist but confirmation UX and merge controls need completion.",
+          "problemStatement": "Dedupe merge workflow is verification-hardened with self-merge guardrails, expanded referential-integrity reassignment coverage, and explicit reviewer-cancel UI protections for merge actions.",
           "requirementExcerpt": "Dedupe engine with fuzzy matching and user-confirm merge UI required.",
           "acceptanceCriteria": [
             "UI presents duplicate candidates with confidence and field diff.",
@@ -223,7 +223,9 @@
           "apiImpact": "New merge decision endpoints and payloads.",
           "securityImpact": "Audit log and change traceability required.",
           "definitionOfDone": [
-            "End-to-end dedupe confirmation flow demonstrated."
+            "Dedupe confirmation flow includes explicit reviewer confirmation gate and cancel-safe behavior.",
+            "Merge service rejects self-referential merges/decisions and reassigns all high-risk contact references.",
+            "Verification artifact published at docs/parity/dedupe-merge-verification.md."
           ]
         },
         {
