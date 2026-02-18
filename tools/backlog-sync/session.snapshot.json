@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T21:44:31.380Z",
+  "generatedAt": "2026-02-18T21:57:20.704Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,36 +14,27 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 2,
+    "unresolvedRequirements": 1,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 2
+      "phase-2": 1
     },
     "unresolvedCountsByStatus": {
-      "Complete": 2
+      "Complete": 1
     },
     "unresolvedCountsByRisk": {
-      "Medium": 2
+      "Medium": 1
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 2
+      "Complete:Medium": 1
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-MAT-004",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement advanced conflict rule profiles and resolution workflows",
-        "component": "API",
-        "epicCode": "PARITY-04",
-        "phase": "phase-2"
-      },
       {
         "requirementId": "REQ-MAT-005",
         "parityStatus": "Complete",
@@ -66,6 +57,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-46",
+        "title": "Implement document retention policies with legal hold workflow",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:48:53.396Z",
+        "requirementId": "REQ-COMM-004"
+      },
       {
         "key": "KAR-48",
         "title": "Implement LEDES/UTBMS export jobs with validation profiles",
@@ -128,31 +126,24 @@
         "state": "Done",
         "updatedAt": "2026-02-18T20:16:45.391Z",
         "requirementId": "REQ-PORT-004"
-      },
-      {
-        "key": "KAR-30",
-        "title": "Implement secure portal attachments in message workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-18T20:03:28.782Z",
-        "requirementId": "REQ-PORTAL-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:44:29.610Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:57:19.133Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "d7f18f6f324dc7e3ca8f69dbf6b564b3d5af38dc",
+    "gitHead": "4f27524f0da2e441f01ab703f3182d3a776a93fe",
     "gitStatusShort": [
-      "## lin/KAR-49-comm-004-verification-hardening",
-      " M apps/api/src/documents/documents.service.ts",
+      "## lin/KAR-44-mat-004-verification-hardening",
+      " M apps/api/src/admin/admin.service.ts",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/document-retention-workflows.md",
+      " M docs/parity/conflict-rule-profiles.md",
       " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
-      "?? apps/api/test/document-retention-verification.spec.ts",
+      "?? apps/api/test/admin-conflict-verification.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
