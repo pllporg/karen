@@ -225,6 +225,7 @@ describe('MattersPage', () => {
       );
     });
 
+    fireEvent.change(screen.getByLabelText('Intake draft selector'), { target: { value: 'draft-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Resume Draft' }));
 
     await waitFor(() => {
