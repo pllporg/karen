@@ -16,7 +16,11 @@ describe('MyCaseConnector', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     delete process.env.INTEGRATION_SYNC_ENABLE_LIVE;
+    delete process.env.INTEGRATION_OAUTH_ENABLE_LIVE;
     delete process.env.MYCASE_API_BASE_URL;
+    delete process.env.MYCASE_TOKEN_URL;
+    delete process.env.MYCASE_CLIENT_ID;
+    delete process.env.MYCASE_CLIENT_SECRET;
     delete process.env.MYCASE_WEBHOOK_REGISTER_URL;
     (global as { fetch?: unknown }).fetch = jest.fn();
   });
@@ -138,5 +142,78 @@ describe('MyCaseConnector', () => {
         }),
       }),
     );
+  });
+
+  it('refreshes token in scaffold mode without network calls', async () => {
+    const connector = new MyCaseConnector();
+    const result = await connector.refreshAccessToken({
+      refreshToken: 'refresh-seed-token',
+    });
+
+    expect(result.accessToken).toMatch(/^mycase_access_refresh_/);
+    expect(result.refreshToken).toMatch(/^mycase_refresh_/);
+    expect(result.metadata).toEqual(
+      expect.objectContaining({
+        mode: 'stub',
+        refreshed: true,
+      }),
+    );
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(0);
+  });
+
+  it('refreshes token in live oauth mode via provider token endpoint', async () => {
+    process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
+    process.env.MYCASE_TOKEN_URL = 'https://mycase.example/oauth/token';
+    process.env.MYCASE_CLIENT_ID = 'mycase-client';
+    process.env.MYCASE_CLIENT_SECRET = 'mycase-secret';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      mockResponse(200, {
+        access_token: 'live-access-token',
+        refresh_token: 'live-refresh-token',
+        expires_in: 3600,
+        scope: 'matters:read contacts:read',
+        created_at: 1700000000,
+      }),
+    );
+
+    const connector = new MyCaseConnector();
+    const result = await connector.refreshAccessToken({
+      refreshToken: 'existing-refresh-token',
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        accessToken: 'live-access-token',
+        refreshToken: 'live-refresh-token',
+        scopes: ['matters:read', 'contacts:read'],
+        metadata: expect.objectContaining({
+          mode: 'live',
+          refreshed: true,
+        }),
+      }),
+    );
+
+    const call = (global.fetch as jest.Mock).mock.calls[0];
+    expect(String(call[0])).toBe('https://mycase.example/oauth/token');
+    expect(String((call[1] as RequestInit).body)).toContain('grant_type=refresh_token');
+    expect(String((call[1] as RequestInit).body)).toContain('refresh_token=existing-refresh-token');
+  });
+
+  it('throws when live oauth refresh response omits access token', async () => {
+    process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
+    process.env.MYCASE_TOKEN_URL = 'https://mycase.example/oauth/token';
+    (global.fetch as jest.Mock).mockResolvedValueOnce(
+      mockResponse(200, {
+        refresh_token: 'live-refresh-token',
+        expires_in: 3600,
+      }),
+    );
+
+    const connector = new MyCaseConnector();
+    await expect(
+      connector.refreshAccessToken({
+        refreshToken: 'existing-refresh-token',
+      }),
+    ).rejects.toThrow('MyCase token refresh did not return access_token');
   });
 });

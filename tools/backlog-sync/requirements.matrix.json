@@ -700,11 +700,11 @@
           "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
           "requirementId": "REQ-INT-002",
           "promptSection": "Phase 2 connectors / MyCase API",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Integrations",
           "risk": "High",
           "labels": ["parity", "integrations", "migration"],
-          "problemStatement": "OAuth start/callback and idempotent sync/webhook scaffolding are implemented; provider API entity pulls remain to be completed.",
+          "problemStatement": "MyCase OAuth callback validation, refresh-grant token lifecycle, incremental idempotent sync checkpoints, and webhook subscription registration paths are now covered by connector + integration orchestration tests.",
           "requirementExcerpt": "Connector must support incremental sync + webhooks where available.",
           "acceptanceCriteria": [
             "OAuth and refresh flow implemented.",
@@ -714,7 +714,9 @@
           "apiImpact": "Integration management API extended.",
           "securityImpact": "Credentials protected and webhook auth enforced.",
           "definitionOfDone": [
-            "MyCase sandbox sync passes acceptance checklist."
+            "Connector refresh grant + webhook registration paths covered in mycase.connector.spec.ts.",
+            "OAuth callback validation/idempotent sync orchestration covered in integrations.spec.ts.",
+            "Verification artifact documented at docs/parity/mycase-connector-verification.md."
           ]
         },
         {

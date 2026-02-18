@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T01:27:03.117Z",
+  "generatedAt": "2026-02-18T01:35:20.463Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 26,
+    "unresolvedRequirements": 25,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 21,
+      "phase-1": 20,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 26
+      "Complete": 25
     },
     "unresolvedCountsByRisk": {
-      "High": 9,
+      "High": 8,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 9,
+      "Complete:High": 8,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-INT-002",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
-        "component": "Integrations",
-        "epicCode": "PARITY-09",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-MAT-001",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "Web",
         "epicCode": "PARITY-08",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-001",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Implement production email/SMS providers behind provider interface",
+        "component": "API",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
       }
     ]
   },
@@ -141,15 +141,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-37"
+      "KAR-38"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-38",
+        "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T01:32:08.377Z",
+        "requirementId": "REQ-INT-002"
+      },
+      {
         "key": "KAR-37",
         "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T01:25:45.017Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T01:30:35.867Z",
         "requirementId": "REQ-INT-001"
       },
       {
@@ -207,29 +214,19 @@
         "state": "Done",
         "updatedAt": "2026-02-17T21:39:45.716Z",
         "requirementId": "REQ-OPS-001"
-      },
-      {
-        "key": "KAR-48",
-        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
-        "state": "Done",
-        "updatedAt": "2026-02-17T20:54:23.712Z",
-        "requirementId": "REQ-BILL-004"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:27:01.778Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:35:19.143Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "a2a5e0dd6abc4c583a617a728a38560e106f4cc3",
+    "gitHead": "44010e5315b3a8eeaeb06eef85a8acccea9f0ffa",
     "gitStatusShort": [
-      "## lin/KAR-37-clio-connector-verification-hardening",
-      " M apps/api/src/integrations/connectors/clio.connector.ts",
-      " M apps/api/src/integrations/connectors/connector.interface.ts",
-      " M apps/api/src/integrations/integrations.service.ts",
-      " M apps/api/test/clio.connector.spec.ts",
-      " M apps/api/test/integrations.spec.ts",
+      "## lin/KAR-38-mycase-connector-verification-hardening",
+      " M apps/api/src/integrations/connectors/mycase.connector.ts",
+      " M apps/api/test/mycase.connector.spec.ts",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
@@ -237,9 +234,9 @@
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/clio-connector-verification.md",
+      "?? docs/parity/mycase-connector-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 14
+    "dirtyFileCount": 11
   }
 }
