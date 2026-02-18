@@ -16,11 +16,11 @@
           "title": "Harden tenant isolation test coverage across all core entities",
           "requirementId": "REQ-SEC-001",
           "promptSection": "SECURITY REQUIREMENTS / Tenant isolation tests",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "security"],
-          "problemStatement": "Tenant checks exist but are not comprehensively verified across all read/write pathways.",
+          "problemStatement": "Tenant isolation coverage is now verified across expanded core entity surfaces, including retention/disposition workflows, trust reconciliation/LEDES entities, and AI style pack administration.",
           "requirementExcerpt": "Tenant isolation tests must be present and enforced server-side.",
           "acceptanceCriteria": [
             "Add test suites for cross-tenant access attempts on contacts, matters, documents, billing, imports, exports, and AI endpoints.",
@@ -30,8 +30,8 @@
           "apiImpact": "No public API change; stricter test guarantees.",
           "securityImpact": "Prevents data leakage between firms.",
           "definitionOfDone": [
-            "Security test suite added and passing in CI.",
-            "Audit evidence links attached."
+            "Security tenant-isolation suite covers newly added billing/documents/AI entities and passes in CI.",
+            "Verification artifact documented at docs/parity/tenant-isolation-verification.md."
           ]
         },
         {

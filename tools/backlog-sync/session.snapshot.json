@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T00:52:39.300Z",
+  "generatedAt": "2026-02-18T01:04:37.447Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,24 +14,24 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 29,
+    "unresolvedRequirements": 28,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 24,
+      "phase-1": 23,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 29
+      "Complete": 28
     },
     "unresolvedCountsByRisk": {
-      "High": 12,
+      "High": 11,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 12,
+      "Complete:High": 11,
       "Complete:Medium": 17
     }
   },
@@ -120,11 +120,11 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-SEC-001",
+        "requirementId": "REQ-SEC-002",
         "parityStatus": "Complete",
         "risk": "High",
-        "title": "Harden tenant isolation test coverage across all core entities",
-        "component": "API",
+        "title": "Implement upload malware scanning provider integration",
+        "component": "Infra",
         "epicCode": "PARITY-01",
         "phase": "phase-1"
       }
@@ -135,21 +135,28 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 48,
     "stateCounts": {
-      "In Progress": 1,
-      "Done": 34,
+      "Done": 35,
       "In Review": 1,
-      "Backlog": 12
+      "Backlog": 11,
+      "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-62"
+      "KAR-6"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-6",
+        "title": "Harden tenant isolation test coverage across all core entities",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T01:00:57.410Z",
+        "requirementId": "REQ-SEC-001"
+      },
+      {
         "key": "KAR-62",
         "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T00:52:11.882Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T00:55:57.563Z",
         "requirementId": "REQ-BILL-002"
       },
       {
@@ -207,26 +214,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T19:58:58.930Z",
         "requirementId": "REQ-COMM-004"
-      },
-      {
-        "key": "KAR-45",
-        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
-        "state": "Done",
-        "updatedAt": "2026-02-17T19:03:45.185Z",
-        "requirementId": "REQ-MAT-005"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T00:52:38.003Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:04:29.564Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "8a00fafe44fa2f6102f8f598d1dcf0e6579e0bce",
+    "gitHead": "b5a5bad42196240fc23cd340d81c728d44da2b5c",
     "gitStatusShort": [
-      "## lin/KAR-62-billing-trust-verification-hardening",
-      " M apps/api/src/billing/billing.service.ts",
-      " M apps/api/test/billing-trust-invariants.spec.ts",
+      "## lin/KAR-6-tenant-isolation-verification-hardening",
+      " M apps/api/test/tenant-isolation.spec.ts",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
@@ -234,9 +233,9 @@
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/billing-trust-ledger-verification.md",
+      "?? docs/parity/tenant-isolation-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 10
   }
 }
