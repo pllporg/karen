@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T21:44:31.380Z",
+  "generatedAt": "2026-02-18T22:06:04.177Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,22 +14,22 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 2,
+    "unresolvedRequirements": 1,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 2
+      "phase-2": 1
     },
     "unresolvedCountsByStatus": {
-      "Complete": 2
+      "Complete": 1
     },
     "unresolvedCountsByRisk": {
-      "Medium": 2
+      "Medium": 1
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 2
+      "Complete:Medium": 1
     }
   },
   "priority": {
@@ -43,15 +43,6 @@
         "component": "API",
         "epicCode": "PARITY-04",
         "phase": "phase-2"
-      },
-      {
-        "requirementId": "REQ-MAT-005",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
-        "component": "API",
-        "epicCode": "PARITY-04",
-        "phase": "phase-2"
       }
     ]
   },
@@ -60,12 +51,27 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 48,
     "stateCounts": {
-      "Done": 37,
+      "Done": 36,
+      "In Review": 1,
       "Backlog": 11
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-44",
+        "title": "Implement advanced conflict rule profiles and resolution workflows",
+        "state": "In Review",
+        "updatedAt": "2026-02-18T22:05:43.627Z",
+        "requirementId": "REQ-MAT-004"
+      },
+      {
+        "key": "KAR-46",
+        "title": "Implement document retention policies with legal hold workflow",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:48:53.396Z",
+        "requirementId": "REQ-COMM-004"
+      },
       {
         "key": "KAR-48",
         "title": "Implement LEDES/UTBMS export jobs with validation profiles",
@@ -121,41 +127,26 @@
         "state": "Done",
         "updatedAt": "2026-02-18T20:23:02.152Z",
         "requirementId": "REQ-AI-003"
-      },
-      {
-        "key": "KAR-17",
-        "title": "Implement full backup export package conformance checks",
-        "state": "Done",
-        "updatedAt": "2026-02-18T20:16:45.391Z",
-        "requirementId": "REQ-PORT-004"
-      },
-      {
-        "key": "KAR-30",
-        "title": "Implement secure portal attachments in message workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-18T20:03:28.782Z",
-        "requirementId": "REQ-PORTAL-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:44:29.610Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T22:06:02.866Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "d7f18f6f324dc7e3ca8f69dbf6b564b3d5af38dc",
+    "gitHead": "4f27524f0da2e441f01ab703f3182d3a776a93fe",
     "gitStatusShort": [
-      "## lin/KAR-49-comm-004-verification-hardening",
-      " M apps/api/src/documents/documents.service.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/document-retention-workflows.md",
+      "## lin/KAR-45-mat-005-verification-hardening",
+      " M apps/api/src/calendar/calendar.service.ts",
+      " M docs/parity/deadline-rules-packs.md",
       " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
-      "?? apps/api/test/document-retention-verification.spec.ts",
+      "?? apps/api/test/deadline-rules-verification.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 8
   }
 }

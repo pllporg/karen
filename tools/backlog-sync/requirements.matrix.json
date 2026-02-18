@@ -353,11 +353,11 @@
           "title": "Implement jurisdictional deadline rules packs and rule selection flow",
           "requirementId": "REQ-MAT-005",
           "promptSection": "Calendar / DeadlineRuleTemplate + Phase 2 advanced docket rules packs",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "matters", "phase-2"],
-          "problemStatement": "Jurisdiction/court/procedure deadline rules packs with versioning, preview-before-apply flow, and override governance are now implemented across API + matter dashboard UI.",
+          "problemStatement": "Jurisdictional rules-pack workflows are verification-hardened with deterministic scoped-pack resolution (specificity + effective-window), explicit inactive/out-of-window pack rejection, and strict apply-selection validation (no unknown/duplicate rule IDs).",
           "requirementExcerpt": "Jurisdictional deadline rules packs should be versioned and selectable by jurisdiction/court/procedure with attorney override controls.",
           "acceptanceCriteria": [
             "Define rules-pack entities keyed by jurisdiction, court, and procedure with effective date versioning.",
@@ -367,7 +367,8 @@
           "apiImpact": "Deadline APIs gain rules-pack selection and preview/apply endpoints.",
           "securityImpact": "No direct confidentiality change; improves litigation deadline reliability and auditability.",
           "definitionOfDone": [
-            "Rules-pack CRUD and deadline preview/apply flows are covered by API + web tests with evidence in docs/parity/deadline-rules-packs.md."
+            "Rules-pack CRUD and deadline preview/apply flows are covered by API + web tests with evidence in docs/parity/deadline-rules-packs.md.",
+            "Rules-pack selection prioritizes most-specific active effective packs and rejects inactive/out-of-window explicit selection; apply flow rejects unknown/duplicate rule selections."
           ]
         }
       ]
