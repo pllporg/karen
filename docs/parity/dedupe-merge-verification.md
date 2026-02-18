@@ -24,6 +24,7 @@ Scope: verify dedupe candidate review and merge-confirmation workflow integrity 
   - `InsuranceClaim.adjusterContactId`
   - `InsuranceClaim.insurerContactId`
   - `ExpertEngagement.expertContactId`
+- Merge workflow now prunes self-referential contact relationships created by ID consolidation (`fromContactId == toContactId` after reassignment).
 - Audit log emission remains enforced for merge and decision actions.
 
 ### Web hardening checks
