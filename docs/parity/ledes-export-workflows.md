@@ -36,6 +36,7 @@ Executed on 2026-02-17:
 ```bash
 pnpm --filter api prisma:generate
 pnpm --filter api test -- billing-ledes-export.spec.ts
+pnpm --filter api test -- billing-ledes-verification.spec.ts
 pnpm --filter web test -- billing-page.spec.tsx
 pnpm test
 pnpm build
@@ -44,5 +45,9 @@ pnpm build
 Results:
 
 - API LEDES service coverage passed (`apps/api/test/billing-ledes-export.spec.ts`).
+- Verification hardening coverage passed (`apps/api/test/billing-ledes-verification.spec.ts`) for:
+  - default-profile rotation behavior (`isDefault=true` resets prior defaults atomically),
+  - explicit invoice-id export integrity (dedupe + missing-id rejection with deterministic error),
+  - expense-line exclusion behavior for `includeExpenseLineItems=false` without false validation failures.
 - Web billing LEDES workflow coverage passed (`apps/web/test/billing-page.spec.tsx`).
 - Full monorepo tests and build passed.
