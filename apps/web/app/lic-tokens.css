@@ -1,0 +1,35 @@
+:root {
+  --lic-paper: #f2efe6;
+  --lic-ink: #0b0d0f;
+  --lic-warm-gray: #8b857a;
+  --lic-blue: #0b3d91;
+  --lic-red: #b23a2b;
+
+  --lic-surface-0: var(--lic-paper);
+  --lic-surface-1: #ffffff;
+
+  --lic-text-0: var(--lic-ink);
+  --lic-text-1: #2a2d31;
+  --lic-text-muted: #5c6066;
+
+  --lic-rule-1: 1px;
+  --lic-rule-2: 2px;
+  --lic-rule-3: 6px;
+
+  --lic-radius: 0px;
+
+  --lic-1: 4px;
+  --lic-2: 8px;
+  --lic-3: 12px;
+  --lic-4: 16px;
+  --lic-5: 24px;
+  --lic-6: 32px;
+  --lic-7: 48px;
+  --lic-8: 64px;
+
+  --lic-font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --lic-font-condensed: var(--font-condensed), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --lic-font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+  --lic-focus: 0 0 0 2px var(--lic-paper), 0 0 0 4px var(--lic-blue);
+}

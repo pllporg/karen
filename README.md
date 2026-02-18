@@ -227,6 +227,8 @@ Included suites cover:
 
 - Planning artifact for LIC-aligned UI migration:
   - `docs/UI_REFACTOR_LANE_PLAN.md`
+- Token contract and baseline architecture:
+  - `docs/UI_TOKEN_CONTRACT.md`
 - Backlog sequence:
   - `KAR-54` (lane plan), then `KAR-55` through `KAR-60` for tokens, shell, primitives, accessibility, responsive matrix, and regression rollout.
 
