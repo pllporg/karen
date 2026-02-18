@@ -107,6 +107,58 @@ describe('MattersPage', () => {
       );
     });
 
+    const wizardCall = fetchMock.mock.calls.find((call) => call[0] === 'http://localhost:4000/matters/intake-wizard');
+    expect(wizardCall).toBeDefined();
+    const body = JSON.parse(String((wizardCall?.[1] as RequestInit).body));
+    expect(body).toEqual(
+      expect.objectContaining({
+        matterNumber: 'M-2026-001-INTAKE',
+        name: 'Kitchen Remodel Defect - Ortega (Intake)',
+        practiceArea: 'Construction Litigation',
+        property: expect.objectContaining({
+          addressLine1: '1234 Orchard Lane',
+          city: 'Pasadena',
+          state: 'CA',
+          parcelNumber: 'APN-1234-99',
+        }),
+        contract: expect.objectContaining({
+          contractDate: '2025-10-01',
+          contractPrice: 125000,
+        }),
+      }),
+    );
+    expect(body.defects[0]).toEqual(
+      expect.objectContaining({
+        category: 'Water Intrusion',
+        severity: 'High',
+      }),
+    );
+    expect(body.liens[0]).toEqual(
+      expect.objectContaining({
+        claimantName: 'Sunset Carpentry LLC',
+        amount: 14250,
+        status: 'RECORDED',
+      }),
+    );
+    expect(body.insuranceClaims[0]).toEqual(
+      expect.objectContaining({
+        claimNumber: 'CLM-77821',
+        policyNumber: 'HO-445-992',
+        insurerName: 'Blue Harbor Insurance',
+        adjusterName: 'Jordan Adjuster',
+      }),
+    );
+    expect(body.expertEngagements[0]).toEqual(
+      expect.objectContaining({
+        expertName: 'Dr. Maya Expert',
+      }),
+    );
+    expect(body.milestones[0]).toEqual(
+      expect.objectContaining({
+        name: 'Initial inspection complete',
+      }),
+    );
+
     await waitFor(() => {
       expect(screen.getByRole('link', { name: 'M-2026-001-INTAKE' })).toBeInTheDocument();
     });
@@ -185,6 +237,9 @@ describe('MattersPage', () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue('88 Cedar Avenue')).toBeInTheDocument();
       expect(screen.getByDisplayValue('CLM-999')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Taylor Expert')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Structural engineering analysis')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Deck Collapse - Draft')).toBeInTheDocument();
     });
   });
 });

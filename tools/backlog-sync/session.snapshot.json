@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T01:48:00.955Z",
+  "generatedAt": "2026-02-18T16:01:07.740Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 24,
+    "unresolvedRequirements": 23,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 19,
+      "phase-1": 18,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 24
+      "Complete": 23
     },
     "unresolvedCountsByRisk": {
-      "High": 7,
+      "High": 6,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 7,
+      "Complete:High": 6,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-MAT-003",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Complete construction litigation intake wizard domain coverage",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-PORT-001",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "Data",
         "epicCode": "PARITY-05",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-003",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Expand document automation coverage for merge fields and generated outputs",
+        "component": "API",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
       }
     ]
   },
@@ -135,21 +135,32 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 48,
     "stateCounts": {
-      "Done": 35,
-      "In Review": 1,
+      "Done": 36,
       "Backlog": 11,
-      "In Progress": 1
+      "In Review": 1
     },
-    "inProgressIssueKeys": [
-      "KAR-19"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-21",
+        "title": "Complete construction litigation intake wizard domain coverage",
+        "state": "In Review",
+        "updatedAt": "2026-02-18T16:00:52.155Z",
+        "requirementId": "REQ-MAT-003"
+      },
+      {
+        "key": "KAR-43",
+        "title": "Enforce Linear key branch/PR policy in CI",
+        "state": "Done",
+        "updatedAt": "2026-02-18T01:58:43.866Z",
+        "requirementId": "REQ-OPS-003"
+      },
+      {
         "key": "KAR-19",
         "title": "Complete participant role configurability and side semantics coverage",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T01:44:59.528Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T01:51:35.922Z",
         "requirementId": "REQ-MAT-001"
       },
       {
@@ -200,42 +211,24 @@
         "state": "Done",
         "updatedAt": "2026-02-18T00:37:07.780Z",
         "requirementId": "REQ-BILL-001"
-      },
-      {
-        "key": "KAR-34",
-        "title": "Implement prompt injection defense hardening for ingestion pipeline",
-        "state": "Done",
-        "updatedAt": "2026-02-17T22:33:44.856Z",
-        "requirementId": "REQ-AI-002"
-      },
-      {
-        "key": "KAR-53",
-        "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-17T22:09:32.751Z",
-        "requirementId": "REQ-AI-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:47:59.832Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:01:05.870Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "f7d3caae0ad3934e89a44167ba2d3364af1f4e9d",
+    "gitHead": "dec7e53db8f97c0096e84183abdf5a919159b612",
     "gitStatusShort": [
-      "## lin/KAR-19-matter-participant-verification-hardening",
-      " M apps/api/test/matters.spec.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
+      "## lin/KAR-21-intake-wizard-verification-hardening...origin/lin/KAR-21-intake-wizard-verification-hardening",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/matter-participant-role-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 6
   }
 }
