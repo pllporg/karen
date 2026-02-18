@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T15:58:50.891Z",
+  "generatedAt": "2026-02-18T16:01:07.740Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -137,18 +137,16 @@
     "stateCounts": {
       "Done": 36,
       "Backlog": 11,
-      "In Progress": 1
+      "In Review": 1
     },
-    "inProgressIssueKeys": [
-      "KAR-21"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
         "key": "KAR-21",
         "title": "Complete construction litigation intake wizard domain coverage",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T15:53:56.510Z",
+        "state": "In Review",
+        "updatedAt": "2026-02-18T16:00:52.155Z",
         "requirementId": "REQ-MAT-003"
       },
       {
@@ -217,26 +215,20 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T15:57:52.174Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:01:05.870Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "6eca775289678c82bebd1754cf614e57ccd4f22c",
+    "gitHead": "dec7e53db8f97c0096e84183abdf5a919159b612",
     "gitStatusShort": [
-      "## lin/KAR-21-intake-wizard-verification-hardening",
-      " M apps/api/test/matters.spec.ts",
-      " M apps/web/test/matters-page.spec.tsx",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
+      "## lin/KAR-21-intake-wizard-verification-hardening...origin/lin/KAR-21-intake-wizard-verification-hardening",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/intake-wizard-domain-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 12
+    "dirtyFileCount": 6
   }
 }
