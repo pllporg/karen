@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:28:53.052Z",
+  "generatedAt": "2026-02-18T20:33:46.800Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -131,6 +131,13 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-39",
+        "title": "Implement Filevine and PracticePanther connector production adapters",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:33:04.451Z",
+        "requirementId": "REQ-INT-003"
+      },
+      {
         "key": "KAR-35",
         "title": "Implement style pack management with source document governance",
         "state": "Done",
@@ -192,35 +199,21 @@
         "state": "Done",
         "updatedAt": "2026-02-18T16:15:08.852Z",
         "requirementId": "REQ-PORT-001"
-      },
-      {
-        "key": "KAR-21",
-        "title": "Complete construction litigation intake wizard domain coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-18T16:06:21.709Z",
-        "requirementId": "REQ-MAT-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:28:51.655Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:33:44.797Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "a838b5ec1aa2797c0238393d977e8354df04ccf7",
+    "gitHead": "36d10670c4198c15e8ed7a15abc078c99e62985a",
     "gitStatusShort": [
-      "## lin/KAR-39-filevine-practicepanther-verification-hardening",
-      " M apps/api/src/integrations/connectors/filevine.connector.ts",
-      " M apps/api/src/integrations/connectors/practicepanther.connector.ts",
-      " M apps/api/test/connector-provider-sync.spec.ts",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
+      "## main...origin/main",
       "?? agents.md",
       "?? brand/",
-      "?? docs/parity/filevine-practicepanther-connector-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 3
   }
 }
