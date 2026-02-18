@@ -1,6 +1,8 @@
 import PizZip from 'pizzip';
 import { DocumentsService } from '../src/documents/documents.service';
 
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
 function createDocxTemplateBuffer(tags: string[]) {
   const zip = new PizZip();
   zip.file(
@@ -141,6 +143,7 @@ describe('DocumentsService mergeDocxTemplate', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 'template-version-1',
           storageKey: 'templates/1.docx',
+          mimeType: DOCX_MIME,
           document: {
             id: 'template-document-1',
             sharedWithClient: true,
@@ -247,6 +250,7 @@ describe('DocumentsService mergeDocxTemplate', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 'template-version-1',
           storageKey: 'templates/1.docx',
+          mimeType: DOCX_MIME,
           document: {
             id: 'template-document-1',
             sharedWithClient: false,
@@ -295,6 +299,7 @@ describe('DocumentsService mergeDocxTemplate', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 'template-version-1',
           storageKey: 'templates/1.docx',
+          mimeType: DOCX_MIME,
           document: {
             id: 'template-document-1',
             sharedWithClient: false,
@@ -342,6 +347,171 @@ describe('DocumentsService mergeDocxTemplate', () => {
               unresolvedMergeFields: expect.arrayContaining(['customFields.matter.optionalField']),
             }),
           }),
+        }),
+      }),
+    );
+  });
+
+  it('rejects non-docx template versions before render', async () => {
+    const prisma = {
+      documentVersion: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'template-version-1',
+          storageKey: 'templates/1.pdf',
+          mimeType: 'application/pdf',
+          document: {
+            id: 'template-document-1',
+            sharedWithClient: false,
+            confidentialityLevel: 'CONFIDENTIAL',
+          },
+        }),
+      },
+      matter: {
+        findFirst: jest.fn().mockResolvedValue(buildMatterFixture()),
+      },
+      customFieldValue: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      document: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const s3 = {
+      getObjectBuffer: jest.fn(),
+      upload: jest.fn(),
+    } as any;
+
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      s3,
+      { scan: jest.fn().mockResolvedValue({ clean: true }) } as any,
+      { appendEvent: jest.fn() } as any,
+    );
+
+    await expect(
+      service.mergeDocxTemplate({
+        user: { id: 'user-1', organizationId: 'org-1' } as any,
+        templateVersionId: 'template-version-1',
+        matterId: 'matter-1',
+        title: 'Demand Letter Draft',
+      }),
+    ).rejects.toThrow('Template document version must be a DOCX file');
+
+    expect(s3.getObjectBuffer).not.toHaveBeenCalled();
+    expect(prisma.document.create).not.toHaveBeenCalled();
+  });
+
+  it('sanitizes unsafe merge keys before provenance and context merge', async () => {
+    const templateBuffer = createDocxTemplateBuffer(['{matter.name}']);
+    const prisma = {
+      documentVersion: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'template-version-1',
+          storageKey: 'templates/1.docx',
+          mimeType: DOCX_MIME,
+          document: {
+            id: 'template-document-1',
+            sharedWithClient: true,
+            confidentialityLevel: 'CONFIDENTIAL',
+          },
+        }),
+        create: jest.fn().mockResolvedValue({ id: 'generated-version-1' }),
+      },
+      matter: {
+        findFirst: jest.fn().mockResolvedValue(buildMatterFixture()),
+      },
+      customFieldValue: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      document: {
+        create: jest.fn().mockResolvedValue({ id: 'generated-document-1' }),
+      },
+    } as any;
+
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      {
+        getObjectBuffer: jest.fn().mockResolvedValue(templateBuffer),
+        upload: jest.fn().mockResolvedValue({ key: 'org/org-1/matter/matter-1/generated.docx' }),
+      } as any,
+      { scan: jest.fn().mockResolvedValue({ clean: true }) } as any,
+      { appendEvent: jest.fn() } as any,
+    );
+
+    const pollutedInput = JSON.parse('{"matter":{"name":"Sanitized Override"},"__proto__":{"polluted":"yes"}}');
+    const result = await service.mergeDocxTemplate({
+      user: { id: 'user-1', organizationId: 'org-1' } as any,
+      templateVersionId: 'template-version-1',
+      matterId: 'matter-1',
+      title: 'Demand Letter Draft',
+      mergeData: pollutedInput,
+    });
+
+    expect(result.mergeSummary.unresolvedMergeFields).toEqual([]);
+    expect(prisma.document.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          rawSourcePayload: expect.objectContaining({
+            provenance: expect.objectContaining({
+              providedMergeDataKeys: ['matter'],
+            }),
+          }),
+        }),
+      }),
+    );
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it('records provenance and audit metadata for generated pdf outputs', async () => {
+    const prisma = {
+      document: {
+        create: jest.fn().mockResolvedValue({ id: 'generated-pdf-document-1' }),
+      },
+      documentVersion: {
+        create: jest.fn().mockResolvedValue({ id: 'generated-pdf-version-1' }),
+      },
+    } as any;
+
+    const appendEvent = jest.fn().mockResolvedValue(undefined);
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      {
+        upload: jest.fn().mockResolvedValue({ key: 'org/org-1/matter/matter-1/generated.pdf' }),
+      } as any,
+      { scan: jest.fn().mockResolvedValue({ clean: true }) } as any,
+      { appendEvent } as any,
+    );
+
+    await service.generateSimplePdf({
+      user: { id: 'user-1', organizationId: 'org-1' } as any,
+      matterId: 'matter-1',
+      title: 'Client Status Letter',
+      lines: ['Line 1', 'Line 2'],
+    });
+
+    expect(prisma.document.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          rawSourcePayload: expect.objectContaining({
+            source: 'simple-pdf',
+            provenance: expect.objectContaining({
+              lineCount: 2,
+            }),
+          }),
+        }),
+      }),
+    );
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'document.pdf.generated',
+        entityType: 'document',
+        entityId: 'generated-pdf-document-1',
+        metadata: expect.objectContaining({
+          lineCount: 2,
         }),
       }),
     );
