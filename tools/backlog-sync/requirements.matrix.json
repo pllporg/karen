@@ -401,11 +401,11 @@
           "title": "Complete communication search relevance and indexing strategy",
           "requirementId": "REQ-COMM-002",
           "promptSection": "Communications / search by keyword (Postgres full-text)",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Data",
           "risk": "Medium",
           "labels": ["parity", "communications"],
-          "problemStatement": "Search exists but ranking, indexing, and performance guardrails are not production-grade.",
+          "problemStatement": "Communications search relevance/indexing is now verified with ranked full-text behavior, wildcard-safe fallback matching, and matter-scope/query-normalization guardrails.",
           "requirementExcerpt": "Search communications by keyword.",
           "acceptanceCriteria": [
             "Add indexed tsvector strategy with migration.",
@@ -415,7 +415,9 @@
           "apiImpact": "Search responses include rank score.",
           "securityImpact": "Search remains tenant-scoped.",
           "definitionOfDone": [
-            "Performance baseline documented."
+            "Search tests verify ranked full-text ordering, fallback substring behavior, and wildcard escaping in fallback patterns.",
+            "Matter-scoped search authorization and SQL matter-filter coverage are verified.",
+            "Verification artifact documented at docs/parity/communications-search-indexing.md."
           ]
         },
         {

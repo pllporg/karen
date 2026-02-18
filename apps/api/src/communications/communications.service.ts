@@ -169,7 +169,7 @@ export class CommunicationsService {
       await this.access.assertMatterAccess(user, matterId, 'read');
     }
 
-    const normalizedQuery = query.trim();
+    const normalizedQuery = this.normalizeSearchQuery(query);
     if (!normalizedQuery) return [];
 
     const matterFilter = matterId ? Prisma.sql`AND t."matterId" = ${matterId}` : Prisma.sql``;
@@ -500,5 +500,12 @@ export class CommunicationsService {
 
   private escapeLikePattern(value: string) {
     return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+  }
+
+  private normalizeSearchQuery(value: string) {
+    const compacted = value.replace(/\s+/g, ' ').trim();
+    if (!compacted) return '';
+    const maxLength = 512;
+    return compacted.length > maxLength ? compacted.slice(0, maxLength) : compacted;
   }
 }

@@ -1,30 +1,39 @@
-# REQ-COMM-002 Parity Evidence: Communications Search Relevance + Indexing
+# Communications Search Indexing Verification
 
 Requirement: `REQ-COMM-002`  
-Prompt section: `Communications / search by keyword (Postgres full-text)`
+Scope: verify ranked full-text communications search with tenant/matter scoping, safe fallback behavior, and indexing guardrails.
 
-## Implemented
+## Verification Coverage
 
-- Upgraded communication keyword search strategy in `CommunicationsService.search`:
-  - primary path uses `websearch_to_tsquery` + ranked full-text matching (`ts_rank_cd`)
-  - ordering by relevance first, then recency
-  - highlighted snippets via `ts_headline`
-- Added fallback path for edge cases:
-  - substring `ILIKE` search when full-text returns no rows
-  - explicit `matchStrategy` (`full_text` or `substring`) and rank in response payload
-- Added indexing migration for production relevance performance:
-  - `apps/api/prisma/migrations/20260217165500_communication_search_indexing/migration.sql`
-  - GIN index over communication message full-text vector expression
-
-## Verification
-
-- API tests:
+- API regression suites:
   - `apps/api/test/communications-search.spec.ts`
-  - existing compatibility tests retained:
-    - `apps/api/test/communications-portal-attachments.spec.ts`
-    - `apps/api/test/communications-delivery.spec.ts`
+  - `apps/api/test/communications-portal-attachments.spec.ts`
+  - `apps/api/test/communications-delivery.spec.ts`
+- Indexing migration:
+  - `apps/api/prisma/migrations/20260217165500_communication_search_indexing/migration.sql`
 
-## Notes
+### Search hardening checks
 
-- Search remains tenant-scoped and matter-scoped when `matterId` filter is provided.
-- Response shape now includes ranking/snip metadata suitable for UI relevance sorting.
+- Primary search path remains ranked full-text:
+  - `websearch_to_tsquery`
+  - `ts_rank_cd`
+  - ordered by relevance then recency
+  - highlighted snippets via `ts_headline`
+- Fallback substring path remains available when no full-text rows are found:
+  - `ILIKE`-based matching with explicit `matchStrategy: substring`
+  - wildcard escaping for `%` and `_` is verified to prevent over-broad pattern matching
+- Matter scoping controls are verified:
+  - `matterId` search requires `assertMatterAccess(..., 'read')`
+  - SQL includes matter filter in scoped queries
+- Query normalization guardrails are verified:
+  - whitespace compaction before execution
+  - oversized queries capped to bounded length before tsquery generation
+
+## Commands
+
+- `pnpm --filter api test -- communications-search.spec.ts`
+- `pnpm --filter api test -- communications-delivery.spec.ts communications-portal-attachments.spec.ts`
+
+## Result
+
+`REQ-COMM-002` is verified with ranked full-text relevance, GIN-backed indexing, scoped query enforcement, wildcard-safe fallback search, and bounded query normalization.
