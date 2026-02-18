@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T21:57:20.704Z`
+- Snapshot Timestamp: `2026-02-18T22:11:02.023Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T21:57:19.133Z`
+- Last Successful Mirror Verify: `2026-02-18T22:11:00.756Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-MAT-005` by hardening rules-pack selection semantics (most-specific active effective pack wins; explicit inactive/out-of-window packs rejected), plus apply-selection guardrails rejecting unknown/duplicate rule IDs with dedicated regression coverage (`apps/api/test/deadline-rules-verification.spec.ts`, `docs/parity/deadline-rules-packs.md`).
 - 2026-02-18: Verified `REQ-MAT-004` by hardening conflict profile update semantics (partial updates now preserve existing scope/weights/thresholds/default flags), adding deterministic default reassignment when a default profile is deactivated, and enforcing scoped-profile selection precedence so the most specific active match is selected for checks (`apps/api/test/admin-conflict-verification.spec.ts`, `docs/parity/conflict-rule-profiles.md`).
 - 2026-02-18: Verified `REQ-COMM-004` by hardening disposition execution to re-check legal holds at execution time (disposing only eligible documents, skipping newly-held documents, reverting skipped docs to `ACTIVE`, and recording `skippedForLegalHoldAtExecution` audit metadata), with new regression coverage in `apps/api/test/document-retention-verification.spec.ts` and parity evidence in `docs/parity/document-retention-workflows.md`.
 - 2026-02-18: Verified `REQ-BILL-004` by adding LEDES verification-hardening coverage for default-profile rotation (`isDefault` swap), explicit invoice-id export integrity (dedupe + missing-id rejection), and `includeExpenseLineItems=false` line filtering conformance, with parity evidence in `docs/parity/ledes-export-workflows.md` (`apps/api/test/billing-ledes-verification.spec.ts`).

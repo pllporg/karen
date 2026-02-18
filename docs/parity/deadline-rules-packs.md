@@ -31,13 +31,16 @@
 - Override reason is mandatory when an override date is supplied.
 - Generated deadline events persist source provenance (`source=deadline_rules_pack`, rules pack id, rule id, computed/override dates).
 - Apply and create-pack actions are audit logged.
+- Explicit rules-pack selection now enforces active/effective-window validation (inactive or out-of-window packs are rejected).
+- Auto-selection now prefers the most specific active match (jurisdiction/court/procedure), then the latest effective version.
+- Apply validation now rejects duplicate or unknown rule selections to prevent silent partial application.
 
 ## Verification
 
-Executed on 2026-02-17:
+Executed on 2026-02-18:
 
 ```bash
-pnpm --filter api test -- deadline-rules-packs.spec.ts
+pnpm --filter api test -- deadline-rules-packs.spec.ts deadline-rules-verification.spec.ts
 pnpm --filter web test -- matter-dashboard-page.spec.tsx
 pnpm test
 pnpm build
@@ -46,6 +49,7 @@ pnpm build
 Results:
 
 - API targeted suite passed (`apps/api/test/deadline-rules-packs.spec.ts`).
+- API verification suite passed (`apps/api/test/deadline-rules-verification.spec.ts`).
 - Web targeted suite passed (`apps/web/test/matter-dashboard-page.spec.tsx`).
-- Full monorepo test suite passed (31 API suites, 10 web files).
+- Full monorepo test suite passed (44 API suites, 13 web files).
 - Full monorepo build passed.

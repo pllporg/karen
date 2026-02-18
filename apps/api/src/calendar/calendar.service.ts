@@ -265,7 +265,20 @@ export class CalendarService {
       rulesPackId: input.rulesPackId,
     });
 
-    const selectionMap = new Map((input.selections || []).map((selection) => [selection.ruleId, selection]));
+    const selectionMap = new Map<string, NonNullable<typeof input.selections>[number]>();
+    for (const selection of input.selections || []) {
+      if (selectionMap.has(selection.ruleId)) {
+        throw new UnprocessableEntityException(`Duplicate selection for rule ${selection.ruleId}`);
+      }
+      selectionMap.set(selection.ruleId, selection);
+    }
+    const previewRuleIds = new Set(preview.previewRows.map((row) => row.ruleId));
+    for (const ruleId of selectionMap.keys()) {
+      if (!previewRuleIds.has(ruleId)) {
+        throw new UnprocessableEntityException(`Unknown ruleId in selections: ${ruleId}`);
+      }
+    }
+
     const created = [];
     const overrides: Array<{ ruleId: string; overrideDate: string; overrideReason: string }> = [];
 
@@ -396,15 +409,22 @@ export class CalendarService {
       throw new UnprocessableEntityException('No deadline rules packs configured');
     }
 
+    const triggerIso = input.triggerDate.toISOString();
+
     if (input.rulesPackId) {
       const byId = packs.find((pack) => pack.id === input.rulesPackId);
       if (!byId) {
         throw new NotFoundException('Rules pack not found');
       }
+      if (!byId.pack.isActive) {
+        throw new UnprocessableEntityException('Rules pack is inactive');
+      }
+      if (!this.isPackEffectiveForDate(byId.pack, triggerIso)) {
+        throw new UnprocessableEntityException('Rules pack is not effective for triggerDate');
+      }
       return byId;
     }
 
-    const triggerIso = input.triggerDate.toISOString();
     const jurisdiction = input.matterJurisdiction.trim().toLowerCase();
     const court = input.matterCourt.trim().toLowerCase();
     const procedure = input.matterProcedure.trim().toLowerCase();
@@ -416,16 +436,38 @@ export class CalendarService {
       const jurisdictionMatches = !pack.pack.jurisdiction || pack.pack.jurisdiction.trim().toLowerCase() === jurisdiction;
       const courtMatches = !pack.pack.court || pack.pack.court.trim().toLowerCase() === court;
       const procedureMatches = !pack.pack.procedure || pack.pack.procedure.trim().toLowerCase() === procedure;
-      const startsBefore = pack.pack.effectiveFrom <= triggerIso;
-      const endsAfter = !pack.pack.effectiveTo || pack.pack.effectiveTo >= triggerIso;
-      return jurisdictionMatches && courtMatches && procedureMatches && startsBefore && endsAfter;
+      return jurisdictionMatches && courtMatches && procedureMatches && this.isPackEffectiveForDate(pack.pack, triggerIso);
     });
 
-    const selected = matching[0] || packs[0];
+    const selected = matching
+      .map((pack) => ({
+        pack,
+        specificity: this.packSpecificity(pack.pack),
+        effectiveFromEpoch: Date.parse(pack.pack.effectiveFrom),
+      }))
+      .sort((a, b) => {
+        if (a.specificity !== b.specificity) {
+          return b.specificity - a.specificity;
+        }
+        if (a.effectiveFromEpoch !== b.effectiveFromEpoch) {
+          return b.effectiveFromEpoch - a.effectiveFromEpoch;
+        }
+        return a.pack.id.localeCompare(b.pack.id);
+      })[0]?.pack;
     if (!selected) {
-      throw new UnprocessableEntityException('Unable to select a rules pack');
+      throw new UnprocessableEntityException('Unable to select an active rules pack');
     }
     return selected;
+  }
+
+  private isPackEffectiveForDate(pack: DeadlineRulePackMeta, triggerIso: string): boolean {
+    const startsBefore = pack.effectiveFrom <= triggerIso;
+    const endsAfter = !pack.effectiveTo || pack.effectiveTo >= triggerIso;
+    return startsBefore && endsAfter;
+  }
+
+  private packSpecificity(pack: DeadlineRulePackMeta): number {
+    return [pack.jurisdiction, pack.court, pack.procedure].filter((value) => Boolean(value && value.trim())).length;
   }
 
   private mapRulesPack(template: {
