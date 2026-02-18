@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   ConnectorAuthorizationParams,
+  ConnectorRefreshParams,
   ConnectorTokenExchangeParams,
   ConnectorTokenExchangeResult,
   ConnectorSyncParams,
@@ -91,6 +92,72 @@ export class MyCaseConnector implements IncrementalSyncConnector {
       scopes: payload.scope ? payload.scope.split(' ').filter(Boolean) : ['matters:read', 'contacts:read'],
       metadata: {
         mode: 'live',
+      },
+    };
+  }
+
+  async refreshAccessToken(params: ConnectorRefreshParams): Promise<ConnectorTokenExchangeResult> {
+    const liveOauth = this.isLiveOauthEnabled();
+    const tokenUrl = process.env.MYCASE_TOKEN_URL || 'https://auth.mycase.com/oauth/token';
+    const clientId = process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
+    const clientSecret = process.env.MYCASE_CLIENT_SECRET || 'stub-mycase-client-secret';
+
+    if (!liveOauth) {
+      const suffix = params.refreshToken.slice(0, 12);
+      return {
+        accessToken: `mycase_access_refresh_${suffix}`,
+        refreshToken: `mycase_refresh_${suffix}`,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        scopes: ['matters:read', 'contacts:read'],
+        metadata: {
+          mode: 'stub',
+          refreshed: true,
+        },
+      };
+    }
+
+    const body = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: params.refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`MyCase token refresh failed (${response.status}): ${text}`);
+    }
+
+    const payload = (await response.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      scope?: string;
+      created_at?: number;
+    };
+    if (!payload.access_token) {
+      throw new Error('MyCase token refresh did not return access_token');
+    }
+
+    const baseTime = typeof payload.created_at === 'number' ? payload.created_at * 1000 : Date.now();
+    const expiresAt =
+      typeof payload.expires_in === 'number'
+        ? new Date(baseTime + payload.expires_in * 1000)
+        : new Date(Date.now() + 1000 * 60 * 60);
+
+    return {
+      accessToken: payload.access_token,
+      refreshToken: payload.refresh_token ?? params.refreshToken,
+      expiresAt,
+      scopes: payload.scope ? payload.scope.split(' ').filter(Boolean) : ['matters:read', 'contacts:read'],
+      metadata: {
+        mode: 'live',
+        refreshed: true,
       },
     };
   }
