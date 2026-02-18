@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T16:11:08.891Z`
+- Snapshot Timestamp: `2026-02-18T16:27:34.487Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T16:11:07.416Z`
+- Last Successful Mirror Verify: `2026-02-18T16:27:32.852Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-PORT-002` by hardening Clio importer regression coverage for CSV/XLSX source-entity lineage, unresolved-reference row-context diagnostics, and communication external-reference payload integrity (`docs/parity/clio-import-verification.md`).
 - 2026-02-18: Verified `REQ-PORT-001` by adding MyCase importer hardening coverage for dependency-order safety with unsorted ZIP entries, unlinked communication warning context integrity, and external-reference lineage/raw-payload assertions (`docs/parity/mycase-import-verification.md`).
 - 2026-02-18: Verified `REQ-MAT-003` by expanding intake wizard regression coverage for required-domain validation gates, fallback contact resolution (lien/insurance/expert), full web payload composition, and draft resume field rehydration across construction sections (`docs/parity/intake-wizard-domain-verification.md`).
 - 2026-02-18: Verified `REQ-MAT-001` by expanding participant-role regression coverage for missing role definitions, self-reference guards, explicit side/primary overrides, counsel-role label detection, and full category matrix enforcement (`docs/parity/matter-participant-role-verification.md`).

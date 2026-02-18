@@ -60,7 +60,7 @@
           "title": "Implement encrypted OAuth token storage with key management",
           "requirementId": "REQ-SEC-003",
           "promptSection": "API & INTEGRATIONS / Integration connections table storing OAuth tokens encrypted",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "security", "integrations"],
@@ -190,7 +190,7 @@
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],
-          "problemStatement": "Clio template parser exists but parity-level mapping is incomplete.",
+          "problemStatement": "Clio CSV/XLSX importer verification is hardened with executable checks for source-entity lineage, row-level unresolved-reference diagnostics, and cross-sheet external-reference payload integrity.",
           "requirementExcerpt": "Map contacts, matters, tasks, calendar, activities/time entries, notes, phone logs/emails where available.",
           "acceptanceCriteria": [
             "All documented Clio template tabs mapped or explicitly skipped with warnings.",
@@ -200,7 +200,9 @@
           "apiImpact": "Import summaries expanded.",
           "securityImpact": "No material security impact.",
           "definitionOfDone": [
-            "Importer acceptance tests cover complete template spectrum."
+            "Importer acceptance tests cover complete template spectrum with row-level error/warning context.",
+            "Communication source-entity lineage is preserved for CSV and XLSX sources.",
+            "Verification artifact published at docs/parity/clio-import-verification.md."
           ]
         },
         {
