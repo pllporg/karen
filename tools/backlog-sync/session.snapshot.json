@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T16:01:07.740Z",
+  "generatedAt": "2026-02-18T16:11:08.891Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,24 +14,24 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 23,
+    "unresolvedRequirements": 22,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 18,
+      "phase-1": 17,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 23
+      "Complete": 22
     },
     "unresolvedCountsByRisk": {
-      "High": 6,
+      "High": 5,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 6,
+      "Complete:High": 5,
       "Complete:Medium": 17
     }
   },
@@ -72,15 +72,6 @@
         "title": "Implement secure portal attachments in message workflow",
         "component": "Web",
         "epicCode": "PARITY-07",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-SEC-002",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement upload malware scanning provider integration",
-        "component": "Infra",
-        "epicCode": "PARITY-01",
         "phase": "phase-1"
       },
       {
@@ -127,6 +118,15 @@
         "component": "API",
         "epicCode": "PARITY-05",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-002",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Complete ABAC policy abstraction for matter-level ethical walls",
+        "component": "API",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
       }
     ]
   },
@@ -137,16 +137,25 @@
     "stateCounts": {
       "Done": 36,
       "Backlog": 11,
-      "In Review": 1
+      "In Progress": 1
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-14"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-14",
+        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T16:08:25.220Z",
+        "requirementId": "REQ-PORT-001"
+      },
+      {
         "key": "KAR-21",
         "title": "Complete construction litigation intake wizard domain coverage",
-        "state": "In Review",
-        "updatedAt": "2026-02-18T16:00:52.155Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T16:06:21.709Z",
         "requirementId": "REQ-MAT-003"
       },
       {
@@ -204,31 +213,27 @@
         "state": "Backlog",
         "updatedAt": "2026-02-18T00:52:11.882Z",
         "requirementId": "PARITY-06"
-      },
-      {
-        "key": "KAR-61",
-        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-18T00:37:07.780Z",
-        "requirementId": "REQ-BILL-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:01:05.870Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:11:07.416Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "dec7e53db8f97c0096e84183abdf5a919159b612",
+    "gitHead": "0ddb6b2894f2304d226feca779472aeb535d04d3",
     "gitStatusShort": [
-      "## lin/KAR-21-intake-wizard-verification-hardening...origin/lin/KAR-21-intake-wizard-verification-hardening",
+      "## lin/KAR-14-mycase-import-verification-hardening",
+      " M apps/api/test/imports.spec.ts",
+      " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
+      "?? docs/parity/mycase-import-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 6
+    "dirtyFileCount": 9
   }
 }
