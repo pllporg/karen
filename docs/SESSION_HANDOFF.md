@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T01:16:53.967Z`
+- Snapshot Timestamp: `2026-02-18T01:27:03.117Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T01:16:17.173Z`
+- Last Successful Mirror Verify: `2026-02-18T01:27:01.778Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-INT-001` by hardening Clio connector OAuth refresh-grant support, adding refresh-before-sync orchestration for expired tokens, and expanding regression coverage for OAuth callback state validation, idempotent sync checkpointing, and webhook subscription flows (`docs/parity/clio-connector-verification.md`).
 - 2026-02-18: Verified `REQ-DATA-001` with executable Prisma conformance coverage (`apps/api/test/schema-conformance.spec.ts`) enforcing required model presence, UUID id convention, and high-risk schema field semantics, with verification artifact `docs/parity/data-model-conformance-verification.md`.
 - 2026-02-18: Verified `REQ-SEC-001` by expanding tenant-isolation coverage across newly added modules (document retention/disposition, trust reconciliation + LEDES entities, AI style packs) and keeping org-scope assertions enforced across core service query paths (`docs/parity/tenant-isolation-verification.md`).
 - 2026-02-17: Verified `REQ-BILL-002` by hardening trust-transfer atomicity (paired transfer entries + ledger updates inside one DB transaction), adding transfer balance metadata to audit events, and fixing reconciliation transfer-delta logic to interpret `| out`/`| in` directions with expanded regression coverage (`docs/parity/billing-trust-ledger-verification.md`).

@@ -225,6 +225,84 @@ describe('IntegrationsService', () => {
     );
   });
 
+  it('rejects oauth callback when state hash does not match pending state', async () => {
+    const connector = connectorStub(IntegrationProvider.CLIO);
+    const prisma = {
+      integrationConnection: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'conn-1',
+          organizationId: 'org1',
+          provider: IntegrationProvider.CLIO,
+          configJson: {
+            oauthPending: {
+              stateHash: createHash('sha256').update('expected-state').digest('hex'),
+              expiresAt: '2099-01-01T00:00:00.000Z',
+              redirectUri: 'http://localhost:3000/callback',
+              scopes: ['matters:read'],
+            },
+          },
+        }),
+      },
+    } as any;
+
+    const service = new IntegrationsService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      new IntegrationTokenCryptoService(),
+      [connector],
+    );
+
+    await expect(
+      service.completeOAuth({
+        user: { id: 'u1', organizationId: 'org1' } as any,
+        connectionId: 'conn-1',
+        code: 'oauth-code-123',
+        state: 'wrong-state',
+        redirectUri: 'http://localhost:3000/callback',
+      }),
+    ).rejects.toThrow('OAuth state mismatch');
+  });
+
+  it('rejects oauth callback when pending state is expired', async () => {
+    const state = 'abcdef123456abcdef123456abcdef123456abcdef123456';
+    const stateHash = createHash('sha256').update(state).digest('hex');
+    const connector = connectorStub(IntegrationProvider.CLIO);
+    const prisma = {
+      integrationConnection: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'conn-1',
+          organizationId: 'org1',
+          provider: IntegrationProvider.CLIO,
+          configJson: {
+            oauthPending: {
+              stateHash,
+              expiresAt: '2000-01-01T00:00:00.000Z',
+              redirectUri: 'http://localhost:3000/callback',
+              scopes: ['matters:read'],
+            },
+          },
+        }),
+      },
+    } as any;
+
+    const service = new IntegrationsService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      new IntegrationTokenCryptoService(),
+      [connector],
+    );
+
+    await expect(
+      service.completeOAuth({
+        user: { id: 'u1', organizationId: 'org1' } as any,
+        connectionId: 'conn-1',
+        code: 'oauth-code-123',
+        state,
+        redirectUri: 'http://localhost:3000/callback',
+      }),
+    ).rejects.toThrow('OAuth state has expired');
+  });
+
   it('runs connector sync with idempotency and persists sync cursor', async () => {
     const tokenCrypto = new IntegrationTokenCryptoService();
     const accessEnvelope = tokenCrypto.encryptToken('decrypted-access');
@@ -329,6 +407,79 @@ describe('IntegrationsService', () => {
 
     expect(result).toEqual(expect.objectContaining({ id: 'run-existing' }));
     expect((connector.sync as jest.Mock).mock.calls.length).toBe(0);
+  });
+
+  it('refreshes expired oauth token before sync when connector supports refresh flow', async () => {
+    const tokenCrypto = new IntegrationTokenCryptoService();
+    const connector = connectorStub(IntegrationProvider.CLIO, {
+      refreshAccessToken: jest.fn().mockResolvedValue({
+        accessToken: 'refreshed-access-token',
+        refreshToken: 'refreshed-refresh-token',
+        expiresAt: new Date('2030-02-01T00:00:00.000Z'),
+        scopes: ['matters:read', 'contacts:read'],
+        metadata: { refreshed: true },
+      }),
+      sync: jest.fn().mockResolvedValue({
+        nextCursor: 'cursor-after-refresh',
+        importedCount: 2,
+        warnings: [],
+      }),
+    });
+    const prisma = {
+      integrationConnection: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'conn-1',
+          organizationId: 'org1',
+          provider: IntegrationProvider.CLIO,
+          encryptedAccessToken: tokenCrypto.encryptToken('expired-access-token'),
+          encryptedRefreshToken: tokenCrypto.encryptToken('existing-refresh-token'),
+          tokenExpiresAt: new Date('2000-01-01T00:00:00.000Z'),
+          configJson: {},
+          scopes: ['matters:read'],
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+      integrationSyncRun: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        findFirst: jest.fn().mockResolvedValue({ cursor: 'cursor-prior' }),
+        create: jest.fn().mockResolvedValue({ id: 'run-refresh' }),
+        update: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'run-refresh', ...data })),
+      },
+    } as any;
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+
+    const service = new IntegrationsService(prisma, audit, tokenCrypto, [connector]);
+    const run = await service.triggerSync({
+      user: { id: 'u1', organizationId: 'org1' } as any,
+      connectionId: 'conn-1',
+      idempotencyKey: 'idem-refresh',
+    });
+
+    expect((connector.refreshAccessToken as jest.Mock).mock.calls[0][0]).toEqual({
+      refreshToken: 'existing-refresh-token',
+    });
+    expect((connector.sync as jest.Mock).mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        accessToken: 'refreshed-access-token',
+        refreshToken: 'refreshed-refresh-token',
+      }),
+    );
+    expect(prisma.integrationConnection.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          encryptedAccessToken: expect.any(String),
+          encryptedRefreshToken: expect.any(String),
+          scopes: ['matters:read', 'contacts:read'],
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'integration.oauth.refreshed',
+        entityId: 'conn-1',
+      }),
+    );
+    expect(run).toEqual(expect.objectContaining({ id: 'run-refresh', status: 'COMPLETED' }));
   });
 
   it('subscribes webhook via connector and stores provider subscription id', async () => {
