@@ -458,11 +458,11 @@
           "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
           "requirementId": "REQ-BILL-001",
           "promptSection": "Billing & Trust / Stripe Checkout pay link",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "billing"],
-          "problemStatement": "Checkout link generation exists but full payment lifecycle reconciliation is incomplete.",
+          "problemStatement": "Stripe checkout + reconciliation is now verified with event-level idempotency, signature-path coverage, and deterministic invoice status transition tests.",
           "requirementExcerpt": "Stripe Checkout pay link required with payments tracking.",
           "acceptanceCriteria": [
             "Webhook handling reconciles checkout completion and payment state.",
@@ -472,7 +472,8 @@
           "apiImpact": "Webhook endpoint and payment status updates expanded.",
           "securityImpact": "Webhook signature verification required.",
           "definitionOfDone": [
-            "Stripe test-mode flow fully documented and tested."
+            "Stripe lifecycle tests cover checkout metadata propagation, duplicate webhook behavior by payment intent and event ID, payment_intent.succeeded paid transitions, and webhook signature verification.",
+            "Verification artifact documented at docs/parity/billing-stripe-reconciliation-verification.md."
           ]
         },
         {

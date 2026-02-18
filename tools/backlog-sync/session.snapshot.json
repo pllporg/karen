@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T22:29:36.614Z",
+  "generatedAt": "2026-02-17T22:43:53.695Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 31,
+    "unresolvedRequirements": 30,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 26,
+      "phase-1": 25,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 31
+      "Complete": 30
     },
     "unresolvedCountsByRisk": {
-      "High": 14,
+      "High": 13,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 14,
+      "Complete:High": 13,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-BILL-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-BILL-002",
         "parityStatus": "Complete",
@@ -127,26 +118,52 @@
         "component": "Web",
         "epicCode": "PARITY-03",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-PORTAL-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement secure portal attachments in message workflow",
+        "component": "Web",
+        "epicCode": "PARITY-07",
+        "phase": "phase-1"
       }
     ]
   },
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 46,
+    "scopedIssueCount": 47,
     "stateCounts": {
-      "Done": 32,
-      "In Review": 2,
+      "In Progress": 1,
+      "Done": 33,
+      "In Review": 1,
       "Backlog": 12
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-61"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-61",
+        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
+        "state": "In Progress",
+        "updatedAt": "2026-02-17T22:43:34.521Z",
+        "requirementId": "REQ-BILL-001"
+      },
+      {
+        "key": "KAR-26",
+        "title": "PARITY-06 Billing + Trust + Payments",
+        "state": "Backlog",
+        "updatedAt": "2026-02-17T22:39:55.432Z",
+        "requirementId": "PARITY-06"
+      },
+      {
         "key": "KAR-34",
         "title": "Implement prompt injection defense hardening for ingestion pipeline",
-        "state": "In Review",
-        "updatedAt": "2026-02-17T22:29:16.066Z",
+        "state": "Done",
+        "updatedAt": "2026-02-17T22:33:44.856Z",
         "requirementId": "REQ-AI-002"
       },
       {
@@ -197,37 +214,30 @@
         "state": "Done",
         "updatedAt": "2026-02-17T18:38:27.887Z",
         "requirementId": "REQ-MAT-004"
-      },
-      {
-        "key": "KAR-42",
-        "title": "Document deployment runbook and operational SLOs",
-        "state": "Done",
-        "updatedAt": "2026-02-17T18:18:44.891Z",
-        "requirementId": "REQ-OPS-002"
-      },
-      {
-        "key": "KAR-31",
-        "title": "Replace e-sign stub with provider abstraction implementation",
-        "state": "Done",
-        "updatedAt": "2026-02-17T18:12:32.131Z",
-        "requirementId": "REQ-PORTAL-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:29:35.336Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:43:52.533Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "4b25cccb5b739c915d984e3ab54031380701bfbf",
+    "gitHead": "f1dc8d3ba85f9f412096e1c154944945e0f62e48",
     "gitStatusShort": [
-      "## lin/KAR-34-ai-ingestion-verification-hardening...origin/lin/KAR-34-ai-ingestion-verification-hardening",
+      "## lin/KAR-61-billing-stripe-verification-hardening",
+      " M apps/api/src/billing/billing.service.ts",
+      " M apps/api/test/billing-stripe-reconciliation.spec.ts",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
       "?? Brandguide.md",
+      "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
+      "?? docs/parity/billing-stripe-reconciliation-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 5
+    "dirtyFileCount": 12
   }
 }

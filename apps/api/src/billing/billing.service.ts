@@ -324,6 +324,7 @@ export class BillingService {
           organizationId,
           invoiceId,
           stripeEventId: event.id,
+          stripeEventType: event.type,
           stripeCheckoutSessionId: session.id,
           stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
           amount: typeof session.amount_total === 'number' ? Number((session.amount_total / 100).toFixed(2)) : undefined,
@@ -359,6 +360,7 @@ export class BillingService {
           organizationId,
           invoiceId,
           stripeEventId: event.id,
+          stripeEventType: event.type,
           stripePaymentIntentId: paymentIntent.id,
           amount: Number((amountInCents / 100).toFixed(2)),
         })),
@@ -1521,6 +1523,12 @@ export class BillingService {
 
   private parseStripeWebhookEvent(input: { payload: unknown; signature?: string; rawBody?: Buffer }): Stripe.Event {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (webhookSecret && !this.stripe) {
+      throw new Error(
+        'Stripe webhook verification requires STRIPE_SECRET_KEY when STRIPE_WEBHOOK_SECRET is configured',
+      );
+    }
+
     if (this.stripe && webhookSecret) {
       if (!input.signature || !input.rawBody) {
         throw new Error('Stripe webhook signature verification failed: missing stripe-signature header or raw body');
@@ -1551,6 +1559,7 @@ export class BillingService {
     organizationId: string;
     invoiceId: string;
     stripeEventId: string;
+    stripeEventType?: string;
     amount?: number;
     stripePaymentIntentId?: string;
     stripeCheckoutSessionId?: string;
@@ -1563,6 +1572,17 @@ export class BillingService {
     });
     if (!invoice) {
       return { status: 'ignored', reason: 'invoice_not_found' };
+    }
+
+    const existingByEvent = await this.prisma.payment.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        invoiceId: invoice.id,
+        reference: `stripe_event:${input.stripeEventId}`,
+      },
+    });
+    if (existingByEvent) {
+      return { status: 'duplicate', paymentId: existingByEvent.id };
     }
 
     if (input.stripePaymentIntentId) {
@@ -1593,6 +1613,7 @@ export class BillingService {
         reference: `stripe_event:${input.stripeEventId}`,
         rawSourcePayload: toJsonValue({
           stripeEventId: input.stripeEventId,
+          stripeEventType: input.stripeEventType ?? null,
           stripeCheckoutSessionId: input.stripeCheckoutSessionId,
         }),
       },
