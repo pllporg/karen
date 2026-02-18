@@ -823,11 +823,11 @@
           "title": "Enforce Linear key branch/PR policy in CI",
           "requirementId": "REQ-OPS-003",
           "promptSection": "Backlog governance / strict issue key linkage",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Infra",
           "risk": "Medium",
           "labels": ["parity", "ops"],
-          "problemStatement": "Policy is enforced via CI and PR template metadata requirements.",
+          "problemStatement": "Linear-key governance is verification-hardened with executable checks that guard workflow regex enforcement and required PR template metadata sections.",
           "requirementExcerpt": "Branch and PR title must include Linear key for auto-linking.",
           "acceptanceCriteria": [
             "CI check fails on non-compliant branch names.",
@@ -837,7 +837,9 @@
           "apiImpact": "No API change.",
           "securityImpact": "Improves change traceability and auditability.",
           "definitionOfDone": [
-            "Policy workflow active on all PRs."
+            "Policy workflow active on all PRs.",
+            "Automated governance test verifies workflow regex/policy guards and required PR template sections.",
+            "Verification artifact documented at docs/parity/pr-linear-policy-verification.md."
           ]
         }
       ]

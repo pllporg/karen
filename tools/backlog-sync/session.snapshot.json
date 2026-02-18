@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:51:25.492Z",
+  "generatedAt": "2026-02-18T20:59:15.135Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 7,
+    "unresolvedRequirements": 6,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
       "phase-2": 5,
-      "phase-1": 2
+      "phase-1": 1
     },
     "unresolvedCountsByStatus": {
-      "Complete": 7
+      "Complete": 6
     },
     "unresolvedCountsByRisk": {
-      "Medium": 7
+      "Medium": 6
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 7
+      "Complete:Medium": 6
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-OPS-003",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Enforce Linear key branch/PR policy in CI",
-        "component": "Infra",
-        "epicCode": "PARITY-10",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-PORTAL-002",
         "parityStatus": "Complete",
@@ -113,6 +104,13 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-42",
+        "title": "Document deployment runbook and operational SLOs",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:55:05.014Z",
+        "requirementId": "REQ-OPS-002"
+      },
+      {
         "key": "KAR-20",
         "title": "Enhance contact relationship graph visualization and filtering",
         "state": "Done",
@@ -174,29 +172,22 @@
         "state": "Done",
         "updatedAt": "2026-02-18T19:06:10.494Z",
         "requirementId": "REQ-COMM-002"
-      },
-      {
-        "key": "KAR-23",
-        "title": "Implement production email/SMS providers behind provider interface",
-        "state": "Done",
-        "updatedAt": "2026-02-18T18:58:44.368Z",
-        "requirementId": "REQ-COMM-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:51:23.862Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:59:13.599Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "763ba1b41f327ce8c14518f876b6ebbb23a4767e",
+    "gitHead": "2ed6df801e9a6487147d262e0243f00e664531f2",
     "gitStatusShort": [
-      "## lin/KAR-42-ops-runbook-verification-hardening",
-      " M docs/parity/ops-runbook-slos.md",
+      "## lin/KAR-43-pr-policy-verification-hardening",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
-      "?? apps/api/test/ops-runbook.spec.ts",
+      "?? apps/api/test/pr-linear-policy.spec.ts",
       "?? brand/",
+      "?? docs/parity/pr-linear-policy-verification.md",
       "?? uirefactorprompt.md"
     ],
     "dirtyFileCount": 6
