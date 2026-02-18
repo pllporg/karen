@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T01:04:37.447Z",
+  "generatedAt": "2026-02-18T01:16:53.967Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 28,
+    "unresolvedRequirements": 27,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 23,
+      "phase-1": 22,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 28
+      "Complete": 27
     },
     "unresolvedCountsByRisk": {
-      "High": 11,
+      "High": 10,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 11,
+      "Complete:High": 10,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-DATA-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Validate all required entities and relation semantics against prompt",
-        "component": "Data",
-        "epicCode": "PARITY-02",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-INT-001",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "Infra",
         "epicCode": "PARITY-01",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-SEC-003",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Implement encrypted OAuth token storage with key management",
+        "component": "API",
+        "epicCode": "PARITY-01",
+        "phase": "phase-1"
       }
     ]
   },
@@ -141,15 +141,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-6"
+      "KAR-10"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-10",
+        "title": "Validate all required entities and relation semantics against prompt",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T01:13:02.923Z",
+        "requirementId": "REQ-DATA-001"
+      },
+      {
         "key": "KAR-6",
         "title": "Harden tenant isolation test coverage across all core entities",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T01:00:57.410Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T01:08:56.302Z",
         "requirementId": "REQ-SEC-001"
       },
       {
@@ -207,35 +214,29 @@
         "state": "Done",
         "updatedAt": "2026-02-17T20:28:07.658Z",
         "requirementId": "REQ-BILL-003"
-      },
-      {
-        "key": "KAR-46",
-        "title": "Implement document retention policies with legal hold workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-17T19:58:58.930Z",
-        "requirementId": "REQ-COMM-004"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:04:29.564Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:16:17.173Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "b5a5bad42196240fc23cd340d81c728d44da2b5c",
+    "gitHead": "3184d7a415aaa880236432079f5f5bc08190e580",
     "gitStatusShort": [
-      "## lin/KAR-6-tenant-isolation-verification-hardening",
-      " M apps/api/test/tenant-isolation.spec.ts",
+      "## lin/KAR-10-data-model-conformance-verification",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
+      "?? apps/api/test/schema-conformance.spec.ts",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/tenant-isolation-verification.md",
+      "?? docs/parity/data-model-conformance-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 11
   }
 }
