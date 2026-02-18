@@ -1,36 +1,44 @@
-# REQ-COMM-001 Parity Evidence: Production Message Providers
+# Communications Provider Adapter Verification
 
 Requirement: `REQ-COMM-001`  
-Prompt section: `Email/SMS provider interfaces + stub provider in MVP`
+Scope: verify production email/SMS provider adapters with deterministic retry policy behavior and persisted delivery provenance.
 
-## Implemented
+## Verification Coverage
 
-- Added provider routing service with env-based selection:
+- API regression suites:
+  - `apps/api/test/message-dispatch.spec.ts`
+  - `apps/api/test/communications-delivery.spec.ts`
+  - `apps/api/test/communications-portal-attachments.spec.ts`
+
+### Provider + dispatch hardening checks
+
+- Provider routing remains env-driven with production adapters:
   - `MESSAGE_EMAIL_PROVIDER=stub|resend`
   - `MESSAGE_SMS_PROVIDER=stub|twilio`
-- Added production adapters:
-  - `ResendEmailProvider` (`/communications/providers/resend-email.provider.ts`)
-  - `TwilioSmsProvider` (`/communications/providers/twilio-sms.provider.ts`)
-- Added retry/failure policy in dispatch layer:
-  - `MESSAGE_PROVIDER_MAX_RETRIES`
-  - `MESSAGE_PROVIDER_RETRY_DELAY_MS`
-  - optional fail-open fallback: `MESSAGE_PROVIDER_FAIL_OPEN=true`
-- Persisted delivery metadata and provider IDs on outbound messages:
-  - stored in `CommunicationMessage.rawSourcePayload.delivery`
-  - includes provider name, status, provider message id, destination, timestamps, provider response/error
-- Added delivery audit trails:
+- Dispatch retry policy now guards invalid env values:
+  - non-integer retry settings fall back to safe defaults
+  - retry attempts are clamped to valid bounds
+  - invalid config emits warning logs instead of silently disabling retries
+- Retry semantics are explicitly verified:
+  - retryable provider errors (`5xx`) are retried and can recover
+  - non-retryable provider errors (`4xx`) do not retry
+  - optional `MESSAGE_PROVIDER_FAIL_OPEN=true` fallback remains constrained to non-stub provider failures
+- Outbound delivery metadata remains persisted on each message:
+  - `rawSourcePayload.delivery.provider`
+  - `rawSourcePayload.delivery.status`
+  - `rawSourcePayload.delivery.providerMessageId`
+  - `rawSourcePayload.delivery.destination`
+  - `rawSourcePayload.delivery.providerResponse/error`
+- Audit events are emitted for both success and failure paths:
   - `communication.delivery.updated`
   - `communication.delivery.failed`
 
-## Verification
+## Commands
 
-- API tests:
-  - `apps/api/test/message-dispatch.spec.ts`
-  - `apps/api/test/communications-delivery.spec.ts`
-  - existing compatibility tests still pass:
-    - `apps/api/test/communications-portal-attachments.spec.ts`
+- `pnpm --filter api test -- message-dispatch.spec.ts`
+- `pnpm --filter api test -- communications-delivery.spec.ts`
+- `pnpm --filter api test -- communications-portal-attachments.spec.ts`
 
-## Notes
+## Result
 
-- Provider credentials are configured via environment variables; no secrets are persisted in application tables.
-- Existing stub provider remains default for local/dev safety.
+`REQ-COMM-001` is verified with production provider adapters, persisted delivery/audit provenance, and hardened retry/failure behavior under invalid configuration and non-retryable provider errors.

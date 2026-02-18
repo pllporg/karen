@@ -94,4 +94,84 @@ describe('MessageDispatchService', () => {
     expect(stub.sendSms).toHaveBeenCalledTimes(1);
     expect(result.provider).toBe('stub');
   });
+
+  it('does not retry non-retryable provider failures', async () => {
+    process.env.MESSAGE_EMAIL_PROVIDER = 'resend';
+    process.env.MESSAGE_PROVIDER_MAX_RETRIES = '5';
+    process.env.MESSAGE_PROVIDER_RETRY_DELAY_MS = '0';
+
+    const resend = {
+      sendEmail: jest.fn().mockRejectedValue(
+        new MessageProviderRequestError('invalid recipient', {
+          provider: 'resend',
+          statusCode: 400,
+          retryable: false,
+        }),
+      ),
+    } as any;
+
+    const service = new MessageDispatchService(
+      { sendEmail: jest.fn(), sendSms: jest.fn() } as any,
+      resend,
+      { sendSms: jest.fn() } as any,
+    );
+
+    await expect(
+      service.sendEmail({
+        to: 'bad@example.com',
+        subject: 'Status',
+        body: 'Update',
+      }),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        details: expect.objectContaining({
+          provider: 'resend',
+          statusCode: 400,
+          retryable: false,
+        }),
+      }),
+    );
+
+    expect(resend.sendEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to default retry settings when env values are invalid', async () => {
+    process.env.MESSAGE_EMAIL_PROVIDER = 'resend';
+    process.env.MESSAGE_PROVIDER_MAX_RETRIES = 'abc';
+    process.env.MESSAGE_PROVIDER_RETRY_DELAY_MS = 'not-a-number';
+
+    const resend = {
+      sendEmail: jest
+        .fn()
+        .mockRejectedValueOnce(
+          new MessageProviderRequestError('provider outage', {
+            provider: 'resend',
+            statusCode: 503,
+            retryable: true,
+          }),
+        )
+        .mockResolvedValueOnce({
+          id: 'resend-2',
+          provider: 'resend',
+          status: 'queued',
+          externalMessageId: 'prov-2',
+        }),
+    } as any;
+
+    const service = new MessageDispatchService(
+      { sendEmail: jest.fn(), sendSms: jest.fn() } as any,
+      resend,
+      { sendSms: jest.fn() } as any,
+    );
+
+    const result = await service.sendEmail({
+      to: 'client@example.com',
+      subject: 'Status',
+      body: 'Update',
+    });
+
+    expect(resend.sendEmail).toHaveBeenCalledTimes(2);
+    expect(result.provider).toBe('resend');
+    expect(result.status).toBe('queued');
+  });
 });

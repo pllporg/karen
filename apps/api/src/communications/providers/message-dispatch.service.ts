@@ -57,8 +57,14 @@ export class MessageDispatchService {
     handler: () => Promise<SendMessageResult>;
     fallback: () => Promise<SendMessageResult>;
   }): Promise<SendMessageResult> {
-    const maxAttempts = Math.max(Number(process.env.MESSAGE_PROVIDER_MAX_RETRIES || 2), 1);
-    const retryDelayMs = Math.max(Number(process.env.MESSAGE_PROVIDER_RETRY_DELAY_MS || 200), 0);
+    const maxAttempts = this.readIntegerEnv('MESSAGE_PROVIDER_MAX_RETRIES', 2, {
+      min: 1,
+      max: 10,
+    });
+    const retryDelayMs = this.readIntegerEnv('MESSAGE_PROVIDER_RETRY_DELAY_MS', 200, {
+      min: 0,
+      max: 30_000,
+    });
     const failOpen = String(process.env.MESSAGE_PROVIDER_FAIL_OPEN || 'false').toLowerCase() === 'true';
 
     let lastError: unknown = null;
@@ -122,5 +128,24 @@ export class MessageDispatchService {
       provider: providerName,
       retryable: false,
     });
+  }
+
+  private readIntegerEnv(
+    name: string,
+    fallback: number,
+    bounds: { min: number; max: number },
+  ) {
+    const raw = process.env[name];
+    if (raw === undefined || raw === null || raw.trim() === '') return fallback;
+    if (!/^-?\d+$/.test(raw.trim())) {
+      this.logger.warn(`Invalid integer value for ${name}; using fallback ${fallback}.`);
+      return fallback;
+    }
+    const parsed = Number.parseInt(raw.trim(), 10);
+    if (!Number.isFinite(parsed)) {
+      this.logger.warn(`Invalid integer value for ${name}; using fallback ${fallback}.`);
+      return fallback;
+    }
+    return Math.max(bounds.min, Math.min(bounds.max, parsed));
   }
 }
