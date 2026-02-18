@@ -747,11 +747,11 @@
           "title": "Implement Filevine and PracticePanther connector production adapters",
           "requirementId": "REQ-INT-003",
           "promptSection": "Phase 2 connectors / Filevine + PracticePanther",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Integrations",
           "risk": "Medium",
           "labels": ["parity", "integrations", "migration"],
-          "problemStatement": "Connectors now run through shared idempotent sync/webhook pipeline with checkpointing and warnings; provider-specific authenticated data pulls are still pending.",
+          "problemStatement": "Filevine and PracticePanther connectors are verification-hardened for live/scaffold incremental pulls and webhook subscription registration, including provider error surfacing and external-subscription-id extraction.",
           "requirementExcerpt": "Provide connector structure with incremental sync and webhook support.",
           "acceptanceCriteria": [
             "At minimum, authenticated pull sync for core entities.",
@@ -761,7 +761,9 @@
           "apiImpact": "Connector adapters expanded; no breaking public API planned.",
           "securityImpact": "Same token/webhook security controls applied.",
           "definitionOfDone": [
-            "Connector readiness matrix published."
+            "Connector regression suite verifies live/scaffold sync behavior, token requirements, and webhook registration failure handling for Filevine + PracticePanther.",
+            "Optional provider webhook registration URLs are supported via env/config overrides and return provider external IDs when available.",
+            "Verification artifact documented at docs/parity/filevine-practicepanther-connector-verification.md."
           ]
         }
       ]
