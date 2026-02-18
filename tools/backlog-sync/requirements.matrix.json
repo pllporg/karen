@@ -233,11 +233,11 @@
           "title": "Implement full backup export package conformance checks",
           "requirementId": "REQ-PORT-004",
           "promptSection": "Export / Exit Strategy",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "migration", "exports"],
-          "problemStatement": "Export exists but needs strict dictionary conformance and integrity validation.",
+          "problemStatement": "Full-backup export is now verification-hardened with deterministic manifest integrity checks (duplicate path/documentVersion detection and placeholder/path consistency) in addition to required file/column/schema validation.",
           "requirementExcerpt": "ZIP with CSVs per entity and docs manifest; data dictionary page.",
           "acceptanceCriteria": [
             "Export output validated against documented manifest schema.",
@@ -247,7 +247,9 @@
           "apiImpact": "Export endpoint emits validated package metadata.",
           "securityImpact": "Signed export access and audit logging maintained.",
           "definitionOfDone": [
-            "Round-trip export/import verification published."
+            "Round-trip export/import verification published.",
+            "Conformance validator rejects duplicate manifest documentVersion/path rows and placeholder/path mismatches with explicit issue codes.",
+            "Verification artifact documented at docs/parity/export-conformance.md."
           ]
         }
       ]

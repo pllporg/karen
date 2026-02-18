@@ -24,6 +24,10 @@ This artifact records full-backup export conformance checks for portability pari
   - `matterId`
   - `title`
 - Manifest paths must remain under `documents/` and resolve to an actual ZIP entry.
+- Manifest entries enforce uniqueness and placeholder consistency:
+  - each `documentVersionId` appears once in `manifest.json`
+  - each manifest `path` is unique
+  - `.missing.txt` suffix and `placeholder` flag must agree
 
 ## Runtime Behavior
 
@@ -40,6 +44,6 @@ This artifact records full-backup export conformance checks for portability pari
   - validates required file/column presence in produced ZIP
   - validates manifest-to-ZIP path linkage
   - validates placeholder-path behavior when document blob retrieval fails
-  - validates conformance error reporting for malformed packages
+  - validates conformance error reporting for malformed packages, including duplicate manifest IDs/paths and placeholder mismatch
 - `apps/api/test/roundtrip.spec.ts`
   - validates generic contacts import can be exported into canonical full backup contacts CSV (roundtrip coherence)
