@@ -210,7 +210,10 @@ describe('ContactsService dedupe workflow', () => {
     const tx = {
       matterParticipant: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
       contactMethod: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
-      contactRelationship: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      contactRelationship: {
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
       externalReference: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
       communicationThread: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
       communicationParticipant: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
@@ -275,6 +278,13 @@ describe('ContactsService dedupe workflow', () => {
       data: { contactId: 'c1' },
     });
     expect(tx.contactRelationship.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.contactRelationship.deleteMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: 'org1',
+        fromContactId: 'c1',
+        toContactId: 'c1',
+      },
+    });
     expect(tx.externalReference.updateMany).toHaveBeenCalledWith({
       where: { organizationId: 'org1', entityType: 'contact', entityId: 'c2' },
       data: { entityId: 'c1' },

@@ -441,6 +441,14 @@ export class ContactsService {
         data: { toContactId: primary.id },
       });
 
+      await tx.contactRelationship.deleteMany({
+        where: {
+          organizationId: input.organizationId,
+          fromContactId: primary.id,
+          toContactId: primary.id,
+        },
+      });
+
       await tx.externalReference.updateMany({
         where: {
           organizationId: input.organizationId,

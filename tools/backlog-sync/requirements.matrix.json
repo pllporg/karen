@@ -210,7 +210,7 @@
           "title": "Build user-confirm merge workflow for dedupe suggestions",
           "requirementId": "REQ-PORT-003",
           "promptSection": "Import Framework / Dedupe engine + user-confirm merge UI",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "migration", "imports", "contacts"],
@@ -225,7 +225,7 @@
           "securityImpact": "Audit log and change traceability required.",
           "definitionOfDone": [
             "Dedupe confirmation flow includes explicit reviewer confirmation gate and cancel-safe behavior.",
-            "Merge service rejects self-referential merges/decisions and reassigns all high-risk contact references.",
+            "Merge service rejects self-referential merges/decisions, reassigns all high-risk contact references, and prunes self-referential relationship rows created during reassignment.",
             "Verification artifact published at docs/parity/dedupe-merge-verification.md."
           ]
         },
