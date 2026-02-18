@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T19:35:44.599Z",
+  "generatedAt": "2026-02-18T20:11:19.493Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 13,
+    "unresolvedRequirements": 11,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 8,
+      "phase-1": 6,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 13
+      "Complete": 11
     },
     "unresolvedCountsByRisk": {
-      "Medium": 12,
-      "High": 1
+      "Medium": 11
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 12,
-      "Complete:High": 1
+      "Complete:Medium": 11
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-PORTAL-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement secure portal attachments in message workflow",
-        "component": "Web",
-        "epicCode": "PARITY-07",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-AI-003",
         "parityStatus": "Complete",
@@ -93,15 +82,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-PORT-004",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement full backup export package conformance checks",
-        "component": "API",
-        "epicCode": "PARITY-03",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-PORTAL-002",
         "parityStatus": "Complete",
         "risk": "Medium",
@@ -127,6 +107,24 @@
         "component": "API",
         "epicCode": "PARITY-06",
         "phase": "phase-2"
+      },
+      {
+        "requirementId": "REQ-COMM-004",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Implement document retention policies with legal hold workflow",
+        "component": "API",
+        "epicCode": "PARITY-05",
+        "phase": "phase-2"
+      },
+      {
+        "requirementId": "REQ-MAT-004",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Implement advanced conflict rule profiles and resolution workflows",
+        "component": "API",
+        "epicCode": "PARITY-04",
+        "phase": "phase-2"
       }
     ]
   },
@@ -141,6 +139,20 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-30",
+        "title": "Implement secure portal attachments in message workflow",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:03:28.782Z",
+        "requirementId": "REQ-PORTAL-001"
+      },
+      {
+        "key": "KAR-35",
+        "title": "Implement style pack management with source document governance",
+        "state": "Done",
+        "updatedAt": "2026-02-18T19:48:45.056Z",
+        "requirementId": "REQ-AI-003"
+      },
       {
         "key": "KAR-16",
         "title": "Build user-confirm merge workflow for dedupe suggestions",
@@ -177,20 +189,6 @@
         "requirementId": "REQ-COMM-001"
       },
       {
-        "key": "KAR-35",
-        "title": "Implement style pack management with source document governance",
-        "state": "Done",
-        "updatedAt": "2026-02-18T18:32:29.595Z",
-        "requirementId": "REQ-AI-003"
-      },
-      {
-        "key": "KAR-30",
-        "title": "Implement secure portal attachments in message workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-18T18:16:19.891Z",
-        "requirementId": "REQ-PORTAL-001"
-      },
-      {
         "key": "KAR-14",
         "title": "Finalize MyCase ZIP importer field coverage and error mapping",
         "state": "Done",
@@ -214,17 +212,21 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T19:35:36.987Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:11:15.094Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "bd4a0ed5b8672e620bace716f60d002f82c88133",
+    "gitHead": "0f20599191881a130d0e6e2df4a60830028fa559",
     "gitStatusShort": [
-      "## main...origin/main",
+      "## lin/KAR-17-export-conformance-verification-hardening",
+      " M apps/api/src/exports/full-backup-contract.ts",
+      " M apps/api/test/exports-conformance.spec.ts",
+      " M docs/parity/export-conformance.md",
+      " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 3
+    "dirtyFileCount": 7
   }
 }

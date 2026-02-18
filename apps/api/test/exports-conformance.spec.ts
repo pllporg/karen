@@ -216,9 +216,26 @@ describe('ExportsService full backup conformance', () => {
           path: '../outside/path',
           matterId: '',
           title: '',
+          placeholder: false,
+        },
+        {
+          documentId: 'doc-2',
+          documentVersionId: 'dv-1',
+          path: 'documents/matter-1/evidence.missing.txt',
+          matterId: 'matter-1',
+          title: 'Duplicate Version',
+          placeholder: false,
+        },
+        {
+          documentId: 'doc-3',
+          documentVersionId: 'dv-3',
+          path: 'documents/matter-1/evidence.missing.txt',
+          matterId: 'matter-1',
+          title: 'Duplicate Path',
+          placeholder: true,
         },
       ],
-      archivePaths: ['contacts.csv', FULL_BACKUP_MANIFEST_FILE],
+      archivePaths: ['contacts.csv', FULL_BACKUP_MANIFEST_FILE, 'documents/matter-1/evidence.missing.txt'],
     });
 
     expect(result.valid).toBe(false);
@@ -229,6 +246,9 @@ describe('ExportsService full backup conformance', () => {
         expect.objectContaining({ code: 'manifest_missing_field' }),
         expect.objectContaining({ code: 'manifest_invalid_path' }),
         expect.objectContaining({ code: 'manifest_missing_blob' }),
+        expect.objectContaining({ code: 'manifest_duplicate_document_version' }),
+        expect.objectContaining({ code: 'manifest_duplicate_path' }),
+        expect.objectContaining({ code: 'manifest_placeholder_mismatch' }),
       ]),
     );
   });

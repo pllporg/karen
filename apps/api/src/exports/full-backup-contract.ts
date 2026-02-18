@@ -209,7 +209,10 @@ export type FullBackupValidationIssueCode =
   | 'missing_required_column'
   | 'manifest_missing_field'
   | 'manifest_invalid_path'
-  | 'manifest_missing_blob';
+  | 'manifest_missing_blob'
+  | 'manifest_duplicate_document_version'
+  | 'manifest_duplicate_path'
+  | 'manifest_placeholder_mismatch';
 
 export type FullBackupValidationIssue = {
   code: FullBackupValidationIssueCode;
@@ -233,6 +236,8 @@ export function validateFullBackupPackageConformance(input: {
 }): FullBackupValidationResult {
   const issues: FullBackupValidationIssue[] = [];
   const archivePaths = new Set(input.archivePaths);
+  const seenDocumentVersions = new Map<string, number>();
+  const seenPaths = new Map<string, number>();
 
   for (const contract of FULL_BACKUP_CSV_CONTRACT) {
     if (!archivePaths.has(contract.fileName) || !input.csvColumnsByFile[contract.fileName]) {
@@ -291,6 +296,31 @@ export function validateFullBackupPackageConformance(input: {
         });
       }
 
+      const priorPathIndex = seenPaths.get(path);
+      if (priorPathIndex !== undefined) {
+        issues.push({
+          code: 'manifest_duplicate_path',
+          file: FULL_BACKUP_MANIFEST_FILE,
+          field: 'path',
+          entryIndex,
+          message: `Manifest entry ${entryIndex} reuses path "${path}" from entry ${priorPathIndex}`,
+        });
+      } else {
+        seenPaths.set(path, entryIndex);
+      }
+
+      const placeholder = entry.placeholder === true;
+      const hasMissingSuffix = path.endsWith('.missing.txt');
+      if (placeholder !== hasMissingSuffix) {
+        issues.push({
+          code: 'manifest_placeholder_mismatch',
+          file: FULL_BACKUP_MANIFEST_FILE,
+          field: 'placeholder',
+          entryIndex,
+          message: `Manifest entry ${entryIndex} placeholder flag does not match path suffix for "${path}"`,
+        });
+      }
+
       if (!archivePaths.has(path)) {
         issues.push({
           code: 'manifest_missing_blob',
@@ -299,6 +329,21 @@ export function validateFullBackupPackageConformance(input: {
           entryIndex,
           message: `Manifest entry ${entryIndex} references missing file "${path}"`,
         });
+      }
+    }
+
+    if (typeof entry.documentVersionId === 'string' && entry.documentVersionId.trim().length > 0) {
+      const priorVersionIndex = seenDocumentVersions.get(entry.documentVersionId);
+      if (priorVersionIndex !== undefined) {
+        issues.push({
+          code: 'manifest_duplicate_document_version',
+          file: FULL_BACKUP_MANIFEST_FILE,
+          field: 'documentVersionId',
+          entryIndex,
+          message: `Manifest entry ${entryIndex} reuses documentVersionId "${entry.documentVersionId}" from entry ${priorVersionIndex}`,
+        });
+      } else {
+        seenDocumentVersions.set(entry.documentVersionId, entryIndex);
       }
     }
   });
