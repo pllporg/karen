@@ -38,7 +38,7 @@
           "title": "Implement upload malware scanning provider integration",
           "requirementId": "REQ-SEC-002",
           "promptSection": "SECURITY REQUIREMENTS / Malware scanning hook for uploads",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Infra",
           "risk": "High",
           "labels": ["parity", "security", "documents"],
@@ -167,7 +167,7 @@
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],
-          "problemStatement": "Importer works but needs complete object mapping and richer diagnostics.",
+          "problemStatement": "MyCase ZIP importer coverage is now verification-hardened with dependency-order safety checks, warning-context assertions for unlinked communications, and external-reference lineage/raw-payload integrity validation.",
           "requirementExcerpt": "Map contacts, cases, tasks, calendar, invoices/payments, time, notes/messages where possible.",
           "acceptanceCriteria": [
             "Complete mapping coverage matrix for MyCase CSV files.",
@@ -177,7 +177,9 @@
           "apiImpact": "Import result payload contains richer warning structures.",
           "securityImpact": "No material security impact.",
           "definitionOfDone": [
-            "Coverage matrix committed; tests passing."
+            "Coverage matrix + verification artifact committed.",
+            "MyCase importer regression suite asserts order safety, warning context, and external reference lineage.",
+            "Verification evidence documented in docs/parity/mycase-import-verification.md."
           ]
         },
         {
