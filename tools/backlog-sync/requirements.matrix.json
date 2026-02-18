@@ -332,11 +332,11 @@
           "title": "Implement advanced conflict rule profiles and resolution workflows",
           "requirementId": "REQ-MAT-004",
           "promptSection": "CRM / ConflictCheckResult + advanced conflict rule profiles",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "matters", "security", "phase-2"],
-          "problemStatement": "Conflict profile configuration, weighted scoring checks, recommendation output, and attorney resolution audit workflow are now implemented across admin API + UI.",
+          "problemStatement": "Conflict profile workflows are verification-hardened with safe partial-update merge semantics and scoped profile selection precedence (specific active scope beats global default).",
           "requirementExcerpt": "Advanced conflict rules should support profile-based matching, relationship-aware scoring, and logged attorney override decisions.",
           "acceptanceCriteria": [
             "Create conflict rule profiles with weighted match criteria and scope by practice area/matter type.",
@@ -346,7 +346,8 @@
           "apiImpact": "Added admin conflict rule profile CRUD, conflict check execution/list, and resolution endpoints with result payload scoring and resolution history fields.",
           "securityImpact": "Reduces conflict-of-interest risk and improves defensible compliance records.",
           "definitionOfDone": [
-            "Advanced conflict profile CRUD, scoring checks, and resolution audit tests are passing with evidence in docs/parity/conflict-rule-profiles.md."
+            "Advanced conflict profile CRUD, scoring checks, and resolution audit tests are passing with evidence in docs/parity/conflict-rule-profiles.md.",
+            "Profile updates preserve unspecified scope/threshold/weight/default fields and conflict checks choose the most specific active scoped profile."
           ]
         },
         {

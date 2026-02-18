@@ -288,19 +288,33 @@ export class AdminService {
     if (!existing && !input.name) {
       throw new UnprocessableEntityException('Profile name is required');
     }
+
+    const mergedWeights: Partial<ConflictRuleWeights> = {
+      ...(existing?.weights || {}),
+      ...(input.weights || {}),
+    };
+    const mergedThresholds: Partial<ConflictRuleThresholds> = {
+      ...(existing?.thresholds || {}),
+      ...(input.thresholds || {}),
+    };
+
     const nextProfile = this.normalizeConflictProfile({
       id: targetId,
       name: input.name ?? existing?.name ?? 'Conflict Profile',
-      description: input.description,
-      practiceAreas: input.practiceAreas,
-      matterTypeIds: input.matterTypeIds,
-      isDefault: input.isDefault,
-      isActive: input.isActive,
-      thresholds: input.thresholds,
-      weights: input.weights,
+      description: input.description ?? existing?.description,
+      practiceAreas: input.practiceAreas ?? existing?.practiceAreas,
+      matterTypeIds: input.matterTypeIds ?? existing?.matterTypeIds,
+      isDefault: input.isDefault ?? existing?.isDefault,
+      isActive: input.isActive ?? existing?.isActive,
+      thresholds: mergedThresholds,
+      weights: mergedWeights,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
     });
+
+    if (!nextProfile.isActive && nextProfile.isDefault) {
+      nextProfile.isDefault = false;
+    }
 
     const nextProfiles = profiles.filter((profile) => profile.id !== targetId);
     if (nextProfile.isDefault) {
@@ -312,6 +326,12 @@ export class AdminService {
     }
     nextProfiles.push(nextProfile);
     nextProfiles.sort((a, b) => a.name.localeCompare(b.name));
+    if (!nextProfiles.some((profile) => profile.isDefault)) {
+      const fallbackDefault = nextProfiles.find((profile) => profile.isActive) || nextProfiles[0];
+      if (fallbackDefault) {
+        fallbackDefault.isDefault = true;
+      }
+    }
 
     const updated = await this.prisma.organization.update({
       where: { id: input.organizationId },
@@ -616,20 +636,33 @@ export class AdminService {
 
     const practiceArea = (input.practiceArea || '').trim().toLowerCase();
     const matterTypeId = (input.matterTypeId || '').trim().toLowerCase();
-    const scoped = input.profiles.filter((profile) => {
-      if (!profile.isActive) {
-        return false;
-      }
-      const practiceMatch =
-        profile.practiceAreas.length === 0 ||
-        profile.practiceAreas.some((value) => value.toLowerCase() === practiceArea);
-      const matterTypeMatch =
-        profile.matterTypeIds.length === 0 ||
-        profile.matterTypeIds.some((value) => value.toLowerCase() === matterTypeId);
-      return practiceMatch && matterTypeMatch;
-    });
+    const scoped = input.profiles
+      .filter((profile) => {
+        if (!profile.isActive) {
+          return false;
+        }
+        const practiceMatch =
+          profile.practiceAreas.length === 0 ||
+          profile.practiceAreas.some((value) => value.toLowerCase() === practiceArea);
+        const matterTypeMatch =
+          profile.matterTypeIds.length === 0 ||
+          profile.matterTypeIds.some((value) => value.toLowerCase() === matterTypeId);
+        return practiceMatch && matterTypeMatch;
+      })
+      .map((profile) => ({
+        profile,
+        specificity:
+          (profile.practiceAreas.length > 0 ? 1 : 0) +
+          (profile.matterTypeIds.length > 0 ? 1 : 0),
+      }));
 
-    const defaultProfile = scoped.find((profile) => profile.isDefault) || scoped[0];
+    if (scoped.length === 0) {
+      throw new UnprocessableEntityException('No active conflict rule profile available');
+    }
+
+    const maxSpecificity = Math.max(...scoped.map((entry) => entry.specificity));
+    const candidates = scoped.filter((entry) => entry.specificity === maxSpecificity).map((entry) => entry.profile);
+    const defaultProfile = candidates.find((profile) => profile.isDefault) || candidates[0];
     if (!defaultProfile) {
       throw new UnprocessableEntityException('No active conflict rule profile available');
     }
