@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T21:25:19.210Z",
+  "generatedAt": "2026-02-18T21:34:51.981Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,36 +14,27 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 4,
+    "unresolvedRequirements": 3,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 4
+      "phase-2": 3
     },
     "unresolvedCountsByStatus": {
-      "Complete": 4
+      "Complete": 3
     },
     "unresolvedCountsByRisk": {
-      "Medium": 4
+      "Medium": 3
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 4
+      "Complete:Medium": 3
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-BILL-004",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-2"
-      },
       {
         "requirementId": "REQ-COMM-004",
         "parityStatus": "Complete",
@@ -84,6 +75,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-47",
+        "title": "Implement trust reconciliation workflows with discrepancy resolution",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:29:32.488Z",
+        "requirementId": "REQ-BILL-003"
+      },
       {
         "key": "KAR-31",
         "title": "Replace e-sign stub with provider abstraction implementation",
@@ -146,34 +144,26 @@
         "state": "Done",
         "updatedAt": "2026-02-18T19:28:43.473Z",
         "requirementId": "REQ-PORT-003"
-      },
-      {
-        "key": "KAR-15",
-        "title": "Finalize Clio CSV/XLSX template importer coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-18T19:21:45.723Z",
-        "requirementId": "REQ-PORT-002"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:25:16.756Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:34:50.737Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "417892848dc62d9990fc8befcd91ac895e8e92b9",
+    "gitHead": "f402b34dc865cb34383060248ad6e7c0d2efcd75",
     "gitStatusShort": [
-      "## lin/KAR-47-bill-003-verification-hardening",
-      " M apps/api/src/billing/billing.service.ts",
+      "## lin/KAR-48-bill-004-verification-hardening",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/trust-reconciliation-workflows.md",
+      " M docs/parity/ledes-export-workflows.md",
       " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
-      "?? apps/api/test/billing-trust-reconciliation-verification.spec.ts",
+      "?? apps/api/test/billing-ledes-verification.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 8
   }
 }
