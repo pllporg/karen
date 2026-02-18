@@ -424,11 +424,11 @@
           "title": "Expand document automation coverage for merge fields and generated outputs",
           "requirementId": "REQ-COMM-003",
           "promptSection": "Document Management + Automation",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "documents"],
-          "problemStatement": "DOCX/PDF generation exists but merge-source breadth and template governance are limited.",
+          "problemStatement": "Document automation is now verified with strict template governance, merge patch sanitization, and generated artifact provenance/audit coverage.",
           "requirementExcerpt": "DOCX template merge from matter/contact/custom fields and PDF generation for invoices/finalized letters.",
           "acceptanceCriteria": [
             "Merge context supports matter/contact/custom field graph.",
@@ -438,7 +438,9 @@
           "apiImpact": "Template merge endpoint payload/response enriched.",
           "securityImpact": "Generated docs inherit confidentiality controls.",
           "definitionOfDone": [
-            "Template merge acceptance suite passes."
+            "Template merge tests verify strict validation behavior, unsupported template-type rejection, and merge patch sanitization controls.",
+            "Generated PDF coverage verifies provenance metadata and document.pdf.generated audit events.",
+            "Verification artifact documented at docs/parity/document-automation-coverage.md."
           ]
         },
         {

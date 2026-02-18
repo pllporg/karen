@@ -926,10 +926,14 @@ export class DocumentsService {
     if (!template) {
       throw new NotFoundException('Template document version not found');
     }
+    if (!this.isDocxTemplateMimeType(template.mimeType)) {
+      throw new UnprocessableEntityException('Template document version must be a DOCX file');
+    }
 
     const strictValidation = input.strictValidation ?? true;
     const baseMergeContext = await this.buildTemplateMergeContext(input.user, input.matterId);
-    const mergeContext = this.deepMergeRecords(baseMergeContext, input.mergeData ?? {});
+    const mergeData = this.sanitizeMergePatch(input.mergeData ?? {});
+    const mergeContext = this.deepMergeRecords(baseMergeContext, mergeData);
 
     const templateBuffer = await this.s3.getObjectBuffer(template.storageKey);
     const zip = new PizZip(templateBuffer);
@@ -969,7 +973,7 @@ export class DocumentsService {
       templateVersionId: template.id,
       strictValidation,
       unresolvedMergeFields,
-      providedMergeDataKeys: Object.keys(input.mergeData ?? {}),
+      providedMergeDataKeys: Object.keys(mergeData),
       mergeContextSummary: {
         participantCount: baseMergeContext.participants.length,
         matterCustomFieldCount: Object.keys(baseMergeContext.customFields.matter).length,
@@ -1377,6 +1381,9 @@ export class DocumentsService {
   private deepMergeRecords<T extends Record<string, unknown>>(base: T, patch: Record<string, unknown>): T {
     const merged: Record<string, unknown> = { ...base };
     for (const [key, value] of Object.entries(patch)) {
+      if (this.isUnsafeMergeKey(key)) {
+        continue;
+      }
       if (this.isRecord(value) && this.isRecord(merged[key])) {
         merged[key] = this.deepMergeRecords(
           merged[key] as Record<string, unknown>,
@@ -1391,6 +1398,32 @@ export class DocumentsService {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  private sanitizeMergePatch(patch: Record<string, unknown>) {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (this.isUnsafeMergeKey(key)) {
+        continue;
+      }
+      if (this.isRecord(value)) {
+        sanitized[key] = this.sanitizeMergePatch(value);
+        continue;
+      }
+      sanitized[key] = value;
+    }
+    return sanitized;
+  }
+
+  private isUnsafeMergeKey(key: string) {
+    return key === '__proto__' || key === 'prototype' || key === 'constructor';
+  }
+
+  private isDocxTemplateMimeType(mimeType: string | null | undefined) {
+    return (
+      mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimeType === 'application/vnd.ms-word.document.macroEnabled.12'
+    );
   }
 
   private async auditBlockedUpload(
