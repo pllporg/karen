@@ -462,6 +462,7 @@ export class ClioTemplateImportPlugin implements ImportPlugin {
       const entityHint = asString(normalized.entity_type || 'contacts');
       const definition = findDefinition(entityHint);
       if (!definition) return [];
+      const sourceEntity = normalizeKey(entityHint) || normalizeKey(definition.aliases[0]);
 
       const transformed = definition.transform(rawInput);
       const warnings = appendUnmappedColumnWarning(rawInput, definition.knownColumns, transformed.warnings);
@@ -469,7 +470,7 @@ export class ClioTemplateImportPlugin implements ImportPlugin {
         {
           entityType: definition.entityType,
           rowNumber: index + 1,
-          rawJson: attachSource(rawInput, transformed.rawJson, sourceFilename, definition.aliases[0]),
+          rawJson: attachSource(rawInput, transformed.rawJson, sourceFilename, sourceEntity),
           warnings,
         },
       ];
@@ -488,12 +489,13 @@ export class ClioTemplateImportPlugin implements ImportPlugin {
       const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: null });
 
       records.forEach((rawInput, index) => {
+        const sourceEntity = normalizeKey(sheetName) || normalizeKey(definition.aliases[0]);
         const transformed = definition.transform(rawInput);
         const warnings = appendUnmappedColumnWarning(rawInput, definition.knownColumns, transformed.warnings);
         rows.push({
           entityType: definition.entityType,
           rowNumber: index + 1,
-          rawJson: attachSource(rawInput, transformed.rawJson, `${sourceFilename}#${sheetName}`, definition.aliases[0]),
+          rawJson: attachSource(rawInput, transformed.rawJson, `${sourceFilename}#${sheetName}`, sourceEntity),
           warnings,
         });
       });

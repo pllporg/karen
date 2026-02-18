@@ -492,6 +492,71 @@ describe('ImportsService', () => {
         }),
       ]),
     );
+
+    const noteRow = rows.find((row) => (row.rawJson as Record<string, unknown>).id === 'n1');
+    const phoneRow = rows.find((row) => (row.rawJson as Record<string, unknown>).id === 'p1');
+    const emailRow = rows.find((row) => (row.rawJson as Record<string, unknown>).id === 'em1');
+
+    expect(noteRow?.rawJson).toMatchObject({
+      __source_file: 'clio-template-full.csv',
+      __source_entity: 'notes',
+    });
+    expect(phoneRow?.rawJson).toMatchObject({
+      __source_file: 'clio-template-full.csv',
+      __source_entity: 'phone_logs',
+    });
+    expect(emailRow?.rawJson).toMatchObject({
+      __source_file: 'clio-template-full.csv',
+      __source_entity: 'emails',
+    });
+  });
+
+  it('captures row-level Clio error context for unresolved matter references', async () => {
+    const csv = Buffer.from('entity_type,id,title,due_date,legacy_column\ntasks,t99,Missing Matter Task,2026-05-10,legacy-task\n');
+
+    const { prisma, state } = buildImportPrismaMock();
+    const service = new ImportsService(prisma, { appendEvent: jest.fn() } as any);
+    service.registerPlugin(new ClioTemplateImportPlugin());
+
+    const batch = await service.runImport({
+      user: { id: 'u1', organizationId: 'org1' } as any,
+      sourceSystem: 'clio_template',
+      file: {
+        buffer: csv,
+        originalname: 'clio-missing-matter.csv',
+        mimetype: 'text/csv',
+        size: csv.length,
+        fieldname: 'file',
+        encoding: '7bit',
+      } as any,
+    });
+
+    expect(batch?.summaryJson).toMatchObject({
+      total: 1,
+      imported: 0,
+      failed: 1,
+      warnings: 2,
+    });
+
+    expect(state.importItems).toHaveLength(1);
+    expect(state.importItems[0].status).toBe('FAILED');
+    expect(state.importItems[0].warningsJson).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'missing_matter_reference' }),
+        expect.objectContaining({ code: 'unmapped_columns' }),
+      ]),
+    );
+    expect(state.importItems[0].errorsJson).toEqual(
+      expect.objectContaining({
+        message: 'Task row missing resolvable matter reference',
+        rowContext: expect.objectContaining({
+          entityType: 'task',
+          sourceFile: 'clio-missing-matter.csv',
+          sourceEntity: 'tasks',
+          externalId: 't99',
+        }),
+      }),
+    );
   });
 
   it('imports Clio XLSX workbook with sheet parity and unmapped-column diagnostics', async () => {
@@ -535,5 +600,34 @@ describe('ImportsService', () => {
     expect(state.calendarEvents).toHaveLength(1);
     expect(state.timeEntries).toHaveLength(1);
     expect(state.communicationMessages).toHaveLength(3);
+
+    const noteRef = state.externalReferences.find((ref) => ref.entityType === 'communication_message' && ref.externalId === 'n1');
+    const phoneRef = state.externalReferences.find((ref) => ref.entityType === 'communication_message' && ref.externalId === 'p1');
+    const emailRef = state.externalReferences.find((ref) => ref.entityType === 'communication_message' && ref.externalId === 'em1');
+
+    expect(noteRef).toMatchObject({
+      sourceSystem: 'clio_template',
+      externalParentId: 'm1',
+      rawSourcePayload: expect.objectContaining({
+        __source_file: 'clio-template.xlsx#Notes',
+        __source_entity: 'notes',
+      }),
+    });
+    expect(phoneRef).toMatchObject({
+      sourceSystem: 'clio_template',
+      externalParentId: 'm1',
+      rawSourcePayload: expect.objectContaining({
+        __source_file: 'clio-template.xlsx#Phone_Logs',
+        __source_entity: 'phone_logs',
+      }),
+    });
+    expect(emailRef).toMatchObject({
+      sourceSystem: 'clio_template',
+      externalParentId: 'm1',
+      rawSourcePayload: expect.objectContaining({
+        __source_file: 'clio-template.xlsx#Emails',
+        __source_entity: 'emails',
+      }),
+    });
   });
 });

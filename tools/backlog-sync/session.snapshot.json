@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T16:11:08.891Z",
+  "generatedAt": "2026-02-18T16:27:34.487Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,25 +14,25 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 22,
+    "unresolvedRequirements": 21,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 17,
+      "phase-1": 16,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 22
+      "Complete": 21
     },
     "unresolvedCountsByRisk": {
-      "High": 5,
-      "Medium": 17
+      "Medium": 17,
+      "High": 4
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 5,
-      "Complete:Medium": 17
+      "Complete:Medium": 17,
+      "Complete:High": 4
     }
   },
   "priority": {
@@ -72,15 +72,6 @@
         "title": "Implement secure portal attachments in message workflow",
         "component": "Web",
         "epicCode": "PARITY-07",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-SEC-003",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Implement encrypted OAuth token storage with key management",
-        "component": "API",
-        "epicCode": "PARITY-01",
         "phase": "phase-1"
       },
       {
@@ -127,6 +118,15 @@
         "component": "API",
         "epicCode": "PARITY-02",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-DATA-003",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Add pgvector-backed similarity retrieval path for source chunks",
+        "component": "Data",
+        "epicCode": "PARITY-02",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,15 +140,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-14"
+      "KAR-15"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-15",
+        "title": "Finalize Clio CSV/XLSX template importer coverage",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T16:24:43.068Z",
+        "requirementId": "REQ-PORT-002"
+      },
+      {
         "key": "KAR-14",
         "title": "Finalize MyCase ZIP importer field coverage and error mapping",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T16:08:25.220Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T16:15:08.852Z",
         "requirementId": "REQ-PORT-001"
       },
       {
@@ -206,24 +213,18 @@
         "state": "Done",
         "updatedAt": "2026-02-18T00:55:57.563Z",
         "requirementId": "REQ-BILL-002"
-      },
-      {
-        "key": "KAR-26",
-        "title": "PARITY-06 Billing + Trust + Payments",
-        "state": "Backlog",
-        "updatedAt": "2026-02-18T00:52:11.882Z",
-        "requirementId": "PARITY-06"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:11:07.416Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:27:32.852Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "0ddb6b2894f2304d226feca779472aeb535d04d3",
+    "gitHead": "5bc63e57c299858c5971a131f934046fbfb94411",
     "gitStatusShort": [
-      "## lin/KAR-14-mycase-import-verification-hardening",
+      "## lin/KAR-15-clio-import-verification-hardening",
+      " M apps/api/src/imports/plugins/clio-template.plugin.ts",
       " M apps/api/test/imports.spec.ts",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
@@ -231,9 +232,9 @@
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/mycase-import-verification.md",
+      "?? docs/parity/clio-import-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 10
   }
 }
