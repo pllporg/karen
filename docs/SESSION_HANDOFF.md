@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-17T22:43:53.695Z`
+- Snapshot Timestamp: `2026-02-18T00:52:39.300Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-17T22:43:52.533Z`
+- Last Successful Mirror Verify: `2026-02-18T00:52:38.003Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-17: Verified `REQ-BILL-002` by hardening trust-transfer atomicity (paired transfer entries + ledger updates inside one DB transaction), adding transfer balance metadata to audit events, and fixing reconciliation transfer-delta logic to interpret `| out`/`| in` directions with expanded regression coverage (`docs/parity/billing-trust-ledger-verification.md`).
 - 2026-02-17: Verified `REQ-BILL-001` by hardening Stripe reconciliation idempotency with event-level dedupe (`stripe_event:<eventId>`), preserving payment-intent dedupe, adding deterministic `payment_intent.succeeded` paid-transition coverage, and verifying signature-enforced webhook parsing when `STRIPE_WEBHOOK_SECRET` is configured (`docs/parity/billing-stripe-reconciliation-verification.md`).
 - 2026-02-17: Verified `REQ-AI-002` by hardening ingestion/generation governance with explicit `quarantinedFromContext` metadata, citation-policy enforcement that appends trusted chunk citations when missing, `policyCompliance` artifact metadata, `ai.output.citation_policy_enforced` audit events, and expanded adversarial API coverage (`docs/parity/ai-ingestion-security-verification.md`).
 - 2026-02-17: Verified `REQ-AI-001` by hardening deadline-confirmation server validation (non-empty selections, valid dates, at-least-one output), adding explicit `ai.deadlines.confirmed` audit events with selection/created-record metadata, and extending API/Web regression coverage (`docs/parity/ai-deadline-confirmation-verification.md`).

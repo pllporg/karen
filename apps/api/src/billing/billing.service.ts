@@ -481,104 +481,114 @@ export class BillingService {
     const amount = Number(Math.abs(input.amount).toFixed(2));
     if (amount <= 0) throw new Error('Transfer amount must be greater than zero');
 
-    const sourceLedger = await this.prisma.matterTrustLedger.findFirst({
-      where: {
-        organizationId: input.user.organizationId,
-        matterId: input.fromMatterId,
-        trustAccountId: input.trustAccountId,
-      },
-    });
-    const sourceBalance = sourceLedger?.balance || 0;
-    const nextSourceBalance = Number((sourceBalance - amount).toFixed(2));
-    this.assertTrustBalanceInvariant(nextSourceBalance);
-
-    const destinationLedger = await this.prisma.matterTrustLedger.findFirst({
-      where: {
-        organizationId: input.user.organizationId,
-        matterId: input.toMatterId,
-        trustAccountId: input.trustAccountId,
-      },
-    });
-    const nextDestinationBalance = Number(((destinationLedger?.balance || 0) + amount).toFixed(2));
-
     const transferId = `transfer:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
-
-    const [withdrawalTx, depositTx] = await this.prisma.$transaction([
-      this.prisma.trustTransaction.create({
-        data: {
-          organizationId: input.user.organizationId,
-          trustAccountId: input.trustAccountId,
-          matterId: input.fromMatterId,
-          type: TrustTransactionType.TRANSFER,
-          amount,
-          description: `${input.description || 'Trust transfer'} | ${transferId} | out`,
-        },
-      }),
-      this.prisma.trustTransaction.create({
-        data: {
-          organizationId: input.user.organizationId,
-          trustAccountId: input.trustAccountId,
-          matterId: input.toMatterId,
-          type: TrustTransactionType.TRANSFER,
-          amount,
-          description: `${input.description || 'Trust transfer'} | ${transferId} | in`,
-        },
-      }),
-    ]);
-
-    if (!sourceLedger) {
-      await this.prisma.matterTrustLedger.create({
-        data: {
+    const transferResult = await this.prisma.$transaction(async (tx) => {
+      const sourceLedger = await tx.matterTrustLedger.findFirst({
+        where: {
           organizationId: input.user.organizationId,
           matterId: input.fromMatterId,
           trustAccountId: input.trustAccountId,
-          balance: nextSourceBalance,
         },
       });
-    } else {
-      await this.prisma.matterTrustLedger.update({
-        where: { id: sourceLedger.id },
-        data: { balance: nextSourceBalance },
-      });
-    }
+      const sourceBalance = sourceLedger?.balance || 0;
+      const nextSourceBalance = Number((sourceBalance - amount).toFixed(2));
+      this.assertTrustBalanceInvariant(nextSourceBalance);
 
-    if (!destinationLedger) {
-      await this.prisma.matterTrustLedger.create({
-        data: {
+      const destinationLedger = await tx.matterTrustLedger.findFirst({
+        where: {
           organizationId: input.user.organizationId,
           matterId: input.toMatterId,
           trustAccountId: input.trustAccountId,
-          balance: nextDestinationBalance,
         },
       });
-    } else {
-      await this.prisma.matterTrustLedger.update({
-        where: { id: destinationLedger.id },
-        data: { balance: nextDestinationBalance },
-      });
-    }
+      const nextDestinationBalance = Number(((destinationLedger?.balance || 0) + amount).toFixed(2));
+
+      const [withdrawalTx, depositTx] = await Promise.all([
+        tx.trustTransaction.create({
+          data: {
+            organizationId: input.user.organizationId,
+            trustAccountId: input.trustAccountId,
+            matterId: input.fromMatterId,
+            type: TrustTransactionType.TRANSFER,
+            amount,
+            description: `${input.description || 'Trust transfer'} | ${transferId} | out`,
+          },
+        }),
+        tx.trustTransaction.create({
+          data: {
+            organizationId: input.user.organizationId,
+            trustAccountId: input.trustAccountId,
+            matterId: input.toMatterId,
+            type: TrustTransactionType.TRANSFER,
+            amount,
+            description: `${input.description || 'Trust transfer'} | ${transferId} | in`,
+          },
+        }),
+      ]);
+
+      if (!sourceLedger) {
+        await tx.matterTrustLedger.create({
+          data: {
+            organizationId: input.user.organizationId,
+            matterId: input.fromMatterId,
+            trustAccountId: input.trustAccountId,
+            balance: nextSourceBalance,
+          },
+        });
+      } else {
+        await tx.matterTrustLedger.update({
+          where: { id: sourceLedger.id },
+          data: { balance: nextSourceBalance },
+        });
+      }
+
+      if (!destinationLedger) {
+        await tx.matterTrustLedger.create({
+          data: {
+            organizationId: input.user.organizationId,
+            matterId: input.toMatterId,
+            trustAccountId: input.trustAccountId,
+            balance: nextDestinationBalance,
+          },
+        });
+      } else {
+        await tx.matterTrustLedger.update({
+          where: { id: destinationLedger.id },
+          data: { balance: nextDestinationBalance },
+        });
+      }
+
+      return {
+        withdrawalTx,
+        depositTx,
+        nextSourceBalance,
+        nextDestinationBalance,
+      };
+    });
 
     await this.audit.appendEvent({
       organizationId: input.user.organizationId,
       actorUserId: input.user.id,
       action: 'trust.transfer.completed',
       entityType: 'trustTransaction',
-      entityId: withdrawalTx.id,
+      entityId: transferResult.withdrawalTx.id,
       metadata: {
         transferId,
         trustAccountId: input.trustAccountId,
         fromMatterId: input.fromMatterId,
         toMatterId: input.toMatterId,
         amount,
+        sourceBalance: transferResult.nextSourceBalance,
+        destinationBalance: transferResult.nextDestinationBalance,
       },
     });
 
     return {
       transferId,
-      withdrawalTransactionId: withdrawalTx.id,
-      depositTransactionId: depositTx.id,
-      sourceBalance: nextSourceBalance,
-      destinationBalance: nextDestinationBalance,
+      withdrawalTransactionId: transferResult.withdrawalTx.id,
+      depositTransactionId: transferResult.depositTx.id,
+      sourceBalance: transferResult.nextSourceBalance,
+      destinationBalance: transferResult.nextDestinationBalance,
     };
   }
 
@@ -660,7 +670,7 @@ export class BillingService {
     for (const tx of transactions) {
       const key = `${tx.trustAccountId}:${tx.matterId}`;
       const current = expectedByKey.get(key) || 0;
-      const delta = this.computeTrustDelta(tx.type, tx.amount);
+      const delta = this.computeTrustReconciliationDelta(tx);
       expectedByKey.set(key, Number((current + delta).toFixed(2)));
     }
 
@@ -1086,7 +1096,7 @@ export class BillingService {
     for (const tx of transactions) {
       const key = `${tx.trustAccountId}:${tx.matterId}`;
       const current = expectedByKey.get(key) || 0;
-      const delta = this.computeTrustDelta(tx.type, tx.amount);
+      const delta = this.computeTrustReconciliationDelta(tx);
       expectedByKey.set(key, Number((current + delta).toFixed(2)));
     }
 
@@ -1664,6 +1674,26 @@ export class BillingService {
       default:
         throw new Error(`Unsupported trust transaction type: ${type}`);
     }
+  }
+
+  private computeTrustReconciliationDelta(tx: {
+    type: TrustTransactionType;
+    amount: number;
+    description?: string | null;
+  }): number {
+    if (tx.type !== TrustTransactionType.TRANSFER) {
+      return this.computeTrustDelta(tx.type, tx.amount);
+    }
+
+    const descriptor = String(tx.description || '').toLowerCase();
+    if (/\|\s*in\s*$/.test(descriptor)) {
+      return Number(Math.abs(tx.amount).toFixed(2));
+    }
+    if (/\|\s*out\s*$/.test(descriptor)) {
+      return Number((-Math.abs(tx.amount)).toFixed(2));
+    }
+
+    return this.computeTrustDelta(tx.type, tx.amount);
   }
 
   private assertTrustBalanceInvariant(nextBalance: number) {

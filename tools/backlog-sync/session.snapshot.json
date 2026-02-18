@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-17T22:43:53.695Z",
+  "generatedAt": "2026-02-18T00:52:39.300Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 30,
+    "unresolvedRequirements": 29,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 25,
+      "phase-1": 24,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 30
+      "Complete": 29
     },
     "unresolvedCountsByRisk": {
-      "High": 13,
+      "High": 12,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 13,
+      "Complete:High": 12,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-BILL-002",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Complete trust accounting reports and ledger invariants",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-DATA-001",
         "parityStatus": "Complete",
@@ -127,37 +118,53 @@
         "component": "Web",
         "epicCode": "PARITY-07",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-SEC-001",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Harden tenant isolation test coverage across all core entities",
+        "component": "API",
+        "epicCode": "PARITY-01",
+        "phase": "phase-1"
       }
     ]
   },
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 47,
+    "scopedIssueCount": 48,
     "stateCounts": {
       "In Progress": 1,
-      "Done": 33,
+      "Done": 34,
       "In Review": 1,
       "Backlog": 12
     },
     "inProgressIssueKeys": [
-      "KAR-61"
+      "KAR-62"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-61",
-        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
+        "key": "KAR-62",
+        "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
         "state": "In Progress",
-        "updatedAt": "2026-02-17T22:43:34.521Z",
-        "requirementId": "REQ-BILL-001"
+        "updatedAt": "2026-02-18T00:52:11.882Z",
+        "requirementId": "REQ-BILL-002"
       },
       {
         "key": "KAR-26",
         "title": "PARITY-06 Billing + Trust + Payments",
         "state": "Backlog",
-        "updatedAt": "2026-02-17T22:39:55.432Z",
+        "updatedAt": "2026-02-18T00:52:11.882Z",
         "requirementId": "PARITY-06"
+      },
+      {
+        "key": "KAR-61",
+        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-18T00:37:07.780Z",
+        "requirementId": "REQ-BILL-001"
       },
       {
         "key": "KAR-34",
@@ -207,37 +214,29 @@
         "state": "Done",
         "updatedAt": "2026-02-17T19:03:45.185Z",
         "requirementId": "REQ-MAT-005"
-      },
-      {
-        "key": "KAR-44",
-        "title": "Implement advanced conflict rule profiles and resolution workflows",
-        "state": "Done",
-        "updatedAt": "2026-02-17T18:38:27.887Z",
-        "requirementId": "REQ-MAT-004"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-17T22:43:52.533Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T00:52:38.003Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "f1dc8d3ba85f9f412096e1c154944945e0f62e48",
+    "gitHead": "8a00fafe44fa2f6102f8f598d1dcf0e6579e0bce",
     "gitStatusShort": [
-      "## lin/KAR-61-billing-stripe-verification-hardening",
+      "## lin/KAR-62-billing-trust-verification-hardening",
       " M apps/api/src/billing/billing.service.ts",
-      " M apps/api/test/billing-stripe-reconciliation.spec.ts",
+      " M apps/api/test/billing-trust-invariants.spec.ts",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
       "?? Brandguide.md",
       "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/billing-stripe-reconciliation-verification.md",
+      "?? docs/parity/billing-trust-ledger-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 12
+    "dirtyFileCount": 11
   }
 }

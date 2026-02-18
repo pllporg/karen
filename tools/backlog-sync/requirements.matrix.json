@@ -480,11 +480,11 @@
           "title": "Complete trust accounting reports and ledger invariants",
           "requirementId": "REQ-BILL-002",
           "promptSection": "Billing & Trust / Trust ledger entries and basic trust reporting",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "billing"],
-          "problemStatement": "Trust tables exist but reconciliation and report completeness need hardening.",
+          "problemStatement": "Trust invariants and reporting are now verified with atomic transfer updates, transfer-aware reconciliation delta logic, and expanded regression coverage.",
           "requirementExcerpt": "Trust ledger and basic trust reporting required.",
           "acceptanceCriteria": [
             "Matter and account-level trust balance reports implemented.",
@@ -494,7 +494,8 @@
           "apiImpact": "Trust report endpoints expanded.",
           "securityImpact": "Financial data integrity improved.",
           "definitionOfDone": [
-            "Trust accounting regression tests pass."
+            "Trust regression tests cover transfer atomicity, reconciliation mismatch detection, and transfer in/out delta correctness.",
+            "Verification artifact documented at docs/parity/billing-trust-ledger-verification.md."
           ]
         },
         {
