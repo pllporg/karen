@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:11:19.493Z",
+  "generatedAt": "2026-02-18T20:19:30.517Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 11,
+    "unresolvedRequirements": 10,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 6,
+      "phase-1": 5,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 11
+      "Complete": 10
     },
     "unresolvedCountsByRisk": {
-      "Medium": 11
+      "Medium": 10
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 11
+      "Complete:Medium": 10
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-AI-003",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement style pack management with source document governance",
-        "component": "Web",
-        "epicCode": "PARITY-08",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-INT-003",
         "parityStatus": "Complete",
@@ -125,6 +116,15 @@
         "component": "API",
         "epicCode": "PARITY-04",
         "phase": "phase-2"
+      },
+      {
+        "requirementId": "REQ-MAT-005",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
+        "component": "API",
+        "epicCode": "PARITY-04",
+        "phase": "phase-2"
       }
     ]
   },
@@ -139,6 +139,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-17",
+        "title": "Implement full backup export package conformance checks",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:16:45.391Z",
+        "requirementId": "REQ-PORT-004"
+      },
       {
         "key": "KAR-30",
         "title": "Implement secure portal attachments in message workflow",
@@ -201,32 +208,24 @@
         "state": "Done",
         "updatedAt": "2026-02-18T16:06:21.709Z",
         "requirementId": "REQ-MAT-003"
-      },
-      {
-        "key": "KAR-43",
-        "title": "Enforce Linear key branch/PR policy in CI",
-        "state": "Done",
-        "updatedAt": "2026-02-18T01:58:43.866Z",
-        "requirementId": "REQ-OPS-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:11:15.094Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:19:28.479Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "0f20599191881a130d0e6e2df4a60830028fa559",
+    "gitHead": "eba216b96ad461b7e3b772af3abb7accf58d9ffa",
     "gitStatusShort": [
-      "## lin/KAR-17-export-conformance-verification-hardening",
-      " M apps/api/src/exports/full-backup-contract.ts",
-      " M apps/api/test/exports-conformance.spec.ts",
-      " M docs/parity/export-conformance.md",
+      "## lin/KAR-35-style-pack-verification-finalize",
+      " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 7
+    "dirtyFileCount": 6
   }
 }
