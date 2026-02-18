@@ -13,6 +13,10 @@ export type ConnectorTokenExchangeParams = {
   redirectUri: string;
 };
 
+export type ConnectorRefreshParams = {
+  refreshToken: string;
+};
+
 export type ConnectorTokenExchangeResult = {
   accessToken: string;
   refreshToken?: string | null;
@@ -48,6 +52,7 @@ export interface IncrementalSyncConnector {
   supportsOAuth: boolean;
   getAuthorizationUrl?(params: ConnectorAuthorizationParams): string;
   exchangeAuthorizationCode?(params: ConnectorTokenExchangeParams): Promise<ConnectorTokenExchangeResult>;
+  refreshAccessToken?(params: ConnectorRefreshParams): Promise<ConnectorTokenExchangeResult>;
   sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult>;
   subscribeWebhooks(params: ConnectorWebhookParams): Promise<{ subscriptionId: string }>;
 }

@@ -262,12 +262,58 @@ export class IntegrationsService {
     });
 
     try {
+      let accessToken = this.resolveTokenForUse(connection.encryptedAccessToken);
+      let refreshToken = this.resolveTokenForUse(connection.encryptedRefreshToken);
+      let syncConfig: ConnectionConfig = { ...config };
+      let scopes = Array.isArray(connection.scopes) ? [...connection.scopes] : [];
+
+      if (this.shouldRefreshToken(connection.tokenExpiresAt) && refreshToken && connector.refreshAccessToken) {
+        const refreshed = await connector.refreshAccessToken({ refreshToken });
+        accessToken = refreshed.accessToken;
+        refreshToken = refreshed.refreshToken ?? refreshToken;
+        scopes = this.normalizeScopes(refreshed.scopes);
+        if (refreshed.metadata) {
+          syncConfig = {
+            ...syncConfig,
+            providerMetadata: {
+              ...(syncConfig.providerMetadata && typeof syncConfig.providerMetadata === 'object'
+                ? (syncConfig.providerMetadata as Record<string, unknown>)
+                : {}),
+              ...refreshed.metadata,
+            },
+          };
+        }
+
+        await this.prisma.integrationConnection.update({
+          where: { id: connection.id },
+          data: {
+            encryptedAccessToken: this.resolveTokenForStorage(accessToken),
+            encryptedRefreshToken: this.resolveTokenForStorage(refreshToken ?? undefined),
+            tokenExpiresAt: refreshed.expiresAt ?? null,
+            scopes: scopes.length > 0 ? scopes : connection.scopes,
+            configJson: toJsonValueOrUndefined(syncConfig),
+          },
+        });
+
+        await this.audit.appendEvent({
+          organizationId: input.user.organizationId,
+          actorUserId: input.user.id,
+          action: 'integration.oauth.refreshed',
+          entityType: 'integrationConnection',
+          entityId: connection.id,
+          metadata: {
+            provider: connection.provider,
+            tokenExpiresAt: refreshed.expiresAt?.toISOString() ?? null,
+          },
+        });
+      }
+
       const syncResult = await connector.sync({
         connectionId: connection.id,
         cursor,
-        accessToken: this.resolveTokenForUse(connection.encryptedAccessToken),
-        refreshToken: this.resolveTokenForUse(connection.encryptedRefreshToken),
-        config,
+        accessToken,
+        refreshToken,
+        config: syncConfig,
       });
 
       const finalCursor = syncResult.nextCursor ?? cursor ?? null;
@@ -286,13 +332,14 @@ export class IntegrationsService {
         warnings: syncResult.warnings ?? [],
         updatedAt: new Date().toISOString(),
       };
-      const nextConfig: ConnectionConfig = { ...config, syncState };
+      const nextConfig: ConnectionConfig = { ...syncConfig, syncState };
 
       await this.prisma.integrationConnection.update({
         where: { id: connection.id },
         data: {
           status: IntegrationConnectionStatus.CONNECTED,
           lastSyncAt: new Date(),
+          scopes: scopes.length > 0 ? scopes : connection.scopes,
           configJson: toJsonValueOrUndefined(nextConfig),
         },
       });
@@ -470,6 +517,12 @@ export class IntegrationsService {
       };
     }
     return null;
+  }
+
+  private shouldRefreshToken(expiresAt: Date | null): boolean {
+    if (!expiresAt) return false;
+    const refreshSkewMs = 1000 * 60;
+    return expiresAt.getTime() <= Date.now() + refreshSkewMs;
   }
 
   private async getLatestCompletedCursor(connectionId: string): Promise<string | null> {
