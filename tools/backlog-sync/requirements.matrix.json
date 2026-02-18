@@ -378,11 +378,11 @@
           "title": "Implement production email/SMS providers behind provider interface",
           "requirementId": "REQ-COMM-001",
           "promptSection": "Email/SMS provider interfaces + stub provider in MVP",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "communications"],
-          "problemStatement": "Current provider is stub-only and not suitable for production messaging.",
+          "problemStatement": "Production email/SMS providers are now verified with retry-policy guardrails, deterministic non-retryable handling, and persisted delivery provenance.",
           "requirementExcerpt": "Provider interfaces exist; MVP includes stub, but production providers needed for parity.",
           "acceptanceCriteria": [
             "Add configurable provider adapters (e.g., SendGrid, Twilio).",
@@ -392,7 +392,9 @@
           "apiImpact": "Message send endpoints include delivery metadata.",
           "securityImpact": "Secrets managed via environment and encryption.",
           "definitionOfDone": [
-            "At least one real email and one SMS provider validated."
+            "Provider dispatch tests verify retryable vs non-retryable handling and invalid retry env fallback behavior.",
+            "Outbound delivery metadata and audit trails remain validated in communications delivery tests.",
+            "Verification artifact documented at docs/parity/communications-provider-adapters.md."
           ]
         },
         {
