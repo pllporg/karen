@@ -148,6 +148,192 @@ describe('MattersService', () => {
     expect(prisma.matterParticipant.create).not.toHaveBeenCalled();
   });
 
+  it('rejects unknown participant role definition keys', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact1' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      matterParticipant: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.addParticipant({
+        user: baseUser,
+        matterId: 'matter1',
+        contactId: 'contact1',
+        participantRoleKey: 'non_existent_role',
+      }),
+    ).rejects.toThrow('Participant role definition not found');
+    expect(prisma.matterParticipant.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects representedByContactId when it matches participant contact', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact1' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role1',
+          key: 'opposing_party',
+          label: 'Opposing Party',
+          sideDefault: 'OPPOSING_SIDE',
+        }),
+      },
+      matterParticipant: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.addParticipant({
+        user: baseUser,
+        matterId: 'matter1',
+        contactId: 'contact1',
+        participantRoleKey: 'opposing_party',
+        representedByContactId: 'contact1',
+      }),
+    ).rejects.toThrow('representedByContactId cannot match contactId');
+    expect(prisma.matterParticipant.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects lawFirmContactId when it matches participant contact', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact1' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role1',
+          key: 'opposing_counsel',
+          label: 'Opposing Counsel',
+          sideDefault: 'OPPOSING_SIDE',
+        }),
+      },
+      matterParticipant: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.addParticipant({
+        user: baseUser,
+        matterId: 'matter1',
+        contactId: 'contact1',
+        participantRoleKey: 'opposing_counsel',
+        lawFirmContactId: 'contact1',
+      }),
+    ).rejects.toThrow('lawFirmContactId cannot match contactId');
+    expect(prisma.matterParticipant.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts explicit side and primary overrides for non-counsel roles', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'contact1' })
+          .mockResolvedValueOnce({ id: 'contact-counsel' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role1',
+          key: 'expert',
+          label: 'Expert Witness',
+          sideDefault: 'NEUTRAL',
+        }),
+      },
+      matterParticipant: {
+        create: jest.fn().mockResolvedValue({ id: 'participant1', side: 'CLIENT_SIDE', isPrimary: true }),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await service.addParticipant({
+      user: baseUser,
+      matterId: 'matter1',
+      contactId: 'contact1',
+      participantRoleKey: 'expert',
+      representedByContactId: 'contact-counsel',
+      side: 'CLIENT_SIDE',
+      isPrimary: true,
+    });
+
+    expect(prisma.matterParticipant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          side: 'CLIENT_SIDE',
+          isPrimary: true,
+          representedByContactId: 'contact-counsel',
+        }),
+      }),
+    );
+  });
+
+  it('treats attorney labels as counsel roles even when key omits counsel', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact-exists' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role1',
+          key: 'carrier_attorney',
+          label: 'Attorney for Carrier',
+          sideDefault: 'OPPOSING_SIDE',
+        }),
+      },
+      matterParticipant: {
+        create: jest.fn(),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.addParticipant({
+        user: baseUser,
+        matterId: 'matter1',
+        contactId: 'contact1',
+        participantRoleKey: 'carrier_attorney',
+        representedByContactId: 'contact2',
+      }),
+    ).rejects.toThrow('Counsel roles cannot use representedByContactId');
+    expect(prisma.matterParticipant.create).not.toHaveBeenCalled();
+  });
+
   it('supports all required participant categories through configurable role keys', async () => {
     const categories = [
       { key: 'opposing_counsel', label: 'Opposing Counsel', sideDefault: 'OPPOSING_SIDE', counsel: true },

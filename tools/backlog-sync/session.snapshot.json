@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T01:35:20.463Z",
+  "generatedAt": "2026-02-18T01:48:00.955Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 25,
+    "unresolvedRequirements": 24,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 20,
+      "phase-1": 19,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 25
+      "Complete": 24
     },
     "unresolvedCountsByRisk": {
-      "High": 8,
+      "High": 7,
       "Medium": 17
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 8,
+      "Complete:High": 7,
       "Complete:Medium": 17
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-MAT-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Complete participant role configurability and side semantics coverage",
-        "component": "API",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-MAT-003",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "API",
         "epicCode": "PARITY-05",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-COMM-002",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Complete communication search relevance and indexing strategy",
+        "component": "Data",
+        "epicCode": "PARITY-05",
+        "phase": "phase-1"
       }
     ]
   },
@@ -141,15 +141,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-38"
+      "KAR-19"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-19",
+        "title": "Complete participant role configurability and side semantics coverage",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T01:44:59.528Z",
+        "requirementId": "REQ-MAT-001"
+      },
+      {
         "key": "KAR-38",
         "title": "Implement MyCase connector OAuth + incremental sync + webhook subscription",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T01:32:08.377Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T01:39:13.175Z",
         "requirementId": "REQ-INT-002"
       },
       {
@@ -207,26 +214,18 @@
         "state": "Done",
         "updatedAt": "2026-02-17T22:09:32.751Z",
         "requirementId": "REQ-AI-001"
-      },
-      {
-        "key": "KAR-52",
-        "title": "Strengthen REQ-OPS-001 web smoke coverage for critical user journey",
-        "state": "Done",
-        "updatedAt": "2026-02-17T21:39:45.716Z",
-        "requirementId": "REQ-OPS-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:35:19.143Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T01:47:59.832Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "44010e5315b3a8eeaeb06eef85a8acccea9f0ffa",
+    "gitHead": "f7d3caae0ad3934e89a44167ba2d3364af1f4e9d",
     "gitStatusShort": [
-      "## lin/KAR-38-mycase-connector-verification-hardening",
-      " M apps/api/src/integrations/connectors/mycase.connector.ts",
-      " M apps/api/test/mycase.connector.spec.ts",
+      "## lin/KAR-19-matter-participant-verification-hardening",
+      " M apps/api/test/matters.spec.ts",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? Brandguide.md",
@@ -234,9 +233,9 @@
       "?? agents.md",
       "?? brand/",
       "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/mycase-connector-verification.md",
+      "?? docs/parity/matter-participant-role-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 10
   }
 }

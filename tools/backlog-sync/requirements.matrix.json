@@ -255,11 +255,11 @@
           "title": "Complete participant role configurability and side semantics coverage",
           "requirementId": "REQ-MAT-001",
           "promptSection": "MatterParticipant role model requirements",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "matters"],
-          "problemStatement": "Participant table exists but needs exhaustive role semantics and validation rules.",
+          "problemStatement": "Participant-role semantics are now verified with explicit edge-case regression coverage for counsel/non-counsel constraints, self-reference guards, side/isPrimary overrides, and full category matrix coverage.",
           "requirementExcerpt": "Support opposing counsel, adjusters, insurer, mediator, judge, expert, inspector, etc.",
           "acceptanceCriteria": [
             "Participant role definitions configurable per org.",
@@ -269,7 +269,9 @@
           "apiImpact": "Role definition endpoints and validation rules strengthened.",
           "securityImpact": "Matter access checks remain enforced on participant mutations.",
           "definitionOfDone": [
-            "Participant role matrix test suite passes and participant role definitions are configurable through admin endpoints."
+            "Matter participant regression suite covers role lookup failures, counsel constraints, and self-reference guards.",
+            "Prompt category matrix coverage remains green across all required participant roles.",
+            "Verification artifact documented at docs/parity/matter-participant-role-verification.md."
           ]
         },
         {

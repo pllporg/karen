@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T01:35:20.463Z`
+- Snapshot Timestamp: `2026-02-18T01:48:00.955Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T01:35:19.143Z`
+- Last Successful Mirror Verify: `2026-02-18T01:47:59.832Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-MAT-001` by expanding participant-role regression coverage for missing role definitions, self-reference guards, explicit side/primary overrides, counsel-role label detection, and full category matrix enforcement (`docs/parity/matter-participant-role-verification.md`).
 - 2026-02-18: Verified `REQ-INT-002` by adding MyCase OAuth refresh-grant support, validating connector refresh behavior (stub/live/error paths), and reusing integration-level callback/idempotency refresh orchestration coverage (`docs/parity/mycase-connector-verification.md`).
 - 2026-02-18: Verified `REQ-INT-001` by hardening Clio connector OAuth refresh-grant support, adding refresh-before-sync orchestration for expired tokens, and expanding regression coverage for OAuth callback state validation, idempotent sync checkpointing, and webhook subscription flows (`docs/parity/clio-connector-verification.md`).
 - 2026-02-18: Verified `REQ-DATA-001` with executable Prisma conformance coverage (`apps/api/test/schema-conformance.spec.ts`) enforcing required model presence, UUID id convention, and high-risk schema field semantics, with verification artifact `docs/parity/data-model-conformance-verification.md`.
