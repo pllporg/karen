@@ -113,6 +113,34 @@ describe('Tenant isolation', () => {
     );
   });
 
+  it('queries document retention policies and disposition runs by organization', async () => {
+    const prisma = {
+      documentRetentionPolicy: { findMany: jest.fn().mockResolvedValue([]) },
+      documentDispositionRun: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn(), getObjectBuffer: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn() } as any,
+    );
+
+    await service.listRetentionPolicies(baseUser);
+    await service.listDispositionRuns(baseUser);
+
+    expect(prisma.documentRetentionPolicy.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated' }),
+      }),
+    );
+    expect(prisma.documentDispositionRun.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated' }),
+      }),
+    );
+  });
+
   it('queries communication threads by organization and matter', async () => {
     const assertMatterAccess = jest.fn().mockResolvedValue(undefined);
     const prisma = {
@@ -164,6 +192,54 @@ describe('Tenant isolation', () => {
     );
   });
 
+  it('queries trust reconciliation runs and LEDES export entities by organization', async () => {
+    const prisma = {
+      trustAccount: { findFirst: jest.fn().mockResolvedValue({ id: 'trust-account-1' }) },
+      trustReconciliationRun: { findMany: jest.fn().mockResolvedValue([]) },
+      lEDESExportProfile: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findFirst: jest.fn().mockResolvedValue({ id: 'profile-1' }),
+      },
+      lEDESExportJob: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const service = new BillingService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { appendEvent: jest.fn() } as any,
+      { upload: jest.fn() } as any,
+    );
+
+    await service.listTrustReconciliationRuns(baseUser, 'trust-account-1');
+    await service.listLedesExportProfiles(baseUser);
+    await service.listLedesExportJobs(baseUser, { profileId: 'profile-1', status: 'COMPLETED' });
+
+    expect(prisma.trustAccount.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'trust-account-1', organizationId: 'org-isolated' }),
+      }),
+    );
+    expect(prisma.trustReconciliationRun.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated', trustAccountId: 'trust-account-1' }),
+      }),
+    );
+    expect(prisma.lEDESExportProfile.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated' }),
+      }),
+    );
+    expect(prisma.lEDESExportProfile.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'profile-1', organizationId: 'org-isolated' }),
+      }),
+    );
+    expect(prisma.lEDESExportJob.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated', profileId: 'profile-1', status: 'COMPLETED' }),
+      }),
+    );
+  });
+
   it('queries ai jobs by organization and matter', async () => {
     const assertMatterAccess = jest.fn().mockResolvedValue(undefined);
     const prisma = {
@@ -182,6 +258,26 @@ describe('Tenant isolation', () => {
     expect(prisma.aiJob.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ organizationId: 'org-isolated', matterId: 'matter-1' }),
+      }),
+    );
+  });
+
+  it('queries ai style packs by organization', async () => {
+    const prisma = {
+      stylePack: { findMany: jest.fn().mockResolvedValue([]) },
+    } as any;
+    const service = new AiService(
+      prisma,
+      { addJob: jest.fn(), createWorker: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { appendEvent: jest.fn() } as any,
+    );
+
+    await service.listStylePacks(baseUser);
+
+    expect(prisma.stylePack.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org-isolated' }),
       }),
     );
   });
