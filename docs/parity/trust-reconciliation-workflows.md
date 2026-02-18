@@ -39,6 +39,7 @@ Executed on 2026-02-17:
 ```bash
 pnpm --filter api prisma:generate
 pnpm --filter api test -- billing-trust-invariants.spec.ts
+pnpm --filter api test -- billing-trust-reconciliation-verification.spec.ts
 pnpm --filter web test -- billing-page.spec.tsx
 pnpm test
 pnpm build
@@ -47,5 +48,10 @@ pnpm build
 Results:
 
 - API trust reconciliation regression coverage passed (`apps/api/test/billing-trust-invariants.spec.ts`).
+- Verification hardening coverage passed (`apps/api/test/billing-trust-reconciliation-verification.spec.ts`) for:
+  - negative-balance discrepancy reason-code capture in run creation,
+  - submission note append behavior on draft -> in-review transition,
+  - strict discrepancy resolution status validation (`RESOLVED|WAIVED` only),
+  - prevention of re-resolving already-resolved discrepancies.
 - Web billing reconciliation coverage passed (`apps/web/test/billing-page.spec.tsx`).
 - Full monorepo tests and build passed.

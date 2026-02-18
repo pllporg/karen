@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T21:09:54.767Z`
+- Snapshot Timestamp: `2026-02-18T21:25:19.210Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T21:09:53.396Z`
+- Last Successful Mirror Verify: `2026-02-18T21:25:16.756Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-BILL-003` by hardening trust reconciliation service invariants (resolution status restricted to `RESOLVED|WAIVED`, non-open discrepancies cannot be re-resolved), plus regression coverage for negative-balance discrepancy reason codes, draft->in-review note append behavior, and resolution guardrails (`apps/api/test/billing-trust-reconciliation-verification.spec.ts`, `docs/parity/trust-reconciliation-workflows.md`).
 - 2026-02-18: Verified `REQ-PORTAL-002` by adding explicit e-sign verification hardening coverage for client matter-scoped envelope listing, duplicate-webhook idempotency, refresh lifecycle history persistence, invalid-signature rejection, and portal envelope status refresh UX assertions (`apps/api/test/portal-esign-verification.spec.ts`, `apps/web/test/portal-page.spec.tsx`, `docs/parity/esign-provider-abstraction.md`).
 - 2026-02-18: Verified `REQ-OPS-003` by adding executable governance checks for `.github/workflows/pr-linear-policy.yml` and `.github/pull_request_template.md`, including regex enforcement and required metadata section assertions (`apps/api/test/pr-linear-policy.spec.ts`, `docs/parity/pr-linear-policy-verification.md`).
 - 2026-02-18: Verified `REQ-OPS-002` by adding executable runbook conformance coverage for required deployment/readiness/rollback/incident sections, baseline SLO targets, and README/parity linkage integrity (`apps/api/test/ops-runbook.spec.ts`, `docs/parity/ops-runbook-slos.md`).
