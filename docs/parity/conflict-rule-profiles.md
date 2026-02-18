@@ -42,10 +42,18 @@ Scope: profile-based conflict checks with weighted scoring, recommendation outpu
 
 - API regression coverage:
   - `apps/api/test/admin.spec.ts`
+  - `apps/api/test/admin-conflict-verification.spec.ts`
   - verifies:
     - profile upsert in organization settings
     - conflict check execution with scoring flow
     - resolution with rationale and audit event
+    - partial profile updates preserve existing scope/weights/thresholds/default flags
+    - default profile fallback re-assignment when deactivating prior default
+    - scoped profile selection precedence (most specific active match wins over global default)
 - Full-suite validation:
   - `pnpm test`
   - `pnpm build`
+
+## Verification Command
+
+- `pnpm --filter api test -- admin-conflict-verification.spec.ts admin.spec.ts`
