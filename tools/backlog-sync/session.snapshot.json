@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T21:34:51.981Z",
+  "generatedAt": "2026-02-18T21:44:31.380Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,36 +14,27 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 3,
+    "unresolvedRequirements": 2,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 3
+      "phase-2": 2
     },
     "unresolvedCountsByStatus": {
-      "Complete": 3
+      "Complete": 2
     },
     "unresolvedCountsByRisk": {
-      "Medium": 3
+      "Medium": 2
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 3
+      "Complete:Medium": 2
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-COMM-004",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement document retention policies with legal hold workflow",
-        "component": "API",
-        "epicCode": "PARITY-05",
-        "phase": "phase-2"
-      },
       {
         "requirementId": "REQ-MAT-004",
         "parityStatus": "Complete",
@@ -75,6 +66,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-48",
+        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:38:38.111Z",
+        "requirementId": "REQ-BILL-004"
+      },
       {
         "key": "KAR-47",
         "title": "Implement trust reconciliation workflows with discrepancy resolution",
@@ -137,33 +135,27 @@
         "state": "Done",
         "updatedAt": "2026-02-18T20:03:28.782Z",
         "requirementId": "REQ-PORTAL-001"
-      },
-      {
-        "key": "KAR-16",
-        "title": "Build user-confirm merge workflow for dedupe suggestions",
-        "state": "Done",
-        "updatedAt": "2026-02-18T19:28:43.473Z",
-        "requirementId": "REQ-PORT-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:34:50.737Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:44:29.610Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "f402b34dc865cb34383060248ad6e7c0d2efcd75",
+    "gitHead": "d7f18f6f324dc7e3ca8f69dbf6b564b3d5af38dc",
     "gitStatusShort": [
-      "## lin/KAR-48-bill-004-verification-hardening",
+      "## lin/KAR-49-comm-004-verification-hardening",
+      " M apps/api/src/documents/documents.service.ts",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/ledes-export-workflows.md",
+      " M docs/parity/document-retention-workflows.md",
       " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
-      "?? apps/api/test/billing-ledes-verification.spec.ts",
+      "?? apps/api/test/document-retention-verification.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 9
   }
 }

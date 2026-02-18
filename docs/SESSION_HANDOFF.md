@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T21:34:51.981Z`
+- Snapshot Timestamp: `2026-02-18T21:44:31.380Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T21:34:50.737Z`
+- Last Successful Mirror Verify: `2026-02-18T21:44:29.610Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-COMM-004` by hardening disposition execution to re-check legal holds at execution time (disposing only eligible documents, skipping newly-held documents, reverting skipped docs to `ACTIVE`, and recording `skippedForLegalHoldAtExecution` audit metadata), with new regression coverage in `apps/api/test/document-retention-verification.spec.ts` and parity evidence in `docs/parity/document-retention-workflows.md`.
 - 2026-02-18: Verified `REQ-BILL-004` by adding LEDES verification-hardening coverage for default-profile rotation (`isDefault` swap), explicit invoice-id export integrity (dedupe + missing-id rejection), and `includeExpenseLineItems=false` line filtering conformance, with parity evidence in `docs/parity/ledes-export-workflows.md` (`apps/api/test/billing-ledes-verification.spec.ts`).
 - 2026-02-18: Verified `REQ-BILL-003` by hardening trust reconciliation service invariants (resolution status restricted to `RESOLVED|WAIVED`, non-open discrepancies cannot be re-resolved), plus regression coverage for negative-balance discrepancy reason codes, draft->in-review note append behavior, and resolution guardrails (`apps/api/test/billing-trust-reconciliation-verification.spec.ts`, `docs/parity/trust-reconciliation-workflows.md`).
 - 2026-02-18: Verified `REQ-PORTAL-002` by adding explicit e-sign verification hardening coverage for client matter-scoped envelope listing, duplicate-webhook idempotency, refresh lifecycle history persistence, invalid-signature rejection, and portal envelope status refresh UX assertions (`apps/api/test/portal-esign-verification.spec.ts`, `apps/web/test/portal-page.spec.tsx`, `docs/parity/esign-provider-abstraction.md`).
