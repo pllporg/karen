@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:33:46.800Z",
+  "generatedAt": "2026-02-18T20:43:42.540Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 9,
+    "unresolvedRequirements": 8,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 4,
-      "phase-2": 5
+      "phase-2": 5,
+      "phase-1": 3
     },
     "unresolvedCountsByStatus": {
-      "Complete": 9
+      "Complete": 8
     },
     "unresolvedCountsByRisk": {
-      "Medium": 9
+      "Medium": 8
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 9
+      "Complete:Medium": 8
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-MAT-002",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Enhance contact relationship graph visualization and filtering",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-OPS-002",
         "parityStatus": "Complete",
@@ -134,7 +125,7 @@
         "key": "KAR-39",
         "title": "Implement Filevine and PracticePanther connector production adapters",
         "state": "Done",
-        "updatedAt": "2026-02-18T20:33:04.451Z",
+        "updatedAt": "2026-02-18T20:37:48.463Z",
         "requirementId": "REQ-INT-003"
       },
       {
@@ -203,17 +194,21 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:33:44.797Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:43:41.127Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "36d10670c4198c15e8ed7a15abc078c99e62985a",
+    "gitHead": "3d192a7d37973e0afc21e88bbb02839cdaac1afd",
     "gitStatusShort": [
-      "## main...origin/main",
+      "## lin/KAR-20-contacts-graph-verification-hardening",
+      " M apps/api/src/contacts/contacts.controller.ts",
+      " M docs/parity/contacts-graph-filtering.md",
+      " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
+      "?? apps/api/test/contacts-controller.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 3
+    "dirtyFileCount": 7
   }
 }
