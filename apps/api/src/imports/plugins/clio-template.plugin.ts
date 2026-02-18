@@ -431,12 +431,14 @@ function attachSource(
   canonical: Prisma.InputJsonObject,
   sourceFile: string,
   sourceEntity: string,
+  sourceRowNumber: number,
 ): Prisma.InputJsonObject {
   return {
     ...rawInput,
     ...canonical,
     __source_file: sourceFile,
     __source_entity: sourceEntity,
+    __source_row_number: sourceRowNumber,
   } as Prisma.InputJsonObject;
 }
 
@@ -470,7 +472,7 @@ export class ClioTemplateImportPlugin implements ImportPlugin {
         {
           entityType: definition.entityType,
           rowNumber: index + 1,
-          rawJson: attachSource(rawInput, transformed.rawJson, sourceFilename, sourceEntity),
+          rawJson: attachSource(rawInput, transformed.rawJson, sourceFilename, sourceEntity, index + 1),
           warnings,
         },
       ];
@@ -495,7 +497,13 @@ export class ClioTemplateImportPlugin implements ImportPlugin {
         rows.push({
           entityType: definition.entityType,
           rowNumber: index + 1,
-          rawJson: attachSource(rawInput, transformed.rawJson, `${sourceFilename}#${sheetName}`, sourceEntity),
+          rawJson: attachSource(
+            rawInput,
+            transformed.rawJson,
+            `${sourceFilename}#${sheetName}`,
+            sourceEntity,
+            index + 1,
+          ),
           warnings,
         });
       });

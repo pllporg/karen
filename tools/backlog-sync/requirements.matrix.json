@@ -186,7 +186,7 @@
           "title": "Finalize Clio CSV/XLSX template importer coverage",
           "requirementId": "REQ-PORT-002",
           "promptSection": "MVP Importers / Clio Migration Template Import",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],
@@ -201,7 +201,8 @@
           "securityImpact": "No material security impact.",
           "definitionOfDone": [
             "Importer acceptance tests cover complete template spectrum with row-level error/warning context.",
-            "Communication source-entity lineage is preserved for CSV and XLSX sources.",
+            "Communication source lineage is preserved for CSV/XLSX with source file, source entity, and source row number metadata.",
+            "XLSX unresolved-reference diagnostics include workbook-sheet source context and row numbers.",
             "Verification artifact published at docs/parity/clio-import-verification.md."
           ]
         },

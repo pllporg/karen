@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import AdmZip from 'adm-zip';
+import XLSX from 'xlsx';
 import { ImportsService } from '../src/imports/imports.service';
 import { ClioTemplateImportPlugin } from '../src/imports/plugins/clio-template.plugin';
 import { MyCaseZipImportPlugin } from '../src/imports/plugins/mycase-zip.plugin';
@@ -500,14 +501,17 @@ describe('ImportsService', () => {
     expect(noteRow?.rawJson).toMatchObject({
       __source_file: 'clio-template-full.csv',
       __source_entity: 'notes',
+      __source_row_number: 6,
     });
     expect(phoneRow?.rawJson).toMatchObject({
       __source_file: 'clio-template-full.csv',
       __source_entity: 'phone_logs',
+      __source_row_number: 7,
     });
     expect(emailRow?.rawJson).toMatchObject({
       __source_file: 'clio-template-full.csv',
       __source_entity: 'emails',
+      __source_row_number: 8,
     });
   });
 
@@ -554,6 +558,68 @@ describe('ImportsService', () => {
           sourceFile: 'clio-missing-matter.csv',
           sourceEntity: 'tasks',
           externalId: 't99',
+        }),
+      }),
+    );
+  });
+
+  it('captures XLSX row-level Clio error context for unresolved matter references', async () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet([
+        {
+          id: 'tx1',
+          title: 'Missing Matter Task',
+          due_date: '2026-05-10',
+          legacy_column: 'legacy-task',
+        },
+      ]),
+      'Tasks',
+    );
+    const workbookBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+
+    const { prisma, state } = buildImportPrismaMock();
+    const service = new ImportsService(prisma, { appendEvent: jest.fn() } as any);
+    service.registerPlugin(new ClioTemplateImportPlugin());
+
+    const batch = await service.runImport({
+      user: { id: 'u1', organizationId: 'org1' } as any,
+      sourceSystem: 'clio_template',
+      file: {
+        buffer: workbookBuffer,
+        originalname: 'clio-missing-matter.xlsx',
+        mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        size: workbookBuffer.length,
+        fieldname: 'file',
+        encoding: '7bit',
+      } as any,
+    });
+
+    expect(batch?.summaryJson).toMatchObject({
+      total: 1,
+      imported: 0,
+      failed: 1,
+      warnings: 2,
+    });
+
+    expect(state.importItems).toHaveLength(1);
+    expect(state.importItems[0].status).toBe('FAILED');
+    expect(state.importItems[0].warningsJson).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'missing_matter_reference' }),
+        expect.objectContaining({ code: 'unmapped_columns' }),
+      ]),
+    );
+    expect(state.importItems[0].errorsJson).toEqual(
+      expect.objectContaining({
+        message: 'Task row missing resolvable matter reference',
+        rowContext: expect.objectContaining({
+          entityType: 'task',
+          rowNumber: 1,
+          sourceFile: 'clio-missing-matter.xlsx#Tasks',
+          sourceEntity: 'tasks',
+          externalId: 'tx1',
         }),
       }),
     );
@@ -611,6 +677,7 @@ describe('ImportsService', () => {
       rawSourcePayload: expect.objectContaining({
         __source_file: 'clio-template.xlsx#Notes',
         __source_entity: 'notes',
+        __source_row_number: 1,
       }),
     });
     expect(phoneRef).toMatchObject({
@@ -619,6 +686,7 @@ describe('ImportsService', () => {
       rawSourcePayload: expect.objectContaining({
         __source_file: 'clio-template.xlsx#Phone_Logs',
         __source_entity: 'phone_logs',
+        __source_row_number: 1,
       }),
     });
     expect(emailRef).toMatchObject({
@@ -627,6 +695,7 @@ describe('ImportsService', () => {
       rawSourcePayload: expect.objectContaining({
         __source_file: 'clio-template.xlsx#Emails',
         __source_entity: 'emails',
+        __source_row_number: 1,
       }),
     });
   });
