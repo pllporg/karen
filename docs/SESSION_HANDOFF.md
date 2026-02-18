@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T18:12:42.100Z`
+- Snapshot Timestamp: `2026-02-18T18:28:50.098Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T18:12:40.906Z`
+- Last Successful Mirror Verify: `2026-02-18T18:28:48.837Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-AI-003` by hardening style-pack source detach authorization (matter-access enforced), enriching detached-source audit provenance (`documentVersionId`, `documentId`, `matterId`), and retaining artifact/execution style-pack provenance checks (`docs/parity/style-pack-verification.md`).
 - 2026-02-18: Verified `REQ-PORTAL-001` by hardening portal attachment auditability with explicit `portal.attachment.linked` and `portal.attachment.download_url_issued` events, while retaining portal upload/link/download security regression coverage (`docs/parity/portal-attachments-verification.md`).
 - 2026-02-18: Verified `REQ-PORT-003` by hardening dedupe merge safeguards (self-merge rejection), expanding contact-reference reassignment coverage before duplicate deletion, and adding web confirmation-cancel behavior validation for merge actions (`docs/parity/dedupe-merge-verification.md`).
 - 2026-02-18: Verified `REQ-PORT-002` by hardening Clio importer regression coverage for CSV/XLSX source-entity lineage, unresolved-reference row-context diagnostics, and communication external-reference payload integrity (`docs/parity/clio-import-verification.md`).

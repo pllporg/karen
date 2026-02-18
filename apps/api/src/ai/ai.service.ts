@@ -358,17 +358,37 @@ export class AiService implements OnModuleInit {
     documentVersionId: string;
   }) {
     const stylePack = await this.assertStylePackInOrganization(input.user.organizationId, input.stylePackId);
+    const sourceDoc = await this.prisma.stylePackSourceDoc.findFirst({
+      where: {
+        stylePackId: stylePack.id,
+        documentVersionId: input.documentVersionId,
+      },
+      include: {
+        documentVersion: {
+          include: {
+            document: {
+              select: {
+                id: true,
+                matterId: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    const deleted = await this.prisma.stylePackSourceDoc.deleteMany({
+    if (!sourceDoc) {
+      throw new NotFoundException('Style pack source document link not found');
+    }
+
+    await this.access.assertMatterAccess(input.user, sourceDoc.documentVersion.document.matterId, 'read');
+
+    await this.prisma.stylePackSourceDoc.deleteMany({
       where: {
         stylePackId: stylePack.id,
         documentVersionId: input.documentVersionId,
       },
     });
-
-    if (deleted.count === 0) {
-      throw new NotFoundException('Style pack source document link not found');
-    }
 
     await this.audit.appendEvent({
       organizationId: input.user.organizationId,
@@ -378,6 +398,8 @@ export class AiService implements OnModuleInit {
       entityId: stylePack.id,
       metadata: {
         documentVersionId: input.documentVersionId,
+        documentId: sourceDoc.documentVersion.document.id,
+        matterId: sourceDoc.documentVersion.document.matterId,
       },
     });
 

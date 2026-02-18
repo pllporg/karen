@@ -163,7 +163,7 @@
           "title": "Finalize MyCase ZIP importer field coverage and error mapping",
           "requirementId": "REQ-PORT-001",
           "promptSection": "MVP Importers / MyCase Full Backup Import",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": ["parity", "migration", "imports"],
@@ -664,7 +664,7 @@
           "component": "Web",
           "risk": "Medium",
           "labels": ["parity", "ai-governance"],
-          "problemStatement": "Schema includes style packs but management workflows are not complete.",
+          "problemStatement": "Style pack governance is verification-hardened with detach-path matter-access enforcement and richer detached-source provenance in audit metadata, in addition to existing style-pack selection provenance.",
           "requirementExcerpt": "Firm style packs should inform drafting tools.",
           "acceptanceCriteria": [
             "Admin UI to create/update style packs and attach source docs.",
@@ -674,7 +674,9 @@
           "apiImpact": "AI create job schema may include stylePackId.",
           "securityImpact": "No major change beyond existing org scope checks.",
           "definitionOfDone": [
-            "Style pack assignment visible in artifact metadata."
+            "Style pack assignment is visible in AI artifact + execution provenance metadata.",
+            "Style pack source detach path enforces matter-access checks and auditable document/matter metadata.",
+            "Verification artifact published at docs/parity/style-pack-verification.md."
           ]
         }
       ]
