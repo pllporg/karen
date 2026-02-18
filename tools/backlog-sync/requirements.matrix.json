@@ -90,11 +90,11 @@
           "title": "Validate all required entities and relation semantics against prompt",
           "requirementId": "REQ-DATA-001",
           "promptSection": "DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Data",
           "risk": "High",
           "labels": ["parity", "data-model"],
-          "problemStatement": "Schema is broad but needs formal parity audit with explicit gap list.",
+          "problemStatement": "Prisma model coverage and high-risk schema semantics are now verified by executable conformance tests plus an explicit gap register for non-REQ-DATA-001 follow-on work.",
           "requirementExcerpt": "Minimum entities and capabilities cannot be omitted.",
           "acceptanceCriteria": [
             "Generate schema checklist mapping every prompt entity to model/table and key relations.",
@@ -104,7 +104,9 @@
           "apiImpact": "Potential follow-on migrations only.",
           "securityImpact": "Improves data integrity and access policy enforcement confidence.",
           "definitionOfDone": [
-            "Checklist committed at docs/parity/data-model-checklist.md and referenced by backlog items."
+            "Schema conformance suite committed at apps/api/test/schema-conformance.spec.ts and passing in CI.",
+            "Verification artifact committed at docs/parity/data-model-conformance-verification.md.",
+            "Checklist remains committed at docs/parity/data-model-checklist.md with explicit open-gap requirement links."
           ]
         },
         {
