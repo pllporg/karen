@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T20:43:42.540Z",
+  "generatedAt": "2026-02-18T20:51:25.492Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,37 +14,28 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 8,
+    "unresolvedRequirements": 7,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
       "phase-2": 5,
-      "phase-1": 3
+      "phase-1": 2
     },
     "unresolvedCountsByStatus": {
-      "Complete": 8
+      "Complete": 7
     },
     "unresolvedCountsByRisk": {
-      "Medium": 8
+      "Medium": 7
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 8
+      "Complete:Medium": 7
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-OPS-002",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Document deployment runbook and operational SLOs",
-        "component": "Infra",
-        "epicCode": "PARITY-10",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-OPS-003",
         "parityStatus": "Complete",
@@ -122,6 +113,13 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-20",
+        "title": "Enhance contact relationship graph visualization and filtering",
+        "state": "Done",
+        "updatedAt": "2026-02-18T20:47:12.236Z",
+        "requirementId": "REQ-MAT-002"
+      },
+      {
         "key": "KAR-39",
         "title": "Implement Filevine and PracticePanther connector production adapters",
         "state": "Done",
@@ -183,32 +181,24 @@
         "state": "Done",
         "updatedAt": "2026-02-18T18:58:44.368Z",
         "requirementId": "REQ-COMM-001"
-      },
-      {
-        "key": "KAR-14",
-        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
-        "state": "Done",
-        "updatedAt": "2026-02-18T16:15:08.852Z",
-        "requirementId": "REQ-PORT-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:43:41.127Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T20:51:23.862Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3d192a7d37973e0afc21e88bbb02839cdaac1afd",
+    "gitHead": "763ba1b41f327ce8c14518f876b6ebbb23a4767e",
     "gitStatusShort": [
-      "## lin/KAR-20-contacts-graph-verification-hardening",
-      " M apps/api/src/contacts/contacts.controller.ts",
-      " M docs/parity/contacts-graph-filtering.md",
+      "## lin/KAR-42-ops-runbook-verification-hardening",
+      " M docs/parity/ops-runbook-slos.md",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
-      "?? apps/api/test/contacts-controller.spec.ts",
+      "?? apps/api/test/ops-runbook.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 7
+    "dirtyFileCount": 6
   }
 }

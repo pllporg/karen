@@ -29,3 +29,10 @@ Scope: deployment runbook, rollback + incident procedures, startup readiness gui
 ## README Linkage
 
 - `README.md` includes an "Operations Runbook" section linking to `docs/DEPLOYMENT_RUNBOOK.md`.
+
+## Test Evidence
+
+- `apps/api/test/ops-runbook.spec.ts` verifies:
+  - required deploy/readiness/rollback/incident/SLO section presence in `docs/DEPLOYMENT_RUNBOOK.md`
+  - required baseline SLO target lines
+  - README linkage to runbook + parity artifact

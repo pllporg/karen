@@ -801,11 +801,11 @@
           "title": "Document deployment runbook and operational SLOs",
           "requirementId": "REQ-OPS-002",
           "promptSection": "Production-ready expectation",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Infra",
           "risk": "Medium",
           "labels": ["parity", "ops"],
-          "problemStatement": "Deployment, rollback, readiness, incident response, and SLO baselines are now documented in a production runbook and linked from README.",
+          "problemStatement": "Operations documentation is now verification-hardened with executable checks that enforce required runbook sections, baseline SLO targets, and README/parity linkage integrity.",
           "requirementExcerpt": "Production-ready system requires clear operational playbooks.",
           "acceptanceCriteria": [
             "Create runbook for deploy, rollback, migrations, and incident response.",
@@ -815,7 +815,8 @@
           "apiImpact": "No endpoint changes.",
           "securityImpact": "Improves incident response posture.",
           "definitionOfDone": [
-            "Runbook committed at docs/DEPLOYMENT_RUNBOOK.md, linked from README, and evidenced in docs/parity/ops-runbook-slos.md."
+            "Runbook committed at docs/DEPLOYMENT_RUNBOOK.md, linked from README, and evidenced in docs/parity/ops-runbook-slos.md.",
+            "Automated regression test validates required runbook sections, baseline SLO targets, and README/parity linkage."
           ]
         },
         {
