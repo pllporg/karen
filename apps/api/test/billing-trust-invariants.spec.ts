@@ -81,6 +81,78 @@ describe('BillingService trust invariants + reports', () => {
     );
   });
 
+  it('creates paired transfer entries and updates both ledgers atomically', async () => {
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const txClient = {
+      matterTrustLedger: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'ledger-src', balance: 300 })
+          .mockResolvedValueOnce({ id: 'ledger-dst', balance: 50 }),
+        update: jest.fn().mockResolvedValue({}),
+        create: jest.fn(),
+      },
+      trustTransaction: {
+        create: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'tx-out' })
+          .mockResolvedValueOnce({ id: 'tx-in' }),
+      },
+    } as any;
+    const prisma = {
+      trustAccount: { findFirst: jest.fn().mockResolvedValue({ id: 'ta-1' }) },
+      $transaction: jest.fn().mockImplementation(async (handler: (client: typeof txClient) => Promise<unknown>) => handler(txClient)),
+    } as any;
+
+    const service = new BillingService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      audit,
+      { upload: jest.fn() } as any,
+    );
+
+    const result = await service.transferTrust({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      trustAccountId: 'ta-1',
+      fromMatterId: 'matter-src',
+      toMatterId: 'matter-dst',
+      amount: 75,
+      description: 'Reallocate trust retainer',
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(txClient.trustTransaction.create).toHaveBeenCalledTimes(2);
+    expect(txClient.matterTrustLedger.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ledger-src' },
+        data: { balance: 225 },
+      }),
+    );
+    expect(txClient.matterTrustLedger.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ledger-dst' },
+        data: { balance: 125 },
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        withdrawalTransactionId: 'tx-out',
+        depositTransactionId: 'tx-in',
+        sourceBalance: 225,
+        destinationBalance: 125,
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'trust.transfer.completed',
+        metadata: expect.objectContaining({
+          sourceBalance: 225,
+          destinationBalance: 125,
+        }),
+      }),
+    );
+  });
+
   it('returns account and matter level trust summaries', async () => {
     const service = new BillingService(
       {
@@ -184,6 +256,65 @@ describe('BillingService trust invariants + reports', () => {
         difference: -50,
       }),
     );
+  });
+
+  it('treats transfer in/out descriptors as opposite reconciliation deltas', async () => {
+    const service = new BillingService(
+      {
+        matterTrustLedger: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'l1',
+              trustAccountId: 'ta-1',
+              matterId: 'm-src',
+              balance: 200,
+              trustAccount: { name: 'IOLTA Account' },
+              matter: { name: 'Matter Source' },
+            },
+            {
+              id: 'l2',
+              trustAccountId: 'ta-1',
+              matterId: 'm-dst',
+              balance: 100,
+              trustAccount: { name: 'IOLTA Account' },
+              matter: { name: 'Matter Dest' },
+            },
+          ]),
+        },
+        trustTransaction: {
+          findMany: jest.fn().mockResolvedValue([
+            { trustAccountId: 'ta-1', matterId: 'm-src', type: 'DEPOSIT', amount: 300 },
+            {
+              trustAccountId: 'ta-1',
+              matterId: 'm-src',
+              type: 'TRANSFER',
+              amount: 100,
+              description: 'Trust transfer | transfer:abc123 | out',
+            },
+            {
+              trustAccountId: 'ta-1',
+              matterId: 'm-dst',
+              type: 'TRANSFER',
+              amount: 100,
+              description: 'Trust transfer | transfer:abc123 | in',
+            },
+          ]),
+        },
+      } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { appendEvent: jest.fn() } as any,
+      { upload: jest.fn() } as any,
+    );
+
+    const report = await service.trustReconciliation({ organizationId: 'org-1' } as any);
+    expect(report).toEqual(
+      expect.objectContaining({
+        checkedLedgers: 2,
+        checkedTransactions: 3,
+        mismatchCount: 0,
+      }),
+    );
+    expect(report.mismatches).toEqual([]);
   });
 
   it('creates trust reconciliation run with discrepancy records', async () => {
