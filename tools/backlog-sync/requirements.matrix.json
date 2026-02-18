@@ -571,11 +571,11 @@
           "title": "Implement secure portal attachments in message workflow",
           "requirementId": "REQ-PORTAL-001",
           "promptSection": "Client Portal / Secure messaging with attachments",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": ["parity", "portal", "documents"],
-          "problemStatement": "Portal attachment workflow is verification-hardened with explicit audit coverage for attachment-link and download-url issuance actions in addition to upload controls.",
+          "problemStatement": "Portal attachment workflow is verification-hardened with disposed-document guardrails, snapshot attachment filtering, and explicit audit coverage for link/download issuance actions.",
           "requirementExcerpt": "Secure messaging with attachments required for clients.",
           "acceptanceCriteria": [
             "Clients can upload attachments to portal threads.",
@@ -585,7 +585,8 @@
           "apiImpact": "Portal messaging endpoints support attachment metadata.",
           "securityImpact": "Strict access controls and signed download URLs required.",
           "definitionOfDone": [
-            "Portal attachment security tests pass across upload/link/download paths.",
+            "Portal attachment security tests pass across upload/link/download paths, including disposed-document denial checks.",
+            "Portal snapshot output excludes non-shared/disposed attachment records defensively.",
             "Attachment-link and download URL issuance actions are auditable.",
             "Verification artifact published at docs/parity/portal-attachments-verification.md."
           ]

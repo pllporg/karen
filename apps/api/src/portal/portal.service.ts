@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { DocumentDispositionStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { S3Service } from '../files/s3.service';
@@ -113,14 +113,20 @@ export class PortalService {
       subject: message.subject,
       body: message.body,
       occurredAt: message.occurredAt,
-      attachments: message.attachments.map((attachment) => ({
-        id: attachment.id,
-        documentVersionId: attachment.documentVersionId,
-        title: attachment.documentVersion.document.title,
-        mimeType: attachment.documentVersion.mimeType,
-        size: attachment.documentVersion.size,
-        downloadPath: `/portal/attachments/${attachment.documentVersionId}/download-url`,
-      })),
+      attachments: message.attachments
+        .filter(
+          (attachment) =>
+            attachment.documentVersion.document.sharedWithClient &&
+            attachment.documentVersion.document.dispositionStatus !== DocumentDispositionStatus.DISPOSED,
+        )
+        .map((attachment) => ({
+          id: attachment.id,
+          documentVersionId: attachment.documentVersionId,
+          title: attachment.documentVersion.document.title,
+          mimeType: attachment.documentVersion.mimeType,
+          size: attachment.documentVersion.size,
+          downloadPath: `/portal/attachments/${attachment.documentVersionId}/download-url`,
+        })),
     }));
 
     const sharedDocuments = documents.map((document) => {
@@ -348,12 +354,16 @@ export class PortalService {
           select: {
             id: true,
             matterId: true,
+            dispositionStatus: true,
           },
         },
       },
     });
 
     if (!version) {
+      throw new NotFoundException('Portal attachment not found');
+    }
+    if (version.document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
       throw new NotFoundException('Portal attachment not found');
     }
 
@@ -799,6 +809,9 @@ export class PortalService {
       }
       if (!version.document.sharedWithClient) {
         throw new ForbiddenException('Portal attachments must be marked shared-with-client');
+      }
+      if (version.document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+        throw new UnprocessableEntityException('Portal attachments cannot reference disposed documents');
       }
     }
   }
