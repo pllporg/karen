@@ -223,6 +223,13 @@ Included suites cover:
 - Parity evidence artifact:
   - `docs/parity/ops-runbook-slos.md`
 
+## UI/UX Refactor Lane
+
+- Planning artifact for LIC-aligned UI migration:
+  - `docs/UI_REFACTOR_LANE_PLAN.md`
+- Backlog sequence:
+  - `KAR-54` (lane plan), then `KAR-55` through `KAR-60` for tokens, shell, primitives, accessibility, responsive matrix, and regression rollout.
+
 ## Important Notes
 
 - `apps/api/prisma/migrations/20260213180000_init/migration.sql` enables extension prerequisites and includes migration guidance. Generate complete SQL from Prisma schema in a Node-enabled environment via `pnpm --filter api prisma:migrate`.
