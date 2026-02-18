@@ -201,7 +201,7 @@ export class PortalService {
         },
       }));
 
-    return this.prisma.communicationMessage.create({
+    const message = await this.prisma.communicationMessage.create({
       data: {
         organizationId: input.user.organizationId,
         threadId: thread.id,
@@ -224,6 +224,24 @@ export class PortalService {
         attachments: true,
       },
     });
+
+    if (attachmentVersionIds.length > 0) {
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'portal.attachment.linked',
+        entityType: 'communicationMessage',
+        entityId: message.id,
+        metadata: {
+          matterId: input.matterId,
+          threadId: thread.id,
+          attachmentVersionIds,
+          source: 'client_portal',
+        },
+      });
+    }
+
+    return message;
   }
 
   async uploadPortalAttachment(input: {
@@ -325,14 +343,36 @@ export class PortalService {
           matterId: { in: matterIds },
         },
       },
+      include: {
+        document: {
+          select: {
+            id: true,
+            matterId: true,
+          },
+        },
+      },
     });
 
     if (!version) {
       throw new NotFoundException('Portal attachment not found');
     }
 
+    const url = await this.s3.signedDownloadUrl(version.storageKey);
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'portal.attachment.download_url_issued',
+      entityType: 'documentVersion',
+      entityId: version.id,
+      metadata: {
+        documentId: version.document.id,
+        matterId: version.document.matterId,
+        source: 'client_portal',
+      },
+    });
+
     return {
-      url: await this.s3.signedDownloadUrl(version.storageKey),
+      url,
     };
   }
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T16:36:27.089Z",
+  "generatedAt": "2026-02-18T18:12:42.100Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,25 +14,25 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 20,
+    "unresolvedRequirements": 19,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 15,
+      "phase-1": 14,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 20
+      "Complete": 19
     },
     "unresolvedCountsByRisk": {
-      "Medium": 16,
-      "High": 4
+      "High": 4,
+      "Medium": 15
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 16,
-      "Complete:High": 4
+      "Complete:High": 4,
+      "Complete:Medium": 15
     }
   },
   "priority": {
@@ -111,21 +111,21 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-DATA-003",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Add pgvector-backed similarity retrieval path for source chunks",
-        "component": "Data",
-        "epicCode": "PARITY-02",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-INT-003",
         "parityStatus": "Complete",
         "risk": "Medium",
         "title": "Implement Filevine and PracticePanther connector production adapters",
         "component": "Integrations",
         "epicCode": "PARITY-09",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-MAT-002",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Enhance contact relationship graph visualization and filtering",
+        "component": "Web",
+        "epicCode": "PARITY-04",
         "phase": "phase-1"
       }
     ]
@@ -140,15 +140,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-16"
+      "KAR-30"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-30",
+        "title": "Implement secure portal attachments in message workflow",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T18:12:23.077Z",
+        "requirementId": "REQ-PORTAL-001"
+      },
+      {
         "key": "KAR-16",
         "title": "Build user-confirm merge workflow for dedupe suggestions",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T16:35:49.787Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T16:40:25.451Z",
         "requirementId": "REQ-PORT-003"
       },
       {
@@ -206,36 +213,25 @@
         "state": "Done",
         "updatedAt": "2026-02-18T01:20:17.216Z",
         "requirementId": "REQ-DATA-001"
-      },
-      {
-        "key": "KAR-6",
-        "title": "Harden tenant isolation test coverage across all core entities",
-        "state": "Done",
-        "updatedAt": "2026-02-18T01:08:56.302Z",
-        "requirementId": "REQ-SEC-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T16:36:25.880Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T18:12:40.906Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "41851aee48cd88cac486195ce0c3577b71c50747",
+    "gitHead": "e94643a084d6b63fc3d3bf480e9c1d1a0f1fe63a",
     "gitStatusShort": [
-      "## lin/KAR-16-dedupe-merge-verification-hardening",
-      " M apps/api/src/contacts/contacts.service.ts",
-      " M apps/api/test/contacts-dedupe.spec.ts",
-      " M apps/web/test/contacts-page.spec.tsx",
+      "## lin/KAR-30-portal-attachments-verification-hardening",
+      " M apps/api/src/portal/portal.service.ts",
+      " M apps/api/test/portal.spec.ts",
       " M tools/backlog-sync/requirements.matrix.json",
-      "?? Brandguide.md",
-      "?? Brandguideprompt.md",
       "?? agents.md",
       "?? brand/",
-      "?? brandguidetailwindsnipped.js",
-      "?? docs/parity/dedupe-merge-verification.md",
+      "?? docs/parity/portal-attachments-verification.md",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 7
   }
 }

@@ -77,11 +77,12 @@ describe('PortalService', () => {
       },
     } as any;
 
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
     const service = new PortalService(
       prisma,
       { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
       { scan: jest.fn() } as any,
-      { appendEvent: jest.fn() } as any,
+      audit,
     );
 
     await service.sendPortalMessage({
@@ -106,6 +107,18 @@ describe('PortalService', () => {
               data: [{ documentVersionId: 'ver-1' }],
             },
           },
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'portal.attachment.linked',
+        entityType: 'communicationMessage',
+        entityId: 'message-1',
+        metadata: expect.objectContaining({
+          matterId: 'matter-1',
+          threadId: 'thread-1',
+          attachmentVersionIds: ['ver-1'],
         }),
       }),
     );
@@ -174,10 +187,15 @@ describe('PortalService', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 'ver-1',
           storageKey: 'org/org-1/matter/matter-1/portal/file-1',
+          document: {
+            id: 'doc-1',
+            matterId: 'matter-1',
+          },
         }),
       },
     } as any;
 
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
     const service = new PortalService(
       prisma,
       {
@@ -185,7 +203,7 @@ describe('PortalService', () => {
         signedDownloadUrl: jest.fn().mockResolvedValue('https://files.local/ver-1'),
       } as any,
       { scan: jest.fn() } as any,
-      { appendEvent: jest.fn() } as any,
+      audit,
     );
 
     const result = await service.getPortalAttachmentDownloadUrl({
@@ -194,6 +212,17 @@ describe('PortalService', () => {
     });
 
     expect(result).toEqual({ url: 'https://files.local/ver-1' });
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'portal.attachment.download_url_issued',
+        entityType: 'documentVersion',
+        entityId: 'ver-1',
+        metadata: expect.objectContaining({
+          documentId: 'doc-1',
+          matterId: 'matter-1',
+        }),
+      }),
+    );
   });
 
   it('rejects download for attachments outside client visibility scope', async () => {
