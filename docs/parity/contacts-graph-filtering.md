@@ -31,6 +31,9 @@ Scope: contact relationship graph filtering + compound contact filters + inline 
 ## Test Evidence
 
 - API:
+  - `apps/api/test/contacts-controller.spec.ts` validates:
+    - repeated-query and CSV parsing for `includeTags`, `excludeTags`, and `relationshipTypes`.
+    - invalid `tagMode` coercion to `any`.
   - `apps/api/test/contacts-dedupe.spec.ts` validates:
     - list query shape for compound tag filters.
     - graph response shape and filter propagation.

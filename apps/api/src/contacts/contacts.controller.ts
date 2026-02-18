@@ -18,8 +18,8 @@ export class ContactsController {
   list(
     @CurrentUser() user: AuthenticatedUser,
     @Query('search') search?: string,
-    @Query('includeTags') includeTags?: string,
-    @Query('excludeTags') excludeTags?: string,
+    @Query('includeTags') includeTags?: string | string[],
+    @Query('excludeTags') excludeTags?: string | string[],
     @Query('tagMode') tagMode?: 'any' | 'all',
   ) {
     return this.contactsService.list(user.organizationId, {
@@ -46,7 +46,7 @@ export class ContactsController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Query('search') search?: string,
-    @Query('relationshipTypes') relationshipTypes?: string,
+    @Query('relationshipTypes') relationshipTypes?: string | string[],
   ) {
     return this.contactsService.graph(user.organizationId, id, {
       search,
@@ -96,9 +96,10 @@ export class ContactsController {
     });
   }
 
-  private parseCsv(value?: string) {
-    return String(value || '')
-      .split(',')
+  private parseCsv(value?: string | string[]) {
+    const values = Array.isArray(value) ? value : value ? [value] : [];
+    return values
+      .flatMap((entry) => String(entry).split(','))
       .map((item) => item.trim())
       .filter(Boolean);
   }

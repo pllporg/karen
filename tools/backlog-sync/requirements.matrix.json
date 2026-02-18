@@ -287,11 +287,11 @@
           "title": "Enhance contact relationship graph visualization and filtering",
           "requirementId": "REQ-MAT-002",
           "promptSection": "Contacts / relationship graph + tags + filters",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "Medium",
           "labels": ["parity", "contacts"],
-          "problemStatement": "Contacts graph and filter workflows now support compound tag filters, graph relationship-type/search filters, and inline dedupe indicators in the main table.",
+          "problemStatement": "Contacts graph/filter workflows are verification-hardened with explicit controller parsing support for both CSV and repeated query parameters (include/exclude tags + relationship types), while preserving compound filters and inline dedupe indicators.",
           "requirementExcerpt": "People/org contacts with relationship graph and tags/filters.",
           "acceptanceCriteria": [
             "Graph view supports relationship-type filters and search.",
@@ -301,6 +301,7 @@
           "apiImpact": "Contacts list/graph endpoints now support compound filter params (include/exclude tags, tag mode, relationship type, search).",
           "securityImpact": "Tenant and permission checks enforced for graph API.",
           "definitionOfDone": [
+            "Contacts controller regression suite verifies CSV + repeated-query parsing for include/exclude tags and relationship types, plus invalid tag-mode fallback behavior.",
             "Contacts graph and filtering UI/API path is covered by API + web regression tests and documented in docs/parity/contacts-graph-filtering.md."
           ]
         },
