@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T20:51:25.492Z`
+- Snapshot Timestamp: `2026-02-18T20:59:15.135Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T20:51:23.862Z`
+- Last Successful Mirror Verify: `2026-02-18T20:59:13.599Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -82,6 +82,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Verified `REQ-OPS-003` by adding executable governance checks for `.github/workflows/pr-linear-policy.yml` and `.github/pull_request_template.md`, including regex enforcement and required metadata section assertions (`apps/api/test/pr-linear-policy.spec.ts`, `docs/parity/pr-linear-policy-verification.md`).
 - 2026-02-18: Verified `REQ-OPS-002` by adding executable runbook conformance coverage for required deployment/readiness/rollback/incident sections, baseline SLO targets, and README/parity linkage integrity (`apps/api/test/ops-runbook.spec.ts`, `docs/parity/ops-runbook-slos.md`).
 - 2026-02-18: Verified `REQ-MAT-002` by hardening contacts filter/graph query parsing to support both CSV and repeated query params (`includeTags`, `excludeTags`, `relationshipTypes`), adding controller-level regression coverage for parsing and tag-mode fallback, and updating parity evidence (`docs/parity/contacts-graph-filtering.md`).
 - 2026-02-18: Verified `REQ-INT-003` by hardening Filevine/PracticePanther connectors with live webhook registration URL support (env/config override), strict provider error surfacing, external subscription ID extraction, and expanded connector regression coverage (`docs/parity/filevine-practicepanther-connector-verification.md`).
