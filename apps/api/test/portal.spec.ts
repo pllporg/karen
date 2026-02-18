@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PortalService } from '../src/portal/portal.service';
 
 function buildClientUser() {
@@ -124,6 +124,43 @@ describe('PortalService', () => {
     );
   });
 
+  it('rejects disposed attachments when sending portal message', async () => {
+    const prisma = {
+      matterParticipant: {
+        findMany: jest.fn().mockResolvedValue([{ matterId: 'matter-1' }]),
+      },
+      documentVersion: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'ver-disposed',
+            document: {
+              id: 'doc-disposed',
+              matterId: 'matter-1',
+              sharedWithClient: true,
+              dispositionStatus: 'DISPOSED',
+            },
+          },
+        ]),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.sendPortalMessage({
+        user: buildClientUser(),
+        matterId: 'matter-1',
+        body: 'Please review this file',
+        attachmentVersionIds: ['ver-disposed'],
+      }),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+
   it('uploads portal attachment as shared-with-client document', async () => {
     const prisma = {
       matterParticipant: {
@@ -190,6 +227,7 @@ describe('PortalService', () => {
           document: {
             id: 'doc-1',
             matterId: 'matter-1',
+            dispositionStatus: 'ACTIVE',
           },
         }),
       },
@@ -225,6 +263,39 @@ describe('PortalService', () => {
     );
   });
 
+  it('rejects download for disposed portal attachments', async () => {
+    const prisma = {
+      matterParticipant: {
+        findMany: jest.fn().mockResolvedValue([{ matterId: 'matter-1' }]),
+      },
+      documentVersion: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'ver-disposed',
+          storageKey: 'org/org-1/matter/matter-1/portal/file-disposed',
+          document: {
+            id: 'doc-disposed',
+            matterId: 'matter-1',
+            dispositionStatus: 'DISPOSED',
+          },
+        }),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.getPortalAttachmentDownloadUrl({
+        user: buildClientUser(),
+        documentVersionId: 'ver-disposed',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('rejects download for attachments outside client visibility scope', async () => {
     const prisma = {
       matterParticipant: {
@@ -248,6 +319,105 @@ describe('PortalService', () => {
         documentVersionId: 'ver-secret',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('filters non-shared and disposed message attachments from portal snapshot output', async () => {
+    const prisma = {
+      matterParticipant: {
+        findMany: jest.fn().mockResolvedValue([{ matterId: 'matter-1' }]),
+      },
+      matter: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      calendarEvent: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      invoice: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      communicationMessage: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'msg-1',
+            threadId: 'thread-1',
+            type: 'PORTAL_MESSAGE',
+            direction: 'INBOUND',
+            subject: 'Portal subject',
+            body: 'Portal body',
+            occurredAt: new Date('2026-02-18T19:00:00.000Z'),
+            attachments: [
+              {
+                id: 'att-safe',
+                documentVersionId: 'ver-safe',
+                documentVersion: {
+                  id: 'ver-safe',
+                  mimeType: 'image/jpeg',
+                  size: 123,
+                  document: {
+                    id: 'doc-safe',
+                    title: 'Client Photo',
+                    sharedWithClient: true,
+                    dispositionStatus: 'ACTIVE',
+                  },
+                },
+              },
+              {
+                id: 'att-hidden',
+                documentVersionId: 'ver-hidden',
+                documentVersion: {
+                  id: 'ver-hidden',
+                  mimeType: 'application/pdf',
+                  size: 456,
+                  document: {
+                    id: 'doc-hidden',
+                    title: 'Internal Memo',
+                    sharedWithClient: false,
+                    dispositionStatus: 'ACTIVE',
+                  },
+                },
+              },
+              {
+                id: 'att-disposed',
+                documentVersionId: 'ver-disposed',
+                documentVersion: {
+                  id: 'ver-disposed',
+                  mimeType: 'application/pdf',
+                  size: 789,
+                  document: {
+                    id: 'doc-disposed',
+                    title: 'Old Exhibit',
+                    sharedWithClient: true,
+                    dispositionStatus: 'DISPOSED',
+                  },
+                },
+              },
+            ],
+          },
+        ]),
+      },
+      document: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      eSignEnvelope: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const snapshot = await service.getPortalSnapshot(buildClientUser());
+    expect(snapshot.messages).toHaveLength(1);
+    expect(snapshot.messages[0].attachments).toEqual([
+      expect.objectContaining({
+        id: 'att-safe',
+        documentVersionId: 'ver-safe',
+      }),
+    ]);
   });
 
   it('creates an e-sign envelope through provider abstraction with stub fallback', async () => {

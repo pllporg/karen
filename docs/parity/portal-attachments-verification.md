@@ -11,11 +11,14 @@ Scope: verify secure client-portal messaging attachments with auditable upload/l
 ### API hardening checks
 
 - Attachment linking on portal messages remains matter-scoped and shared-with-client constrained.
+- Disposed document versions are explicitly blocked from portal message attachment linking.
 - Link actions now emit explicit audit events:
   - `portal.attachment.linked`
 - Signed download URL issuance now emits explicit audit events:
   - `portal.attachment.download_url_issued`
+- Disposed document versions are explicitly denied for portal download-url issuance.
 - Upload controls remain enforced with malware scan gating and upload audit records.
+- Snapshot rendering defensively filters portal message attachments to exclude non-shared and disposed documents.
 
 ### Web checks
 
