@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T18:12:42.100Z",
+  "generatedAt": "2026-02-18T18:28:50.098Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,39 +14,30 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 19,
+    "unresolvedRequirements": 18,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 14,
+      "phase-1": 13,
       "phase-2": 5
     },
     "unresolvedCountsByStatus": {
-      "Complete": 19
+      "Complete": 18
     },
     "unresolvedCountsByRisk": {
-      "High": 4,
+      "High": 3,
       "Medium": 15
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 4,
+      "Complete:High": 3,
       "Complete:Medium": 15
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-PORT-001",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Finalize MyCase ZIP importer field coverage and error mapping",
-        "component": "API",
-        "epicCode": "PARITY-03",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-PORT-002",
         "parityStatus": "Complete",
@@ -127,6 +118,15 @@
         "component": "Web",
         "epicCode": "PARITY-04",
         "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-OPS-002",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Document deployment runbook and operational SLOs",
+        "component": "Infra",
+        "epicCode": "PARITY-10",
+        "phase": "phase-1"
       }
     ]
   },
@@ -140,15 +140,22 @@
       "In Progress": 1
     },
     "inProgressIssueKeys": [
-      "KAR-30"
+      "KAR-35"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-35",
+        "title": "Implement style pack management with source document governance",
+        "state": "In Progress",
+        "updatedAt": "2026-02-18T18:28:22.848Z",
+        "requirementId": "REQ-AI-003"
+      },
+      {
         "key": "KAR-30",
         "title": "Implement secure portal attachments in message workflow",
-        "state": "In Progress",
-        "updatedAt": "2026-02-18T18:12:23.077Z",
+        "state": "Done",
+        "updatedAt": "2026-02-18T18:16:19.891Z",
         "requirementId": "REQ-PORTAL-001"
       },
       {
@@ -206,30 +213,23 @@
         "state": "Done",
         "updatedAt": "2026-02-18T01:30:35.867Z",
         "requirementId": "REQ-INT-001"
-      },
-      {
-        "key": "KAR-10",
-        "title": "Validate all required entities and relation semantics against prompt",
-        "state": "Done",
-        "updatedAt": "2026-02-18T01:20:17.216Z",
-        "requirementId": "REQ-DATA-001"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T18:12:40.906Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T18:28:48.837Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "e94643a084d6b63fc3d3bf480e9c1d1a0f1fe63a",
+    "gitHead": "c55cb99484cecb1c1ce45f71d2c71ab76fd8d415",
     "gitStatusShort": [
-      "## lin/KAR-30-portal-attachments-verification-hardening",
-      " M apps/api/src/portal/portal.service.ts",
-      " M apps/api/test/portal.spec.ts",
+      "## lin/KAR-35-style-pack-verification-hardening",
+      " M apps/api/src/ai/ai.service.ts",
+      " M apps/api/test/ai-style-pack.spec.ts",
       " M tools/backlog-sync/requirements.matrix.json",
       "?? agents.md",
       "?? brand/",
-      "?? docs/parity/portal-attachments-verification.md",
+      "?? docs/parity/style-pack-verification.md",
       "?? uirefactorprompt.md"
     ],
     "dirtyFileCount": 7

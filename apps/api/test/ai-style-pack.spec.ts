@@ -234,4 +234,110 @@ describe('AiService style pack workflows', () => {
       }),
     );
   });
+
+  it('detaches source docs with matter access check and rich audit metadata', async () => {
+    const getStylePackResult = {
+      id: 'style-pack-1',
+      name: 'Construction Litigation Tone',
+      description: 'Forceful but neutral',
+      sourceDocs: [],
+    };
+
+    const prisma = {
+      stylePack: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'style-pack-1', organizationId: 'org-1' })
+          .mockResolvedValueOnce(getStylePackResult),
+      },
+      stylePackSourceDoc: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'spd-1',
+          stylePackId: 'style-pack-1',
+          documentVersionId: 'ver-1',
+          documentVersion: {
+            id: 'ver-1',
+            document: {
+              id: 'doc-1',
+              matterId: 'matter-1',
+            },
+          },
+        }),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    } as any;
+
+    const access = {
+      assertMatterAccess: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
+    const audit = {
+      appendEvent: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
+    const service = new AiService(prisma, { createWorker: jest.fn(), addJob: jest.fn() } as any, access, audit);
+    const result = await service.removeStylePackSourceDoc({
+      user: { id: 'user-1', organizationId: 'org-1' } as any,
+      stylePackId: 'style-pack-1',
+      documentVersionId: 'ver-1',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1', organizationId: 'org-1' }),
+      'matter-1',
+      'read',
+    );
+    expect(prisma.stylePackSourceDoc.deleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          stylePackId: 'style-pack-1',
+          documentVersionId: 'ver-1',
+        },
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'ai.style_pack.source_doc.detached',
+        entityId: 'style-pack-1',
+        metadata: expect.objectContaining({
+          documentVersionId: 'ver-1',
+          documentId: 'doc-1',
+          matterId: 'matter-1',
+        }),
+      }),
+    );
+    expect(result).toEqual(getStylePackResult);
+  });
+
+  it('rejects detaching unknown source doc link', async () => {
+    const prisma = {
+      stylePack: {
+        findFirst: jest.fn().mockResolvedValueOnce({ id: 'style-pack-1', organizationId: 'org-1' }),
+      },
+      stylePackSourceDoc: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        deleteMany: jest.fn(),
+      },
+    } as any;
+    const access = {
+      assertMatterAccess: jest.fn(),
+    } as any;
+    const audit = {
+      appendEvent: jest.fn(),
+    } as any;
+
+    const service = new AiService(prisma, { createWorker: jest.fn(), addJob: jest.fn() } as any, access, audit);
+
+    await expect(
+      service.removeStylePackSourceDoc({
+        user: { id: 'user-1', organizationId: 'org-1' } as any,
+        stylePackId: 'style-pack-1',
+        documentVersionId: 'ver-missing',
+      }),
+    ).rejects.toThrow('Style pack source document link not found');
+
+    expect(access.assertMatterAccess).not.toHaveBeenCalled();
+    expect(prisma.stylePackSourceDoc.deleteMany).not.toHaveBeenCalled();
+    expect(audit.appendEvent).not.toHaveBeenCalled();
+  });
 });
