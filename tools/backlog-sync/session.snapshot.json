@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T21:09:54.767Z",
+  "generatedAt": "2026-02-18T21:25:19.210Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,36 +14,27 @@
   },
   "matrixSummary": {
     "totalRequirements": 34,
-    "unresolvedRequirements": 5,
+    "unresolvedRequirements": 4,
     "totalCountsByPhase": {
       "phase-1": 29,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-2": 5
+      "phase-2": 4
     },
     "unresolvedCountsByStatus": {
-      "Complete": 5
+      "Complete": 4
     },
     "unresolvedCountsByRisk": {
-      "Medium": 5
+      "Medium": 4
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:Medium": 5
+      "Complete:Medium": 4
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-BILL-003",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Implement trust reconciliation workflows with discrepancy resolution",
-        "component": "API",
-        "epicCode": "PARITY-06",
-        "phase": "phase-2"
-      },
       {
         "requirementId": "REQ-BILL-004",
         "parityStatus": "Complete",
@@ -93,6 +84,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-31",
+        "title": "Replace e-sign stub with provider abstraction implementation",
+        "state": "Done",
+        "updatedAt": "2026-02-18T21:15:22.027Z",
+        "requirementId": "REQ-PORTAL-002"
+      },
       {
         "key": "KAR-43",
         "title": "Enforce Linear key branch/PR policy in CI",
@@ -155,33 +153,27 @@
         "state": "Done",
         "updatedAt": "2026-02-18T19:21:45.723Z",
         "requirementId": "REQ-PORT-002"
-      },
-      {
-        "key": "KAR-25",
-        "title": "Expand document automation coverage for merge fields and generated outputs",
-        "state": "Done",
-        "updatedAt": "2026-02-18T19:14:05.739Z",
-        "requirementId": "REQ-COMM-003"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:09:53.396Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-18T21:25:16.756Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "4ebc313d2d918b5f39b658655c017abc06226898",
+    "gitHead": "417892848dc62d9990fc8befcd91ac895e8e92b9",
     "gitStatusShort": [
-      "## lin/KAR-31-portal-esign-verification-hardening",
-      " M apps/web/test/portal-page.spec.tsx",
+      "## lin/KAR-47-bill-003-verification-hardening",
+      " M apps/api/src/billing/billing.service.ts",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/parity/esign-provider-abstraction.md",
+      " M docs/parity/trust-reconciliation-workflows.md",
       " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
-      "?? apps/api/test/portal-esign-verification.spec.ts",
+      "?? apps/api/test/billing-trust-reconciliation-verification.spec.ts",
       "?? brand/",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 9
   }
 }

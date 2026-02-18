@@ -1245,6 +1245,12 @@ export class BillingService {
     if (!input.resolutionNote?.trim()) {
       throw new UnprocessableEntityException('resolutionNote is required');
     }
+    if (
+      input.status !== TrustReconciliationDiscrepancyStatus.RESOLVED &&
+      input.status !== TrustReconciliationDiscrepancyStatus.WAIVED
+    ) {
+      throw new UnprocessableEntityException('status must be RESOLVED or WAIVED');
+    }
 
     const discrepancy = await this.prisma.trustReconciliationDiscrepancy.findFirst({
       where: {
@@ -1258,6 +1264,9 @@ export class BillingService {
     if (!discrepancy) throw new NotFoundException('Trust reconciliation discrepancy not found');
     if (discrepancy.run.status !== TrustReconciliationRunStatus.IN_REVIEW) {
       throw new UnprocessableEntityException('Discrepancies can only be resolved while run is in review');
+    }
+    if (discrepancy.status !== TrustReconciliationDiscrepancyStatus.OPEN) {
+      throw new UnprocessableEntityException('Only open discrepancies can be resolved');
     }
 
     const resolved = await this.prisma.trustReconciliationDiscrepancy.update({

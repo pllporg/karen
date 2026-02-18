@@ -524,11 +524,11 @@
           "title": "Implement trust reconciliation workflows with discrepancy resolution",
           "requirementId": "REQ-BILL-003",
           "promptSection": "Billing & Trust / trust reconciliation workflows",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "billing", "phase-2"],
-          "problemStatement": "Trust reconciliation workflows are implemented with run lifecycle management, discrepancy resolution, and completion sign-off controls.",
+          "problemStatement": "Trust reconciliation workflows are verification-hardened with discrepancy reason-code capture, strict resolution status guards, and immutable resolution semantics for non-open discrepancies.",
           "requirementExcerpt": "Trust reconciliation should support statement-period runs, discrepancy tracking, resolution notes, and sign-off evidence.",
           "acceptanceCriteria": [
             "Create reconciliation run entities with lifecycle states (draft, in_review, completed).",
@@ -538,7 +538,8 @@
           "apiImpact": "New reconciliation run/discrepancy endpoints and reporting payload fields.",
           "securityImpact": "Improves financial controls and traceability for trust account compliance.",
           "definitionOfDone": [
-            "Reconciliation workflows are tested end-to-end with deterministic trust ledger fixtures and documented in docs/parity/trust-reconciliation-workflows.md."
+            "Reconciliation workflows are tested end-to-end with deterministic trust ledger fixtures and documented in docs/parity/trust-reconciliation-workflows.md.",
+            "Service-level validation rejects unsupported discrepancy statuses and re-resolution of non-open discrepancies."
           ]
         },
         {
