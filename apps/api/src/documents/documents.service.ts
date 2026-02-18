@@ -624,42 +624,99 @@ export class DocumentsService {
     const now = new Date();
     const pendingItems = run.items.filter((item) => item.status === DocumentDispositionItemStatus.PENDING);
     const pendingDocumentIds = pendingItems.map((item) => item.documentId);
+    const executableDocumentIds: string[] = [];
+    const blockedByLegalHoldIds: string[] = [];
 
     if (pendingDocumentIds.length > 0) {
-      await this.prisma.document.updateMany({
+      const pendingDocuments = await this.prisma.document.findMany({
         where: {
+          organizationId: input.user.organizationId,
           id: { in: pendingDocumentIds },
-          organizationId: input.user.organizationId,
         },
-        data: {
-          dispositionStatus: DocumentDispositionStatus.DISPOSED,
-          disposedAt: now,
-          sharedWithClient: false,
+        select: {
+          id: true,
+          legalHoldActive: true,
+          dispositionStatus: true,
         },
       });
+      const pendingDocumentById = new Map(pendingDocuments.map((document) => [document.id, document]));
+      for (const pendingItem of pendingItems) {
+        const document = pendingDocumentById.get(pendingItem.documentId);
+        if (!document) {
+          continue;
+        }
+        if (document.legalHoldActive) {
+          blockedByLegalHoldIds.push(document.id);
+          continue;
+        }
+        executableDocumentIds.push(document.id);
+      }
 
-      await this.prisma.documentShareLink.updateMany({
-        where: {
-          organizationId: input.user.organizationId,
-          documentId: { in: pendingDocumentIds },
-          revokedAt: null,
-        },
-        data: {
-          revokedAt: now,
-        },
-      });
+      if (executableDocumentIds.length > 0) {
+        await this.prisma.document.updateMany({
+          where: {
+            id: { in: executableDocumentIds },
+            organizationId: input.user.organizationId,
+          },
+          data: {
+            dispositionStatus: DocumentDispositionStatus.DISPOSED,
+            disposedAt: now,
+            sharedWithClient: false,
+          },
+        });
 
-      await this.prisma.documentDispositionItem.updateMany({
-        where: {
-          runId: run.id,
-          organizationId: input.user.organizationId,
-          status: DocumentDispositionItemStatus.PENDING,
-        },
-        data: {
-          status: DocumentDispositionItemStatus.DISPOSED,
-          appliedAt: now,
-        },
-      });
+        await this.prisma.documentShareLink.updateMany({
+          where: {
+            organizationId: input.user.organizationId,
+            documentId: { in: executableDocumentIds },
+            revokedAt: null,
+          },
+          data: {
+            revokedAt: now,
+          },
+        });
+
+        await this.prisma.documentDispositionItem.updateMany({
+          where: {
+            runId: run.id,
+            organizationId: input.user.organizationId,
+            documentId: { in: executableDocumentIds },
+            status: DocumentDispositionItemStatus.PENDING,
+          },
+          data: {
+            status: DocumentDispositionItemStatus.DISPOSED,
+            appliedAt: now,
+          },
+        });
+      }
+
+      if (blockedByLegalHoldIds.length > 0) {
+        await this.prisma.document.updateMany({
+          where: {
+            id: { in: blockedByLegalHoldIds },
+            organizationId: input.user.organizationId,
+            dispositionStatus: DocumentDispositionStatus.PENDING_DISPOSITION,
+          },
+          data: {
+            dispositionStatus: DocumentDispositionStatus.ACTIVE,
+          },
+        });
+
+        await this.prisma.documentDispositionItem.updateMany({
+          where: {
+            runId: run.id,
+            organizationId: input.user.organizationId,
+            documentId: { in: blockedByLegalHoldIds },
+            status: DocumentDispositionItemStatus.PENDING,
+          },
+          data: {
+            status: DocumentDispositionItemStatus.SKIPPED_LEGAL_HOLD,
+            note: 'Skipped at execution because legal hold is active.',
+            appliedAt: now,
+          },
+        });
+      }
+
     }
 
     const completed = await this.prisma.documentDispositionRun.update({
@@ -680,13 +737,15 @@ export class DocumentsService {
       entityId: completed.id,
       metadata: {
         executedAt: now.toISOString(),
-        disposedCount: pendingDocumentIds.length,
+        disposedCount: executableDocumentIds.length,
+        skippedForLegalHoldAtExecution: blockedByLegalHoldIds.length,
       },
     });
 
     return {
       ...completed,
-      disposedDocumentCount: pendingDocumentIds.length,
+      disposedDocumentCount: executableDocumentIds.length,
+      skippedForLegalHoldCount: blockedByLegalHoldIds.length,
     };
   }
 

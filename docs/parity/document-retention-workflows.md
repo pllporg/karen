@@ -45,6 +45,7 @@ Executed on 2026-02-17:
 ```bash
 pnpm --filter api prisma:generate
 pnpm --filter api test -- document-retention.spec.ts
+pnpm --filter api test -- document-retention-verification.spec.ts
 pnpm --filter web test -- documents-page.spec.tsx
 pnpm test
 pnpm build
@@ -53,5 +54,9 @@ pnpm build
 Results:
 
 - New API retention workflow suite passed (`apps/api/test/document-retention.spec.ts`).
+- Verification hardening suite passed (`apps/api/test/document-retention-verification.spec.ts`) for:
+  - execution-time legal-hold re-check of pending disposition items,
+  - mixed execution path handling (dispose eligible docs, skip active-hold docs),
+  - audit metadata for `disposedCount` and `skippedForLegalHoldAtExecution`.
 - Updated documents page suite passed (`apps/web/test/documents-page.spec.tsx`).
 - Full monorepo tests and build passed.
