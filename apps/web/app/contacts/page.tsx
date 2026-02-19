@@ -5,6 +5,12 @@ import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
 import { ToastStack, type ToastItem } from '../../components/toast-stack';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
+import { Card, CardGrid } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import { Table } from '../../components/ui/table';
 import { apiFetch } from '../../lib/api';
 
 type Contact = {
@@ -348,63 +354,61 @@ export default function ContactsPage() {
     <AppShell>
       <PageHeader title="Contacts" subtitle="Unified people/organizations, relationship graph, and dedupe suggestions." />
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <Card style={{ marginBottom: 14 }}>
         <form onSubmit={addContact} style={{ display: 'grid', gridTemplateColumns: '1fr 180px 140px', gap: 10 }}>
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" />
-          <select className="select" value={kind} onChange={(e) => setKind(e.target.value as 'PERSON' | 'ORGANIZATION')}>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" />
+          <Select value={kind} onChange={(e) => setKind(e.target.value as 'PERSON' | 'ORGANIZATION')}>
             <option value="PERSON">Person</option>
             <option value="ORGANIZATION">Organization</option>
-          </select>
-          <button className="button" type="submit">Create</button>
+          </Select>
+          <Button type="submit">Create</Button>
         </form>
-      </div>
+      </Card>
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <Card style={{ marginBottom: 14 }}>
         <form
           onSubmit={applyContactFilters}
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 160px auto auto', gap: 10 }}
         >
-          <input
-            className="input"
+          <Input
             aria-label="Contact Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name/email/phone"
           />
-          <input
-            className="input"
+          <Input
             aria-label="Include Tags"
             value={includeTagsInput}
             onChange={(e) => setIncludeTagsInput(e.target.value)}
             placeholder="Include tags (comma-separated)"
           />
-          <input
-            className="input"
+          <Input
             aria-label="Exclude Tags"
             value={excludeTagsInput}
             onChange={(e) => setExcludeTagsInput(e.target.value)}
             placeholder="Exclude tags (comma-separated)"
           />
-          <select
-            className="select"
+          <Select
             aria-label="Tag Mode"
             value={tagMode}
             onChange={(e) => setTagMode(e.target.value as 'any' | 'all')}
           >
             <option value="any">Include Any Tag</option>
             <option value="all">Include All Tags</option>
-          </select>
-          <button className="button secondary" type="submit">Apply Filters</button>
-          <button className="button ghost" type="button" onClick={() => clearContactFilters()}>
+          </Select>
+          <Button tone="secondary" type="submit">
+            Apply Filters
+          </Button>
+          <Button tone="ghost" type="button" onClick={() => clearContactFilters()}>
             Clear
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      <div className="card-grid">
-        <div className="card">
+      <CardGrid>
+        <Card>
           <h3 style={{ marginTop: 0 }}>Contacts</h3>
-          <table className="table">
+          <Table>
             <thead>
               <tr>
                 <th>Name</th>
@@ -426,12 +430,17 @@ export default function ContactsPage() {
                   <td>{contact.tags?.length ? contact.tags.join(', ') : '-'}</td>
                   <td>
                     {dedupeByContactId.get(contact.id)
-                      ? `${dedupeByContactId.get(contact.id)?.openCount} open (${dedupeByContactId.get(contact.id)?.highestConfidence})`
+                      ? (
+                        <Badge tone="in-review">
+                          {dedupeByContactId.get(contact.id)?.openCount} OPEN (
+                          {dedupeByContactId.get(contact.id)?.highestConfidence})
+                        </Badge>
+                        )
                       : '-'}
                   </td>
                   <td>
-                    <button
-                      className="button ghost"
+                    <Button
+                      tone="ghost"
                       type="button"
                       onClick={() => {
                         setGraphSearch('');
@@ -441,15 +450,15 @@ export default function ContactsPage() {
                       disabled={graphLoading}
                     >
                       {activeGraphContactId === contact.id ? 'Refresh' : 'View Graph'}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </Card>
 
-        <div className="card">
+        <Card>
           <h3 style={{ marginTop: 0 }}>Relationship Graph</h3>
           {!activeGraphContactId ? (
             <p>Select a contact from the table to view relationship graph details.</p>
@@ -472,15 +481,13 @@ export default function ContactsPage() {
                 }}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 220px auto auto', gap: 8, marginBottom: 10 }}
               >
-                <input
-                  className="input"
+                <Input
                   aria-label="Graph Search"
                   value={graphSearch}
                   onChange={(e) => setGraphSearch(e.target.value)}
                   placeholder="Search related contact name"
                 />
-                <select
-                  className="select"
+                <Select
                   aria-label="Relationship Type Filter"
                   value={graphRelationshipType}
                   onChange={(e) => setGraphRelationshipType(e.target.value)}
@@ -491,12 +498,12 @@ export default function ContactsPage() {
                       {type}
                     </option>
                   ))}
-                </select>
-                <button className="button secondary" type="submit" disabled={graphLoading}>
+                </Select>
+                <Button tone="secondary" type="submit" disabled={graphLoading}>
                   Apply
-                </button>
-                <button
-                  className="button ghost"
+                </Button>
+                <Button
+                  tone="ghost"
                   type="button"
                   disabled={graphLoading}
                   onClick={() => {
@@ -508,12 +515,12 @@ export default function ContactsPage() {
                   }}
                 >
                   Reset
-                </button>
+                </Button>
               </form>
               <small style={{ color: 'var(--lic-text-muted)' }}>
                 Nodes: {graph?.summary.nodeCount ?? 0} | Edges: {graph?.summary.edgeCount ?? 0}
               </small>
-              <table className="table" style={{ marginTop: 8 }}>
+              <Table style={{ marginTop: 8 }}>
                 <thead>
                   <tr>
                     <th>Direction</th>
@@ -535,12 +542,12 @@ export default function ContactsPage() {
                     </tr>
                   ) : null}
                 </tbody>
-              </table>
+              </Table>
             </>
           )}
-        </div>
+        </Card>
 
-        <div className="card">
+        <Card>
           <h3 style={{ marginTop: 0 }}>Dedupe Suggestions</h3>
           {actionKey ? (
             <p className="notice mono-meta" role="status" style={{ marginBottom: 8 }}>
@@ -566,7 +573,7 @@ export default function ContactsPage() {
                 Confidence: {item.confidence} | Status: {item.decision} | {item.reasons.join(', ')}
               </small>
               {item.fieldDiffs.length > 0 ? (
-                <table className="table" style={{ marginTop: 6 }}>
+                <Table style={{ marginTop: 6 }}>
                   <thead>
                     <tr>
                       <th>Field</th>
@@ -583,51 +590,51 @@ export default function ContactsPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Table>
               ) : null}
               <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <button
-                  className="button ghost"
+                <Button
+                  tone="ghost"
                   type="button"
                   onClick={() => merge(item)}
                   disabled={actionKey !== null}
                 >
                   {actionKey === `${item.pairKey}:merge` ? 'Merging...' : 'Merge'}
-                </button>
+                </Button>
                 {item.decision === 'OPEN' ? (
                   <>
-                    <button
-                      className="button ghost"
+                    <Button
+                      tone="ghost"
                       type="button"
                       onClick={() => decision(item, 'DEFER')}
                       disabled={actionKey !== null}
                     >
                       {actionKey === `${item.pairKey}:DEFER` ? 'Saving...' : 'Defer'}
-                    </button>
-                    <button
-                      className="button ghost"
+                    </Button>
+                    <Button
+                      tone="ghost"
                       type="button"
                       onClick={() => decision(item, 'IGNORE')}
                       disabled={actionKey !== null}
                     >
                       {actionKey === `${item.pairKey}:IGNORE` ? 'Saving...' : 'Ignore'}
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <button
-                    className="button ghost"
+                  <Button
+                    tone="ghost"
                     type="button"
                     onClick={() => decision(item, 'OPEN')}
                     disabled={actionKey !== null}
                   >
                     {actionKey === `${item.pairKey}:OPEN` ? 'Saving...' : 'Reopen'}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
           ))}
-        </div>
-      </div>
+        </Card>
+      </CardGrid>
 
       <ConfirmDialog
         open={Boolean(pendingActionDialog)}

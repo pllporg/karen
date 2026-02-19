@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T16:19:09.706Z`
+- Snapshot Timestamp: `2026-02-19T16:34:26.015Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T16:19:08.385Z`
+- Last Successful Mirror Verify: `2026-02-19T16:34:24.739Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,6 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-19: Implemented `KAR-57` / `REQ-UI-004` primitive-system uplift by introducing canonical shared primitives in `apps/web/components/ui/` (`Button`, `Input`, `Select`, `Badge`, `Table`, `Card`, `Drawer`, `Modal`, `Toast`), integrating primitives into representative workflow routes (`apps/web/app/contacts/page.tsx`, `apps/web/app/communications/page.tsx`) and review/toast surfaces (`apps/web/components/confirm-dialog.tsx`, `apps/web/components/toast-stack.tsx`), adding primitive regression coverage (`apps/web/test/ui-primitives.spec.tsx`), and documenting parity evidence (`docs/parity/ui-primitives-state-verification.md`).
 - 2026-02-19: Implemented `KAR-60` / `REQ-UI-007` rollout governance by adding a dedicated UI regression workflow (`.github/workflows/ui-regression-rollout-gates.yml`) that enforces UI-evidence PR sections for UI-touching files and runs deterministic web regression/build gates, expanded PR template evidence sections (`UI Interaction Checklist`, `Screenshot Evidence`), added runbook coverage (`docs/UI_REGRESSION_ROLLOUT_GATES.md`), wired regression scripts (`apps/web/package.json`, `package.json`), and added governance regression tests (`apps/api/test/ui-regression-rollout-gates.spec.ts`, `apps/api/test/pr-linear-policy.spec.ts`).
 - 2026-02-19: Implemented `KAR-58` / `REQ-UI-005` accessibility-interaction remediation slice with keyboard skip-link (`#karen-main-content`), focus-trapped/returning confirmation dialog replacing browser confirm flows for dedupe actions, structured toast + inline alert feedback hierarchy, and keyboard-safe communications thread selection (button semantics + live status updates), including new web regression coverage (`apps/web/test/confirm-dialog.spec.tsx`, `apps/web/test/communications-page.spec.tsx`, `apps/web/test/contacts-page.spec.tsx`, `docs/parity/ui-interaction-accessibility-verification.md`).
 - 2026-02-19: Advanced `KAR-11` (REQ-DATA-002) to `In Review` after implementing a composable ABAC policy evaluation contract with explicit reason codes (`apps/api/src/access/access-policy.types.ts`, `apps/api/src/access/access-policy.engine.ts`, `apps/api/src/access/matter-access-policy.evaluator.ts`) and wiring `AccessService` through `evaluateMatterAccess(...)`; added policy/unit integration coverage in `apps/api/test/access-policy-evaluator.spec.ts` + expanded `apps/api/test/access-ethical-wall.spec.ts`, updated parity artifacts (`docs/parity/access-policy-abac-verification.md`, `docs/parity/data-model-checklist.md`, `docs/parity/data-model-conformance-verification.md`), and ran `pnpm --filter api test -- access-ethical-wall.spec.ts access-policy-evaluator.spec.ts`, `pnpm --filter api test`, `pnpm --filter api build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`.

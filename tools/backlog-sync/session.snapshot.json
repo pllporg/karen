@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T16:19:09.706Z",
+  "generatedAt": "2026-02-19T16:34:26.015Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -114,24 +114,23 @@
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 7,
-    "openIssueCount": 3,
+    "openIssueCount": 2,
     "stateCounts": {
-      "In Progress": 1,
-      "Backlog": 2,
-      "Done": 4
+      "Done": 5,
+      "Backlog": 1,
+      "In Progress": 1
     },
     "openIssueKeys": [
       "KAR-57",
-      "KAR-59",
-      "KAR-60"
+      "KAR-59"
     ],
     "openIssues": [
       {
         "key": "KAR-57",
         "title": "Uplift shared UI primitives and interaction state model to canonical standards",
-        "state": "Backlog",
+        "state": "In Progress",
         "requirementId": "REQ-UI-004",
-        "updatedAt": "2026-02-19T01:23:35.593Z"
+        "updatedAt": "2026-02-19T16:24:28.532Z"
       },
       {
         "key": "KAR-59",
@@ -139,36 +138,28 @@
         "state": "Backlog",
         "requirementId": "REQ-UI-006",
         "updatedAt": "2026-02-19T01:23:35.922Z"
-      },
-      {
-        "key": "KAR-60",
-        "title": "Enforce UI regression and rollout gates for Brand Identity compliance",
-        "state": "In Progress",
-        "requirementId": "REQ-UI-007",
-        "updatedAt": "2026-02-19T16:14:49.553Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:19:08.385Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:34:24.739Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "a589b8f89fe3db5f1684841a8a04e30d1ef0f68e",
+    "gitHead": "2283c42ee9868b4d0eb4d1b970fbd951027239e7",
     "gitStatusShort": [
-      "## lin/KAR-60-ui-regression-rollout-gates",
-      " M .github/pull_request_template.md",
-      " M README.md",
-      " M apps/api/test/pr-linear-policy.spec.ts",
-      " M apps/web/package.json",
-      " M docs/UI_REFACTOR_LANE_PLAN.md",
-      " M docs/WORKING_CONTRACT.md",
-      " M package.json",
-      "?? .github/workflows/ui-regression-rollout-gates.yml",
-      "?? apps/api/test/ui-regression-rollout-gates.spec.ts",
-      "?? docs/UI_REGRESSION_ROLLOUT_GATES.md",
-      "?? docs/parity/ui-regression-rollout-gates.md"
+      "## lin/KAR-57-ui-primitives-state-model",
+      " M apps/web/app/communications/page.tsx",
+      " M apps/web/app/contacts/page.tsx",
+      " M apps/web/app/globals.css",
+      " M apps/web/components/confirm-dialog.tsx",
+      " M apps/web/components/toast-stack.tsx",
+      " M apps/web/test/contacts-page.spec.tsx",
+      " M docs/UI_TOKEN_CONTRACT.md",
+      "?? apps/web/components/ui/",
+      "?? apps/web/test/ui-primitives.spec.tsx",
+      "?? docs/parity/ui-primitives-state-verification.md"
     ],
-    "dirtyFileCount": 11
+    "dirtyFileCount": 10
   }
 }

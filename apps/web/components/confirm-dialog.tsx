@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { useEffect, useId, useRef } from 'react';
+import { Button } from './ui/button';
+import { Modal } from './ui/modal';
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -30,75 +29,26 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return undefined;
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const raf = requestAnimationFrame(() => {
       cancelButtonRef.current?.focus();
     });
-
-    return () => {
-      cancelAnimationFrame(raf);
-      if (previouslyFocused && document.contains(previouslyFocused)) {
-        previouslyFocused.focus();
-      }
-    };
+    return () => cancelAnimationFrame(raf);
   }, [open]);
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      if (!busy) {
-        onCancel();
-      }
-      return;
-    }
-
-    if (event.key !== 'Tab') return;
-    const container = dialogRef.current;
-    if (!container) return;
-
-    const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-
-    if (event.shiftKey) {
-      if (active === first || !container.contains(active)) {
-        event.preventDefault();
-        last.focus();
-      }
-      return;
-    }
-
-    if (active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  if (!open) return null;
-
   return (
-    <div className="confirm-overlay" role="presentation" onMouseDown={() => (busy ? undefined : onCancel())}>
-      <div
-        className="confirm-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        ref={dialogRef}
-        onMouseDown={(event) => event.stopPropagation()}
-        onKeyDown={handleKeyDown}
-      >
+    <Modal
+      open={open}
+      titleId={titleId}
+      descriptionId={descriptionId}
+      className="confirm-dialog"
+      busy={busy}
+      onClose={onCancel}
+    >
+      <div className="confirm-body">
         <p id={titleId} className="confirm-title">
           {title}
         </p>
@@ -106,25 +56,25 @@ export function ConfirmDialog({
           {description}
         </p>
         <div className="confirm-actions">
-          <button
+          <Button
             ref={cancelButtonRef}
-            className="button ghost"
+            tone="ghost"
             type="button"
             onClick={onCancel}
             disabled={busy}
           >
             {cancelLabel}
-          </button>
-          <button
-            className={`button${confirmTone === 'danger' ? ' danger' : ''}`}
+          </Button>
+          <Button
+            tone={confirmTone === 'danger' ? 'danger' : 'default'}
             type="button"
             onClick={onConfirm}
             disabled={busy}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
