@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T19:35:25.386Z",
+  "generatedAt": "2026-02-19T22:48:01.876Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -13,10 +13,10 @@
     "githubIssues": "mirror-only"
   },
   "matrixSummary": {
-    "totalRequirements": 35,
+    "totalRequirements": 36,
     "unresolvedRequirements": 0,
     "totalCountsByPhase": {
-      "phase-1": 30,
+      "phase-1": 31,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {},
@@ -31,8 +31,9 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 53,
+    "scopedIssueCount": 54,
     "stateCounts": {
+      "In Review": 1,
       "Done": 43,
       "Backlog": 10
     },
@@ -40,10 +41,17 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-68",
+        "title": "Implement matter dashboard document lifecycle operations",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T22:47:27.999Z",
+        "requirementId": "REQ-PMS-CORE-006"
+      },
+      {
         "key": "KAR-67",
         "title": "Complete matter dashboard task and calendar lifecycle operations",
         "state": "Done",
-        "updatedAt": "2026-02-19T19:31:09.467Z",
+        "updatedAt": "2026-02-19T19:39:03.964Z",
         "requirementId": "REQ-PMS-CORE-005"
       },
       {
@@ -101,13 +109,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T22:14:53.656Z",
         "requirementId": "REQ-MAT-005"
-      },
-      {
-        "key": "KAR-44",
-        "title": "Implement advanced conflict rule profiles and resolution workflows",
-        "state": "Done",
-        "updatedAt": "2026-02-18T22:14:52.975Z",
-        "requirementId": "REQ-MAT-004"
       }
     ]
   },
@@ -122,14 +123,22 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:35:23.547Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T22:48:00.419Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "7cf91c199f03c2fa4e580a4ac5ce27ed7d0cb9e1",
+    "gitHead": "3229d4922e5c4b57d4a270d9790087ad5dbae36c",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-68-matter-dashboard-document-lifecycle",
+      " M apps/api/src/documents/documents.controller.ts",
+      " M apps/api/src/documents/documents.service.ts",
+      " M apps/api/test/documents.spec.ts",
+      " M apps/web/app/matters/[id]/page.tsx",
+      " M apps/web/test/matter-dashboard-page.spec.tsx",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? apps/api/src/documents/dto/update-document.dto.ts",
+      "?? docs/parity/matter-dashboard-document-lifecycle.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 8
   }
 }

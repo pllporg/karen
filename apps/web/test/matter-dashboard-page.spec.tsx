@@ -43,6 +43,12 @@ function createDashboardState() {
         occurredAt: string;
       }>;
     }>,
+    documents: [] as Array<{
+      id: string;
+      title: string;
+      sharedWithClient: boolean;
+      versions: Array<{ id: string }>;
+    }>,
   };
 }
 
@@ -62,7 +68,7 @@ function buildDashboardFixture(
     tasks: state.tasks,
     calendarEvents: state.calendarEvents,
     communicationThreads: state.communicationThreads,
-    documents: [],
+    documents: state.documents,
     invoices: [],
     aiJobs: [],
     domainSectionCompleteness: { completedCount: 0, totalCount: 0, completionPercent: 0, sections: {} },
@@ -416,6 +422,141 @@ describe('MatterDashboardPage operational workflows', () => {
       );
       expect(screen.getByText('Participant removed.')).toBeInTheDocument();
       expect(screen.queryByRole('cell', { name: 'Taylor Expert' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('manages document lifecycle actions in matter dashboard context', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    state.documents.push({
+      id: 'doc-1',
+      title: 'Inspection Report',
+      sharedWithClient: false,
+      versions: [{ id: 'version-1' }],
+    });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/documents/upload') && method === 'POST') {
+        const formData = init?.body as FormData;
+        const title = String(formData.get('title') || 'Matter Document');
+        state.documents.unshift({
+          id: `doc-${state.documents.length + 1}`,
+          title,
+          sharedWithClient: false,
+          versions: [{ id: `version-${state.documents.length + 1}` }],
+        });
+        return jsonResponse({ document: { id: state.documents[0].id } });
+      }
+      if (url.endsWith('/documents/doc-1/versions') && method === 'POST') {
+        const document = state.documents.find((doc) => doc.id === 'doc-1');
+        if (document) {
+          document.versions.unshift({ id: 'version-2' });
+        }
+        return jsonResponse({ id: 'version-2' });
+      }
+      if (url.endsWith('/documents/doc-1') && method === 'PATCH') {
+        const payload = JSON.parse(String(init?.body || '{}'));
+        const document = state.documents.find((doc) => doc.id === 'doc-1');
+        if (document && typeof payload.sharedWithClient === 'boolean') {
+          document.sharedWithClient = payload.sharedWithClient;
+        }
+        return jsonResponse({ id: 'doc-1', sharedWithClient: payload.sharedWithClient });
+      }
+      if (url.endsWith('/documents/doc-1/share-link') && method === 'POST') {
+        return jsonResponse({
+          url: 'http://localhost:3000/shared-doc/share-token-1',
+          expiresAt: '2026-03-09T12:00:00.000Z',
+        });
+      }
+      if (url.endsWith('/documents/versions/version-2/download-url') && method === 'GET') {
+        return jsonResponse({
+          url: 'http://localhost:9000/download/version-2',
+        });
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    await screen.findByRole('cell', { name: 'Inspection Report' });
+
+    fireEvent.change(screen.getByLabelText('Matter Document Title'), { target: { value: 'Uploaded Scope Photo' } });
+    fireEvent.change(screen.getByLabelText('Matter Document File'), {
+      target: { files: [new File(['scope photo'], 'scope-photo.txt', { type: 'text/plain' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload Document' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/upload',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText('Document uploaded.')).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Uploaded Scope Photo' })).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Document Version File doc-1'), {
+      target: { files: [new File(['v2'], 'inspection-v2.txt', { type: 'text/plain' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload Document Version doc-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/doc-1/versions',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText('Document version uploaded.')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Document Sharing doc-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/doc-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Client sharing enabled.')).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Yes' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Document Share Link doc-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/doc-1/share-link',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Share link issued/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Issue Document Download URL doc-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/documents/versions/version-2/download-url',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+      expect(screen.getByText(/Signed download URL issued/)).toBeInTheDocument();
     });
   });
 

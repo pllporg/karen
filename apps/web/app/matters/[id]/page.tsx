@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/app-shell';
 import { PageHeader } from '../../../components/page-header';
-import { apiFetch } from '../../../lib/api';
+import { apiFetch, getSessionToken } from '../../../lib/api';
 
 type DeadlinePreviewRow = {
   ruleId: string;
@@ -52,6 +52,7 @@ const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
 function toDateTimeLocalValue(value?: string | null) {
   if (!value) {
@@ -103,6 +104,10 @@ export default function MatterDashboardPage() {
   const [communicationOccurredAt, setCommunicationOccurredAt] = useState(new Date().toISOString().slice(0, 16));
   const [communicationStatusMessage, setCommunicationStatusMessage] = useState<string | null>(null);
   const [editingCommunicationId, setEditingCommunicationId] = useState<string | null>(null);
+  const [documentTitle, setDocumentTitle] = useState('Matter Document');
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentVersionFiles, setDocumentVersionFiles] = useState<Record<string, File | null>>({});
+  const [documentStatusMessage, setDocumentStatusMessage] = useState<string | null>(null);
 
   async function refreshDashboard() {
     if (!matterId) {
@@ -499,6 +504,87 @@ export default function MatterDashboardPage() {
 
     setCommunicationStatusMessage('Communication entry removed.');
     await refreshDashboard();
+  }
+
+  async function uploadDocumentForm(path: string, formData: FormData) {
+    const token = getSessionToken();
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      body: formData,
+      headers: token ? { 'x-session-token': token } : undefined,
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`${response.status} ${response.statusText}: ${text}`);
+    }
+    return response.status === 204 ? null : response.json();
+  }
+
+  async function uploadMatterDocument() {
+    if (!matterId || !documentTitle.trim() || !documentFile) {
+      setDocumentStatusMessage('Document title and file are required.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set('matterId', matterId);
+    formData.set('title', documentTitle.trim());
+    formData.set('file', documentFile);
+
+    await uploadDocumentForm('/documents/upload', formData);
+    setDocumentTitle('Matter Document');
+    setDocumentFile(null);
+    setDocumentStatusMessage('Document uploaded.');
+    await refreshDashboard();
+  }
+
+  async function uploadMatterDocumentVersion(documentId: string) {
+    const file = documentVersionFiles[documentId];
+    if (!file) {
+      setDocumentStatusMessage('Select a version file before uploading.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set('file', file);
+    await uploadDocumentForm(`/documents/${documentId}/versions`, formData);
+    setDocumentVersionFiles((current) => ({
+      ...current,
+      [documentId]: null,
+    }));
+    setDocumentStatusMessage('Document version uploaded.');
+    await refreshDashboard();
+  }
+
+  async function toggleMatterDocumentSharing(documentId: string, sharedWithClient: boolean) {
+    await apiFetch(`/documents/${documentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        sharedWithClient: !sharedWithClient,
+      }),
+    });
+    setDocumentStatusMessage(sharedWithClient ? 'Client sharing disabled.' : 'Client sharing enabled.');
+    await refreshDashboard();
+  }
+
+  async function createMatterDocumentShareLink(documentId: string) {
+    const share = await apiFetch<{ url: string; expiresAt: string }>(`/documents/${documentId}/share-link`, {
+      method: 'POST',
+      body: JSON.stringify({
+        expiresInHours: 72,
+      }),
+    });
+    setDocumentStatusMessage(`Share link issued (expires ${new Date(share.expiresAt).toLocaleString()}): ${share.url}`);
+  }
+
+  async function issueLatestDocumentDownload(documentId: string, latestVersionId?: string | null) {
+    if (!latestVersionId) {
+      setDocumentStatusMessage(`No versions available for ${documentId}.`);
+      return;
+    }
+    const download = await apiFetch<{ url: string }>(`/documents/versions/${latestVersionId}/download-url`);
+    setDocumentStatusMessage(`Signed download URL issued: ${download.url}`);
   }
 
   const communicationRows = dashboard
@@ -1079,11 +1165,100 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Documents</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {dashboard.documents?.map((doc: any) => (
-                <li key={doc.id}>{doc.title}</li>
-              ))}
-            </ul>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr auto' }}>
+              <input
+                className="input"
+                aria-label="Matter Document Title"
+                placeholder="Document title"
+                value={documentTitle}
+                onChange={(event) => setDocumentTitle(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Matter Document File"
+                type="file"
+                onChange={(event) => setDocumentFile(event.target.files?.[0] || null)}
+              />
+              <button className="button" type="button" onClick={uploadMatterDocument}>
+                Upload Document
+              </button>
+            </div>
+            {documentStatusMessage ? (
+              <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{documentStatusMessage}</p>
+            ) : null}
+            <table className="table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Versions</th>
+                  <th>Shared</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dashboard.documents || []).map((doc: any) => (
+                  <tr key={doc.id}>
+                    <td>{doc.title}</td>
+                    <td>{doc.versions?.length || 0}</td>
+                    <td>{doc.sharedWithClient ? 'Yes' : 'No'}</td>
+                    <td>
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        <input
+                          className="input"
+                          aria-label={`Document Version File ${doc.id}`}
+                          type="file"
+                          onChange={(event) =>
+                            setDocumentVersionFiles((current) => ({
+                              ...current,
+                              [doc.id]: event.target.files?.[0] || null,
+                            }))
+                          }
+                        />
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button
+                            className="button secondary"
+                            type="button"
+                            aria-label={`Upload Document Version ${doc.id}`}
+                            onClick={() => uploadMatterDocumentVersion(doc.id)}
+                          >
+                            Upload Version
+                          </button>
+                          <button
+                            className="button secondary"
+                            type="button"
+                            aria-label={`Toggle Document Sharing ${doc.id}`}
+                            onClick={() => toggleMatterDocumentSharing(doc.id, Boolean(doc.sharedWithClient))}
+                          >
+                            {doc.sharedWithClient ? 'Disable Sharing' : 'Enable Sharing'}
+                          </button>
+                          <button
+                            className="button secondary"
+                            type="button"
+                            aria-label={`Create Document Share Link ${doc.id}`}
+                            onClick={() => createMatterDocumentShareLink(doc.id)}
+                          >
+                            Create Share Link
+                          </button>
+                          <button
+                            className="button secondary"
+                            type="button"
+                            aria-label={`Issue Document Download URL ${doc.id}`}
+                            onClick={() => issueLatestDocumentDownload(doc.id, doc.versions?.[0]?.id || null)}
+                          >
+                            Download Latest
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {(dashboard.documents || []).length === 0 ? (
+                  <tr>
+                    <td colSpan={4}>No documents for this matter yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
           </div>
 
           <div className="card">

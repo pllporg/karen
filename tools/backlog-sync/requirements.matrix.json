@@ -503,6 +503,29 @@
             "Retention + legal hold + disposition lifecycle workflows are covered by API/Web tests with evidence in docs/parity/document-retention-workflows.md.",
             "Disposition execution re-checks active legal holds and records skipped-at-execution counts in audit metadata."
           ]
+        },
+        {
+          "title": "Complete matter dashboard document lifecycle operations",
+          "requirementId": "REQ-PMS-CORE-006",
+          "promptSection": "Matters / Matter dashboard / Documents",
+          "parityStatus": "Verified",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": ["parity", "documents", "matters", "pms-core"],
+          "problemStatement": "Matter dashboard document lifecycle is now complete with in-context upload/version/share/download operations, client-sharing toggles, and audit-backed server-side enforcement.",
+          "requirementExcerpt": "Matter dashboard must support operational document management with secure sharing and auditability.",
+          "acceptanceCriteria": [
+            "Users can upload and version documents from matter dashboard context.",
+            "Users can toggle client sharing and issue secure document share/download links from matter dashboard context.",
+            "Document lifecycle operations enforce matter-scoped write access and emit audit log events."
+          ],
+          "apiImpact": "Adds document metadata update endpoint plus dashboard-integrated document upload/version/share operations.",
+          "securityImpact": "Preserves tenant/matter authorization and signed-link expiry controls for client-facing document access.",
+          "definitionOfDone": [
+            "API regression coverage validates document update/version/share lifecycle audit trails.",
+            "Matter dashboard UI supports document upload/version/share/download actions with user feedback states.",
+            "Verification artifact documented at docs/parity/matter-dashboard-document-lifecycle.md."
+          ]
         }
       ]
     },

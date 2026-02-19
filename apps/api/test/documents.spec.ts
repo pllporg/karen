@@ -157,4 +157,150 @@ describe('DocumentsService', () => {
       await fakeClam.close();
     }
   });
+
+  it('uploads a new document version and emits audit event', async () => {
+    const prisma = {
+      document: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'doc-1',
+          organizationId: 'org-1',
+          matterId: 'matter-1',
+          dispositionStatus: 'ACTIVE',
+        }),
+      },
+      documentVersion: {
+        create: jest.fn().mockResolvedValue({
+          id: 'version-2',
+          documentId: 'doc-1',
+        }),
+      },
+    } as any;
+
+    const appendEvent = jest.fn();
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { upload: jest.fn().mockResolvedValue({ key: 's3/new-version-key' }) } as any,
+      { scan: jest.fn().mockResolvedValue({ clean: true }) } as any,
+      { appendEvent } as any,
+    );
+
+    const version = await service.uploadVersion({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      documentId: 'doc-1',
+      file: {
+        buffer: Buffer.from('new version'),
+        mimetype: 'text/plain',
+        originalname: 'new-version.txt',
+        size: 11,
+      } as any,
+    });
+
+    expect(version.id).toBe('version-2');
+    expect(prisma.documentVersion.create).toHaveBeenCalled();
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'document.version.uploaded',
+        entityType: 'documentVersion',
+        entityId: 'version-2',
+      }),
+    );
+  });
+
+  it('updates document shared status and emits audit event', async () => {
+    const prisma = {
+      document: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'doc-1',
+          organizationId: 'org-1',
+          matterId: 'matter-1',
+          dispositionStatus: 'ACTIVE',
+        }),
+        update: jest.fn().mockResolvedValue({
+          id: 'doc-1',
+          title: 'Inspection Report',
+          category: 'REPORT',
+          tags: ['inspection'],
+          sharedWithClient: true,
+          versions: [],
+        }),
+      },
+    } as any;
+
+    const appendEvent = jest.fn();
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { upload: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent } as any,
+    );
+
+    const updated = await service.updateDocument({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      documentId: 'doc-1',
+      sharedWithClient: true,
+    });
+
+    expect(updated.sharedWithClient).toBe(true);
+    expect(prisma.document.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'doc-1' },
+        data: expect.objectContaining({
+          sharedWithClient: true,
+        }),
+      }),
+    );
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'document.updated',
+        entityType: 'document',
+        entityId: 'doc-1',
+      }),
+    );
+  });
+
+  it('creates share link and emits audit event', async () => {
+    const prisma = {
+      document: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'doc-1',
+          organizationId: 'org-1',
+          matterId: 'matter-1',
+          dispositionStatus: 'ACTIVE',
+        }),
+      },
+      documentShareLink: {
+        create: jest.fn().mockResolvedValue({
+          id: 'share-1',
+          token: 'token-1',
+        }),
+      },
+    } as any;
+
+    const appendEvent = jest.fn();
+    const service = new DocumentsService(
+      prisma,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+      { upload: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent } as any,
+    );
+
+    const share = await service.createShareLink({
+      user: { id: 'u1', organizationId: 'org-1' } as any,
+      documentId: 'doc-1',
+      expiresInHours: 1,
+    });
+
+    expect(share.url).toContain('/shared-doc/');
+    expect(prisma.documentShareLink.create).toHaveBeenCalled();
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'document.share_link.created',
+        entityType: 'documentShareLink',
+        entityId: 'share-1',
+      }),
+    );
+  });
 });
