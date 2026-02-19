@@ -49,6 +49,12 @@ Rule: do not introduce additional ad hoc color values for core UI.
 - Max content width 960px.
 - Horizontal margins never below 32px.
 
+### Responsive behavior doctrine
+- `>=1280px`: full desktop shell, persistent sidebar, 12-column density.
+- `1024-1279px`: compact desktop shell (collapsed rail/hamburger permitted), dense data remains table-first with horizontal scroll when needed.
+- `768-1023px`: tablet overlay navigation drawer, single-column content, 48px minimum touch targets.
+- `<768px`: unsupported viewport notice; do not present full operator workflow UI.
+
 ## Geometry + Rule Tokens
 
 - `--lic-radius`: `0px`

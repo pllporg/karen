@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { clearSessionToken } from '../lib/api';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
   { href: '/dashboard', label: 'Command Center', code: '00' },
@@ -21,6 +21,21 @@ const LINKS = [
   { href: '/data-dictionary', label: 'Data Dictionary', code: '12' },
 ];
 
+type ShellViewportMode = 'desktop' | 'compact' | 'tablet' | 'unsupported';
+
+function resolveShellViewportMode(width: number): ShellViewportMode {
+  if (width < 768) {
+    return 'unsupported';
+  }
+  if (width < 1024) {
+    return 'tablet';
+  }
+  if (width < 1280) {
+    return 'compact';
+  }
+  return 'desktop';
+}
+
 function isActivePath(pathname: string, href: string) {
   if (pathname === href) {
     return true;
@@ -35,28 +50,83 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname() || '';
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shellMode, setShellMode] = useState<ShellViewportMode>(() => {
+    if (typeof window === 'undefined') {
+      return 'desktop';
+    }
+    return resolveShellViewportMode(window.innerWidth);
+  });
 
   const handleSignOut = () => {
     clearSessionToken();
     router.push('/login');
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    const handleResize = () => {
+      setShellMode(resolveShellViewportMode(window.innerWidth));
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (shellMode !== 'tablet' && mobileOpen) {
+      setMobileOpen(false);
+    }
+  }, [mobileOpen, shellMode]);
+
+  if (shellMode === 'unsupported') {
+    return (
+      <div className="page-shell unsupported-shell" data-shell-mode={shellMode}>
+        <a className="skip-link" href="#karen-unsupported-content">
+          Skip to main content
+        </a>
+        <main id="karen-unsupported-content" tabIndex={-1} className="unsupported-panel">
+          <div className="unsupported-card" role="status" aria-live="polite">
+            <p className="unsupported-code">Viewport Notice</p>
+            <h1>Desktop Required</h1>
+            <p className="unsupported-message">
+              LIC is designed for desktop use. For the best experience, use a device with a screen width of 768px or
+              greater.
+            </p>
+            <button type="button" className="shell-signout unsupported-signout" onClick={handleSignOut}>
+              Sign Out
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="page-shell shell-root">
+    <div className="page-shell shell-root" data-shell-mode={shellMode}>
       <a className="skip-link" href="#karen-main-content">
         Skip to main content
       </a>
       <button
         type="button"
         className="shell-menu-toggle"
-        onClick={() => setMobileOpen((current) => !current)}
-        aria-expanded={mobileOpen}
+        onClick={() => {
+          if (shellMode === 'tablet') {
+            setMobileOpen((current) => !current);
+          }
+        }}
+        aria-expanded={shellMode === 'tablet' ? mobileOpen : false}
         aria-controls="karen-primary-nav"
       >
-        {mobileOpen ? 'Close' : 'Menu'}
+        {shellMode === 'tablet' && mobileOpen ? 'Close' : 'Menu'}
       </button>
 
-      <aside className="shell-sidebar" data-open={mobileOpen ? 'true' : 'false'}>
+      <aside
+        className="shell-sidebar"
+        data-open={shellMode === 'tablet' && mobileOpen ? 'true' : 'false'}
+        data-shell-mode={shellMode}
+      >
         <div className="shell-sidebar-header">
           <p className="shell-header-kicker">Standards Manual</p>
           <p className="shell-header-title">Karen Legal Suite</p>
@@ -91,11 +161,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {mobileOpen ? (
+      {shellMode === 'tablet' && mobileOpen ? (
         <button type="button" className="shell-overlay" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />
       ) : null}
 
-      <main id="karen-main-content" tabIndex={-1} className="main-panel" onClick={() => setMobileOpen(false)}>
+      <main
+        id="karen-main-content"
+        tabIndex={-1}
+        className="main-panel"
+        onClick={() => {
+          if (shellMode === 'tablet') {
+            setMobileOpen(false);
+          }
+        }}
+      >
         {children}
       </main>
     </div>
