@@ -36,12 +36,21 @@ type CommunicationThread = {
     subject?: string | null;
     body: string;
     occurredAt: string;
+    participants?: Array<{
+      id: string;
+      role: 'FROM' | 'TO' | 'CC' | 'BCC' | 'OTHER';
+      contact?: {
+        id: string;
+        displayName: string;
+      } | null;
+      contactId?: string | null;
+    }>;
   }>;
 };
 
 const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED'] as const;
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
-const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'INTERNAL_NOTE'] as const;
+const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
 
 export default function MatterDashboardPage() {
@@ -78,6 +87,7 @@ export default function MatterDashboardPage() {
   const [communicationParticipantContactId, setCommunicationParticipantContactId] = useState('');
   const [communicationOccurredAt, setCommunicationOccurredAt] = useState(new Date().toISOString().slice(0, 16));
   const [communicationStatusMessage, setCommunicationStatusMessage] = useState<string | null>(null);
+  const [editingCommunicationId, setEditingCommunicationId] = useState<string | null>(null);
 
   async function refreshDashboard() {
     if (!matterId) {
@@ -268,29 +278,106 @@ export default function MatterDashboardPage() {
     const normalizedThreadSubject = newCommunicationThreadSubject.trim();
     const isNewThread = selectedCommunicationThreadId === '__new__';
 
-    await apiFetch(`/matters/${matterId}/communications/log`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...(isNewThread
-          ? {
-              threadSubject: normalizedThreadSubject || normalizedSubject || `${communicationType} log`,
-            }
-          : {
-              threadId: selectedCommunicationThreadId,
-            }),
-        type: communicationType,
-        direction: communicationDirection,
-        ...(normalizedSubject ? { subject: normalizedSubject } : {}),
-        body: normalizedBody,
-        ...(communicationParticipantContactId ? { participantContactId: communicationParticipantContactId } : {}),
-        ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
-      }),
-    });
+    if (editingCommunicationId) {
+      if (isNewThread) {
+        setCommunicationStatusMessage('Select an existing thread while editing a communication entry.');
+        return;
+      }
 
-    setCommunicationStatusMessage('Communication entry logged.');
+      await apiFetch(`/matters/${matterId}/communications/${editingCommunicationId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          threadId: selectedCommunicationThreadId,
+          type: communicationType,
+          direction: communicationDirection,
+          subject: normalizedSubject,
+          body: normalizedBody,
+          participantContactId: communicationParticipantContactId,
+          ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
+        }),
+      });
+
+      setCommunicationStatusMessage('Communication entry updated.');
+      setEditingCommunicationId(null);
+    } else {
+      await apiFetch(`/matters/${matterId}/communications/log`, {
+        method: 'POST',
+        body: JSON.stringify({
+          ...(isNewThread
+            ? {
+                threadSubject: normalizedThreadSubject || normalizedSubject || `${communicationType} log`,
+              }
+            : {
+                threadId: selectedCommunicationThreadId,
+              }),
+          type: communicationType,
+          direction: communicationDirection,
+          ...(normalizedSubject ? { subject: normalizedSubject } : {}),
+          body: normalizedBody,
+          ...(communicationParticipantContactId ? { participantContactId: communicationParticipantContactId } : {}),
+          ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
+        }),
+      });
+
+      setCommunicationStatusMessage('Communication entry logged.');
+    }
+
     setCommunicationSubject('');
     setCommunicationBody('');
+    setCommunicationParticipantContactId('');
     setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+    setNewCommunicationThreadSubject('');
+    await refreshDashboard();
+  }
+
+  function startEditingCommunication(row: {
+    id: string;
+    threadId: string;
+    type: (typeof COMMUNICATION_TYPE_OPTIONS)[number];
+    direction: (typeof COMMUNICATION_DIRECTION_OPTIONS)[number];
+    subject: string;
+    body: string;
+    occurredAt: string;
+    participantContactId: string;
+  }) {
+    setEditingCommunicationId(row.id);
+    setSelectedCommunicationThreadId(row.threadId);
+    setCommunicationType(row.type);
+    setCommunicationDirection(row.direction);
+    setCommunicationSubject(row.subject);
+    setCommunicationBody(row.body);
+    setCommunicationParticipantContactId(row.participantContactId);
+    setCommunicationOccurredAt(new Date(row.occurredAt).toISOString().slice(0, 16));
+    setCommunicationStatusMessage(`Editing communication entry ${row.id}.`);
+  }
+
+  function cancelEditingCommunication() {
+    setEditingCommunicationId(null);
+    setCommunicationSubject('');
+    setCommunicationBody('');
+    setCommunicationParticipantContactId('');
+    setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+    setCommunicationStatusMessage('Communication edit cancelled.');
+  }
+
+  async function deleteCommunicationEntry(messageId: string) {
+    if (!matterId) {
+      return;
+    }
+
+    await apiFetch(`/matters/${matterId}/communications/${messageId}`, {
+      method: 'DELETE',
+    });
+
+    if (editingCommunicationId === messageId) {
+      setEditingCommunicationId(null);
+      setCommunicationSubject('');
+      setCommunicationBody('');
+      setCommunicationParticipantContactId('');
+      setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+    }
+
+    setCommunicationStatusMessage('Communication entry removed.');
     await refreshDashboard();
   }
 
@@ -301,6 +388,9 @@ export default function MatterDashboardPage() {
             ...message,
             threadId: thread.id,
             threadSubject: thread.subject || thread.id,
+            subject: message.subject || '',
+            participantContactId: message.participants?.[0]?.contact?.id || message.participants?.[0]?.contactId || '',
+            participantContactName: message.participants?.[0]?.contact?.displayName || '',
           })),
         )
         .sort(
@@ -655,9 +745,16 @@ export default function MatterDashboardPage() {
                 ))}
               </select>
               <button className="button" type="button" onClick={logCommunicationEntry}>
-                Log Communication
+                {editingCommunicationId ? 'Save Communication Edit' : 'Log Communication'}
               </button>
             </div>
+            {editingCommunicationId ? (
+              <div style={{ marginTop: 8 }}>
+                <button className="button secondary" type="button" onClick={cancelEditingCommunication}>
+                  Cancel Communication Edit
+                </button>
+              </div>
+            ) : null}
             {selectedCommunicationThreadId === '__new__' ? (
               <input
                 className="input"
@@ -703,7 +800,9 @@ export default function MatterDashboardPage() {
                   <th>Thread</th>
                   <th>Type</th>
                   <th>Direction</th>
+                  <th>Participant</th>
                   <th>Summary</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -713,12 +812,44 @@ export default function MatterDashboardPage() {
                     <td>{message.threadSubject}</td>
                     <td>{message.type}</td>
                     <td>{message.direction}</td>
+                    <td>{message.participantContactName || '-'}</td>
                     <td>{message.subject || String(message.body || '').slice(0, 90)}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          type="button"
+                          className="button secondary"
+                          aria-label={`Edit Communication ${message.id}`}
+                          onClick={() =>
+                            startEditingCommunication({
+                              id: message.id,
+                              threadId: message.threadId,
+                              type: message.type,
+                              direction: message.direction,
+                              subject: message.subject || '',
+                              body: message.body || '',
+                              occurredAt: message.occurredAt,
+                              participantContactId: message.participantContactId || '',
+                            })
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="button danger"
+                          aria-label={`Delete Communication ${message.id}`}
+                          onClick={() => deleteCommunicationEntry(message.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {communicationRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>No communications logged for this matter yet.</td>
+                    <td colSpan={7}>No communications logged for this matter yet.</td>
                   </tr>
                 ) : null}
               </tbody>

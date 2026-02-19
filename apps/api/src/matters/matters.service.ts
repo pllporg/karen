@@ -327,6 +327,169 @@ export class MattersService {
     };
   }
 
+  async updateCommunicationEntry(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    messageId: string;
+    threadId?: string;
+    type?: 'EMAIL' | 'SMS' | 'CALL_LOG' | 'PORTAL_MESSAGE' | 'INTERNAL_NOTE';
+    direction?: 'INBOUND' | 'OUTBOUND' | 'INTERNAL';
+    subject?: string;
+    body?: string;
+    participantContactId?: string;
+    occurredAt?: string;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const message = await this.findMatterScopedCommunicationMessage({
+      organizationId: input.user.organizationId,
+      matterId: input.matterId,
+      messageId: input.messageId,
+    });
+
+    let targetThreadId = message.threadId;
+    if (input.threadId) {
+      const targetThread = await this.prisma.communicationThread.findFirst({
+        where: {
+          id: input.threadId,
+          organizationId: input.user.organizationId,
+          matterId: input.matterId,
+        },
+      });
+      if (!targetThread) {
+        throw new NotFoundException('Matter communication thread not found');
+      }
+      targetThreadId = targetThread.id;
+    }
+
+    const normalizedBody = input.body === undefined ? undefined : this.normalizeOptionalText(input.body);
+    if (input.body !== undefined && !normalizedBody) {
+      throw new BadRequestException('Communication body is required');
+    }
+
+    const occurredAt = input.occurredAt === undefined ? undefined : new Date(input.occurredAt);
+    if (occurredAt && Number.isNaN(occurredAt.getTime())) {
+      throw new BadRequestException('Invalid occurredAt timestamp');
+    }
+
+    const hasParticipantField = Object.prototype.hasOwnProperty.call(input, 'participantContactId');
+    const normalizedParticipantContactId = this.normalizeOptionalText(input.participantContactId);
+    if (hasParticipantField && normalizedParticipantContactId) {
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        normalizedParticipantContactId,
+        `Communication contact not found: ${normalizedParticipantContactId}`,
+      );
+    }
+
+    const nextDirection = input.direction || message.direction;
+    const updated = await this.prisma.communicationMessage.update({
+      where: { id: message.id },
+      data: {
+        threadId: targetThreadId,
+        ...(input.type ? { type: input.type } : {}),
+        ...(input.direction ? { direction: input.direction } : {}),
+        ...(input.subject !== undefined ? { subject: this.normalizeOptionalText(input.subject) ?? null } : {}),
+        ...(input.body !== undefined ? { body: normalizedBody } : {}),
+        ...(input.occurredAt !== undefined ? { occurredAt } : {}),
+        ...(hasParticipantField
+          ? {
+              participants: {
+                deleteMany: {},
+                ...(normalizedParticipantContactId
+                  ? {
+                      create: [
+                        {
+                          contactId: normalizedParticipantContactId,
+                          role: this.participantRoleForDirection(nextDirection),
+                        },
+                      ],
+                    }
+                  : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        participants: {
+          include: {
+            contact: true,
+          },
+        },
+      },
+    });
+
+    await this.prisma.communicationThread.update({
+      where: { id: targetThreadId },
+      data: { updatedAt: new Date() },
+    });
+
+    if (message.threadId !== targetThreadId) {
+      await this.prisma.communicationThread.update({
+        where: { id: message.threadId },
+        data: { updatedAt: new Date() },
+      });
+    }
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.communication.updated',
+      entityType: 'communicationMessage',
+      entityId: message.id,
+      metadata: {
+        matterId: input.matterId,
+        previousThreadId: message.threadId,
+        threadId: targetThreadId,
+        type: updated.type,
+        direction: updated.direction,
+        participantContactId: normalizedParticipantContactId || null,
+      },
+    });
+
+    return {
+      ...updated,
+      matterId: input.matterId,
+    };
+  }
+
+  async deleteCommunicationEntry(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    messageId: string;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const message = await this.findMatterScopedCommunicationMessage({
+      organizationId: input.user.organizationId,
+      matterId: input.matterId,
+      messageId: input.messageId,
+    });
+
+    await this.prisma.communicationMessage.delete({
+      where: { id: message.id },
+    });
+
+    await this.prisma.communicationThread.update({
+      where: { id: message.threadId },
+      data: { updatedAt: new Date() },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.communication.deleted',
+      entityType: 'communicationMessage',
+      entityId: message.id,
+      metadata: {
+        matterId: input.matterId,
+        threadId: message.threadId,
+      },
+    });
+
+    return { id: message.id, removed: true };
+  }
+
   private isCounselRole(roleKey: string, roleLabel?: string | null) {
     const fingerprint = `${roleKey} ${roleLabel || ''}`.toLowerCase();
     return /(counsel|attorney|lawyer)/.test(fingerprint);
@@ -345,6 +508,32 @@ export class MattersService {
       return CommunicationParticipantRole.TO;
     }
     return CommunicationParticipantRole.OTHER;
+  }
+
+  private async findMatterScopedCommunicationMessage(input: {
+    organizationId: string;
+    matterId: string;
+    messageId: string;
+  }) {
+    const message = await this.prisma.communicationMessage.findFirst({
+      where: {
+        id: input.messageId,
+        organizationId: input.organizationId,
+        thread: {
+          matterId: input.matterId,
+        },
+      },
+      include: {
+        thread: true,
+        participants: true,
+      },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Matter communication entry not found');
+    }
+
+    return message;
   }
 
   private async assertContactInOrganization(
@@ -389,6 +578,13 @@ export class MattersService {
             messages: {
               orderBy: { occurredAt: 'desc' },
               take: 5,
+              include: {
+                participants: {
+                  include: {
+                    contact: true,
+                  },
+                },
+              },
             },
           },
           take: 10,

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:28:00.429Z",
+  "generatedAt": "2026-02-19T18:58:48.516Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -31,8 +31,9 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 51,
+    "scopedIssueCount": 52,
     "stateCounts": {
+      "In Review": 1,
       "Done": 41,
       "Backlog": 10
     },
@@ -40,18 +41,25 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-65",
-        "title": "Implement matter dashboard communications logging operations",
-        "state": "Done",
-        "updatedAt": "2026-02-19T18:27:35.989Z",
-        "requirementId": "REQ-PMS-CORE-003"
+        "key": "KAR-66",
+        "title": "Implement matter dashboard communication entry edit/delete operations",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T18:58:27.865Z",
+        "requirementId": "REQ-PMS-CORE-004"
       },
       {
         "key": "KAR-22",
         "title": "PARITY-05 Communications + Documents",
         "state": "Backlog",
-        "updatedAt": "2026-02-19T18:14:47.345Z",
+        "updatedAt": "2026-02-19T18:51:19.570Z",
         "requirementId": "PARITY-05"
+      },
+      {
+        "key": "KAR-65",
+        "title": "Implement matter dashboard communications logging operations",
+        "state": "Done",
+        "updatedAt": "2026-02-19T18:31:49.758Z",
+        "requirementId": "REQ-PMS-CORE-003"
       },
       {
         "key": "KAR-64",
@@ -101,13 +109,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T21:48:53.396Z",
         "requirementId": "REQ-COMM-004"
-      },
-      {
-        "key": "KAR-48",
-        "title": "Implement LEDES/UTBMS export jobs with validation profiles",
-        "state": "Done",
-        "updatedAt": "2026-02-18T21:38:38.111Z",
-        "requirementId": "REQ-BILL-004"
       }
     ]
   },
@@ -122,14 +123,15 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:27:58.813Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:58:47.270Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "bc563ed1599ba614a10165a941b60bc1a9dc31e4",
+    "gitHead": "79550e40c0587e9857bc5ce5a70a44eb480c7de2",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-66-matter-dashboard-communications-edit-delete...origin/lin/KAR-66-matter-dashboard-communications-edit-delete",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 1
   }
 }

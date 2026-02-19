@@ -325,7 +325,7 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
-  it('logs communications from matter dashboard context', async () => {
+  it('logs, edits, and deletes communications from matter dashboard context', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();
@@ -374,12 +374,61 @@ describe('MatterDashboardPage operational workflows', () => {
           subject: payload.subject || null,
           body: payload.body,
           occurredAt: payload.occurredAt || '2026-02-19T14:15:00.000Z',
+          participants: payload.participantContactId
+            ? [
+                {
+                  id: `participant-${thread.messages.length + 1}`,
+                  role: payload.direction === 'INBOUND' ? 'FROM' : payload.direction === 'OUTBOUND' ? 'TO' : 'OTHER',
+                  contact: contacts.find((contact) => contact.id === payload.participantContactId) || null,
+                },
+              ]
+            : [],
         };
         thread.messages.unshift(message);
         return jsonResponse({
           ...message,
           threadId: thread.id,
         });
+      }
+      if (url.endsWith('/matters/matter-1/communications/message-1') && method === 'PATCH') {
+        const payload = JSON.parse(String(init?.body || '{}'));
+        const thread = state.communicationThreads.find((item) => item.id === payload.threadId);
+        if (!thread) {
+          throw new Error(`Thread not found: ${payload.threadId}`);
+        }
+
+        for (const candidate of state.communicationThreads) {
+          candidate.messages = candidate.messages.filter((item) => item.id !== 'message-1');
+        }
+
+        const updatedMessage = {
+          id: 'message-1',
+          type: payload.type,
+          direction: payload.direction,
+          subject: payload.subject || null,
+          body: payload.body,
+          occurredAt: payload.occurredAt || '2026-02-19T15:00:00.000Z',
+          participants: payload.participantContactId
+            ? [
+                {
+                  id: 'participant-updated',
+                  role: payload.direction === 'INBOUND' ? 'FROM' : payload.direction === 'OUTBOUND' ? 'TO' : 'OTHER',
+                  contact: contacts.find((contact) => contact.id === payload.participantContactId) || null,
+                },
+              ]
+            : [],
+        };
+        thread.messages.unshift(updatedMessage);
+        return jsonResponse({
+          ...updatedMessage,
+          threadId: thread.id,
+        });
+      }
+      if (url.endsWith('/matters/matter-1/communications/message-1') && method === 'DELETE') {
+        for (const thread of state.communicationThreads) {
+          thread.messages = thread.messages.filter((item) => item.id !== 'message-1');
+        }
+        return jsonResponse({ id: 'message-1', removed: true });
       }
 
       throw new Error(`Unhandled request: ${method} ${url}`);
@@ -413,7 +462,41 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByRole('cell', { name: 'Mediation updates' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'CALL_LOG' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'INBOUND' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Jordan Homeowner' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'Mediation slot follow-up' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Communication message-1' }));
+    fireEvent.change(screen.getByLabelText('Communication Type'), { target: { value: 'EMAIL' } });
+    fireEvent.change(screen.getByLabelText('Communication Direction'), { target: { value: 'OUTBOUND' } });
+    fireEvent.change(screen.getByLabelText('Communication Contact'), { target: { value: 'contact-2' } });
+    fireEvent.change(screen.getByLabelText('Communication Subject'), { target: { value: 'Updated mediation confirmation' } });
+    fireEvent.change(screen.getByLabelText('Communication Body'), {
+      target: { value: 'Sent confirmed mediation windows to client via email.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Communication Edit' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/matters/matter-1/communications/message-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Communication entry updated.')).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'EMAIL' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'OUTBOUND' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Taylor Expert' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Updated mediation confirmation' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Communication message-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/matters/matter-1/communications/message-1',
+        expect.objectContaining({ method: 'DELETE', credentials: 'include' }),
+      );
+      expect(screen.getByText('Communication entry removed.')).toBeInTheDocument();
+      expect(screen.getByText('No communications logged for this matter yet.')).toBeInTheDocument();
     });
   });
 });
