@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T17:33:15.613Z`
+- Snapshot Timestamp: `2026-02-19T17:37:43.003Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T17:33:13.595Z`
+- Last Successful Mirror Verify: `2026-02-19T17:37:41.228Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,7 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
-- 2026-02-19: Advanced `KAR-63` / `REQ-PMS-CORE-001` (In Review) by adding core matter-dashboard operations for day-to-day practice management: task creation with due datetime + priority, inline task status updates (new API endpoint `PATCH /tasks/:id` with matter-access checks + `task.updated` audit events), and calendar event creation from matter context, with regression coverage in `apps/api/test/tasks.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`.
+- 2026-02-19: Completed `KAR-63` / `REQ-PMS-CORE-001` by adding core matter-dashboard operations for day-to-day practice management: task creation with due datetime + priority, inline task status updates (new API endpoint `PATCH /tasks/:id` with matter-access checks + `task.updated` audit events), and calendar event creation from matter context, with regression coverage in `apps/api/test/tasks.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`.
 - 2026-02-19: Implemented `KAR-59` / `REQ-UI-006` responsive matrix compliance by adding deterministic app-shell viewport modes (`desktop`, `compact`, `tablet`, `unsupported`) in `apps/web/components/app-shell.tsx`, aligning shell/table/touch-target behavior to Brand Identity breakpoints in `apps/web/app/globals.css` (including unsupported `<768px` notice copy), adding responsive regression coverage (`apps/web/test/app-shell-responsive.spec.tsx`), extending regression lane script coverage (`apps/web/package.json`), and documenting verification evidence in `docs/parity/ui-responsive-behavior-verification.md`.
 - 2026-02-19: Implemented `KAR-57` / `REQ-UI-004` primitive-system uplift by introducing canonical shared primitives in `apps/web/components/ui/` (`Button`, `Input`, `Select`, `Badge`, `Table`, `Card`, `Drawer`, `Modal`, `Toast`), integrating primitives into representative workflow routes (`apps/web/app/contacts/page.tsx`, `apps/web/app/communications/page.tsx`) and review/toast surfaces (`apps/web/components/confirm-dialog.tsx`, `apps/web/components/toast-stack.tsx`), adding primitive regression coverage (`apps/web/test/ui-primitives.spec.tsx`), and documenting parity evidence (`docs/parity/ui-primitives-state-verification.md`).
 - 2026-02-19: Implemented `KAR-60` / `REQ-UI-007` rollout governance by adding a dedicated UI regression workflow (`.github/workflows/ui-regression-rollout-gates.yml`) that enforces UI-evidence PR sections for UI-touching files and runs deterministic web regression/build gates, expanded PR template evidence sections (`UI Interaction Checklist`, `Screenshot Evidence`), added runbook coverage (`docs/UI_REGRESSION_ROLLOUT_GATES.md`), wired regression scripts (`apps/web/package.json`, `package.json`), and added governance regression tests (`apps/api/test/ui-regression-rollout-gates.spec.ts`, `apps/api/test/pr-linear-policy.spec.ts`).
