@@ -9,6 +9,7 @@ import { CreateMatterDto } from './dto/create-matter.dto';
 import { AddParticipantDto } from './dto/add-participant.dto';
 import { IntakeWizardDto } from './dto/intake-wizard.dto';
 import { SaveIntakeDraftDto } from './dto/save-intake-draft.dto';
+import { LogCommunicationEntryDto } from './dto/log-communication-entry.dto';
 
 @Controller('matters')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -65,6 +66,20 @@ export class MattersController {
   @RequirePermissions('matters:read')
   participantRoleOptions(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.mattersService.listParticipantRoleOptions(user, id);
+  }
+
+  @Post(':id/communications/log')
+  @RequirePermissions('matters:write')
+  logCommunicationEntry(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: LogCommunicationEntryDto,
+  ) {
+    return this.mattersService.logCommunicationEntry({
+      user,
+      matterId: id,
+      ...dto,
+    });
   }
 
   @Post('intake-wizard')

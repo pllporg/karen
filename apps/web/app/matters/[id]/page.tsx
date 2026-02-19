@@ -26,8 +26,23 @@ type ParticipantRoleOption = {
   sideDefault: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' | null;
 };
 
+type CommunicationThread = {
+  id: string;
+  subject?: string | null;
+  messages?: Array<{
+    id: string;
+    type: 'EMAIL' | 'SMS' | 'CALL_LOG' | 'PORTAL_MESSAGE' | 'INTERNAL_NOTE';
+    direction: 'INBOUND' | 'OUTBOUND' | 'INTERNAL';
+    subject?: string | null;
+    body: string;
+    occurredAt: string;
+  }>;
+};
+
 const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED'] as const;
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
+const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'INTERNAL_NOTE'] as const;
+const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
 
 export default function MatterDashboardPage() {
   const params = useParams() as { id: string };
@@ -52,17 +67,39 @@ export default function MatterDashboardPage() {
   const [selectedParticipantContactId, setSelectedParticipantContactId] = useState('');
   const [selectedParticipantRoleKey, setSelectedParticipantRoleKey] = useState('');
   const [participantStatusMessage, setParticipantStatusMessage] = useState<string | null>(null);
+  const [selectedCommunicationThreadId, setSelectedCommunicationThreadId] = useState('__new__');
+  const [newCommunicationThreadSubject, setNewCommunicationThreadSubject] = useState('');
+  const [communicationType, setCommunicationType] =
+    useState<(typeof COMMUNICATION_TYPE_OPTIONS)[number]>('CALL_LOG');
+  const [communicationDirection, setCommunicationDirection] =
+    useState<(typeof COMMUNICATION_DIRECTION_OPTIONS)[number]>('INBOUND');
+  const [communicationSubject, setCommunicationSubject] = useState('');
+  const [communicationBody, setCommunicationBody] = useState('');
+  const [communicationParticipantContactId, setCommunicationParticipantContactId] = useState('');
+  const [communicationOccurredAt, setCommunicationOccurredAt] = useState(new Date().toISOString().slice(0, 16));
+  const [communicationStatusMessage, setCommunicationStatusMessage] = useState<string | null>(null);
 
   async function refreshDashboard() {
     if (!matterId) {
       return;
     }
-    setDashboard(await apiFetch(`/matters/${matterId}/dashboard`));
+    const nextDashboard = await apiFetch<any>(`/matters/${matterId}/dashboard`);
+    setDashboard(nextDashboard);
+    const threadIds = (nextDashboard.communicationThreads || []).map((thread: CommunicationThread) => thread.id);
+    setSelectedCommunicationThreadId((current) => {
+      if (threadIds.length === 0) {
+        return '__new__';
+      }
+      if (current && current !== '__new__' && threadIds.includes(current)) {
+        return current;
+      }
+      return threadIds[0];
+    });
   }
 
   useEffect(() => {
     if (!matterId) return;
-    apiFetch(`/matters/${matterId}/dashboard`).then(setDashboard).catch(() => undefined);
+    refreshDashboard().catch(() => undefined);
     apiFetch<Array<{ id: string; name: string; pack?: { version?: string } }>>('/calendar/rules-packs')
       .then((packs) => {
         setRulesPacks(packs);
@@ -215,6 +252,62 @@ export default function MatterDashboardPage() {
     setParticipantStatusMessage('Participant removed.');
     await refreshDashboard();
   }
+
+  async function logCommunicationEntry() {
+    if (!matterId) {
+      return;
+    }
+
+    const normalizedBody = communicationBody.trim();
+    if (!normalizedBody) {
+      setCommunicationStatusMessage('Communication body is required.');
+      return;
+    }
+
+    const normalizedSubject = communicationSubject.trim();
+    const normalizedThreadSubject = newCommunicationThreadSubject.trim();
+    const isNewThread = selectedCommunicationThreadId === '__new__';
+
+    await apiFetch(`/matters/${matterId}/communications/log`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ...(isNewThread
+          ? {
+              threadSubject: normalizedThreadSubject || normalizedSubject || `${communicationType} log`,
+            }
+          : {
+              threadId: selectedCommunicationThreadId,
+            }),
+        type: communicationType,
+        direction: communicationDirection,
+        ...(normalizedSubject ? { subject: normalizedSubject } : {}),
+        body: normalizedBody,
+        ...(communicationParticipantContactId ? { participantContactId: communicationParticipantContactId } : {}),
+        ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
+      }),
+    });
+
+    setCommunicationStatusMessage('Communication entry logged.');
+    setCommunicationSubject('');
+    setCommunicationBody('');
+    setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+    await refreshDashboard();
+  }
+
+  const communicationRows = dashboard
+    ? (dashboard.communicationThreads || [])
+        .flatMap((thread: CommunicationThread) =>
+          (thread.messages || []).map((message) => ({
+            ...message,
+            threadId: thread.id,
+            threadSubject: thread.subject || thread.id,
+          })),
+        )
+        .sort(
+          (left: { occurredAt: string }, right: { occurredAt: string }) =>
+            new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+        )
+    : [];
 
   return (
     <AppShell>
@@ -510,11 +603,126 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Communications</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {dashboard.communicationThreads?.map((thread: any) => (
-                <li key={thread.id}>{thread.subject || 'Thread'} ({thread.messages?.length || 0} msgs)</li>
-              ))}
-            </ul>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 1fr 1fr auto' }}>
+              <select
+                className="select"
+                aria-label="Communication Thread"
+                value={selectedCommunicationThreadId}
+                onChange={(event) => setSelectedCommunicationThreadId(event.target.value)}
+              >
+                <option value="__new__">Create new thread</option>
+                {(dashboard.communicationThreads || []).map((thread: CommunicationThread) => (
+                  <option key={thread.id} value={thread.id}>
+                    {thread.subject || thread.id}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                aria-label="Communication Type"
+                value={communicationType}
+                onChange={(event) => setCommunicationType(event.target.value as (typeof COMMUNICATION_TYPE_OPTIONS)[number])}
+              >
+                {COMMUNICATION_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                aria-label="Communication Direction"
+                value={communicationDirection}
+                onChange={(event) => setCommunicationDirection(event.target.value as (typeof COMMUNICATION_DIRECTION_OPTIONS)[number])}
+              >
+                {COMMUNICATION_DIRECTION_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                aria-label="Communication Contact"
+                value={communicationParticipantContactId}
+                onChange={(event) => setCommunicationParticipantContactId(event.target.value)}
+              >
+                <option value="">No contact participant</option>
+                {participantContacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.displayName}
+                  </option>
+                ))}
+              </select>
+              <button className="button" type="button" onClick={logCommunicationEntry}>
+                Log Communication
+              </button>
+            </div>
+            {selectedCommunicationThreadId === '__new__' ? (
+              <input
+                className="input"
+                style={{ marginTop: 8 }}
+                aria-label="Communication Thread Subject"
+                placeholder="Thread subject"
+                value={newCommunicationThreadSubject}
+                onChange={(event) => setNewCommunicationThreadSubject(event.target.value)}
+              />
+            ) : null}
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '220px 1fr', marginTop: 8 }}>
+              <input
+                className="input"
+                aria-label="Communication Occurred At"
+                type="datetime-local"
+                value={communicationOccurredAt}
+                onChange={(event) => setCommunicationOccurredAt(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Communication Subject"
+                placeholder="Subject (optional)"
+                value={communicationSubject}
+                onChange={(event) => setCommunicationSubject(event.target.value)}
+              />
+            </div>
+            <textarea
+              className="textarea"
+              style={{ marginTop: 8 }}
+              aria-label="Communication Body"
+              rows={3}
+              placeholder="Log details"
+              value={communicationBody}
+              onChange={(event) => setCommunicationBody(event.target.value)}
+            />
+            {communicationStatusMessage ? (
+              <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{communicationStatusMessage}</p>
+            ) : null}
+            <table className="table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Occurred</th>
+                  <th>Thread</th>
+                  <th>Type</th>
+                  <th>Direction</th>
+                  <th>Summary</th>
+                </tr>
+              </thead>
+              <tbody>
+                {communicationRows.map((message: any) => (
+                  <tr key={message.id}>
+                    <td>{new Date(message.occurredAt).toLocaleString()}</td>
+                    <td>{message.threadSubject}</td>
+                    <td>{message.type}</td>
+                    <td>{message.direction}</td>
+                    <td>{message.subject || String(message.body || '').slice(0, 90)}</td>
+                  </tr>
+                ))}
+                {communicationRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No communications logged for this matter yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
           </div>
 
           <div className="card">
