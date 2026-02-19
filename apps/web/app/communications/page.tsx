@@ -58,15 +58,28 @@ export default function CommunicationsPage() {
     <AppShell>
       <PageHeader title="Communications" subtitle="Manual logs for call/email/text/portal messages with matter-linkable threads." />
       <div className="card" style={{ marginBottom: 14 }}>
-        <button className="button secondary" style={{ width: 220 }} onClick={createThread}>Create Thread</button>
+        <button className="button secondary" type="button" style={{ width: 220 }} onClick={createThread}>
+          Create Thread
+        </button>
       </div>
       <div className="card-grid">
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Threads</h3>
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
+          <p className="mono-meta" role="status" aria-live="polite" style={{ marginBottom: 8 }}>
+            Active thread: {threadId || 'None selected'}
+          </p>
+          <ul className="thread-list">
             {threads.map((thread) => (
-              <li key={thread.id} onClick={() => setThreadId(thread.id)} style={{ cursor: 'pointer' }}>
-                {thread.subject || thread.id}
+              <li key={thread.id}>
+                <button
+                  className={`thread-select${threadId === thread.id ? ' is-active' : ''}`}
+                  type="button"
+                  onClick={() => setThreadId(thread.id)}
+                  aria-pressed={threadId === thread.id}
+                >
+                  <span className="thread-subject">{thread.subject || thread.id}</span>
+                  <span className="thread-meta mono-meta">{thread.id}</span>
+                </button>
               </li>
             ))}
           </ul>
@@ -83,8 +96,13 @@ export default function CommunicationsPage() {
           <h3 style={{ marginTop: 0 }}>Keyword Search</h3>
           <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto' }}>
             <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search communications..." />
-            <button className="button ghost" onClick={search}>Search</button>
+            <button className="button ghost" type="button" onClick={search}>
+              Search
+            </button>
           </div>
+          <p className="mono-meta" role="status" aria-live="polite" style={{ marginTop: 8 }}>
+            Results: {searchResults.length}
+          </p>
           <ul style={{ marginTop: 10, paddingLeft: 18 }}>
             {searchResults.map((row) => (
               <li key={row.id}>{row.subject || 'No subject'} - {String(row.body).slice(0, 80)}</li>

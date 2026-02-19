@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
+import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
+import { ToastStack, type ToastItem } from '../../components/toast-stack';
 import { apiFetch } from '../../lib/api';
 
 type Contact = {
@@ -70,6 +72,17 @@ type ContactGraph = {
   };
 };
 
+type PendingDedupeAction =
+  | {
+      kind: 'MERGE';
+      item: DedupeSuggestion;
+    }
+  | {
+      kind: 'DECISION';
+      item: DedupeSuggestion;
+      nextDecision: 'OPEN' | 'IGNORE' | 'DEFER';
+    };
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [dedupe, setDedupe] = useState<DedupeSuggestion[]>([]);
@@ -86,12 +99,44 @@ export default function ContactsPage() {
   const [graphRelationshipType, setGraphRelationshipType] = useState('');
   const [graphLoading, setGraphLoading] = useState(false);
   const [actionKey, setActionKey] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingDedupeAction | null>(null);
+  const [dedupeError, setDedupeError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   function splitCsv(value: string) {
     return value
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  function formatTimestamp(date: Date) {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(date);
+  }
+
+  function pushToast(tone: ToastItem['tone'], title: string, detail: string) {
+    setToasts((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+        tone,
+        title,
+        detail,
+        occurredAt: formatTimestamp(new Date()),
+      },
+    ]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
   }
 
   function contactsPath() {
@@ -123,6 +168,14 @@ export default function ContactsPage() {
     load().catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (toasts.length === 0) return undefined;
+    const timer = window.setTimeout(() => {
+      setToasts((current) => current.slice(1));
+    }, 4500);
+    return () => window.clearTimeout(timer);
+  }, [toasts]);
 
   async function loadGraph(
     contactId: string,
@@ -177,43 +230,90 @@ export default function ContactsPage() {
   }
 
   async function merge(item: DedupeSuggestion) {
-    const confirmed = window.confirm(
-      `Merge ${item.duplicate.displayName} into ${item.primary.displayName}? This cannot be automatically undone.`,
-    );
-    if (!confirmed) return;
-    const key = `${item.pairKey}:merge`;
-    setActionKey(key);
-    try {
-      await apiFetch('/contacts/dedupe/merge', {
-        method: 'POST',
-        body: JSON.stringify({ primaryId: item.primaryId, duplicateId: item.duplicateId }),
-      });
-      await load();
-    } finally {
-      setActionKey(null);
-    }
+    setDedupeError(null);
+    setPendingAction({ kind: 'MERGE', item });
   }
 
-  async function decision(item: DedupeSuggestion, nextDecision: 'OPEN' | 'IGNORE' | 'DEFER') {
-    const label = nextDecision === 'IGNORE' ? 'ignore' : nextDecision === 'DEFER' ? 'defer' : 'reopen';
-    const confirmed = window.confirm(
-      `Confirm ${label} decision for duplicate pair ${item.primary.displayName} ↔ ${item.duplicate.displayName}?`,
-    );
-    if (!confirmed) return;
-    const key = `${item.pairKey}:${nextDecision}`;
+  function decision(item: DedupeSuggestion, nextDecision: 'OPEN' | 'IGNORE' | 'DEFER') {
+    setDedupeError(null);
+    setPendingAction({ kind: 'DECISION', item, nextDecision });
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingAction) return;
+    const currentAction = pendingAction;
+    const key =
+      currentAction.kind === 'MERGE'
+        ? `${currentAction.item.pairKey}:merge`
+        : `${currentAction.item.pairKey}:${currentAction.nextDecision}`;
+    setPendingAction(null);
     setActionKey(key);
+    setDedupeError(null);
+
     try {
-      await apiFetch('/contacts/dedupe/decisions', {
-        method: 'POST',
-        body: JSON.stringify({ primaryId: item.primaryId, duplicateId: item.duplicateId, decision: nextDecision }),
-      });
+      if (currentAction.kind === 'MERGE') {
+        await apiFetch('/contacts/dedupe/merge', {
+          method: 'POST',
+          body: JSON.stringify({ primaryId: currentAction.item.primaryId, duplicateId: currentAction.item.duplicateId }),
+        });
+        pushToast(
+          'warning',
+          'Dedupe Merge Completed',
+          `${currentAction.item.duplicate.displayName} merged into ${currentAction.item.primary.displayName}.`,
+        );
+      } else {
+        await apiFetch('/contacts/dedupe/decisions', {
+          method: 'POST',
+          body: JSON.stringify({
+            primaryId: currentAction.item.primaryId,
+            duplicateId: currentAction.item.duplicateId,
+            decision: currentAction.nextDecision,
+          }),
+        });
+        pushToast(
+          'success',
+          'Dedupe Decision Recorded',
+          `${currentAction.nextDecision} recorded for ${currentAction.item.primary.displayName} ↔ ${currentAction.item.duplicate.displayName}.`,
+        );
+      }
       await load();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to process dedupe action.';
+      setDedupeError(message);
+      pushToast('error', 'Dedupe Action Failed', message);
     } finally {
       setActionKey(null);
     }
   }
 
   const visibleDedupe = includeResolved ? dedupe : dedupe.filter((item) => item.decision === 'OPEN');
+  const pendingActionDialog = useMemo(() => {
+    if (!pendingAction) return null;
+
+    if (pendingAction.kind === 'MERGE') {
+      return {
+        title: 'Confirm Dedupe Merge',
+        description: `Merge ${pendingAction.item.duplicate.displayName} into ${pendingAction.item.primary.displayName}. This updates participant/contact references and cannot be automatically reversed.`,
+        confirmLabel: 'Approve Merge',
+        confirmTone: 'danger' as const,
+      };
+    }
+
+    const decisionLabel =
+      pendingAction.nextDecision === 'IGNORE'
+        ? 'IGNORE'
+        : pendingAction.nextDecision === 'DEFER'
+          ? 'DEFER'
+          : 'REOPEN';
+
+    return {
+      title: 'Confirm Dedupe Decision',
+      description: `Apply ${decisionLabel} to duplicate pair ${pendingAction.item.primary.displayName} ↔ ${pendingAction.item.duplicate.displayName}.`,
+      confirmLabel: 'Record Decision',
+      confirmTone: 'default' as const,
+    };
+  }, [pendingAction]);
+
   const dedupeByContactId = useMemo(() => {
     const index = new Map<string, { openCount: number; highestConfidence: DedupeSuggestion['confidence'] }>();
     const confidenceWeight = (value: DedupeSuggestion['confidence']) => {
@@ -442,6 +542,16 @@ export default function ContactsPage() {
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Dedupe Suggestions</h3>
+          {actionKey ? (
+            <p className="notice mono-meta" role="status" style={{ marginBottom: 8 }}>
+              Processing dedupe action...
+            </p>
+          ) : null}
+          {dedupeError ? (
+            <p className="error" role="alert" style={{ marginBottom: 8 }}>
+              {dedupeError}
+            </p>
+          ) : null}
           <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
             <input type="checkbox" checked={includeResolved} onChange={(e) => setIncludeResolved(e.target.checked)} />
             Show deferred/ignored pairs
@@ -478,6 +588,7 @@ export default function ContactsPage() {
               <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                 <button
                   className="button ghost"
+                  type="button"
                   onClick={() => merge(item)}
                   disabled={actionKey !== null}
                 >
@@ -487,6 +598,7 @@ export default function ContactsPage() {
                   <>
                     <button
                       className="button ghost"
+                      type="button"
                       onClick={() => decision(item, 'DEFER')}
                       disabled={actionKey !== null}
                     >
@@ -494,6 +606,7 @@ export default function ContactsPage() {
                     </button>
                     <button
                       className="button ghost"
+                      type="button"
                       onClick={() => decision(item, 'IGNORE')}
                       disabled={actionKey !== null}
                     >
@@ -503,6 +616,7 @@ export default function ContactsPage() {
                 ) : (
                   <button
                     className="button ghost"
+                    type="button"
                     onClick={() => decision(item, 'OPEN')}
                     disabled={actionKey !== null}
                   >
@@ -514,6 +628,19 @@ export default function ContactsPage() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingActionDialog)}
+        title={pendingActionDialog?.title || 'Confirm Action'}
+        description={pendingActionDialog?.description || ''}
+        confirmLabel={pendingActionDialog?.confirmLabel || 'Confirm'}
+        confirmTone={pendingActionDialog?.confirmTone || 'default'}
+        cancelLabel="Return to Review"
+        busy={actionKey !== null}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={confirmPendingAction}
+      />
+      <ToastStack items={toasts} onDismiss={dismissToast} />
     </AppShell>
   );
 }
