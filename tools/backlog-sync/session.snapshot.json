@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T22:48:01.876Z",
+  "generatedAt": "2026-02-19T22:52:37.020Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 54,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 43,
+      "Done": 44,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-68",
         "title": "Implement matter dashboard document lifecycle operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T22:47:27.999Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T22:52:14.738Z",
         "requirementId": "REQ-PMS-CORE-006"
       },
       {
@@ -123,22 +122,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T22:48:00.419Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T22:52:35.822Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3229d4922e5c4b57d4a270d9790087ad5dbae36c",
+    "gitHead": "8154671de8c2d8cd89cbdad1d394a4ee3a36c2ec",
     "gitStatusShort": [
-      "## lin/KAR-68-matter-dashboard-document-lifecycle",
-      " M apps/api/src/documents/documents.controller.ts",
-      " M apps/api/src/documents/documents.service.ts",
-      " M apps/api/test/documents.spec.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/test/matter-dashboard-page.spec.tsx",
-      " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/src/documents/dto/update-document.dto.ts",
-      "?? docs/parity/matter-dashboard-document-lifecycle.md"
+      "## lin/KAR-68-post-merge-snapshot-refresh"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 0
   }
 }

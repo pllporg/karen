@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T22:48:01.876Z`
+- Snapshot Timestamp: `2026-02-19T22:52:37.020Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T22:48:00.419Z`
+- Last Successful Mirror Verify: `2026-02-19T22:52:35.822Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,6 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-19: Completed `KAR-68` / `REQ-PMS-CORE-006`; PR `#146` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).
 - 2026-02-19: Advanced `KAR-68` / `REQ-PMS-CORE-006` to `In Review` by implementing matter-dashboard document lifecycle operations: added document metadata update endpoint (`PATCH /documents/:id`) with matter-scoped write enforcement, expanded document audit coverage for version upload/share-link creation (`document.version.uploaded`, `document.share_link.created`, `document.updated`), upgraded dashboard documents panel with in-context upload/version/share/download controls and client-sharing toggle (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/documents.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published parity evidence at `docs/parity/matter-dashboard-document-lifecycle.md`; validation passed via `pnpm --filter api test -- test/documents.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
 - 2026-02-19: Completed `KAR-67` / `REQ-PMS-CORE-005`; PR `#142` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).
 - 2026-02-19: Advanced `KAR-67` / `REQ-PMS-CORE-005` by completing matter-dashboard task + calendar lifecycle operations: added task delete endpoint/service audit path (`DELETE /tasks/:id`), calendar event update/delete endpoints with matter-scoped write enforcement and audit events (`PATCH /calendar/events/:id`, `DELETE /calendar/events/:id`), upgraded dashboard workflow to support task/event edit-cancel-delete UX with tabular actions (`apps/web/app/matters/[id]/page.tsx`), expanded regression coverage (`apps/api/test/tasks.spec.ts`, `apps/api/test/calendar-events.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published parity evidence at `docs/parity/matter-dashboard-task-calendar-lifecycle.md`; validation passed via `pnpm --filter api test -- test/tasks.spec.ts test/calendar-events.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
