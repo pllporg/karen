@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:06:44.636Z",
+  "generatedAt": "2026-02-19T18:23:12.854Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -31,8 +31,9 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 50,
+    "scopedIssueCount": 51,
     "stateCounts": {
+      "In Review": 1,
       "Done": 40,
       "Backlog": 10
     },
@@ -40,10 +41,24 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-65",
+        "title": "Implement matter dashboard communications logging operations",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T18:22:56.660Z",
+        "requirementId": "REQ-PMS-CORE-003"
+      },
+      {
+        "key": "KAR-22",
+        "title": "PARITY-05 Communications + Documents",
+        "state": "Backlog",
+        "updatedAt": "2026-02-19T18:14:47.345Z",
+        "requirementId": "PARITY-05"
+      },
+      {
         "key": "KAR-64",
         "title": "Implement matter dashboard participant add/remove operations",
         "state": "Done",
-        "updatedAt": "2026-02-19T18:05:32.518Z",
+        "updatedAt": "2026-02-19T18:10:27.549Z",
         "requirementId": "REQ-PMS-CORE-002"
       },
       {
@@ -94,20 +109,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T21:38:38.111Z",
         "requirementId": "REQ-BILL-004"
-      },
-      {
-        "key": "KAR-47",
-        "title": "Implement trust reconciliation workflows with discrepancy resolution",
-        "state": "Done",
-        "updatedAt": "2026-02-18T21:29:32.488Z",
-        "requirementId": "REQ-BILL-003"
-      },
-      {
-        "key": "KAR-31",
-        "title": "Replace e-sign stub with provider abstraction implementation",
-        "state": "Done",
-        "updatedAt": "2026-02-18T21:15:22.027Z",
-        "requirementId": "REQ-PORTAL-002"
       }
     ]
   },
@@ -122,14 +123,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:06:40.972Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:23:11.622Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "fd3f484cce72528b6684830f85e4e09c067594d4",
+    "gitHead": "3c7ca2fbeb267c4147f397be409a0b4124c4ff68",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M docs/SESSION_HANDOFF.md"
+      "## lin/KAR-65-matter-dashboard-communications-ops...origin/lin/KAR-65-matter-dashboard-communications-ops",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
     "dirtyFileCount": 1
   }
