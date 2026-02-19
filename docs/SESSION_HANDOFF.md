@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-18T22:11:02.023Z`
+- Snapshot Timestamp: `2026-02-19T00:00:20.630Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-18T22:11:00.756Z`
+- Last Successful Mirror Verify: `2026-02-19T00:00:19.200Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -52,6 +52,11 @@ Selection policy:
 3. Within same phase/status: `High` risk before `Medium` before `Low`
 4. Security/data-integrity/portability before UX polish
 
+UI refactor lane continuity:
+
+1. Use `tools/backlog-sync/session.snapshot.json` -> `uiLaneSummary.openIssueKeys` for active UI queue.
+2. Current UI queue is `KAR-56` through `KAR-60` with Brand Identity Document compliance criteria embedded in each issue.
+
 ## Dirty Tree Policy
 
 Dirty working tree is allowed, but must be acknowledged at session start:
@@ -82,6 +87,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-18: Canonicalized UI refactor backlog to the new `brand/Brand Identity Document` source by updating `KAR-54` through `KAR-60` with requirement IDs (`REQ-UI-001`..`REQ-UI-007`), explicit Brand Identity precedence, and checklist-based acceptance criteria; snapshot now publishes `uiLaneSummary` for new-chat continuity (`tools/backlog-sync/sync_ui_refactor_backlog.mjs`, `tools/backlog-sync/backlog_snapshot.mjs`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/UI_TOKEN_CONTRACT.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`).
 - 2026-02-18: Verified `REQ-MAT-005` by hardening rules-pack selection semantics (most-specific active effective pack wins; explicit inactive/out-of-window packs rejected), plus apply-selection guardrails rejecting unknown/duplicate rule IDs with dedicated regression coverage (`apps/api/test/deadline-rules-verification.spec.ts`, `docs/parity/deadline-rules-packs.md`).
 - 2026-02-18: Verified `REQ-MAT-004` by hardening conflict profile update semantics (partial updates now preserve existing scope/weights/thresholds/default flags), adding deterministic default reassignment when a default profile is deactivated, and enforcing scoped-profile selection precedence so the most specific active match is selected for checks (`apps/api/test/admin-conflict-verification.spec.ts`, `docs/parity/conflict-rule-profiles.md`).
 - 2026-02-18: Verified `REQ-COMM-004` by hardening disposition execution to re-check legal holds at execution time (disposing only eligible documents, skipping newly-held documents, reverting skipped docs to `ACTIVE`, and recording `skippedForLegalHoldAtExecution` audit metadata), with new regression coverage in `apps/api/test/document-retention-verification.spec.ts` and parity evidence in `docs/parity/document-retention-workflows.md`.

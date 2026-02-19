@@ -1,75 +1,112 @@
-# KAR-54 UI/UX Refactor Lane Plan
+# KAR-54 UI/UX Refactor Lane Plan (Brand Identity Document Canonical)
+
+## Canonical Source + Precedence
+
+1. Canonical source of truth: `brand/Brand Identity Document/`.
+2. If conflicts exist between prior UI docs or current implementation and the Brand Identity Document, **Brand Identity Document wins**.
+3. If AGENTS guidance, legacy UI tokens, or in-product styles conflict with Brand Identity standards, resolve to Brand Identity and record the delta in the ticket verification evidence.
+4. Affected references:
+- `brand/Brand Identity Document/src/app/components/sections/ColorSystem.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/TypographySection.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/GridComponents.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/InteractionDesign.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/AIInteraction.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/MessagingVoice.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/NamingSystem.tsx`
 
 ## Objective
-Define a low-risk, PR-sized migration path from the current app UI to the LIC brand/system rules (procedural tone, 8pt grid, square geometry, border-first structure, explicit review/audit workflows).
 
-## Discovery Snapshot
+Refactor the app UI into a standards-manual style system: controlled, procedural, auditable, and interaction-safe for litigation workflows.
 
-### Frontend Stack
-- Framework: Next.js App Router (`apps/web/app`)
-- Styling: global CSS + utility classes (`apps/web/app/globals.css`)
-- Shared UI components: minimal shell/header only (`apps/web/components/app-shell.tsx`, `apps/web/components/page-header.tsx`)
-- Tests: Vitest route-level integration tests in `apps/web/test`
+## Enforceable Standards (Extracted)
 
-### Route Inventory
-- `/dashboard`, `/matters`, `/matters/[id]`, `/contacts`, `/communications`, `/documents`, `/billing`, `/portal`, `/ai`, `/admin`, `/imports`, `/exports`, `/reporting`, `/data-dictionary`, `/login`
+### Visual + Layout
+- Color palette is fixed: Ink `#0B0B0B`, Paper `#F7F5F0`, Graphite `#3A3A3A`, Slate `#6B6B6B`, Silver `#A8A8A8`, Fog `#D4D2CD`, Parchment `#ECEAE4`, Institutional Blue `#2B4C7E`, Filing Red `#8B2500`, Ledger Green `#2D5F3A`.
+- No gradients, no shadows, no decorative transparency effects.
+- No rounded corners (rectilinear geometry only).
+- 12-column grid, max content width 960px, margins never below 32px.
+- 8px spacing base (4, 8, 16, 24, 32, 48, 64, 96).
+- Tables/lists are first-class for dense operations.
 
-## LIC Gap Summary (Current -> Target)
-- Color/theming: current gradients/soft tints -> matte Paper/Ink system with sparse blue accent usage.
-- Geometry: current rounded cards/inputs/badges -> zero-radius across primitives.
-- Depth: current shadows/blur/backdrop effects -> no shadows; hierarchy via heavy/medium rules and spacing.
-- Typography: current Space Grotesk + mixed styles -> IBM Plex Sans / Sans Condensed / Mono with uppercase tracked headings.
-- Structure: current card-heavy layout -> table-first dense workflows for queue, logs, discovery, reporting.
-- Interaction governance: inconsistent review-state visualization -> normalized status workflow `PROPOSED -> IN REVIEW -> APPROVED -> EXECUTED -> RETURNED` with explicit approval gates and timestamped audit feedback.
-- Accessibility: focus-visible behavior is not standardized -> global `:focus-visible` contract for all interactive controls.
+### Typography + Voice
+- IBM Plex Mono is primary for headings/labels/codes/UI metadata.
+- IBM Plex Sans for body/prose.
+- IBM Plex Serif is limited to pull quotes/emphasis.
+- Tone: procedural, terse, declarative, action-oriented.
+- Ban hype/friendly filler language.
 
-## Refactor Lane (Phased)
+### Interaction + Accessibility
+- State always visible; actions reversible; system never interrupts first.
+- Motion only when functional; linear timing only (`0ms`, `80ms`, `100ms`, `120ms`).
+- Prohibited patterns include: infinite scroll, optimistic UI for critical operations, skeleton shimmer, hover-only disclosure, stacked modals, toast-only error handling.
+- Feedback hierarchy: inline state -> toast -> inline alert -> confirmation dialog.
+- Destructive actions require explicit confirmation and consequence text.
+- Keyboard-first: visible focus, correct tab order, modal focus trap/return.
+- WCAG 2.1 AA and reduced-motion support required.
 
-### Phase 0 - Guardrails (KAR-55)
-- Define token contract and global base styles (`paper/ink/accent`, type, spacing, rules, focus).
-- Add UI lint rules/conventions for `border-radius: 0`, no gradients, no shadows.
-- Add baseline visual smoke checks for shell + key forms.
+### AI Interaction Standards
+- AI is workforce, not chat persona.
+- Universal Interface is command surface: natural-language input, structured output.
+- Every output requires provenance + review gate before external use.
+- No anthropomorphic language, no confidence percentages, no conversational filler.
 
-### Phase 1 - Shell + Navigation (KAR-56)
-- Refactor global shell and nav to LIC structure (module-first, rule-separated layout).
-- Remove blur/gradient treatments from sidebar/topbar.
-- Normalize heading/metadata typographic hierarchy.
+## Current Delta (Must Be Corrected in Lane)
 
-### Phase 2 - Primitive Uplift (KAR-57)
-- Build reusable primitives: `Button`, `Input`, `Textarea`, `Select`, `Badge`, `Table`, `Card`, `Drawer`, `Modal`, `Toast`.
-- Adopt primitives incrementally by page; prevent new one-off styles.
+- Existing `apps/web/app/globals.css` and token implementation are transitional and not fully aligned to canonical color/typography/interaction definitions.
+- Prior token choices and spacing/type role assumptions must be reconciled to Brand Identity Document values and role mapping.
 
-### Phase 3 - Accessibility Remediation (KAR-58)
-- Keyboard/focus pass on all primary workflows.
-- Label/error semantics normalization for forms.
-- Contrast and status-not-color-only validation.
+## Refactor Sequence (Updated)
 
-### Phase 4 - Responsive Matrix (KAR-59)
-- Define responsive behavior by route (desktop/tablet/mobile).
-- Validate dense tables, forms, and review drawers at breakpoints.
-- Fix overflow and action reachability regressions.
+### Phase 0 - Canonical Lock + Delta Audit
+- Freeze standards: publish canonical compliance checklist.
+- Document implementation deltas route-by-route and primitive-by-primitive.
+- Add PR checklist gate for standards compliance.
 
-### Phase 5 - Regression + Release Controls (KAR-60)
-- Expand web regression coverage for shell/primitives and high-traffic workflows.
-- Add final smoke script for approval/send flows.
-- Produce rollout checklist and fallback plan.
+### Phase 1 - Foundation Realignment
+- Realign color tokens exactly to canonical palette.
+- Realign typography role mapping (Mono-first heading/label system).
+- Align spacing/grid constants to 8px base and 12-column rules.
 
-## PR Sequence (Small, Mergeable Steps)
-1. Token + global style baseline only.
-2. Shell/navigation migration.
-3. Primitive library introduction (no route rewrites yet).
-4. Matter/queue-heavy pages converted to table-first primitives.
-5. Approval/review workflow visual standardization.
-6. Accessibility + responsive cleanup.
-7. Regression hardening and final polish.
+### Phase 2 - Shell + Navigation
+- Apply canonical shell structure and hierarchy.
+- Ensure nav semantics, keyboard traversal, and status visibility.
+- Eliminate conflicting decorative patterns.
 
-## Verification Standard Per Slice
+### Phase 3 - Primitive System Uplift
+- Standardize Button/Input/Select/Textarea/Badge/Table/Card/Drawer/Modal/Toast.
+- Encode explicit state models and focus behavior.
+- Enforce destructive-action confirmation standards.
+
+### Phase 4 - Workflow Interaction Compliance
+- Apply feedback hierarchy and review gate workflow standards.
+- Normalize AI interaction presentation to command/provenance model.
+- Replace anti-patterns (optimistic flow, hidden state, non-explicit approvals).
+
+### Phase 5 - Accessibility + Responsive + Regression
+- Enforce WCAG/keyboard/reduced-motion requirements.
+- Apply desktop-first responsive doctrine and unsupported-mobile behavior.
+- Expand regression and smoke coverage across high-risk workflows.
+
+## Ticket Mapping
+
+- `KAR-55`: foundation/token architecture and canonical token contract.
+- `KAR-56`: shell/navigation architecture compliance.
+- `KAR-57`: primitives + interaction state standardization.
+- `KAR-58`: accessibility compliance lane.
+- `KAR-59`: responsive behavior matrix + breakpoints doctrine.
+- `KAR-60`: regression + rollout gate enforcement.
+- Canonical token/global reconciliation is enforced as acceptance criteria within `KAR-56` and `KAR-57` execution.
+
+## Verification Standard per Slice
+
 - `pnpm --filter web test`
+- `pnpm --filter web build`
 - `pnpm test`
 - `pnpm build`
-- Manual checks: keyboard navigation, focus-visible, no console errors on touched routes.
+- Manual: keyboard/focus-visible, review-gate behavior, confirmation patterns, no console errors, and checklist sign-off in PR.
 
-## Non-Goals for KAR-54
-- No backend API changes.
-- No full visual rewrite in a single PR.
-- No migration of every page in this planning slice.
+## Non-Goals
+
+- No backend contract changes in this lane unless UI correctness explicitly requires it.
+- No large single-PR visual rewrite.
+- No bypass of review-gate/auditability standards for speed.

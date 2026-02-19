@@ -7,6 +7,7 @@ This contract defines how implementation sessions are executed to preserve parit
 1. Linear is canonical for task status, acceptance criteria, and verification evidence.
 2. GitHub issues are a mirror for visibility and code linkage only.
 3. `tools/backlog-sync/requirements.matrix.json` is the versioned parity baseline in-repo.
+4. For UI/interaction work, `brand/Brand Identity Document/` is canonical and overrides conflicting legacy UI setup/docs.
 
 ## Iterative Slice Protocol
 
@@ -46,6 +47,11 @@ Any issue moved to `In Progress` or later must contain:
 2. Acceptance criteria reference
 3. Verification evidence (`## Verification Evidence`)
 4. Test/build command results
+
+UI-affecting issues must also include:
+
+1. Explicit checklist sign-off against `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
+2. Any Brand Identity exceptions plus follow-up ticket
 
 ## Bootstrap Check Command
 

@@ -16,6 +16,7 @@ import {
 const linearToken = requiredEnv('LINEAR_API_TOKEN');
 const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
 const scopeLabel = normalizeLabelName(env('LINEAR_SCOPE_LABEL', 'parity'));
+const uiLaneLabel = normalizeLabelName(env('UI_LANE_LABEL', 'ui-ux'));
 const topN = Math.max(1, Number(env('SNAPSHOT_TOP_N', '10')) || 10);
 const recentIssueLimit = Math.max(1, Number(env('SNAPSHOT_RECENT_ISSUES', '10')) || 10);
 
@@ -132,6 +133,11 @@ async function main() {
   const inProgressMissingVerification = inProgressIssues
     .filter((issue) => !/##\s*Verification Evidence/i.test(String(issue.description || '')))
     .map((issue) => issue.identifier);
+  const uiLaneIssues = allProjectIssues.filter((issue) =>
+    (issue.labels?.nodes || []).some((label) => normalizeLabelName(label.name) === uiLaneLabel),
+  );
+  const uiLaneOpenIssues = uiLaneIssues.filter((issue) => String(issue.state?.type || '').toLowerCase() !== 'completed');
+  const sortedUiLaneOpen = [...uiLaneOpenIssues].sort((a, b) => a.identifier.localeCompare(b.identifier));
 
   let verifyState = null;
   try {
@@ -190,6 +196,20 @@ async function main() {
         state: issue.state?.name || 'Unknown',
         updatedAt: issue.updatedAt || null,
         requirementId: extractRequirementId(issue.description),
+      })),
+    },
+    uiLaneSummary: {
+      label: uiLaneLabel,
+      issueCount: uiLaneIssues.length,
+      openIssueCount: uiLaneOpenIssues.length,
+      stateCounts: countBy(uiLaneIssues, (issue) => issue.state?.name || 'Unknown'),
+      openIssueKeys: sortedUiLaneOpen.map((issue) => issue.identifier),
+      openIssues: sortedUiLaneOpen.map((issue) => ({
+        key: issue.identifier,
+        title: issue.title,
+        state: issue.state?.name || 'Unknown',
+        requirementId: extractRequirementId(issue.description),
+        updatedAt: issue.updatedAt || null,
       })),
     },
     operational: {

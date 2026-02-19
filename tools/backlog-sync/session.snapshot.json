@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-18T22:11:02.023Z",
+  "generatedAt": "2026-02-19T00:00:20.630Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,26 +33,25 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 48,
     "stateCounts": {
-      "Done": 36,
-      "In Review": 1,
+      "Done": 37,
       "Backlog": 11
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-45",
+        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
+        "state": "Done",
+        "updatedAt": "2026-02-18T22:14:53.656Z",
+        "requirementId": "REQ-MAT-005"
+      },
+      {
         "key": "KAR-44",
         "title": "Implement advanced conflict rule profiles and resolution workflows",
         "state": "Done",
-        "updatedAt": "2026-02-18T22:09:54.274Z",
+        "updatedAt": "2026-02-18T22:14:52.975Z",
         "requirementId": "REQ-MAT-004"
-      },
-      {
-        "key": "KAR-45",
-        "title": "Implement jurisdictional deadline rules packs and rule selection flow",
-        "state": "In Review",
-        "updatedAt": "2026-02-18T22:07:05.842Z",
-        "requirementId": "REQ-MAT-005"
       },
       {
         "key": "KAR-46",
@@ -112,24 +111,84 @@
       }
     ]
   },
+  "uiLaneSummary": {
+    "label": "ui-ux",
+    "issueCount": 7,
+    "openIssueCount": 5,
+    "stateCounts": {
+      "Backlog": 5,
+      "Done": 2
+    },
+    "openIssueKeys": [
+      "KAR-56",
+      "KAR-57",
+      "KAR-58",
+      "KAR-59",
+      "KAR-60"
+    ],
+    "openIssues": [
+      {
+        "key": "KAR-56",
+        "title": "Refactor global app shell and navigation to Brand Identity standards",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-003",
+        "updatedAt": "2026-02-18T23:58:46.993Z"
+      },
+      {
+        "key": "KAR-57",
+        "title": "Uplift shared UI primitives and interaction state model to canonical standards",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-004",
+        "updatedAt": "2026-02-18T23:58:47.143Z"
+      },
+      {
+        "key": "KAR-58",
+        "title": "Execute accessibility and interaction compliance remediation lane",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-005",
+        "updatedAt": "2026-02-18T23:58:47.350Z"
+      },
+      {
+        "key": "KAR-59",
+        "title": "Define and apply responsive behavior matrix under Brand Identity constraints",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-006",
+        "updatedAt": "2026-02-18T23:58:47.516Z"
+      },
+      {
+        "key": "KAR-60",
+        "title": "Enforce UI regression and rollout gates for Brand Identity compliance",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-007",
+        "updatedAt": "2026-02-18T23:58:47.668Z"
+      }
+    ]
+  },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-18T22:10:59.515Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T00:00:19.200Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "6e614b346f40d09fbe43b909ba37f61d8d48347f",
+    "gitHead": "80aeeb64875878fb20e69892e6a6239396124451",
     "gitStatusShort": [
-      "## lin/KAR-45-mat-005-verification-hardening...origin/lin/KAR-45-mat-005-verification-hardening",
-      "M  apps/api/src/admin/admin.service.ts",
-      "A  apps/api/test/admin-conflict-verification.spec.ts",
-      "UU docs/SESSION_HANDOFF.md",
-      "M  docs/parity/conflict-rule-profiles.md",
-      "M  tools/backlog-sync/requirements.matrix.json",
-      "UU tools/backlog-sync/session.snapshot.json",
+      "## main...origin/main",
+      " M README.md",
+      " M docs/UI_REFACTOR_LANE_PLAN.md",
+      " M docs/UI_TOKEN_CONTRACT.md",
+      " M docs/WORKING_CONTRACT.md",
+      " M package.json",
+      " M tools/backlog-sync/README.md",
+      " M tools/backlog-sync/backlog_snapshot.mjs",
+      " M tools/backlog-sync/linear_issue_template.md",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/seed_parity_backlog.mjs",
+      " M tools/backlog-sync/session.snapshot.json",
       "?? agents.md",
       "?? brand/",
+      "?? docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
+      "?? tools/backlog-sync/sync_ui_refactor_backlog.mjs",
       "?? uirefactorprompt.md"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 16
   }
 }

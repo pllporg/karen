@@ -24,6 +24,13 @@ Verification Evidence:
 ## API/data/UI impact
 <contract, schema, UI, migration impact>
 
+## Design + Interaction Compliance (required for UI-affecting work)
+- Canonical source reviewed: `brand/Brand Identity Document/`
+- Checklist reviewed: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
+- Compliance notes:
+  - <token/typography/layout/interaction confirmations>
+  - <exceptions + follow-up ticket if any>
+
 ## Security/privacy implications
 <auth, data isolation, secrets, compliance impact>
 

@@ -1,33 +1,103 @@
-# KAR-55 UI Token Contract
+# KAR-55 UI Token Contract (Canonicalized to Brand Identity Document)
 
-## Scope
-Defines the LIC token contract and baseline UI architecture used by `apps/web`.
+## Canonical Source
 
-## Token Source of Truth
-- File: `apps/web/app/lic-tokens.css`
-- Imported globally by: `apps/web/app/globals.css`
+All UI tokens and interaction constants derive from `brand/Brand Identity Document`.
+If any existing implementation differs, implementation must migrate to this contract.
+If this contract conflicts with legacy docs or AGENTS token guidance, this contract (and Brand Identity source files) prevails.
 
-## Token Families
-- Color: `--lic-paper`, `--lic-ink`, `--lic-warm-gray`, `--lic-blue`, `--lic-red`
-- Surface/Text: `--lic-surface-*`, `--lic-text-*`
-- Rules/Geometry: `--lic-rule-*`, `--lic-radius`
-- Spacing grid: `--lic-1` through `--lic-8` (8pt progression)
-- Typography: `--lic-font-sans`, `--lic-font-condensed`, `--lic-font-mono`
-- Focus: `--lic-focus`
+## Color Tokens (Fixed Palette)
 
-## Base UI Architecture
-- Global shell classes: `.page-shell`, `.sidebar`, `.main-panel`, `.topbar`
-- Primitive class contract: `.button`, `.input`, `.select`, `.textarea`, `.badge`, `.table`, `.card`
-- Accessibility baseline: standardized `:focus-visible` ring across interactive controls
+### Primary
+- `--lic-ink`: `#0B0B0B`
+- `--lic-paper`: `#F7F5F0`
 
-## LIC Enforcement Rules
-- No shadows.
-- No gradients.
-- No rounded corners.
-- Border-first hierarchy (`--lic-rule-*`) instead of visual elevation.
-- Table-first dense data presentation.
+### Neutrals
+- `--lic-graphite`: `#3A3A3A`
+- `--lic-slate`: `#6B6B6B`
+- `--lic-silver`: `#A8A8A8`
+- `--lic-fog`: `#D4D2CD`
+- `--lic-parchment`: `#ECEAE4`
 
-## Migration Guidance
-- New UI changes must consume token variables directly or via existing primitive class contract.
-- New one-off inline styling for colors/radius/shadows is out of scope unless explicitly approved.
-- Page-level refactors should prioritize replacing ad hoc styles with primitive class usage before introducing new layout variants.
+### Functional
+- `--lic-institutional`: `#2B4C7E` (links, active, focus)
+- `--lic-filing-red`: `#8B2500` (destructive, errors)
+- `--lic-ledger`: `#2D5F3A` (success/approval)
+
+Rule: do not introduce additional ad hoc color values for core UI.
+
+## Typography Tokens
+
+- `--lic-font-mono`: IBM Plex Mono (primary UI headings/labels/metadata)
+- `--lic-font-sans`: IBM Plex Sans (body and long-form text)
+- `--lic-font-serif`: IBM Plex Serif (limited quotes/emphasis only)
+
+### Role Mapping
+- Heading/module labels/nav labels/status metadata -> Mono
+- Body/descriptions/form help -> Sans
+- Pull quotes/formal statements -> Serif
+
+## Spacing + Grid Tokens
+
+### Base scale
+- 8px base: `4, 8, 16, 24, 32, 48, 64, 96`
+
+### Layout doctrine
+- 12-column grid for desktop layouts.
+- Max content width 960px.
+- Horizontal margins never below 32px.
+
+## Geometry + Rule Tokens
+
+- `--lic-radius`: `0px`
+- Border/rule hierarchy:
+  - `--lic-rule-1`: `1px`
+  - `--lic-rule-2`: `2px`
+  - `--lic-rule-4`: `4px` (left-rule emphasis only)
+
+Rule: no rounded corners, no drop shadows, no decorative gradients.
+
+## Motion + Interaction Tokens
+
+Allowed motion is functional and linear only.
+
+- `--lic-motion-instant`: `0ms`
+- `--lic-motion-fast`: `80ms`
+- `--lic-motion-toast`: `100ms`
+- `--lic-motion-panel`: `120ms`
+- `--lic-motion-easing`: `linear`
+
+Prohibited: spring/bounce, parallax, staggered reveals, page transitions, skeleton shimmer.
+
+## Accessibility Tokens/Contracts
+
+- Focus ring: 2px Institutional Blue, offset 2px, visible on light/dark contexts.
+- Must support reduced motion (`prefers-reduced-motion`) by disabling non-essential transitions.
+- Status/error communication cannot rely on color alone.
+
+## Primitive Class Contract (Target)
+
+Required primitive set for migration:
+- `Button`
+- `Input`
+- `Textarea`
+- `Select`
+- `Badge` / status marker
+- `Table`
+- `Card`
+- `Drawer`
+- `Modal`
+- `Toast`
+
+All primitives must consume token variables directly or via shared utility wrappers.
+
+## Compliance Rule
+
+A UI change is non-compliant if it introduces any of:
+- non-canonical colors,
+- rounded corners,
+- shadow/gradient decoration,
+- non-linear decorative animation,
+- inconsistent typography role usage,
+- hidden/unlabeled state transitions.
+- missing references to `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md` in issue/PR verification evidence.

@@ -15,6 +15,8 @@ This toolkit sets up and operates a persistent parity backlog where:
   - Seeds epics/tasks from `requirements.matrix.json`.
 - `linear_to_github.mjs`
   - Mirrors scoped Linear issues into GitHub issues (idempotent by `Linear-ID` marker).
+- `sync_ui_refactor_backlog.mjs`
+  - Normalizes UI refactor issues (`KAR-54`..`KAR-60`) to the canonical Brand Identity contract.
 - `verify_backlog_sync.mjs`
   - Verifies mirror counts, traceability markers, and requirement IDs.
   - Writes `tools/backlog-sync/state/verify.last.json` on successful verification.
@@ -89,3 +91,5 @@ DRY_RUN=true node tools/backlog-sync/linear_to_github.mjs
 - `requirements.matrix.json` is the persistent, versioned baseline of parity work.
 - `linear_issue_template.md` defines required fields/sections for manual parity issues.
 - `session.snapshot.json` is generated and intended to be read first in new chats.
+- UI-affecting backlog items must follow `brand/Brand Identity Document/` and include checklist evidence from `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`.
+- Snapshot output includes `uiLaneSummary` for the `ui-ux` lane so UI refactor priorities remain visible even when prompt-parity requirements are fully verified.

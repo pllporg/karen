@@ -3,7 +3,12 @@
     "version": "1.0.0",
     "generatedFrom": "Prompt-Context",
     "assessmentDate": "2026-02-16",
-    "notes": "Initial parity matrix based on prompt requirements and current repo behavior."
+    "notes": "Initial parity matrix based on prompt requirements and current repo behavior.",
+    "uiCompliance": {
+      "canonicalSource": "brand/Brand Identity Document/",
+      "interactionChecklist": "docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
+      "precedenceRule": "If UI standards conflict with legacy implementation/docs, Brand Identity Document wins."
+    }
   },
   "epics": [
     {

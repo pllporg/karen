@@ -70,6 +70,16 @@ function buildEpicDescription(epic) {
 function buildTaskDescription(epic, task) {
   const acceptance = task.acceptanceCriteria.map((item) => `- ${item}`).join('\n');
   const done = task.definitionOfDone.map((item) => `- ${item}`).join('\n');
+  const designComplianceSection =
+    String(task.component || '').toLowerCase() === 'web'
+      ? [
+          '',
+          '## Design + Interaction Compliance',
+          '- Canonical source: `brand/Brand Identity Document/`',
+          '- Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`',
+          '- Conflict rule: if legacy UI differs from Brand Identity standards, Brand Identity wins.',
+        ].join('\n')
+      : '';
   return [
     `Requirement ID: ${task.requirementId}`,
     `Prompt Section: ${task.promptSection}`,
@@ -92,6 +102,7 @@ function buildTaskDescription(epic, task) {
     '',
     '## API/data/UI impact',
     task.apiImpact,
+    designComplianceSection,
     '',
     '## Security/privacy implications',
     task.securityImpact,

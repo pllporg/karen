@@ -225,12 +225,19 @@ Included suites cover:
 
 ## UI/UX Refactor Lane
 
+- Canonical source and precedence:
+  - `brand/Brand Identity Document/` (source of truth)
+  - If conflicts exist with legacy UI setup/docs, Brand Identity Document wins.
 - Planning artifact for LIC-aligned UI migration:
   - `docs/UI_REFACTOR_LANE_PLAN.md`
 - Token contract and baseline architecture:
   - `docs/UI_TOKEN_CONTRACT.md`
+- Design + interaction compliance checklist:
+  - `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
 - Backlog sequence:
   - `KAR-54` (lane plan), then `KAR-55` through `KAR-60` for tokens, shell, primitives, accessibility, responsive matrix, and regression rollout.
+- Backlog normalization command for UI lane:
+  - `pnpm backlog:ui:sync`
 
 ## Important Notes
 
@@ -292,6 +299,7 @@ Then read context in this order:
 3. `tools/backlog-sync/requirements.matrix.json`
 4. `README.md` (this section)
 5. `Prompt-Context`
+6. `brand/Brand Identity Document/` (mandatory for UI/interaction slices)
 
 Handoff artifacts:
 
@@ -406,6 +414,7 @@ Includes:
 - unresolved requirement counts by phase/status/risk
 - top priority requirement IDs
 - recent Linear issue updates
+- UI refactor lane summary (`ui-ux` label) with open issue keys
 - last successful `backlog:verify` timestamp
 
 ### 7) Local bootstrap check shortcut
