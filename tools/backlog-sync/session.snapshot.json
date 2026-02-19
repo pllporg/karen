@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T19:21:50.497Z",
+  "generatedAt": "2026-02-19T19:27:08.943Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 53,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 42,
+      "Done": 43,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-67",
         "title": "Complete matter dashboard task and calendar lifecycle operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T19:21:29.309Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T19:26:37.813Z",
         "requirementId": "REQ-PMS-CORE-005"
       },
       {
@@ -123,13 +122,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:21:47.653Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:27:07.300Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "6f1ddd3cf09f4b3644f2030d2af9d8721fb102f2",
+    "gitHead": "095f4f8831772ef9778fbf8b3808ab6c2d9c52fa",
     "gitStatusShort": [
-      "## lin/KAR-67-task-calendar-lifecycle-ops...origin/lin/KAR-67-task-calendar-lifecycle-ops"
+      "## lin/KAR-67-post-merge-snapshot-refresh"
     ],
     "dirtyFileCount": 0
   }
