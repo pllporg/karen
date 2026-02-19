@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T16:53:37.851Z",
+  "generatedAt": "2026-02-19T16:58:14.053Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -114,32 +114,21 @@
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 7,
-    "openIssueCount": 1,
+    "openIssueCount": 0,
     "stateCounts": {
-      "Done": 6,
-      "In Review": 1
+      "Done": 7
     },
-    "openIssueKeys": [
-      "KAR-59"
-    ],
-    "openIssues": [
-      {
-        "key": "KAR-59",
-        "title": "Define and apply responsive behavior matrix under Brand Identity constraints",
-        "state": "In Review",
-        "requirementId": "REQ-UI-006",
-        "updatedAt": "2026-02-19T16:53:15.904Z"
-      }
-    ]
+    "openIssueKeys": [],
+    "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:53:35.594Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:58:11.749Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "f59ca778f815c2ad541d2dc8a1b34b13c859b9b0",
+    "gitHead": "af3cee5929b6705ae3cf7c96912a7e4750d00c83",
     "gitStatusShort": [
-      "## lin/KAR-59-responsive-behavior-matrix...origin/lin/KAR-59-responsive-behavior-matrix"
+      "## main...origin/main"
     ],
     "dirtyFileCount": 0
   }
