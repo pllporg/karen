@@ -25,6 +25,18 @@ function createDashboardState() {
     }>,
     tasks: [] as Array<{ id: string; title: string; status: string; dueAt: string | null }>,
     calendarEvents: [] as Array<{ id: string; type: string; startAt: string }>,
+    communicationThreads: [] as Array<{
+      id: string;
+      subject: string | null;
+      messages: Array<{
+        id: string;
+        type: 'EMAIL' | 'SMS' | 'CALL_LOG' | 'PORTAL_MESSAGE' | 'INTERNAL_NOTE';
+        direction: 'INBOUND' | 'OUTBOUND' | 'INTERNAL';
+        subject: string | null;
+        body: string;
+        occurredAt: string;
+      }>;
+    }>,
   };
 }
 
@@ -43,7 +55,7 @@ function buildDashboardFixture(
     docketEntries: [],
     tasks: state.tasks,
     calendarEvents: state.calendarEvents,
-    communicationThreads: [],
+    communicationThreads: state.communicationThreads,
     documents: [],
     invoices: [],
     aiJobs: [],
@@ -310,6 +322,98 @@ describe('MatterDashboardPage operational workflows', () => {
       );
       expect(screen.getByText('Participant removed.')).toBeInTheDocument();
       expect(screen.queryByRole('cell', { name: 'Taylor Expert' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('logs communications from matter dashboard context', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    state.communicationThreads.push({
+      id: 'thread-1',
+      subject: 'Initial Intake',
+      messages: [],
+    });
+
+    const contacts = [
+      { id: 'contact-1', displayName: 'Jordan Homeowner', kind: 'PERSON' },
+      { id: 'contact-2', displayName: 'Taylor Expert', kind: 'PERSON' },
+    ];
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse(contacts);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/communications/log') && method === 'POST') {
+        const payload = JSON.parse(String(init?.body || '{}'));
+        let thread = state.communicationThreads.find((item) => item.id === payload.threadId);
+        if (!thread) {
+          thread = {
+            id: `thread-${state.communicationThreads.length + 1}`,
+            subject: payload.threadSubject || 'Thread',
+            messages: [],
+          };
+          state.communicationThreads.unshift(thread);
+        }
+        const message = {
+          id: `message-${thread.messages.length + 1}`,
+          type: payload.type,
+          direction: payload.direction,
+          subject: payload.subject || null,
+          body: payload.body,
+          occurredAt: payload.occurredAt || '2026-02-19T14:15:00.000Z',
+        };
+        thread.messages.unshift(message);
+        return jsonResponse({
+          ...message,
+          threadId: thread.id,
+        });
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    await screen.findByText('No communications logged for this matter yet.');
+
+    fireEvent.change(screen.getByLabelText('Communication Thread'), { target: { value: '__new__' } });
+    fireEvent.change(screen.getByLabelText('Communication Thread Subject'), { target: { value: 'Mediation updates' } });
+    fireEvent.change(screen.getByLabelText('Communication Type'), { target: { value: 'CALL_LOG' } });
+    fireEvent.change(screen.getByLabelText('Communication Direction'), { target: { value: 'INBOUND' } });
+    fireEvent.change(screen.getByLabelText('Communication Contact'), { target: { value: 'contact-1' } });
+    fireEvent.change(screen.getByLabelText('Communication Occurred At'), { target: { value: '2026-03-04T09:30' } });
+    fireEvent.change(screen.getByLabelText('Communication Subject'), { target: { value: 'Mediation slot follow-up' } });
+    fireEvent.change(screen.getByLabelText('Communication Body'), {
+      target: { value: 'Client called to confirm proposed mediation windows.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Log Communication' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/matters/matter-1/communications/log',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText('Communication entry logged.')).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Mediation updates' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'CALL_LOG' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'INBOUND' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Mediation slot follow-up' })).toBeInTheDocument();
     });
   });
 });

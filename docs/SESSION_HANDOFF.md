@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T18:06:44.636Z`
+- Snapshot Timestamp: `2026-02-19T18:23:12.854Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T18:06:40.972Z`
+- Last Successful Mirror Verify: `2026-02-19T18:23:11.622Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,6 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-19: Advanced `KAR-65` / `REQ-PMS-CORE-003` to `In Review` after implementing matter-dashboard communication logging operations: new matter-scoped endpoint (`POST /matters/:id/communications/log`) with tenant + matter write enforcement, scoped-thread validation/new-thread creation, optional participant linkage, and `matter.communication.logged` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/log-communication-entry.dto.ts`), plus dashboard in-context communication controls + tabular log view (`apps/web/app/matters/[id]/page.tsx`) and regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`); validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`.
 - 2026-02-19: Completed `KAR-64` / `REQ-PMS-CORE-002` by adding matter-dashboard participant operations: API endpoints for participant role-option listing and scoped participant removal (`GET /matters/:id/participant-roles`, `DELETE /matters/:id/participants/:participantId`) with audit logging, plus web add/remove participant controls and regression coverage in `apps/api/test/matters.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`; validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, and `pnpm build`, and the slice merged via PR `#133`.
 - 2026-02-19: Completed `KAR-63` / `REQ-PMS-CORE-001` by adding core matter-dashboard operations for day-to-day practice management: task creation with due datetime + priority, inline task status updates (new API endpoint `PATCH /tasks/:id` with matter-access checks + `task.updated` audit events), and calendar event creation from matter context, with regression coverage in `apps/api/test/tasks.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`.
 - 2026-02-19: Implemented `KAR-59` / `REQ-UI-006` responsive matrix compliance by adding deterministic app-shell viewport modes (`desktop`, `compact`, `tablet`, `unsupported`) in `apps/web/components/app-shell.tsx`, aligning shell/table/touch-target behavior to Brand Identity breakpoints in `apps/web/app/globals.css` (including unsupported `<768px` notice copy), adding responsive regression coverage (`apps/web/test/app-shell-responsive.spec.tsx`), extending regression lane script coverage (`apps/web/package.json`), and documenting verification evidence in `docs/parity/ui-responsive-behavior-verification.md`.

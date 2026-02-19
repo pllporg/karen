@@ -452,6 +452,120 @@ describe('MattersService', () => {
     expect(roles).toHaveLength(1);
   });
 
+  it('logs communication entry and creates a new matter thread when threadId is not provided', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact-1' }),
+      },
+      communicationThread: {
+        create: jest.fn().mockResolvedValue({
+          id: 'thread-1',
+          organizationId: 'org1',
+          matterId: 'matter1',
+          subject: 'Client updates',
+        }),
+        update: jest.fn().mockResolvedValue({ id: 'thread-1' }),
+      },
+      communicationMessage: {
+        create: jest.fn().mockResolvedValue({
+          id: 'message-1',
+          threadId: 'thread-1',
+          type: 'CALL_LOG',
+          direction: 'INBOUND',
+          subject: 'Inspection call',
+          body: 'Client reported follow-up inspection notes.',
+          participants: [{ contactId: 'contact-1', role: 'FROM' }],
+        }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+
+    const message = await service.logCommunicationEntry({
+      user: baseUser,
+      matterId: 'matter1',
+      threadSubject: 'Client updates',
+      type: 'CALL_LOG',
+      direction: 'INBOUND',
+      subject: 'Inspection call',
+      body: 'Client reported follow-up inspection notes.',
+      participantContactId: 'contact-1',
+      occurredAt: '2026-02-19T10:00:00.000Z',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+    expect(prisma.communicationThread.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: 'org1',
+          matterId: 'matter1',
+          subject: 'Client updates',
+        }),
+      }),
+    );
+    expect(prisma.communicationMessage.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          threadId: 'thread-1',
+          type: 'CALL_LOG',
+          direction: 'INBOUND',
+          occurredAt: new Date('2026-02-19T10:00:00.000Z'),
+          participants: {
+            create: [
+              {
+                contactId: 'contact-1',
+                role: 'FROM',
+              },
+            ],
+          },
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.communication.logged',
+        entityType: 'communicationMessage',
+        entityId: 'message-1',
+      }),
+    );
+    expect(message).toEqual(
+      expect.objectContaining({
+        id: 'message-1',
+        threadId: 'thread-1',
+        matterId: 'matter1',
+      }),
+    );
+  });
+
+  it('rejects logging communication against a thread outside matter scope', async () => {
+    const prisma = {
+      communicationThread: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    } as any;
+
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      access,
+    );
+
+    await expect(
+      service.logCommunicationEntry({
+        user: baseUser,
+        matterId: 'matter1',
+        threadId: 'thread-outside-scope',
+        type: 'INTERNAL_NOTE',
+        direction: 'INTERNAL',
+        body: 'Internal chronology update.',
+      }),
+    ).rejects.toThrow('Matter communication thread not found');
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+  });
+
   it('intake wizard persists all construction domain sections', async () => {
     const prisma = {
       contact: {

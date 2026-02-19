@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ContactKind, MatterStatus, Prisma } from '@prisma/client';
+import { CommunicationParticipantRole, ContactKind, MatterStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AccessService } from '../access/access.service';
@@ -214,9 +214,137 @@ export class MattersService {
     });
   }
 
+  async logCommunicationEntry(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    threadId?: string;
+    threadSubject?: string;
+    type: 'EMAIL' | 'SMS' | 'CALL_LOG' | 'PORTAL_MESSAGE' | 'INTERNAL_NOTE';
+    direction: 'INBOUND' | 'OUTBOUND' | 'INTERNAL';
+    subject?: string;
+    body: string;
+    participantContactId?: string;
+    occurredAt?: string;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const body = this.normalizeOptionalText(input.body);
+    if (!body) {
+      throw new BadRequestException('Communication body is required');
+    }
+
+    const subject = this.normalizeOptionalText(input.subject);
+    const threadSubject = this.normalizeOptionalText(input.threadSubject);
+    const participantContactId = this.normalizeOptionalText(input.participantContactId);
+    const occurredAt = input.occurredAt ? new Date(input.occurredAt) : undefined;
+    if (occurredAt && Number.isNaN(occurredAt.getTime())) {
+      throw new BadRequestException('Invalid occurredAt timestamp');
+    }
+
+    let thread = null;
+    if (input.threadId) {
+      thread = await this.prisma.communicationThread.findFirst({
+        where: {
+          id: input.threadId,
+          organizationId: input.user.organizationId,
+          matterId: input.matterId,
+        },
+      });
+      if (!thread) {
+        throw new NotFoundException('Matter communication thread not found');
+      }
+    } else {
+      thread = await this.prisma.communicationThread.create({
+        data: {
+          organizationId: input.user.organizationId,
+          matterId: input.matterId,
+          subject: threadSubject || subject || `${input.type} log`,
+        },
+      });
+    }
+
+    if (participantContactId) {
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        participantContactId,
+        `Communication contact not found: ${participantContactId}`,
+      );
+    }
+
+    const message = await this.prisma.communicationMessage.create({
+      data: {
+        organizationId: input.user.organizationId,
+        threadId: thread.id,
+        type: input.type,
+        direction: input.direction,
+        subject,
+        body,
+        occurredAt: occurredAt ?? undefined,
+        createdByUserId: input.user.id,
+        participants: participantContactId
+          ? {
+              create: [
+                {
+                  contactId: participantContactId,
+                  role: this.participantRoleForDirection(input.direction),
+                },
+              ],
+            }
+          : undefined,
+      },
+      include: {
+        participants: true,
+      },
+    });
+
+    await this.prisma.communicationThread.update({
+      where: { id: thread.id },
+      data: {
+        subject: thread.subject || threadSubject || subject || undefined,
+        updatedAt: new Date(),
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.communication.logged',
+      entityType: 'communicationMessage',
+      entityId: message.id,
+      metadata: {
+        matterId: input.matterId,
+        threadId: thread.id,
+        type: input.type,
+        direction: input.direction,
+        participantContactId,
+      },
+    });
+
+    return {
+      ...message,
+      threadId: thread.id,
+      matterId: input.matterId,
+    };
+  }
+
   private isCounselRole(roleKey: string, roleLabel?: string | null) {
     const fingerprint = `${roleKey} ${roleLabel || ''}`.toLowerCase();
     return /(counsel|attorney|lawyer)/.test(fingerprint);
+  }
+
+  private normalizeOptionalText(value?: string | null) {
+    const trimmed = String(value || '').trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  private participantRoleForDirection(direction: 'INBOUND' | 'OUTBOUND' | 'INTERNAL'): CommunicationParticipantRole {
+    if (direction === 'INBOUND') {
+      return CommunicationParticipantRole.FROM;
+    }
+    if (direction === 'OUTBOUND') {
+      return CommunicationParticipantRole.TO;
+    }
+    return CommunicationParticipantRole.OTHER;
   }
 
   private async assertContactInOrganization(
