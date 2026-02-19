@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:00:21.980Z",
+  "generatedAt": "2026-02-19T18:02:01.491Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,20 +33,18 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 50,
     "stateCounts": {
-      "In Progress": 1,
+      "In Review": 1,
       "Done": 39,
       "Backlog": 10
     },
-    "inProgressIssueKeys": [
-      "KAR-64"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
         "key": "KAR-64",
         "title": "Implement matter dashboard participant add/remove operations",
-        "state": "In Progress",
-        "updatedAt": "2026-02-19T17:59:36.759Z",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T18:01:44.510Z",
         "requirementId": "REQ-PMS-CORE-002"
       },
       {
@@ -125,16 +123,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T17:59:52.641Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:01:59.708Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "e98d434478423c7f940076f4a255f4bbea9de217",
+    "gitHead": "8f66c5ee8c8315809ac4fdeced031281ef66cba8",
     "gitStatusShort": [
-      "## lin/KAR-64-matter-dashboard-participant-ops...origin/lin/KAR-64-matter-dashboard-participant-ops",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## lin/KAR-64-matter-dashboard-participant-ops...origin/lin/KAR-64-matter-dashboard-participant-ops"
     ],
-    "dirtyFileCount": 2
+    "dirtyFileCount": 0
   }
 }
