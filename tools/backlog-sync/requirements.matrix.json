@@ -126,7 +126,7 @@
           "component": "API",
           "risk": "Medium",
           "labels": ["parity", "security", "matters"],
-          "problemStatement": "Ethical wall logic exists but policy representation is not fully extensible.",
+          "problemStatement": "Matter access ABAC now uses a composable policy evaluation contract with explicit reason codes and stable service integration semantics.",
           "requirementExcerpt": "AccessPolicy / ABAC hooks required for ethical wall controls.",
           "acceptanceCriteria": [
             "Define reusable policy evaluation contract with reason codes.",
@@ -136,7 +136,8 @@
           "apiImpact": "Internal policy service contract introduced.",
           "securityImpact": "Reduces accidental bypass risks.",
           "definitionOfDone": [
-            "Policy engine contract documented and tested."
+            "Policy engine contract implemented in apps/api/src/access/* and covered by unit + integration tests.",
+            "Verification artifact documented at docs/parity/access-policy-abac-verification.md."
           ]
         },
         {
