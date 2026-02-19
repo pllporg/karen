@@ -48,5 +48,8 @@ describe('PR Linear policy governance', () => {
     expect(template).toContain('## Requirement ID');
     expect(template).toContain('## Acceptance Criteria Checklist');
     expect(template).toContain('## Test Evidence');
+    expect(template).toContain('## UI Interaction Checklist');
+    expect(template).toContain('## Screenshot Evidence');
+    expect(template).toContain('No console errors observed on touched routes.');
   });
 });

@@ -236,10 +236,14 @@ Included suites cover:
   - `docs/UI_TOKEN_CONTRACT.md`
 - Design + interaction compliance checklist:
   - `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
+- Regression + rollout gate runbook:
+  - `docs/UI_REGRESSION_ROLLOUT_GATES.md`
 - Backlog sequence:
   - `KAR-54` (lane plan), then `KAR-55` through `KAR-60` for tokens, shell, primitives, accessibility, responsive matrix, and regression rollout.
 - Backlog normalization command for UI lane:
   - `pnpm backlog:ui:sync`
+- Local UI regression gate command:
+  - `pnpm test:ui-regression`
 
 ## Important Notes
 
