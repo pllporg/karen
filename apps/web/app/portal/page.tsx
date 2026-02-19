@@ -151,7 +151,7 @@ export default function PortalPage() {
             />
             <button className="button" type="submit">Send</button>
           </form>
-          {error ? <p style={{ color: '#b91c1c', marginTop: 8 }}>{error}</p> : null}
+          {error ? <p style={{ color: 'var(--lic-red)', marginTop: 8 }}>{error}</p> : null}
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Shared Documents</h3>

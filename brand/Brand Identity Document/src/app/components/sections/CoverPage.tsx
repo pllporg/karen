@@ -47,7 +47,7 @@ export function CoverPage() {
         <div className="font-mono text-[9px] tracking-[0.3em] text-slate text-right">
           DOCUMENT CLASS: BRAND / IDENTITY
           <br />
-          PAGES: §00 – §09
+          PAGES: §00 – §11
         </div>
       </div>
     </div>

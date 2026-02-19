@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
       <div className="card" style={{ width: 'min(520px, 100%)' }}>
         <h1 style={{ marginTop: 0 }}>{mode === 'login' ? 'Sign In' : 'Create Organization'}</h1>
-        <p style={{ color: 'var(--muted)' }}>Secure session auth with optional MFA (TOTP)</p>
+        <p style={{ color: 'var(--lic-text-muted)' }}>Secure session auth with optional MFA (TOTP)</p>
         <div style={{ display: 'grid', gap: 10 }}>
           {mode === 'register' ? (
             <input

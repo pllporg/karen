@@ -3,39 +3,41 @@
 ## Canonical Source
 
 All UI tokens and interaction constants derive from `brand/Brand Identity Document`.
+Canonical component state behavior derives from `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
 If any existing implementation differs, implementation must migrate to this contract.
 If this contract conflicts with legacy docs or AGENTS token guidance, this contract (and Brand Identity source files) prevails.
+Product app parity excludes `MarketingSite` tab visuals and interactions.
 
 ## Color Tokens (Fixed Palette)
 
 ### Primary
-- `--lic-ink`: `#0B0B0B`
-- `--lic-paper`: `#F7F5F0`
+- `--lic-ink`: `#0B0D0F`
+- `--lic-paper`: `#F2EFE6`
 
 ### Neutrals
-- `--lic-graphite`: `#3A3A3A`
-- `--lic-slate`: `#6B6B6B`
-- `--lic-silver`: `#A8A8A8`
-- `--lic-fog`: `#D4D2CD`
-- `--lic-parchment`: `#ECEAE4`
+- `--lic-graphite`: `#2A2D31`
+- `--lic-slate`: `#5C6066`
+- `--lic-silver`: `#8B857A`
+- `--lic-fog`: `#D9D5CC`
+- `--lic-parchment`: `#ECE8DE`
 
 ### Functional
-- `--lic-institutional`: `#2B4C7E` (links, active, focus)
-- `--lic-filing-red`: `#8B2500` (destructive, errors)
+- `--lic-institutional`: `#0B3D91` (links, active, focus)
+- `--lic-filing-red`: `#B23A2B` (destructive, errors)
 - `--lic-ledger`: `#2D5F3A` (success/approval)
 
 Rule: do not introduce additional ad hoc color values for core UI.
 
 ## Typography Tokens
 
-- `--lic-font-mono`: IBM Plex Mono (primary UI headings/labels/metadata)
+- `--lic-font-condensed`: IBM Plex Sans Condensed (primary headings, uppercase + 0.06em tracking)
 - `--lic-font-sans`: IBM Plex Sans (body and long-form text)
-- `--lic-font-serif`: IBM Plex Serif (limited quotes/emphasis only)
+- `--lic-font-mono`: IBM Plex Mono (labels/metadata/codes/status)
 
 ### Role Mapping
-- Heading/module labels/nav labels/status metadata -> Mono
+- Heading/module labels/nav section titles -> Condensed
 - Body/descriptions/form help -> Sans
-- Pull quotes/formal statements -> Serif
+- Labels/codes/audit metadata/status chips -> Mono
 
 ## Spacing + Grid Tokens
 
@@ -51,9 +53,9 @@ Rule: do not introduce additional ad hoc color values for core UI.
 
 - `--lic-radius`: `0px`
 - Border/rule hierarchy:
-  - `--lic-rule-1`: `1px`
-  - `--lic-rule-2`: `2px`
-  - `--lic-rule-4`: `4px` (left-rule emphasis only)
+  - `--lic-rule-1`: `1px` (default containment)
+  - `--lic-rule-2`: `2px` (section separators, table headers)
+  - `--lic-rule-3`: `4px` (left-rule emphasis only)
 
 Rule: no rounded corners, no drop shadows, no decorative gradients.
 
@@ -90,6 +92,7 @@ Required primitive set for migration:
 - `Toast`
 
 All primitives must consume token variables directly or via shared utility wrappers.
+State matrices for these primitives must align with `AppUIKit` (default/hover/focus/active/disabled/loading where applicable).
 
 ## Compliance Rule
 

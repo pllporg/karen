@@ -179,7 +179,7 @@ export default function MatterDashboardPage() {
                 Apply Selected
               </button>
             </div>
-            {deadlineStatus ? <p style={{ marginTop: 8, color: 'var(--muted)' }}>{deadlineStatus}</p> : null}
+            {deadlineStatus ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{deadlineStatus}</p> : null}
             {previewRows.length > 0 ? (
               <table className="table" style={{ marginTop: 10 }}>
                 <thead>

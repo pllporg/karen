@@ -11,8 +11,10 @@
 - `brand/Brand Identity Document/src/app/components/sections/GridComponents.tsx`
 - `brand/Brand Identity Document/src/app/components/sections/InteractionDesign.tsx`
 - `brand/Brand Identity Document/src/app/components/sections/AIInteraction.tsx`
+- `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
 - `brand/Brand Identity Document/src/app/components/sections/MessagingVoice.tsx`
 - `brand/Brand Identity Document/src/app/components/sections/NamingSystem.tsx`
+5. Explicit exclusion: `brand/Brand Identity Document/src/app/components/sections/MarketingSite.tsx` is out-of-scope for product app parity.
 
 ## Objective
 
@@ -21,7 +23,7 @@ Refactor the app UI into a standards-manual style system: controlled, procedural
 ## Enforceable Standards (Extracted)
 
 ### Visual + Layout
-- Color palette is fixed: Ink `#0B0B0B`, Paper `#F7F5F0`, Graphite `#3A3A3A`, Slate `#6B6B6B`, Silver `#A8A8A8`, Fog `#D4D2CD`, Parchment `#ECEAE4`, Institutional Blue `#2B4C7E`, Filing Red `#8B2500`, Ledger Green `#2D5F3A`.
+- Color palette is fixed: Ink `#0B0D0F`, Paper `#F2EFE6`, Warm Gray `#8B857A`, Process Blue `#0B3D91`, Oxide Red `#B23A2B`, with supporting neutrals constrained to tokenized values only.
 - No gradients, no shadows, no decorative transparency effects.
 - No rounded corners (rectilinear geometry only).
 - 12-column grid, max content width 960px, margins never below 32px.
@@ -29,9 +31,9 @@ Refactor the app UI into a standards-manual style system: controlled, procedural
 - Tables/lists are first-class for dense operations.
 
 ### Typography + Voice
-- IBM Plex Mono is primary for headings/labels/codes/UI metadata.
-- IBM Plex Sans for body/prose.
-- IBM Plex Serif is limited to pull quotes/emphasis.
+- IBM Plex Sans Condensed is primary for uppercase headings.
+- IBM Plex Sans is primary for body/prose.
+- IBM Plex Mono is required for labels/codes/status metadata.
 - Tone: procedural, terse, declarative, action-oriented.
 - Ban hype/friendly filler language.
 
@@ -39,6 +41,7 @@ Refactor the app UI into a standards-manual style system: controlled, procedural
 - State always visible; actions reversible; system never interrupts first.
 - Motion only when functional; linear timing only (`0ms`, `80ms`, `100ms`, `120ms`).
 - Prohibited patterns include: infinite scroll, optimistic UI for critical operations, skeleton shimmer, hover-only disclosure, stacked modals, toast-only error handling.
+- App UIKit component matrix is closed: use existing kit primitives rather than inventing ad hoc components.
 - Feedback hierarchy: inline state -> toast -> inline alert -> confirmation dialog.
 - Destructive actions require explicit confirmation and consequence text.
 - Keyboard-first: visible focus, correct tab order, modal focus trap/return.

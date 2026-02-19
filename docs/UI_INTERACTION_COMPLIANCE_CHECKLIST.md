@@ -1,18 +1,21 @@
 # UI + Interaction Compliance Checklist
 
 Source of truth: `brand/Brand Identity Document/`
+Canonical component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+Explicitly out of scope for product app parity: `MarketingSite` tab/section.
 
 Use this checklist for any UI-affecting ticket or PR.
 
 ## 1) Visual System
-- Uses canonical palette only (`Ink/Paper/Graphite/Slate/Silver/Fog/Parchment/Institutional/Filing Red/Ledger`).
+- Uses canonical palette only (`Paper #F2EFE6`, `Ink #0B0D0F`, `Process Blue #0B3D91`, `Oxide Red #B23A2B`, tokenized neutrals).
 - No gradients.
 - No shadows.
 - No rounded corners.
 - Border/rule-based hierarchy present.
 
 ## 2) Typography + Copy
-- Mono used for headings/labels/codes/status metadata.
+- Condensed used for headings (`uppercase`, tracking `0.06em`).
+- Mono used for labels/codes/status metadata.
 - Sans used for body content.
 - Serif used sparingly for approved emphasis contexts only.
 - Voice is procedural and terse.

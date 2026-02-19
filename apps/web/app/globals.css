@@ -14,12 +14,80 @@ body {
   min-height: 100%;
   background: var(--lic-surface-0);
   color: var(--lic-text-0);
+}
+
+body {
   font-family: var(--lic-font-sans);
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--lic-font-condensed);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lic-text-0);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 1.625rem;
+}
+
+h2 {
+  font-size: 1.375rem;
+}
+
+h3 {
+  font-size: 1.0625rem;
+}
+
+h4 {
+  font-size: 0.9375rem;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: var(--lic-4);
+}
+
+li + li {
+  margin-top: var(--lic-1);
+}
+
+label {
+  display: block;
+  margin-bottom: var(--lic-1);
+  font-family: var(--lic-font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lic-text-1);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+small,
+.muted,
+.meta-note {
+  color: var(--lic-text-muted);
+}
+
+pre {
+  margin: 0;
+  font-family: var(--lic-font-mono);
 }
 
 .page-shell {
@@ -46,7 +114,7 @@ a {
 
 .shell-sidebar-header {
   padding: var(--lic-6) var(--lic-4) var(--lic-5);
-  border-bottom: var(--lic-rule-1) solid var(--lic-text-1);
+  border-bottom: var(--lic-rule-1) solid var(--lic-graphite);
 }
 
 .shell-header-kicker {
@@ -55,24 +123,24 @@ a {
   font-size: 0.625rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--lic-silver);
+  color: var(--lic-fog);
 }
 
 .shell-header-title {
-  margin: 6px 0 0;
-  font-family: var(--lic-font-mono);
-  font-size: 0.875rem;
-  letter-spacing: 0.12em;
+  margin: var(--lic-2) 0 0;
+  font-family: var(--lic-font-condensed);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .shell-header-meta {
-  margin: 12px 0 0;
+  margin: var(--lic-2) 0 0;
   font-family: var(--lic-font-mono);
   font-size: 0.625rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--lic-slate);
+  color: var(--lic-silver);
 }
 
 .shell-nav {
@@ -89,9 +157,9 @@ a {
   border-left: var(--lic-rule-2) solid transparent;
   font-family: var(--lic-font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--lic-silver);
+  color: var(--lic-fog);
 }
 
 .shell-nav-link:hover {
@@ -109,8 +177,8 @@ a {
   width: 28px;
   flex-shrink: 0;
   font-size: 0.625rem;
-  letter-spacing: 0.08em;
-  color: var(--lic-slate);
+  letter-spacing: 0.12em;
+  color: var(--lic-silver);
 }
 
 .shell-nav-label {
@@ -119,7 +187,7 @@ a {
 
 .shell-sidebar-footer {
   padding: var(--lic-4);
-  border-top: var(--lic-rule-1) solid var(--lic-text-1);
+  border-top: var(--lic-rule-1) solid var(--lic-graphite);
 }
 
 .shell-footer-note {
@@ -129,18 +197,19 @@ a {
   line-height: 1.5;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--lic-slate);
+  color: var(--lic-silver);
 }
 
 .shell-signout {
   width: 100%;
-  border: var(--lic-rule-1) solid var(--lic-slate);
+  min-height: 40px;
+  border: var(--lic-rule-1) solid var(--lic-silver);
   background: transparent;
   color: var(--lic-paper);
   padding: var(--lic-2) var(--lic-3);
   font-family: var(--lic-font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -175,17 +244,20 @@ a {
 
 .topbar-title {
   margin: 0;
-  font-family: var(--lic-font-mono);
+  font-family: var(--lic-font-condensed);
   font-size: 1.5rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .topbar-subtitle {
   margin: var(--lic-1) 0 0;
   color: var(--lic-text-muted);
+  font-family: var(--lic-font-sans);
   font-size: 0.9375rem;
-  line-height: 1.6;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .topbar-actions {
@@ -196,7 +268,7 @@ a {
 
 .card {
   background: var(--lic-surface-1);
-  border: var(--lic-rule-2) solid var(--lic-ink);
+  border: var(--lic-rule-1) solid var(--lic-ink);
   border-radius: var(--lic-radius);
   padding: var(--lic-4);
 }
@@ -209,100 +281,246 @@ a {
 
 .input,
 .select,
-.textarea,
-.button {
+.textarea {
   width: 100%;
+  border: var(--lic-rule-1) solid var(--lic-ink);
   border-radius: var(--lic-radius);
-  border: var(--lic-rule-2) solid var(--lic-ink);
-  padding: var(--lic-2) var(--lic-3);
-  font: inherit;
+  padding: 10px 12px;
+  font-family: var(--lic-font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
   color: var(--lic-text-0);
   background: var(--lic-surface-1);
 }
 
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--lic-text-muted);
+}
+
+.select {
+  appearance: auto;
+  padding-right: var(--lic-3);
+}
+
+.textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.input[aria-invalid='true'],
+.select[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--lic-red);
+}
+
 .button {
-  cursor: pointer;
-  background: var(--lic-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lic-2);
+  min-height: 40px;
+  width: auto;
+  border: var(--lic-rule-1) solid var(--lic-ink);
+  border-radius: var(--lic-radius);
+  padding: var(--lic-2) var(--lic-4);
+  font-family: var(--lic-font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--lic-paper);
-  border-color: var(--lic-ink);
-  font-weight: 600;
+  background: var(--lic-ink);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--lic-graphite);
+}
+
+.button:active {
+  transform: scale(0.98);
 }
 
 .button.secondary {
-  background: transparent;
   color: var(--lic-ink);
+  background: var(--lic-paper);
+}
+
+.button.secondary:hover {
+  background: var(--lic-parchment);
 }
 
 .button.ghost {
+  color: var(--lic-ink);
+  border-color: transparent;
   background: transparent;
-  color: var(--lic-text-1);
-  border-color: var(--lic-warm-gray);
 }
 
-.button:hover,
-.button.secondary:hover,
 .button.ghost:hover {
-  background: rgba(11, 13, 15, 0.08);
-  color: var(--lic-ink);
+  border-color: var(--lic-ink);
+  background: transparent;
+}
+
+.button.danger {
+  color: var(--lic-paper);
+  border-color: var(--lic-red);
+  background: var(--lic-red);
+}
+
+.button.danger:hover {
+  background: var(--lic-red);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  color: var(--lic-silver);
+  border-color: var(--lic-fog);
+  background: var(--lic-parchment);
+  cursor: not-allowed;
+  transform: none;
 }
 
 .badge {
-  display: inline-block;
-  border: var(--lic-rule-2) solid var(--lic-ink);
+  display: inline-flex;
+  align-items: center;
+  border: var(--lic-rule-1) solid var(--lic-ink);
   background: transparent;
-  color: var(--lic-ink);
+  color: var(--lic-text-0);
   padding: var(--lic-1) var(--lic-2);
   font-family: var(--lic-font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.badge.status-proposed {
+  background: var(--lic-parchment);
+}
+
+.badge.status-in-review {
+  border-color: var(--lic-blue);
+  color: var(--lic-blue);
+}
+
+.badge.status-approved,
+.badge.status-executed {
+  border-color: var(--lic-ledger);
+  color: var(--lic-ledger);
+}
+
+.badge.status-returned,
+.badge.status-blocked {
+  border-color: var(--lic-red);
+  color: var(--lic-red);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  border: var(--lic-rule-1) solid var(--lic-ink);
+  background: var(--lic-surface-1);
 }
 
 .table th,
 .table td {
   text-align: left;
-  padding: var(--lic-2) var(--lic-1);
+  padding: var(--lic-2) var(--lic-3);
+  border-bottom: var(--lic-rule-1) solid var(--lic-fog);
+  vertical-align: top;
 }
 
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   border-bottom: var(--lic-rule-2) solid var(--lic-ink);
+  background: var(--lic-surface-0);
   font-family: var(--lic-font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .table td {
-  border-bottom: var(--lic-rule-1) solid var(--lic-warm-gray);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+}
+
+.table tbody tr:hover {
+  background: var(--lic-surface-0);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .notice {
+  border: var(--lic-rule-1) solid var(--lic-fog);
   border-left: var(--lic-rule-3) solid var(--lic-blue);
-  background: var(--lic-surface-1);
+  background: var(--lic-surface-0);
   padding: var(--lic-2) var(--lic-3);
+  color: var(--lic-text-0);
+  font-size: 0.875rem;
 }
 
 .error {
+  border: var(--lic-rule-1) solid var(--lic-fog);
+  border-left: var(--lic-rule-3) solid var(--lic-red);
+  background: var(--lic-surface-0);
+  padding: var(--lic-2) var(--lic-3);
   color: var(--lic-red);
   font-family: var(--lic-font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.mono-meta {
+  font-family: var(--lic-font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.inline-stack {
+  display: grid;
+  gap: var(--lic-2);
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lic-2);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: none;
+  border-radius: 0;
 }
 
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+[role='button']:focus-visible {
   outline: none;
   box-shadow: var(--lic-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (max-width: 980px) {
@@ -318,6 +536,7 @@ textarea:focus-visible {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-height: 40px;
     border: var(--lic-rule-1) solid var(--lic-ink);
     background: var(--lic-ink);
     color: var(--lic-paper);
@@ -337,7 +556,7 @@ textarea:focus-visible {
     width: 280px;
     max-width: 85vw;
     transform: translateX(-100%);
-    transition: transform 120ms linear;
+    transition: transform var(--lic-motion-panel) var(--lic-motion-easing);
     z-index: 70;
   }
 
@@ -353,7 +572,7 @@ textarea:focus-visible {
     border: 0;
     padding: 0;
     margin: 0;
-    background: rgba(11, 11, 11, 0.64);
+    background: rgb(11 13 15 / 70%);
     cursor: pointer;
   }
 

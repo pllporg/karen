@@ -228,6 +228,8 @@ Included suites cover:
 - Canonical source and precedence:
   - `brand/Brand Identity Document/` (source of truth)
   - If conflicts exist with legacy UI setup/docs, Brand Identity Document wins.
+  - Component states/patterns come from `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
+  - Product app work explicitly excludes the `MarketingSite` tab/section.
 - Planning artifact for LIC-aligned UI migration:
   - `docs/UI_REFACTOR_LANE_PLAN.md`
 - Token contract and baseline architecture:

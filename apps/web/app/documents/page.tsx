@@ -295,7 +295,7 @@ export default function DocumentsPage() {
             Create Disposition Run
           </button>
         </div>
-        {retentionStatus ? <p style={{ marginTop: 10, color: 'var(--muted)' }}>{retentionStatus}</p> : null}
+        {retentionStatus ? <p style={{ marginTop: 10, color: 'var(--lic-text-muted)' }}>{retentionStatus}</p> : null}
       </div>
       <div className="card">
         <table className="table">

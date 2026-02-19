@@ -383,7 +383,7 @@ export default function AiPage() {
           };
           const isBusy = busyStylePackId === stylePack.id;
           return (
-            <div key={stylePack.id} className="card" style={{ marginTop: 10, borderColor: '#1a2f2a1f' }}>
+            <div key={stylePack.id} className="card" style={{ marginTop: 10, borderColor: 'var(--lic-fog)' }}>
               <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1.3fr auto', alignItems: 'center' }}>
                 <input
                   className="input"
@@ -432,8 +432,8 @@ export default function AiPage() {
                         gap: 8,
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        border: '1px solid #1a2f2a1f',
-                        borderRadius: 8,
+                        border: '1px solid var(--lic-fog)',
+                        borderRadius: 0,
                         padding: '6px 8px',
                         fontSize: '0.85rem',
                       }}
@@ -512,7 +512,7 @@ export default function AiPage() {
                   return (
                     <tr key={artifact.id}>
                       <td colSpan={4}>
-                        <div className="card" style={{ margin: '10px 0', borderColor: '#1f7a8c44' }}>
+                        <div className="card" style={{ margin: '10px 0', borderColor: 'var(--lic-blue)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                             <div>
                               <strong>{artifact.type}</strong>
@@ -541,9 +541,9 @@ export default function AiPage() {
                             style={{
                               marginTop: 10,
                               whiteSpace: 'pre-wrap',
-                              background: '#f8faf7',
-                              border: '1px solid #1a2f2a1f',
-                              borderRadius: 8,
+                              background: 'var(--lic-surface-0)',
+                              border: '1px solid var(--lic-fog)',
+                              borderRadius: 0,
                               padding: 10,
                               fontSize: '0.85rem',
                             }}
