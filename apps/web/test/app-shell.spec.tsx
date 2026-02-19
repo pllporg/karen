@@ -1,0 +1,24 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+
+import { AppShell } from '../components/app-shell';
+
+describe('AppShell', () => {
+  it('renders standardized sidebar navigation with active route semantics', () => {
+    render(
+      <AppShell>
+        <div>Body Content</div>
+      </AppShell>,
+    );
+
+    expect(screen.getByText('Standards Manual')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
+
+    const activeLink = screen.getByRole('link', { name: /Command Center/i });
+    expect(activeLink).toHaveAttribute('aria-current', 'page');
+
+    expect(screen.getByRole('link', { name: /Matter Registry/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Sign Out/i })).toBeInTheDocument();
+    expect(screen.getByText('Body Content')).toBeInTheDocument();
+  });
+});

@@ -11,11 +11,11 @@ export function PageHeader({
 }) {
   return (
     <div className="topbar">
-      <div>
-        <h1 style={{ fontSize: '1.65rem', margin: 0 }}>{title}</h1>
-        {subtitle ? <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>{subtitle}</p> : null}
+      <div className="topbar-copy">
+        <h1 className="topbar-title">{title}</h1>
+        {subtitle ? <p className="topbar-subtitle">{subtitle}</p> : null}
       </div>
-      {right}
+      {right ? <div className="topbar-actions">{right}</div> : null}
     </div>
   );
 }

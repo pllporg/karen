@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T00:00:20.630Z",
+  "generatedAt": "2026-02-19T00:19:21.914Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -116,7 +116,8 @@
     "issueCount": 7,
     "openIssueCount": 5,
     "stateCounts": {
-      "Backlog": 5,
+      "Backlog": 4,
+      "In Review": 1,
       "Done": 2
     },
     "openIssueKeys": [
@@ -130,9 +131,9 @@
       {
         "key": "KAR-56",
         "title": "Refactor global app shell and navigation to Brand Identity standards",
-        "state": "Backlog",
+        "state": "In Review",
         "requirementId": "REQ-UI-003",
-        "updatedAt": "2026-02-18T23:58:46.993Z"
+        "updatedAt": "2026-02-19T00:19:07.073Z"
       },
       {
         "key": "KAR-57",
@@ -169,26 +170,15 @@
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "80aeeb64875878fb20e69892e6a6239396124451",
+    "gitHead": "7b159ff3c1a7c1f27ced4d1eca062416f8dc72cb",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M README.md",
-      " M docs/UI_REFACTOR_LANE_PLAN.md",
-      " M docs/UI_TOKEN_CONTRACT.md",
-      " M docs/WORKING_CONTRACT.md",
-      " M package.json",
-      " M tools/backlog-sync/README.md",
-      " M tools/backlog-sync/backlog_snapshot.mjs",
-      " M tools/backlog-sync/linear_issue_template.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/seed_parity_backlog.mjs",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? agents.md",
-      "?? brand/",
-      "?? docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      "?? tools/backlog-sync/sync_ui_refactor_backlog.mjs",
-      "?? uirefactorprompt.md"
+      "## lin/KAR-56-shell-navigation-brand-identity",
+      " M apps/web/app/globals.css",
+      " M apps/web/app/lic-tokens.css",
+      " M apps/web/components/app-shell.tsx",
+      " M apps/web/components/page-header.tsx",
+      "?? apps/web/test/app-shell.spec.tsx"
     ],
-    "dirtyFileCount": 16
+    "dirtyFileCount": 5
   }
 }
