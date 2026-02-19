@@ -117,4 +117,43 @@ export class TasksService {
 
     return task;
   }
+
+  async remove(input: {
+    user: AuthenticatedUser;
+    taskId: string;
+  }) {
+    const existing = await this.prisma.task.findFirst({
+      where: {
+        id: input.taskId,
+        organizationId: input.user.organizationId,
+      },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Task not found');
+    }
+
+    await this.access.assertMatterAccess(input.user, existing.matterId, 'write');
+
+    await this.prisma.task.delete({
+      where: { id: existing.id },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'task.deleted',
+      entityType: 'task',
+      entityId: existing.id,
+      metadata: {
+        taskId: existing.id,
+        matterId: existing.matterId,
+      },
+    });
+
+    return {
+      id: existing.id,
+      removed: true,
+    };
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
@@ -32,6 +32,15 @@ export class TasksController {
       user,
       taskId: id,
       ...dto,
+    });
+  }
+
+  @Delete(':id')
+  @RequirePermissions('tasks:write')
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.tasksService.remove({
+      user,
+      taskId: id,
     });
   }
 }

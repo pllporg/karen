@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T19:03:10.853Z",
+  "generatedAt": "2026-02-19T19:17:01.881Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -13,10 +13,10 @@
     "githubIssues": "mirror-only"
   },
   "matrixSummary": {
-    "totalRequirements": 34,
+    "totalRequirements": 35,
     "unresolvedRequirements": 0,
     "totalCountsByPhase": {
-      "phase-1": 29,
+      "phase-1": 30,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {},
@@ -31,19 +31,33 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 52,
+    "scopedIssueCount": 53,
     "stateCounts": {
-      "Done": 42,
-      "Backlog": 10
+      "Backlog": 11,
+      "Done": 42
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-67",
+        "title": "Complete matter dashboard task and calendar lifecycle operations",
+        "state": "Backlog",
+        "updatedAt": "2026-02-19T19:10:10.502Z",
+        "requirementId": "REQ-PMS-CORE-005"
+      },
+      {
+        "key": "KAR-18",
+        "title": "PARITY-04 Contacts + Matters + Participants",
+        "state": "Backlog",
+        "updatedAt": "2026-02-19T19:10:10.502Z",
+        "requirementId": "PARITY-04"
+      },
+      {
         "key": "KAR-66",
         "title": "Implement matter dashboard communication entry edit/delete operations",
         "state": "Done",
-        "updatedAt": "2026-02-19T19:02:53.910Z",
+        "updatedAt": "2026-02-19T19:07:06.909Z",
         "requirementId": "REQ-PMS-CORE-004"
       },
       {
@@ -66,13 +80,6 @@
         "state": "Done",
         "updatedAt": "2026-02-19T18:10:27.549Z",
         "requirementId": "REQ-PMS-CORE-002"
-      },
-      {
-        "key": "KAR-18",
-        "title": "PARITY-04 Contacts + Matters + Participants",
-        "state": "Backlog",
-        "updatedAt": "2026-02-19T17:57:16.508Z",
-        "requirementId": "PARITY-04"
       },
       {
         "key": "KAR-63",
@@ -101,13 +108,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T22:14:52.975Z",
         "requirementId": "REQ-MAT-004"
-      },
-      {
-        "key": "KAR-46",
-        "title": "Implement document retention policies with legal hold workflow",
-        "state": "Done",
-        "updatedAt": "2026-02-18T21:48:53.396Z",
-        "requirementId": "REQ-COMM-004"
       }
     ]
   },
@@ -122,14 +122,26 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:03:09.597Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:17:00.535Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "ec160fbe62f5f9d87605a653bc28536f9b556de7",
+    "gitHead": "06b09ce7569bea113d43a2435fbe7c1c6cc3f8f4",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-67-task-calendar-lifecycle-ops",
+      " M apps/api/src/calendar/calendar.controller.ts",
+      " M apps/api/src/calendar/calendar.service.ts",
+      " M apps/api/src/tasks/tasks.controller.ts",
+      " M apps/api/src/tasks/tasks.service.ts",
+      " M apps/api/test/tasks.spec.ts",
+      " M apps/web/app/matters/[id]/page.tsx",
+      " M apps/web/test/matter-dashboard-page.spec.tsx",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? apps/api/src/calendar/dto/update-event.dto.ts",
+      "?? apps/api/test/calendar-events.spec.ts",
+      "?? docs/parity/matter-dashboard-task-calendar-lifecycle.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 12
   }
 }

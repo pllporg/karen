@@ -23,8 +23,14 @@ function createDashboardState() {
       contact: { id: string; displayName: string };
       participantRoleDefinition?: { id: string; label: string; key: string } | null;
     }>,
-    tasks: [] as Array<{ id: string; title: string; status: string; dueAt: string | null }>,
-    calendarEvents: [] as Array<{ id: string; type: string; startAt: string }>,
+    tasks: [] as Array<{ id: string; title: string; status: string; dueAt: string | null; priority?: string }>,
+    calendarEvents: [] as Array<{
+      id: string;
+      type: string;
+      startAt: string;
+      endAt?: string | null;
+      location?: string | null;
+    }>,
     communicationThreads: [] as Array<{
       id: string;
       subject: string | null;
@@ -146,7 +152,7 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
-  it('creates tasks, updates task status, and logs calendar events', async () => {
+  it('creates, edits, updates status, and deletes tasks plus calendar events', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();
@@ -174,14 +180,29 @@ describe('MatterDashboardPage operational workflows', () => {
           title: body.title,
           status: body.status || 'TODO',
           dueAt: body.dueAt || null,
+          priority: body.priority || 'MEDIUM',
         };
         state.tasks.push(task);
         return jsonResponse(task);
       }
       if (url.endsWith('/tasks/task-1') && method === 'PATCH') {
         const body = JSON.parse(String(init?.body || '{}'));
-        state.tasks = state.tasks.map((task) => (task.id === 'task-1' ? { ...task, status: body.status } : task));
+        state.tasks = state.tasks.map((task) =>
+          task.id === 'task-1'
+            ? {
+                ...task,
+                ...(body.status ? { status: body.status } : {}),
+                ...(body.title ? { title: body.title } : {}),
+                ...(body.dueAt ? { dueAt: body.dueAt } : {}),
+                ...(body.priority ? { priority: body.priority } : {}),
+              }
+            : task,
+        );
         return jsonResponse(state.tasks[0]);
+      }
+      if (url.endsWith('/tasks/task-1') && method === 'DELETE') {
+        state.tasks = state.tasks.filter((task) => task.id !== 'task-1');
+        return jsonResponse({ id: 'task-1', removed: true });
       }
       if (url.endsWith('/calendar/events') && method === 'POST') {
         const body = JSON.parse(String(init?.body || '{}'));
@@ -189,9 +210,31 @@ describe('MatterDashboardPage operational workflows', () => {
           id: `event-${state.calendarEvents.length + 1}`,
           type: body.type,
           startAt: body.startAt,
+          endAt: body.endAt || null,
+          location: body.location || null,
         };
         state.calendarEvents.push(event);
         return jsonResponse(event);
+      }
+      if (url.endsWith('/calendar/events/event-1') && method === 'PATCH') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        state.calendarEvents = state.calendarEvents.map((event) =>
+          event.id === 'event-1'
+            ? {
+                ...event,
+                ...(body.type ? { type: body.type } : {}),
+                ...(body.startAt ? { startAt: body.startAt } : {}),
+                ...(body.endAt ? { endAt: body.endAt } : {}),
+                ...(body.clearEndAt ? { endAt: null } : {}),
+                ...(body.location ? { location: body.location } : {}),
+              }
+            : event,
+        );
+        return jsonResponse(state.calendarEvents[0]);
+      }
+      if (url.endsWith('/calendar/events/event-1') && method === 'DELETE') {
+        state.calendarEvents = state.calendarEvents.filter((event) => event.id !== 'event-1');
+        return jsonResponse({ id: 'event-1', removed: true });
       }
 
       throw new Error(`Unhandled request: ${method} ${url}`);
@@ -217,6 +260,20 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByText('Draft meet-and-confer email')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Task task-1' }));
+    fireEvent.change(screen.getByLabelText('Task Title'), { target: { value: 'Send revised meet-and-confer email' } });
+    fireEvent.change(screen.getByLabelText('Task Priority'), { target: { value: 'URGENT' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Task Edit' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/tasks/task-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Task updated.')).toBeInTheDocument();
+      expect(screen.getByText('Send revised meet-and-confer email')).toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText('Task Status task-1'), { target: { value: 'DONE' } });
 
     await waitFor(() => {
@@ -227,8 +284,21 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByText('Task status updated to DONE.')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Task task-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/tasks/task-1',
+        expect.objectContaining({ method: 'DELETE', credentials: 'include' }),
+      );
+      expect(screen.getByText('Task removed.')).toBeInTheDocument();
+      expect(screen.queryByText('Send revised meet-and-confer email')).not.toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText('Calendar Event Type'), { target: { value: 'Site inspection' } });
     fireEvent.change(screen.getByLabelText('Calendar Event Start'), { target: { value: '2026-03-02T14:00' } });
+    fireEvent.change(screen.getByLabelText('Calendar Event End'), { target: { value: '2026-03-02T15:00' } });
+    fireEvent.change(screen.getByLabelText('Calendar Event Location'), { target: { value: 'Property address' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
 
     await waitFor(() => {
@@ -238,6 +308,30 @@ describe('MatterDashboardPage operational workflows', () => {
       );
       expect(screen.getByText('Calendar event created.')).toBeInTheDocument();
       expect(screen.getByText(/Site inspection/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Calendar Event event-1' }));
+    fireEvent.change(screen.getByLabelText('Calendar Event Type'), { target: { value: 'Updated site inspection' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Event Edit' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/calendar/events/event-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Calendar event updated.')).toBeInTheDocument();
+      expect(screen.getByText('Updated site inspection')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Calendar Event event-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/calendar/events/event-1',
+        expect.objectContaining({ method: 'DELETE', credentials: 'include' }),
+      );
+      expect(screen.getByText('Calendar event removed.')).toBeInTheDocument();
+      expect(screen.getByText('No calendar events for this matter yet.')).toBeInTheDocument();
     });
   });
 
