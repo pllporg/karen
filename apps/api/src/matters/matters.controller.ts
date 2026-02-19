@@ -10,6 +10,7 @@ import { AddParticipantDto } from './dto/add-participant.dto';
 import { IntakeWizardDto } from './dto/intake-wizard.dto';
 import { SaveIntakeDraftDto } from './dto/save-intake-draft.dto';
 import { LogCommunicationEntryDto } from './dto/log-communication-entry.dto';
+import { UpdateCommunicationEntryDto } from './dto/update-communication-entry.dto';
 
 @Controller('matters')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -79,6 +80,36 @@ export class MattersController {
       user,
       matterId: id,
       ...dto,
+    });
+  }
+
+  @Patch(':id/communications/:messageId')
+  @RequirePermissions('matters:write')
+  updateCommunicationEntry(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+    @Body() dto: UpdateCommunicationEntryDto,
+  ) {
+    return this.mattersService.updateCommunicationEntry({
+      user,
+      matterId: id,
+      messageId,
+      ...dto,
+    });
+  }
+
+  @Delete(':id/communications/:messageId')
+  @RequirePermissions('matters:write')
+  deleteCommunicationEntry(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.mattersService.deleteCommunicationEntry({
+      user,
+      matterId: id,
+      messageId,
     });
   }
 

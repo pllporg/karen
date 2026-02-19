@@ -566,6 +566,123 @@ describe('MattersService', () => {
     expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
   });
 
+  it('updates communication entry and remaps participant in matter scope', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'contact-2' }),
+      },
+      communicationMessage: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'message-1',
+          organizationId: 'org1',
+          threadId: 'thread-1',
+          direction: 'INBOUND',
+          thread: { id: 'thread-1', matterId: 'matter1' },
+          participants: [{ id: 'participant-1', contactId: 'contact-1', role: 'FROM' }],
+        }),
+        update: jest.fn().mockResolvedValue({
+          id: 'message-1',
+          threadId: 'thread-1',
+          type: 'EMAIL',
+          direction: 'OUTBOUND',
+          subject: 'Updated subject',
+          body: 'Updated body',
+          participants: [{ id: 'participant-2', contactId: 'contact-2', role: 'TO' }],
+        }),
+      },
+      communicationThread: {
+        update: jest.fn().mockResolvedValue({ id: 'thread-1' }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+
+    const updated = await service.updateCommunicationEntry({
+      user: baseUser,
+      matterId: 'matter1',
+      messageId: 'message-1',
+      type: 'EMAIL',
+      direction: 'OUTBOUND',
+      subject: 'Updated subject',
+      body: 'Updated body',
+      participantContactId: 'contact-2',
+      occurredAt: '2026-02-20T10:30:00.000Z',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+    expect(prisma.communicationMessage.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'message-1' },
+        data: expect.objectContaining({
+          type: 'EMAIL',
+          direction: 'OUTBOUND',
+          subject: 'Updated subject',
+          body: 'Updated body',
+          participants: {
+            deleteMany: {},
+            create: [{ contactId: 'contact-2', role: 'TO' }],
+          },
+          occurredAt: new Date('2026-02-20T10:30:00.000Z'),
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.communication.updated',
+        entityType: 'communicationMessage',
+        entityId: 'message-1',
+      }),
+    );
+    expect(updated).toEqual(
+      expect.objectContaining({
+        id: 'message-1',
+        matterId: 'matter1',
+      }),
+    );
+  });
+
+  it('deletes communication entry within matter scope and emits audit event', async () => {
+    const prisma = {
+      communicationMessage: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'message-1',
+          organizationId: 'org1',
+          threadId: 'thread-1',
+          direction: 'INBOUND',
+          thread: { id: 'thread-1', matterId: 'matter1' },
+          participants: [],
+        }),
+        delete: jest.fn().mockResolvedValue({ id: 'message-1' }),
+      },
+      communicationThread: {
+        update: jest.fn().mockResolvedValue({ id: 'thread-1' }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+
+    const result = await service.deleteCommunicationEntry({
+      user: baseUser,
+      matterId: 'matter1',
+      messageId: 'message-1',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+    expect(prisma.communicationMessage.delete).toHaveBeenCalledWith({ where: { id: 'message-1' } });
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.communication.deleted',
+        entityType: 'communicationMessage',
+        entityId: 'message-1',
+      }),
+    );
+    expect(result).toEqual({ id: 'message-1', removed: true });
+  });
+
   it('intake wizard persists all construction domain sections', async () => {
     const prisma = {
       contact: {
