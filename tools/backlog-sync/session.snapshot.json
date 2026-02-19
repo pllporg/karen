@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T16:58:14.053Z",
+  "generatedAt": "2026-02-19T17:33:15.613Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -31,14 +31,22 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 48,
+    "scopedIssueCount": 49,
     "stateCounts": {
+      "In Review": 1,
       "Done": 38,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-63",
+        "title": "Implement core matter dashboard task/calendar operations",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T17:32:59.135Z",
+        "requirementId": "REQ-PMS-CORE-001"
+      },
       {
         "key": "KAR-11",
         "title": "Complete ABAC policy abstraction for matter-level ethical walls",
@@ -101,13 +109,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T20:55:05.014Z",
         "requirementId": "REQ-OPS-002"
-      },
-      {
-        "key": "KAR-20",
-        "title": "Enhance contact relationship graph visualization and filtering",
-        "state": "Done",
-        "updatedAt": "2026-02-18T20:47:12.236Z",
-        "requirementId": "REQ-MAT-002"
       }
     ]
   },
@@ -122,13 +123,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:58:11.749Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T17:33:13.595Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "af3cee5929b6705ae3cf7c96912a7e4750d00c83",
+    "gitHead": "2187a6b2e9acc6fd461388795f5a631f3d4f3b28",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-63-matter-dashboard-task-calendar-ops...origin/lin/KAR-63-matter-dashboard-task-calendar-ops"
     ],
     "dirtyFileCount": 0
   }
