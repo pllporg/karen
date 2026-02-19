@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T16:49:26.107Z",
+  "generatedAt": "2026-02-19T16:53:37.851Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -117,7 +117,7 @@
     "openIssueCount": 1,
     "stateCounts": {
       "Done": 6,
-      "Backlog": 1
+      "In Review": 1
     },
     "openIssueKeys": [
       "KAR-59"
@@ -126,30 +126,21 @@
       {
         "key": "KAR-59",
         "title": "Define and apply responsive behavior matrix under Brand Identity constraints",
-        "state": "Backlog",
+        "state": "In Review",
         "requirementId": "REQ-UI-006",
-        "updatedAt": "2026-02-19T16:49:16.565Z"
+        "updatedAt": "2026-02-19T16:53:15.904Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:49:23.942Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:53:35.594Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "b752012df2eb5642f046e3388d0b275e8185646f",
+    "gitHead": "f59ca778f815c2ad541d2dc8a1b34b13c859b9b0",
     "gitStatusShort": [
-      "## lin/KAR-59-responsive-behavior-matrix",
-      " M apps/web/app/globals.css",
-      " M apps/web/components/app-shell.tsx",
-      " M apps/web/package.json",
-      " M docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      " M docs/UI_REFACTOR_LANE_PLAN.md",
-      " M docs/UI_TOKEN_CONTRACT.md",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/web/test/app-shell-responsive.spec.tsx",
-      "?? docs/parity/ui-responsive-behavior-verification.md"
+      "## lin/KAR-59-responsive-behavior-matrix...origin/lin/KAR-59-responsive-behavior-matrix"
     ],
-    "dirtyFileCount": 9
+    "dirtyFileCount": 0
   }
 }
