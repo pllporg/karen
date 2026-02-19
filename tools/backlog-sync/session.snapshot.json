@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T17:33:15.613Z",
+  "generatedAt": "2026-02-19T17:37:43.003Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 49,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 38,
+      "Done": 39,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-63",
         "title": "Implement core matter dashboard task/calendar operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T17:32:59.135Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T17:36:51.930Z",
         "requirementId": "REQ-PMS-CORE-001"
       },
       {
@@ -123,13 +122,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T17:33:13.595Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T17:37:41.228Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2187a6b2e9acc6fd461388795f5a631f3d4f3b28",
+    "gitHead": "e019cbb9a57e85fe5519bc93e30be20945e29ac6",
     "gitStatusShort": [
-      "## lin/KAR-63-matter-dashboard-task-calendar-ops...origin/lin/KAR-63-matter-dashboard-task-calendar-ops"
+      "## main...origin/main"
     ],
     "dirtyFileCount": 0
   }
