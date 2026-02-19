@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T01:23:41.947Z",
+  "generatedAt": "2026-02-19T01:29:23.855Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -114,27 +114,18 @@
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 7,
-    "openIssueCount": 5,
+    "openIssueCount": 4,
     "stateCounts": {
       "Backlog": 4,
-      "In Review": 1,
-      "Done": 2
+      "Done": 3
     },
     "openIssueKeys": [
-      "KAR-56",
       "KAR-57",
       "KAR-58",
       "KAR-59",
       "KAR-60"
     ],
     "openIssues": [
-      {
-        "key": "KAR-56",
-        "title": "Refactor global app shell and navigation to Brand Identity standards",
-        "state": "In Review",
-        "requirementId": "REQ-UI-003",
-        "updatedAt": "2026-02-19T01:23:35.214Z"
-      },
       {
         "key": "KAR-57",
         "title": "Uplift shared UI primitives and interaction state model to canonical standards",
@@ -166,39 +157,14 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T01:23:40.707Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T01:29:22.698Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "1ced0f9dde349f6b26b975915a19521468678bd5",
+    "gitHead": "e58a9bb738258702a26fe27dc1a6f8a9c93fc1db",
     "gitStatusShort": [
-      "## lin/KAR-56-shell-navigation-brand-identity...origin/lin/KAR-56-shell-navigation-brand-identity",
-      " M README.md",
-      " M apps/web/app/admin/page.tsx",
-      " M apps/web/app/ai/page.tsx",
-      " M apps/web/app/billing/page.tsx",
-      " M apps/web/app/contacts/page.tsx",
-      " M apps/web/app/documents/page.tsx",
-      " M apps/web/app/globals.css",
-      " M apps/web/app/layout.tsx",
-      " M apps/web/app/lic-tokens.css",
-      " M apps/web/app/login/page.tsx",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/app/portal/page.tsx",
-      " M \"brand/Brand Identity Document/src/app/components/Layout.tsx\"",
-      " M \"brand/Brand Identity Document/src/app/components/sections/CoverPage.tsx\"",
-      " M \"brand/Brand Identity Document/src/app/components/sections/GridComponents.tsx\"",
-      " M \"brand/Brand Identity Document/src/app/routes.ts\"",
-      " M docs/SESSION_HANDOFF.md",
-      " M docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      " M docs/UI_REFACTOR_LANE_PLAN.md",
-      " M docs/UI_TOKEN_CONTRACT.md",
-      " M docs/WORKING_CONTRACT.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
-      "?? \"brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx\"",
-      "?? \"brand/Brand Identity Document/src/app/components/sections/MarketingSite.tsx\""
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 25
+    "dirtyFileCount": 0
   }
 }
