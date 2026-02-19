@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:23:12.854Z",
+  "generatedAt": "2026-02-19T18:28:00.429Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 51,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 40,
+      "Done": 41,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-65",
         "title": "Implement matter dashboard communications logging operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T18:22:56.660Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T18:27:35.989Z",
         "requirementId": "REQ-PMS-CORE-003"
       },
       {
@@ -123,15 +122,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:23:11.622Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:27:58.813Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3c7ca2fbeb267c4147f397be409a0b4124c4ff68",
+    "gitHead": "bc563ed1599ba614a10165a941b60bc1a9dc31e4",
     "gitStatusShort": [
-      "## lin/KAR-65-matter-dashboard-communications-ops...origin/lin/KAR-65-matter-dashboard-communications-ops",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 1
+    "dirtyFileCount": 0
   }
 }
