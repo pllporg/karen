@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T18:28:00.429Z`
+- Snapshot Timestamp: `2026-02-19T18:58:48.516Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T18:27:58.813Z`
+- Last Successful Mirror Verify: `2026-02-19T18:58:47.270Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,6 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-19: Advanced `KAR-66` / `REQ-PMS-CORE-004` to `In Review` by adding matter-scoped communication update/delete operations (`PATCH /matters/:id/communications/:messageId`, `DELETE /matters/:id/communications/:messageId`) with strict matter/thread tenancy checks, participant remap handling, and audit events (`matter.communication.updated`, `matter.communication.deleted`) in `apps/api/src/matters/matters.service.ts` + `apps/api/src/matters/matters.controller.ts`; upgraded dashboard communications workflow to support inline edit/cancel/delete actions with participant mapping and row-level status feedback (`apps/web/app/matters/[id]/page.tsx`), and expanded lifecycle regression coverage in `apps/api/test/matters.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`; validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
 - 2026-02-19: Completed `KAR-65` / `REQ-PMS-CORE-003` by implementing matter-dashboard communication logging operations: new matter-scoped endpoint (`POST /matters/:id/communications/log`) with tenant + matter write enforcement, scoped-thread validation/new-thread creation, optional participant linkage, and `matter.communication.logged` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/log-communication-entry.dto.ts`), plus dashboard in-context communication controls + tabular log view (`apps/web/app/matters/[id]/page.tsx`) and regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`); validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, and the slice merged via PR `#136`.
 - 2026-02-19: Completed `KAR-64` / `REQ-PMS-CORE-002` by adding matter-dashboard participant operations: API endpoints for participant role-option listing and scoped participant removal (`GET /matters/:id/participant-roles`, `DELETE /matters/:id/participants/:participantId`) with audit logging, plus web add/remove participant controls and regression coverage in `apps/api/test/matters.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`; validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, and `pnpm build`, and the slice merged via PR `#133`.
 - 2026-02-19: Completed `KAR-63` / `REQ-PMS-CORE-001` by adding core matter-dashboard operations for day-to-day practice management: task creation with due datetime + priority, inline task status updates (new API endpoint `PATCH /tasks/:id` with matter-access checks + `task.updated` audit events), and calendar event creation from matter context, with regression coverage in `apps/api/test/tasks.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`.
