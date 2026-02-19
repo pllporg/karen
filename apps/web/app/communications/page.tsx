@@ -3,6 +3,9 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
+import { Button } from '../../components/ui/button';
+import { Card, CardGrid } from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
 import { apiFetch } from '../../lib/api';
 
 export default function CommunicationsPage() {
@@ -57,13 +60,13 @@ export default function CommunicationsPage() {
   return (
     <AppShell>
       <PageHeader title="Communications" subtitle="Manual logs for call/email/text/portal messages with matter-linkable threads." />
-      <div className="card" style={{ marginBottom: 14 }}>
-        <button className="button secondary" type="button" style={{ width: 220 }} onClick={createThread}>
+      <Card style={{ marginBottom: 14 }}>
+        <Button tone="secondary" type="button" style={{ width: 220 }} onClick={createThread}>
           Create Thread
-        </button>
-      </div>
-      <div className="card-grid">
-        <div className="card">
+        </Button>
+      </Card>
+      <CardGrid>
+        <Card>
           <h3 style={{ marginTop: 0 }}>Threads</h3>
           <p className="mono-meta" role="status" aria-live="polite" style={{ marginBottom: 8 }}>
             Active thread: {threadId || 'None selected'}
@@ -83,22 +86,22 @@ export default function CommunicationsPage() {
               </li>
             ))}
           </ul>
-        </div>
-        <div className="card">
+        </Card>
+        <Card>
           <h3 style={{ marginTop: 0 }}>Log Message</h3>
           <form onSubmit={addMessage} style={{ display: 'grid', gap: 10 }}>
-            <input className="input" value={threadId} onChange={(e) => setThreadId(e.target.value)} placeholder="Thread ID" />
+            <Input value={threadId} onChange={(e) => setThreadId(e.target.value)} placeholder="Thread ID" />
             <textarea className="textarea" value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
-            <button className="button" type="submit">Save Call Log</button>
+            <Button type="submit">Save Call Log</Button>
           </form>
-        </div>
-        <div className="card">
+        </Card>
+        <Card>
           <h3 style={{ marginTop: 0 }}>Keyword Search</h3>
           <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto' }}>
-            <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search communications..." />
-            <button className="button ghost" type="button" onClick={search}>
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search communications..." />
+            <Button tone="ghost" type="button" onClick={search}>
               Search
-            </button>
+            </Button>
           </div>
           <p className="mono-meta" role="status" aria-live="polite" style={{ marginTop: 8 }}>
             Results: {searchResults.length}
@@ -108,8 +111,8 @@ export default function CommunicationsPage() {
               <li key={row.id}>{row.subject || 'No subject'} - {String(row.body).slice(0, 80)}</li>
             ))}
           </ul>
-        </div>
-      </div>
+        </Card>
+      </CardGrid>
     </AppShell>
   );
 }

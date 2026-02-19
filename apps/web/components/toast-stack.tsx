@@ -1,5 +1,8 @@
 'use client';
 
+import { Button } from './ui/button';
+import { Toast } from './ui/toast';
+
 export type ToastItem = {
   id: string;
   tone: 'success' | 'warning' | 'error';
@@ -20,16 +23,18 @@ export function ToastStack({
   return (
     <div className="toast-stack" aria-live="polite" aria-label="Status updates">
       {items.map((item) => (
-        <section key={item.id} className={`toast toast-${item.tone}`} role={item.tone === 'error' ? 'alert' : 'status'}>
-          <div className="toast-header">
-            <p className="toast-title">{item.title}</p>
-            <p className="toast-time">{item.occurredAt}</p>
-          </div>
-          <p className="toast-detail">{item.detail}</p>
-          <button className="button ghost toast-dismiss" type="button" onClick={() => onDismiss(item.id)}>
-            Dismiss
-          </button>
-        </section>
+        <Toast
+          key={item.id}
+          tone={item.tone}
+          title={item.title}
+          time={item.occurredAt}
+          detail={item.detail}
+          actions={
+            <Button className="toast-dismiss" tone="ghost" type="button" onClick={() => onDismiss(item.id)}>
+              Dismiss
+            </Button>
+          }
+        />
       ))}
     </div>
   );

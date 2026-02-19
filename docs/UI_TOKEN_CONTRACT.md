@@ -91,6 +91,9 @@ Required primitive set for migration:
 - `Modal`
 - `Toast`
 
+Current primitive implementation path:
+- `apps/web/components/ui/`
+
 All primitives must consume token variables directly or via shared utility wrappers.
 State matrices for these primitives must align with `AppUIKit` (default/hover/focus/active/disabled/loading where applicable).
 

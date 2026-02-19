@@ -186,7 +186,7 @@ describe('ContactsPage', () => {
     render(<ContactsPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText('1 open (HIGH)').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/1\s*OPEN\s*\(HIGH\)/i).length).toBeGreaterThan(0);
     });
 
     fireEvent.change(screen.getByLabelText('Include Tags'), { target: { value: 'client,vip' } });

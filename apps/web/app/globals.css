@@ -401,6 +401,10 @@ pre {
   transform: none;
 }
 
+.button-block {
+  width: 100%;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -572,6 +576,7 @@ textarea:focus-visible,
   box-shadow: var(--lic-focus);
 }
 
+.ui-modal-overlay,
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -583,11 +588,17 @@ textarea:focus-visible,
   background: rgb(11 13 15 / 70%);
 }
 
+.ui-modal,
 .confirm-dialog {
   width: min(560px, 100%);
   border: var(--lic-rule-2) solid var(--lic-ink);
   background: var(--lic-paper);
   padding: var(--lic-4);
+  display: grid;
+  gap: var(--lic-3);
+}
+
+.confirm-body {
   display: grid;
   gap: var(--lic-3);
 }
@@ -668,6 +679,63 @@ textarea:focus-visible,
   justify-self: end;
   min-height: 32px;
   padding: var(--lic-1) var(--lic-2);
+}
+
+.ui-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  z-index: 95;
+  border: var(--lic-rule-2) solid var(--lic-ink);
+  background: var(--lic-paper);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  transform: translateX(-110%);
+}
+
+.ui-drawer-left {
+  left: 0;
+}
+
+.ui-drawer-right {
+  right: 0;
+  transform: translateX(110%);
+}
+
+.ui-drawer.is-open.ui-drawer-left,
+.ui-drawer.is-open.ui-drawer-right {
+  transform: translateX(0);
+}
+
+.ui-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--lic-2);
+  padding: var(--lic-3);
+  border-bottom: var(--lic-rule-1) solid var(--lic-ink);
+}
+
+.ui-drawer-title {
+  font-family: var(--lic-font-condensed);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ui-drawer-body {
+  overflow: auto;
+  padding: var(--lic-3);
+}
+
+.ui-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: rgb(11 13 15 / 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {
