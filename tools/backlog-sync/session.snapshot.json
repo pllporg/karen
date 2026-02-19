@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T19:27:08.943Z",
+  "generatedAt": "2026-02-19T19:35:25.386Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -43,7 +43,7 @@
         "key": "KAR-67",
         "title": "Complete matter dashboard task and calendar lifecycle operations",
         "state": "Done",
-        "updatedAt": "2026-02-19T19:26:37.813Z",
+        "updatedAt": "2026-02-19T19:31:09.467Z",
         "requirementId": "REQ-PMS-CORE-005"
       },
       {
@@ -122,13 +122,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:27:07.300Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:35:23.547Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "095f4f8831772ef9778fbf8b3808ab6c2d9c52fa",
+    "gitHead": "7cf91c199f03c2fa4e580a4ac5ce27ed7d0cb9e1",
     "gitStatusShort": [
-      "## lin/KAR-67-post-merge-snapshot-refresh"
+      "## main...origin/main"
     ],
     "dirtyFileCount": 0
   }
