@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { MattersService } from './matters.service';
 import { SessionAuthGuard } from '../common/guards/session-auth.guard';
 import { PermissionGuard } from '../common/guards/permission.guard';
@@ -45,6 +45,26 @@ export class MattersController {
       matterId: id,
       ...dto,
     });
+  }
+
+  @Delete(':id/participants/:participantId')
+  @RequirePermissions('matters:write')
+  removeParticipant(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('participantId') participantId: string,
+  ) {
+    return this.mattersService.removeParticipant({
+      user,
+      matterId: id,
+      participantId,
+    });
+  }
+
+  @Get(':id/participant-roles')
+  @RequirePermissions('matters:read')
+  participantRoleOptions(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.mattersService.listParticipantRoleOptions(user, id);
   }
 
   @Post('intake-wizard')

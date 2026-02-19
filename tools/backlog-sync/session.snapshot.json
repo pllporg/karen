@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T17:37:43.003Z",
+  "generatedAt": "2026-02-19T18:02:01.491Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -31,8 +31,9 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 49,
+    "scopedIssueCount": 50,
     "stateCounts": {
+      "In Review": 1,
       "Done": 39,
       "Backlog": 10
     },
@@ -40,10 +41,24 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-64",
+        "title": "Implement matter dashboard participant add/remove operations",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T18:01:44.510Z",
+        "requirementId": "REQ-PMS-CORE-002"
+      },
+      {
+        "key": "KAR-18",
+        "title": "PARITY-04 Contacts + Matters + Participants",
+        "state": "Backlog",
+        "updatedAt": "2026-02-19T17:57:16.508Z",
+        "requirementId": "PARITY-04"
+      },
+      {
         "key": "KAR-63",
         "title": "Implement core matter dashboard task/calendar operations",
         "state": "Done",
-        "updatedAt": "2026-02-19T17:36:51.930Z",
+        "updatedAt": "2026-02-19T17:41:54.891Z",
         "requirementId": "REQ-PMS-CORE-001"
       },
       {
@@ -94,20 +109,6 @@
         "state": "Done",
         "updatedAt": "2026-02-18T21:15:22.027Z",
         "requirementId": "REQ-PORTAL-002"
-      },
-      {
-        "key": "KAR-43",
-        "title": "Enforce Linear key branch/PR policy in CI",
-        "state": "Done",
-        "updatedAt": "2026-02-18T21:03:00.059Z",
-        "requirementId": "REQ-OPS-003"
-      },
-      {
-        "key": "KAR-42",
-        "title": "Document deployment runbook and operational SLOs",
-        "state": "Done",
-        "updatedAt": "2026-02-18T20:55:05.014Z",
-        "requirementId": "REQ-OPS-002"
       }
     ]
   },
@@ -122,13 +123,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T17:37:41.228Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:01:59.708Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "e019cbb9a57e85fe5519bc93e30be20945e29ac6",
+    "gitHead": "8f66c5ee8c8315809ac4fdeced031281ef66cba8",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-64-matter-dashboard-participant-ops...origin/lin/KAR-64-matter-dashboard-participant-ops"
     ],
     "dirtyFileCount": 0
   }
