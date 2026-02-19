@@ -221,7 +221,7 @@ describe('Prisma schema conformance', () => {
   });
 
   it('keeps explicit partial/missing gap links documented for non-REQ-DATA-001 items', () => {
-    const requiredGapRefs = ['REQ-DATA-002', 'REQ-DATA-003', 'REQ-MAT-001', 'REQ-MAT-004', 'REQ-PORT-003'];
+    const requiredGapRefs = ['REQ-DATA-003', 'REQ-MAT-001', 'REQ-MAT-004', 'REQ-PORT-003'];
     for (const requirementId of requiredGapRefs) {
       expect(checklist).toContain(requirementId);
     }

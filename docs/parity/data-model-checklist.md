@@ -22,7 +22,7 @@ This checklist maps prompt-required entities/capabilities to Prisma models in `a
 | Permission | `Permission` | Complete | Many-to-many with roles via `RolePermissions`. | — |
 | MatterTeam | `MatterTeam` | Complete | Matter-level team for ethical wall composition. | — |
 | MatterTeamMember | `MatterTeamMember` | Complete | User membership at matter team granularity. | — |
-| AccessPolicy / ABAC hooks | `AccessPolicy` | Partial | Policy records exist; extensible composition/evaluation contract still in progress. | `REQ-DATA-002` |
+| AccessPolicy / ABAC hooks | `AccessPolicy` | Complete | Policy records + composable evaluation contract now implemented through access policy engine + reason-code evaluator hooks in `AccessService`. | — |
 | AuditLogEvent (append-only, tamper-evident hash chain) | `AuditLogEvent` | Complete | `previousHash` + `eventHash` fields support tamper-evident chain. | — |
 
 ## 2) Contacts & Relationship Graph
@@ -181,7 +181,6 @@ These gaps are explicitly tracked in the parity matrix and Linear backlog:
 
 | Gap | Requirement ID | Why It Is Open |
 | --- | --- | --- |
-| AccessPolicy abstraction and composable ABAC reasoned evaluation | `REQ-DATA-002` | Model exists; policy engine abstraction still partial. |
 | Pgvector retrieval production path for AI chunks | `REQ-DATA-003` | Storage exists; retrieval ranking path still partial. |
 | Participant role workflow semantics completeness | `REQ-MAT-001` | Core schema exists; end-to-end role semantics still partial. |
 | Advanced conflict rule profiles + resolution decision logging | `REQ-MAT-004` | Missing first-class conflict profile/decision entities. |

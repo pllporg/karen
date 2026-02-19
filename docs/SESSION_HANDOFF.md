@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T01:23:41.947Z`
+- Snapshot Timestamp: `2026-02-19T15:40:55.480Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T01:23:40.707Z`
+- Last Successful Mirror Verify: `2026-02-19T15:40:54.050Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -89,6 +89,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-19: Advanced `KAR-11` (REQ-DATA-002) to `In Review` after implementing a composable ABAC policy evaluation contract with explicit reason codes (`apps/api/src/access/access-policy.types.ts`, `apps/api/src/access/access-policy.engine.ts`, `apps/api/src/access/matter-access-policy.evaluator.ts`) and wiring `AccessService` through `evaluateMatterAccess(...)`; added policy/unit integration coverage in `apps/api/test/access-policy-evaluator.spec.ts` + expanded `apps/api/test/access-ethical-wall.spec.ts`, updated parity artifacts (`docs/parity/access-policy-abac-verification.md`, `docs/parity/data-model-checklist.md`, `docs/parity/data-model-conformance-verification.md`), and ran `pnpm --filter api test -- access-ethical-wall.spec.ts access-policy-evaluator.spec.ts`, `pnpm --filter api test`, `pnpm --filter api build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`.
 - 2026-02-19: Updated UI lane documentation and web token/primitives to align with the latest Brand Identity `AppUIKit` component matrix (Marketing tab excluded), including canonical palette/token refresh, shared primitive state styling updates, and backlog sync-script metadata updates (`apps/web/app/lic-tokens.css`, `apps/web/app/globals.css`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/UI_TOKEN_CONTRACT.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`, `tools/backlog-sync/sync_ui_refactor_backlog.mjs`).
 - 2026-02-19: Advanced `KAR-56` (REQ-UI-003) to `In Review` after implementing Brand Identity shell/navigation refactor (desktop sidebar + mobile drawer toggle, procedural nav taxonomy with section codes, active-route semantics, and standardized header typography) with verification coverage in `apps/web/test/app-shell.spec.tsx`; validation commands passed: `pnpm --filter web test`, `pnpm --filter web build`, `pnpm test`, `pnpm build`.
 - 2026-02-18: Canonicalized UI refactor backlog to the new `brand/Brand Identity Document` source by updating `KAR-54` through `KAR-60` with requirement IDs (`REQ-UI-001`..`REQ-UI-007`), explicit Brand Identity precedence, and checklist-based acceptance criteria; snapshot now publishes `uiLaneSummary` for new-chat continuity (`tools/backlog-sync/sync_ui_refactor_backlog.mjs`, `tools/backlog-sync/backlog_snapshot.mjs`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/UI_TOKEN_CONTRACT.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`).

@@ -21,7 +21,7 @@ Scope: verify prompt-required Prisma model coverage and key relation/field seman
   - `LEDESExportProfile`, `LEDESExportJob`
   - `AiSourceChunk`, `AiExecutionLog`
   - `IntegrationConnection`, `IntegrationSyncRun`, `IntegrationWebhookSubscription`
-- Confirms open gaps not part of `REQ-DATA-001` stay explicitly linked to requirement IDs in the checklist (`REQ-DATA-002`, `REQ-DATA-003`, `REQ-MAT-001`, `REQ-MAT-004`, `REQ-PORT-003`).
+- Confirms open gaps not part of `REQ-DATA-001` stay explicitly linked to requirement IDs in the checklist (`REQ-DATA-003`, `REQ-MAT-001`, `REQ-MAT-004`, `REQ-PORT-003`).
 
 ## Verification Commands
 
