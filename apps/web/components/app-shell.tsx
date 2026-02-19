@@ -43,6 +43,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="page-shell shell-root">
+      <a className="skip-link" href="#karen-main-content">
+        Skip to main content
+      </a>
       <button
         type="button"
         className="shell-menu-toggle"
@@ -92,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button type="button" className="shell-overlay" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />
       ) : null}
 
-      <main className="main-panel" onClick={() => setMobileOpen(false)}>
+      <main id="karen-main-content" tabIndex={-1} className="main-panel" onClick={() => setMobileOpen(false)}>
         {children}
       </main>
     </div>

@@ -89,14 +89,6 @@ const graphFixture = {
 };
 
 describe('ContactsPage', () => {
-  beforeEach(() => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('posts dedupe decision actions and refreshes suggestion list', async () => {
     const fetchMock = vi
       .fn()
@@ -115,6 +107,7 @@ describe('ContactsPage', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Ignore' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Record Decision' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -144,6 +137,7 @@ describe('ContactsPage', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Merge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Merge' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -156,8 +150,7 @@ describe('ContactsPage', () => {
     });
   });
 
-  it('does not post merge action when reviewer cancels confirmation', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not post merge action when reviewer returns to review from confirmation dialog', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(contactsFixture))
@@ -171,8 +164,8 @@ describe('ContactsPage', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Merge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Return to Review' }));
 
-    expect(confirmSpy).toHaveBeenCalled();
     await waitFor(() => {
       expect(fetchMock).not.toHaveBeenCalledWith(
         'http://localhost:4000/contacts/dedupe/merge',
