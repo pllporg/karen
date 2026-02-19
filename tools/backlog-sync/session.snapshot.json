@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:02:01.491Z",
+  "generatedAt": "2026-02-19T18:06:44.636Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 50,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 39,
+      "Done": 40,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-64",
         "title": "Implement matter dashboard participant add/remove operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T18:01:44.510Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T18:05:32.518Z",
         "requirementId": "REQ-PMS-CORE-002"
       },
       {
@@ -123,14 +122,15 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:01:59.708Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:06:40.972Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "8f66c5ee8c8315809ac4fdeced031281ef66cba8",
+    "gitHead": "fd3f484cce72528b6684830f85e4e09c067594d4",
     "gitStatusShort": [
-      "## lin/KAR-64-matter-dashboard-participant-ops...origin/lin/KAR-64-matter-dashboard-participant-ops"
+      "## main...origin/main",
+      " M docs/SESSION_HANDOFF.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 1
   }
 }
