@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T16:34:26.015Z",
+  "generatedAt": "2026-02-19T16:53:37.851Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -114,52 +114,33 @@
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 7,
-    "openIssueCount": 2,
+    "openIssueCount": 1,
     "stateCounts": {
-      "Done": 5,
-      "Backlog": 1,
-      "In Progress": 1
+      "Done": 6,
+      "In Review": 1
     },
     "openIssueKeys": [
-      "KAR-57",
       "KAR-59"
     ],
     "openIssues": [
       {
-        "key": "KAR-57",
-        "title": "Uplift shared UI primitives and interaction state model to canonical standards",
-        "state": "In Progress",
-        "requirementId": "REQ-UI-004",
-        "updatedAt": "2026-02-19T16:24:28.532Z"
-      },
-      {
         "key": "KAR-59",
         "title": "Define and apply responsive behavior matrix under Brand Identity constraints",
-        "state": "Backlog",
+        "state": "In Review",
         "requirementId": "REQ-UI-006",
-        "updatedAt": "2026-02-19T01:23:35.922Z"
+        "updatedAt": "2026-02-19T16:53:15.904Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:34:24.739Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T16:53:35.594Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2283c42ee9868b4d0eb4d1b970fbd951027239e7",
+    "gitHead": "f59ca778f815c2ad541d2dc8a1b34b13c859b9b0",
     "gitStatusShort": [
-      "## lin/KAR-57-ui-primitives-state-model",
-      " M apps/web/app/communications/page.tsx",
-      " M apps/web/app/contacts/page.tsx",
-      " M apps/web/app/globals.css",
-      " M apps/web/components/confirm-dialog.tsx",
-      " M apps/web/components/toast-stack.tsx",
-      " M apps/web/test/contacts-page.spec.tsx",
-      " M docs/UI_TOKEN_CONTRACT.md",
-      "?? apps/web/components/ui/",
-      "?? apps/web/test/ui-primitives.spec.tsx",
-      "?? docs/parity/ui-primitives-state-verification.md"
+      "## lin/KAR-59-responsive-behavior-matrix...origin/lin/KAR-59-responsive-behavior-matrix"
     ],
-    "dirtyFileCount": 10
+    "dirtyFileCount": 0
   }
 }

@@ -23,6 +23,11 @@ Use this checklist for any UI-affecting ticket or PR.
 
 ## 3) Layout + Density
 - 12-column desktop structure respected.
+- Responsive matrix enforced:
+  - `>=1280px` full desktop layout with visible sidebar and full-width tables.
+  - `1024-1279px` compact desktop (collapsed rail/hamburger, dense-data readability preserved via scroll where needed).
+  - `768-1023px` tablet mode (overlay navigation drawer, single-column content, 48px touch targets).
+  - `<768px` unsupported notice shown with predictable fallback behavior.
 - 8px spacing scale respected.
 - Table/list-first for dense operational data.
 - Max content width and margin constraints respected.

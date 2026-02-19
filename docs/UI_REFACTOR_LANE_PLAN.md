@@ -98,6 +98,7 @@ Refactor the app UI into a standards-manual style system: controlled, procedural
 - `KAR-58`: accessibility compliance lane.
 - `KAR-59`: responsive behavior matrix + breakpoints doctrine.
 - `KAR-60`: regression + rollout gate enforcement.
+- `KAR-59` verification artifact: `docs/parity/ui-responsive-behavior-verification.md`.
 - Canonical token/global reconciliation is enforced as acceptance criteria within `KAR-56` and `KAR-57` execution.
 - Rollout gate runbook: `docs/UI_REGRESSION_ROLLOUT_GATES.md`.
 
