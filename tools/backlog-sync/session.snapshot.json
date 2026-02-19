@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T18:58:48.516Z",
+  "generatedAt": "2026-02-19T19:03:10.853Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,7 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 52,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 41,
+      "Done": 42,
       "Backlog": 10
     },
     "inProgressIssueKeys": [],
@@ -43,8 +42,8 @@
       {
         "key": "KAR-66",
         "title": "Implement matter dashboard communication entry edit/delete operations",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T18:58:27.865Z",
+        "state": "Done",
+        "updatedAt": "2026-02-19T19:02:53.910Z",
         "requirementId": "REQ-PMS-CORE-004"
       },
       {
@@ -123,15 +122,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T18:58:47.270Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:03:09.597Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "79550e40c0587e9857bc5ce5a70a44eb480c7de2",
+    "gitHead": "ec160fbe62f5f9d87605a653bc28536f9b556de7",
     "gitStatusShort": [
-      "## lin/KAR-66-matter-dashboard-communications-edit-delete...origin/lin/KAR-66-matter-dashboard-communications-edit-delete",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 1
+    "dirtyFileCount": 0
   }
 }
