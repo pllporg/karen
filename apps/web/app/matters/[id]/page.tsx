@@ -13,6 +13,9 @@ type DeadlinePreviewRow = {
   computedDate: string;
 };
 
+const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED'] as const;
+const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
+
 export default function MatterDashboardPage() {
   const params = useParams() as { id: string };
   const matterId = params.id;
@@ -24,6 +27,20 @@ export default function MatterDashboardPage() {
   const [overrideDates, setOverrideDates] = useState<Record<string, string>>({});
   const [overrideReasons, setOverrideReasons] = useState<Record<string, string>>({});
   const [deadlineStatus, setDeadlineStatus] = useState<string | null>(null);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDueAt, setTaskDueAt] = useState('');
+  const [taskPriority, setTaskPriority] = useState<(typeof TASK_PRIORITY_OPTIONS)[number]>('MEDIUM');
+  const [taskStatusMessage, setTaskStatusMessage] = useState<string | null>(null);
+  const [eventType, setEventType] = useState('');
+  const [eventStartAt, setEventStartAt] = useState('');
+  const [calendarStatusMessage, setCalendarStatusMessage] = useState<string | null>(null);
+
+  async function refreshDashboard() {
+    if (!matterId) {
+      return;
+    }
+    setDashboard(await apiFetch(`/matters/${matterId}/dashboard`));
+  }
 
   useEffect(() => {
     if (!matterId) return;
@@ -73,7 +90,65 @@ export default function MatterDashboardPage() {
     setPreviewRows([]);
     setOverrideDates({});
     setOverrideReasons({});
-    setDashboard(await apiFetch(`/matters/${matterId}/dashboard`));
+    await refreshDashboard();
+  }
+
+  async function createTask() {
+    if (!matterId || !taskTitle.trim()) {
+      setTaskStatusMessage('Task title is required.');
+      return;
+    }
+
+    await apiFetch('/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        title: taskTitle.trim(),
+        ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
+        priority: taskPriority,
+      }),
+    });
+
+    setTaskTitle('');
+    setTaskDueAt('');
+    setTaskPriority('MEDIUM');
+    setTaskStatusMessage('Task created.');
+    await refreshDashboard();
+  }
+
+  async function updateTaskStatus(taskId: string, status: string) {
+    if (!TASK_STATUS_OPTIONS.includes(status as (typeof TASK_STATUS_OPTIONS)[number])) {
+      return;
+    }
+
+    await apiFetch(`/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+
+    setTaskStatusMessage(`Task status updated to ${status}.`);
+    await refreshDashboard();
+  }
+
+  async function createCalendarEvent() {
+    if (!matterId || !eventType.trim() || !eventStartAt) {
+      setCalendarStatusMessage('Event type and start time are required.');
+      return;
+    }
+
+    await apiFetch('/calendar/events', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        type: eventType.trim(),
+        startAt: new Date(eventStartAt).toISOString(),
+      }),
+    });
+
+    setEventType('');
+    setEventStartAt('');
+    setCalendarStatusMessage('Calendar event created.');
+    await refreshDashboard();
   }
 
   return (
@@ -133,16 +208,96 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Tasks</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {dashboard.tasks?.map((task: any) => (
-                <li key={task.id}>{task.title} ({task.status})</li>
-              ))}
-            </ul>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 140px auto' }}>
+              <input
+                className="input"
+                aria-label="Task Title"
+                placeholder="Task title"
+                value={taskTitle}
+                onChange={(event) => setTaskTitle(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Task Due At"
+                type="datetime-local"
+                value={taskDueAt}
+                onChange={(event) => setTaskDueAt(event.target.value)}
+              />
+              <select
+                className="select"
+                aria-label="Task Priority"
+                value={taskPriority}
+                onChange={(event) => setTaskPriority(event.target.value as (typeof TASK_PRIORITY_OPTIONS)[number])}
+              >
+                {TASK_PRIORITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <button className="button" type="button" onClick={createTask}>
+                Add Task
+              </button>
+            </div>
+            {taskStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{taskStatusMessage}</p> : null}
+            <table className="table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dashboard.tasks || []).map((task: any) => (
+                  <tr key={task.id}>
+                    <td>{task.title}</td>
+                    <td>
+                      <select
+                        className="select"
+                        aria-label={`Task Status ${task.id}`}
+                        value={task.status}
+                        onChange={(event) => updateTaskStatus(task.id, event.target.value)}
+                      >
+                        {TASK_STATUS_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{task.dueAt ? new Date(task.dueAt).toLocaleString() : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Calendar</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px auto' }}>
+              <input
+                className="input"
+                aria-label="Calendar Event Type"
+                placeholder="Event type"
+                value={eventType}
+                onChange={(event) => setEventType(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Calendar Event Start"
+                type="datetime-local"
+                value={eventStartAt}
+                onChange={(event) => setEventStartAt(event.target.value)}
+              />
+              <button className="button" type="button" onClick={createCalendarEvent}>
+                Add Event
+              </button>
+            </div>
+            {calendarStatusMessage ? (
+              <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{calendarStatusMessage}</p>
+            ) : null}
+            <ul style={{ margin: 0, marginTop: 10, paddingLeft: 18 }}>
               {dashboard.calendarEvents?.map((event: any) => (
                 <li key={event.id}>{new Date(event.startAt).toLocaleDateString()} - {event.type}</li>
               ))}
