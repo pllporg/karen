@@ -164,6 +164,56 @@ export class MattersService {
     return participant;
   }
 
+  async removeParticipant(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    participantId: string;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const participant = await this.prisma.matterParticipant.findFirst({
+      where: {
+        id: input.participantId,
+        matterId: input.matterId,
+        organizationId: input.user.organizationId,
+      },
+    });
+
+    if (!participant) {
+      throw new NotFoundException('Matter participant not found');
+    }
+
+    await this.prisma.matterParticipant.delete({
+      where: { id: participant.id },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.participant.removed',
+      entityType: 'matterParticipant',
+      entityId: participant.id,
+      metadata: {
+        matterId: participant.matterId,
+        contactId: participant.contactId,
+        participantRoleKey: participant.participantRoleKey,
+      },
+    });
+
+    return { id: participant.id, removed: true };
+  }
+
+  async listParticipantRoleOptions(user: AuthenticatedUser, matterId: string) {
+    await this.accessService.assertMatterAccess(user, matterId, 'read');
+
+    return this.prisma.participantRoleDefinition.findMany({
+      where: {
+        organizationId: user.organizationId,
+      },
+      orderBy: [{ label: 'asc' }, { key: 'asc' }],
+    });
+  }
+
   private isCounselRole(roleKey: string, roleLabel?: string | null) {
     const fingerprint = `${roleKey} ${roleLabel || ''}`.toLowerCase();
     return /(counsel|attorney|lawyer)/.test(fingerprint);
@@ -199,6 +249,7 @@ export class MattersService {
         participants: {
           include: {
             contact: true,
+            participantRoleDefinition: true,
           },
           orderBy: { createdAt: 'asc' },
         },

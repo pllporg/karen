@@ -391,6 +391,67 @@ describe('MattersService', () => {
     expect(new Set(createdKeys)).toEqual(new Set(categories.map((category) => category.key)));
   });
 
+  it('removes participant within matter scope and emits audit event', async () => {
+    const prisma = {
+      matterParticipant: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'participant-1',
+          organizationId: 'org1',
+          matterId: 'matter1',
+          contactId: 'contact1',
+          participantRoleKey: 'expert',
+        }),
+        delete: jest.fn().mockResolvedValue({ id: 'participant-1' }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+
+    const result = await service.removeParticipant({
+      user: baseUser,
+      matterId: 'matter1',
+      participantId: 'participant-1',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+    expect(prisma.matterParticipant.delete).toHaveBeenCalledWith({ where: { id: 'participant-1' } });
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.participant.removed',
+        entityType: 'matterParticipant',
+        entityId: 'participant-1',
+      }),
+    );
+    expect(result).toEqual({ id: 'participant-1', removed: true });
+  });
+
+  it('lists participant role options for a matter after access check', async () => {
+    const prisma = {
+      participantRoleDefinition: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'role-1', key: 'expert', label: 'Expert Witness' }]),
+      },
+    } as any;
+
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      access,
+    );
+
+    const roles = await service.listParticipantRoleOptions(baseUser, 'matter1');
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'read');
+    expect(prisma.participantRoleDefinition.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: 'org1' },
+      }),
+    );
+    expect(roles).toHaveLength(1);
+  });
+
   it('intake wizard persists all construction domain sections', async () => {
     const prisma = {
       contact: {

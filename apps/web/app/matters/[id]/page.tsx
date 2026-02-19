@@ -13,6 +13,19 @@ type DeadlinePreviewRow = {
   computedDate: string;
 };
 
+type ParticipantContactOption = {
+  id: string;
+  displayName: string;
+  kind: 'PERSON' | 'ORGANIZATION';
+};
+
+type ParticipantRoleOption = {
+  id: string;
+  key: string;
+  label: string;
+  sideDefault: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' | null;
+};
+
 const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED'] as const;
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 
@@ -34,6 +47,11 @@ export default function MatterDashboardPage() {
   const [eventType, setEventType] = useState('');
   const [eventStartAt, setEventStartAt] = useState('');
   const [calendarStatusMessage, setCalendarStatusMessage] = useState<string | null>(null);
+  const [participantContacts, setParticipantContacts] = useState<ParticipantContactOption[]>([]);
+  const [participantRoleOptions, setParticipantRoleOptions] = useState<ParticipantRoleOption[]>([]);
+  const [selectedParticipantContactId, setSelectedParticipantContactId] = useState('');
+  const [selectedParticipantRoleKey, setSelectedParticipantRoleKey] = useState('');
+  const [participantStatusMessage, setParticipantStatusMessage] = useState<string | null>(null);
 
   async function refreshDashboard() {
     if (!matterId) {
@@ -50,6 +68,22 @@ export default function MatterDashboardPage() {
         setRulesPacks(packs);
         if (packs.length > 0) {
           setSelectedRulesPackId(packs[0].id);
+        }
+      })
+      .catch(() => undefined);
+    apiFetch<ParticipantContactOption[]>('/contacts')
+      .then((contacts) => {
+        setParticipantContacts(contacts);
+        if (contacts.length > 0) {
+          setSelectedParticipantContactId((current) => current || contacts[0].id);
+        }
+      })
+      .catch(() => undefined);
+    apiFetch<ParticipantRoleOption[]>(`/matters/${matterId}/participant-roles`)
+      .then((roles) => {
+        setParticipantRoleOptions(roles);
+        if (roles.length > 0) {
+          setSelectedParticipantRoleKey((current) => current || roles[0].key);
         }
       })
       .catch(() => undefined);
@@ -151,6 +185,37 @@ export default function MatterDashboardPage() {
     await refreshDashboard();
   }
 
+  async function addParticipant() {
+    if (!matterId || !selectedParticipantContactId || !selectedParticipantRoleKey) {
+      setParticipantStatusMessage('Contact and participant role are required.');
+      return;
+    }
+
+    await apiFetch(`/matters/${matterId}/participants`, {
+      method: 'POST',
+      body: JSON.stringify({
+        contactId: selectedParticipantContactId,
+        participantRoleKey: selectedParticipantRoleKey,
+      }),
+    });
+
+    setParticipantStatusMessage('Participant added.');
+    await refreshDashboard();
+  }
+
+  async function removeParticipant(participantId: string) {
+    if (!matterId) {
+      return;
+    }
+
+    await apiFetch(`/matters/${matterId}/participants/${participantId}`, {
+      method: 'DELETE',
+    });
+
+    setParticipantStatusMessage('Participant removed.');
+    await refreshDashboard();
+  }
+
   return (
     <AppShell>
       <PageHeader
@@ -188,13 +253,69 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Participants</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {dashboard.participants?.map((participant: any) => (
-                <li key={participant.id}>
-                  {participant.contact?.displayName} - {participant.participantRoleKey} ({participant.side || 'N/A'})
-                </li>
-              ))}
-            </ul>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr auto' }}>
+              <select
+                className="select"
+                aria-label="Participant Contact"
+                value={selectedParticipantContactId}
+                onChange={(event) => setSelectedParticipantContactId(event.target.value)}
+              >
+                <option value="">Select contact</option>
+                {participantContacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.displayName}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                aria-label="Participant Role"
+                value={selectedParticipantRoleKey}
+                onChange={(event) => setSelectedParticipantRoleKey(event.target.value)}
+              >
+                <option value="">Select role</option>
+                {participantRoleOptions.map((role) => (
+                  <option key={role.id} value={role.key}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              <button className="button" type="button" onClick={addParticipant}>
+                Add Participant
+              </button>
+            </div>
+            {participantStatusMessage ? (
+              <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{participantStatusMessage}</p>
+            ) : null}
+            <table className="table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Contact</th>
+                  <th>Role</th>
+                  <th>Side</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dashboard.participants || []).map((participant: any) => (
+                  <tr key={participant.id}>
+                    <td>{participant.contact?.displayName || participant.contactId}</td>
+                    <td>{participant.participantRoleDefinition?.label || participant.participantRoleKey}</td>
+                    <td>{participant.side || 'N/A'}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button danger"
+                        aria-label={`Remove Participant ${participant.id}`}
+                        onClick={() => removeParticipant(participant.id)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="card">
