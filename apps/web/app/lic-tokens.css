@@ -1,35 +1,56 @@
 :root {
   --lic-paper: #f2efe6;
   --lic-ink: #0b0d0f;
+
+  --lic-graphite: #2a2d31;
+  --lic-slate: #5c6066;
+  --lic-silver: #8b857a;
+  --lic-fog: #d9d5cc;
+  --lic-parchment: #ece8de;
+
+  --lic-institutional: #0b3d91;
+  --lic-filing-red: #b23a2b;
+  --lic-ledger: #2d5f3a;
+
   --lic-warm-gray: #8b857a;
-  --lic-blue: #0b3d91;
-  --lic-red: #b23a2b;
+  --lic-blue: var(--lic-institutional);
+  --lic-red: var(--lic-filing-red);
 
   --lic-surface-0: var(--lic-paper);
   --lic-surface-1: #ffffff;
+  --lic-surface-ink: var(--lic-ink);
 
   --lic-text-0: var(--lic-ink);
-  --lic-text-1: #2a2d31;
-  --lic-text-muted: #5c6066;
+  --lic-text-1: var(--lic-graphite);
+  --lic-text-muted: var(--lic-slate);
 
   --lic-rule-1: 1px;
   --lic-rule-2: 2px;
-  --lic-rule-3: 6px;
+  --lic-rule-3: 4px;
 
   --lic-radius: 0px;
 
   --lic-1: 4px;
   --lic-2: 8px;
-  --lic-3: 12px;
-  --lic-4: 16px;
-  --lic-5: 24px;
-  --lic-6: 32px;
-  --lic-7: 48px;
-  --lic-8: 64px;
+  --lic-3: 16px;
+  --lic-4: 24px;
+  --lic-5: 32px;
+  --lic-6: 48px;
+  --lic-7: 64px;
+  --lic-8: 96px;
 
   --lic-font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --lic-font-condensed: var(--font-condensed), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --lic-font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
+  --lic-motion-instant: 0ms;
+  --lic-motion-fast: 80ms;
+  --lic-motion-toast: 100ms;
+  --lic-motion-panel: 120ms;
+  --lic-motion-easing: linear;
+
   --lic-focus: 0 0 0 2px var(--lic-paper), 0 0 0 4px var(--lic-blue);
+
+  /* Legacy aliases retained for existing inline styles/components. */
+  --muted: var(--lic-text-muted);
 }

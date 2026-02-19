@@ -71,6 +71,7 @@ const issueSpecs = [
       'App shell and navigation must follow canonical layout/grid/rule hierarchy and interaction visibility standards.',
     acceptanceCriteria: [
       'Global shell uses canonical layout spacing/grid constraints and rule hierarchy.',
+      'Shell/navigation aligns with `AppUIKit` Application Layout Shell patterns.',
       'Navigation labels/metadata typography and interaction states follow token contract.',
       'No prohibited decoration patterns (shadows, gradients, rounded corners) remain in shell/nav surfaces.',
     ],
@@ -93,9 +94,9 @@ const issueSpecs = [
     problemStatement:
       'Shared primitives are inconsistent in state handling and styling, creating non-uniform behavior across workflows.',
     requirementExcerpt:
-      'Button/Input/Select/Badge/Table/Card/Drawer/Modal/Toast primitives must expose consistent, explicit state behavior under Brand Identity rules.',
+      'Button/Input/Select/Badge/Table/Card/Drawer/Modal/Toast primitives must expose consistent, explicit state behavior under Brand Identity rules and AppUIKit state matrices.',
     acceptanceCriteria: [
-      'Primitive components consume canonical tokens and typography roles.',
+      'Primitive components consume canonical tokens and typography roles from `AppUIKit`.',
       'Focus, disabled, error, success, and destructive states are explicit and consistent.',
       'Destructive actions require explicit confirmation patterns where applicable.',
     ],
@@ -212,6 +213,8 @@ function buildDescription(spec) {
     '',
     '## Design + Interaction Compliance',
     '- Canonical source: `brand/Brand Identity Document/`',
+    '- Canonical component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`',
+    '- Product app exclusion: `MarketingSite` section is out-of-scope.',
     '- Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`',
     '- Conflict rule: Brand Identity standards override conflicting legacy UI setup/docs.',
     '',

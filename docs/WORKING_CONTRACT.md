@@ -8,6 +8,8 @@ This contract defines how implementation sessions are executed to preserve parit
 2. GitHub issues are a mirror for visibility and code linkage only.
 3. `tools/backlog-sync/requirements.matrix.json` is the versioned parity baseline in-repo.
 4. For UI/interaction work, `brand/Brand Identity Document/` is canonical and overrides conflicting legacy UI setup/docs.
+5. UI component/state behavior must map to `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
+6. `MarketingSite` guidance is excluded from product app parity work.
 
 ## Iterative Slice Protocol
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T00:00:20.630Z",
+  "generatedAt": "2026-02-19T01:23:41.947Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -116,7 +116,8 @@
     "issueCount": 7,
     "openIssueCount": 5,
     "stateCounts": {
-      "Backlog": 5,
+      "Backlog": 4,
+      "In Review": 1,
       "Done": 2
     },
     "openIssueKeys": [
@@ -130,65 +131,74 @@
       {
         "key": "KAR-56",
         "title": "Refactor global app shell and navigation to Brand Identity standards",
-        "state": "Backlog",
+        "state": "In Review",
         "requirementId": "REQ-UI-003",
-        "updatedAt": "2026-02-18T23:58:46.993Z"
+        "updatedAt": "2026-02-19T01:23:35.214Z"
       },
       {
         "key": "KAR-57",
         "title": "Uplift shared UI primitives and interaction state model to canonical standards",
         "state": "Backlog",
         "requirementId": "REQ-UI-004",
-        "updatedAt": "2026-02-18T23:58:47.143Z"
+        "updatedAt": "2026-02-19T01:23:35.593Z"
       },
       {
         "key": "KAR-58",
         "title": "Execute accessibility and interaction compliance remediation lane",
         "state": "Backlog",
         "requirementId": "REQ-UI-005",
-        "updatedAt": "2026-02-18T23:58:47.350Z"
+        "updatedAt": "2026-02-19T01:23:35.759Z"
       },
       {
         "key": "KAR-59",
         "title": "Define and apply responsive behavior matrix under Brand Identity constraints",
         "state": "Backlog",
         "requirementId": "REQ-UI-006",
-        "updatedAt": "2026-02-18T23:58:47.516Z"
+        "updatedAt": "2026-02-19T01:23:35.922Z"
       },
       {
         "key": "KAR-60",
         "title": "Enforce UI regression and rollout gates for Brand Identity compliance",
         "state": "Backlog",
         "requirementId": "REQ-UI-007",
-        "updatedAt": "2026-02-18T23:58:47.668Z"
+        "updatedAt": "2026-02-19T01:23:36.092Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T00:00:19.200Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T01:23:40.707Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "80aeeb64875878fb20e69892e6a6239396124451",
+    "gitHead": "1ced0f9dde349f6b26b975915a19521468678bd5",
     "gitStatusShort": [
-      "## main...origin/main",
+      "## lin/KAR-56-shell-navigation-brand-identity...origin/lin/KAR-56-shell-navigation-brand-identity",
       " M README.md",
+      " M apps/web/app/admin/page.tsx",
+      " M apps/web/app/ai/page.tsx",
+      " M apps/web/app/billing/page.tsx",
+      " M apps/web/app/contacts/page.tsx",
+      " M apps/web/app/documents/page.tsx",
+      " M apps/web/app/globals.css",
+      " M apps/web/app/layout.tsx",
+      " M apps/web/app/lic-tokens.css",
+      " M apps/web/app/login/page.tsx",
+      " M apps/web/app/matters/[id]/page.tsx",
+      " M apps/web/app/portal/page.tsx",
+      " M \"brand/Brand Identity Document/src/app/components/Layout.tsx\"",
+      " M \"brand/Brand Identity Document/src/app/components/sections/CoverPage.tsx\"",
+      " M \"brand/Brand Identity Document/src/app/components/sections/GridComponents.tsx\"",
+      " M \"brand/Brand Identity Document/src/app/routes.ts\"",
+      " M docs/SESSION_HANDOFF.md",
+      " M docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
       " M docs/UI_REFACTOR_LANE_PLAN.md",
       " M docs/UI_TOKEN_CONTRACT.md",
       " M docs/WORKING_CONTRACT.md",
-      " M package.json",
-      " M tools/backlog-sync/README.md",
-      " M tools/backlog-sync/backlog_snapshot.mjs",
-      " M tools/backlog-sync/linear_issue_template.md",
       " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/seed_parity_backlog.mjs",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? agents.md",
-      "?? brand/",
-      "?? docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      "?? tools/backlog-sync/sync_ui_refactor_backlog.mjs",
-      "?? uirefactorprompt.md"
+      " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
+      "?? \"brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx\"",
+      "?? \"brand/Brand Identity Document/src/app/components/sections/MarketingSite.tsx\""
     ],
-    "dirtyFileCount": 16
+    "dirtyFileCount": 25
   }
 }

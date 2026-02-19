@@ -239,7 +239,7 @@ export default function BillingPage() {
             Create Reconciliation Run
           </button>
         </div>
-        {reconciliationStatus ? <p style={{ color: 'var(--muted)' }}>{reconciliationStatus}</p> : null}
+        {reconciliationStatus ? <p style={{ color: 'var(--lic-text-muted)' }}>{reconciliationStatus}</p> : null}
         <table className="table">
           <thead>
             <tr>
@@ -330,7 +330,7 @@ export default function BillingPage() {
             Run LEDES Export
           </button>
         </div>
-        {ledesStatus ? <p style={{ color: 'var(--muted)' }}>{ledesStatus}</p> : null}
+        {ledesStatus ? <p style={{ color: 'var(--lic-text-muted)' }}>{ledesStatus}</p> : null}
         <table className="table">
           <thead>
             <tr>
@@ -358,7 +358,7 @@ export default function BillingPage() {
                       Download
                     </button>
                   ) : (
-                    <span style={{ color: 'var(--muted)' }}>-</span>
+                    <span style={{ color: 'var(--lic-text-muted)' }}>-</span>
                   )}
                 </td>
               </tr>

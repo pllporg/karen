@@ -410,7 +410,7 @@ export default function ContactsPage() {
                   Reset
                 </button>
               </form>
-              <small style={{ color: 'var(--muted)' }}>
+              <small style={{ color: 'var(--lic-text-muted)' }}>
                 Nodes: {graph?.summary.nodeCount ?? 0} | Edges: {graph?.summary.edgeCount ?? 0}
               </small>
               <table className="table" style={{ marginTop: 8 }}>
@@ -452,7 +452,7 @@ export default function ContactsPage() {
               <div>
                 {item.primary.displayName} ↔ {item.duplicate.displayName} ({Math.round(item.score * 100)}%)
               </div>
-              <small style={{ color: 'var(--muted)' }}>
+              <small style={{ color: 'var(--lic-text-muted)' }}>
                 Confidence: {item.confidence} | Status: {item.decision} | {item.reasons.join(', ')}
               </small>
               {item.fieldDiffs.length > 0 ? (

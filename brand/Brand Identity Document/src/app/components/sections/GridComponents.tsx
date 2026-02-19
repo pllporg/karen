@@ -709,7 +709,7 @@ export function GridComponents() {
               <br />
               CLASSIFICATION: CONFIDENTIAL
               <br />
-              PAGES: §00 – §09
+              PAGES: §00 – §11
               <br />
               PREPARED FOR INTERNAL USE ONLY
             </div>

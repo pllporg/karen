@@ -502,7 +502,7 @@ export default function AdminPage() {
               onChange={(e) => setResolutionRationale(e.target.value)}
               placeholder="Resolution rationale"
             />
-            <span style={{ color: 'var(--muted)', alignSelf: 'center' }}>Use Resolve on a row below</span>
+            <span style={{ color: 'var(--lic-text-muted)', alignSelf: 'center' }}>Use Resolve on a row below</span>
           </div>
 
           <table className="table">
@@ -539,7 +539,7 @@ export default function AdminPage() {
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Webhook Delivery Monitor</h3>
-          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
+          <p style={{ color: 'var(--lic-text-muted)', marginTop: 0 }}>
             Track endpoint health and retry failed deliveries with full server-side organization scoping.
           </p>
 
@@ -555,16 +555,12 @@ export default function AdminPage() {
               <option value="FAILED">FAILED</option>
               <option value="DELIVERED">DELIVERED</option>
             </select>
-            <span style={{ alignSelf: 'center', color: 'var(--muted)' }}>
+            <span style={{ alignSelf: 'center', color: 'var(--lic-text-muted)' }}>
               Active endpoints: {webhookEndpoints.filter((endpoint) => endpoint.isActive).length} / {webhookEndpoints.length}
             </span>
           </div>
 
-          {webhookError ? (
-            <p style={{ color: '#c62828', marginTop: 0 }}>
-              {webhookError}
-            </p>
-          ) : null}
+          {webhookError ? <p style={{ color: 'var(--lic-red)', marginTop: 0 }}>{webhookError}</p> : null}
 
           <table className="table">
             <thead>
@@ -604,7 +600,7 @@ export default function AdminPage() {
               })}
               {webhookDeliveries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ color: 'var(--muted)' }}>
+                  <td colSpan={7} style={{ color: 'var(--lic-text-muted)' }}>
                     No deliveries for current filter.
                   </td>
                 </tr>

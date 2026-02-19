@@ -13,6 +13,8 @@ const sections = [
   { path: "/grid", label: "Grid & Components", code: "07" },
   { path: "/interaction", label: "Interaction Design", code: "08" },
   { path: "/ai", label: "AI Interaction", code: "09" },
+  { path: "/marketing", label: "Marketing Site", code: "10" },
+  { path: "/uikit", label: "Application UI Kit", code: "11" },
 ];
 
 export function Layout() {

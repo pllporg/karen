@@ -6,8 +6,12 @@
     "notes": "Initial parity matrix based on prompt requirements and current repo behavior.",
     "uiCompliance": {
       "canonicalSource": "brand/Brand Identity Document/",
+      "componentMatrixSource": "brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx",
       "interactionChecklist": "docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      "precedenceRule": "If UI standards conflict with legacy implementation/docs, Brand Identity Document wins."
+      "precedenceRule": "If UI standards conflict with legacy implementation/docs, Brand Identity Document wins.",
+      "exclusions": [
+        "MarketingSite tab/section is excluded from product app parity scope."
+      ]
     }
   },
   "epics": [

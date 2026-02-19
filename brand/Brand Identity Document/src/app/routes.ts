@@ -10,6 +10,8 @@ import { MessagingVoice } from "./components/sections/MessagingVoice";
 import { GridComponents } from "./components/sections/GridComponents";
 import { InteractionDesign } from "./components/sections/InteractionDesign";
 import { AIInteraction } from "./components/sections/AIInteraction";
+import { MarketingSite } from "./components/sections/MarketingSite";
+import { AppUIKit } from "./components/sections/AppUIKit";
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +28,8 @@ export const router = createBrowserRouter([
       { path: "grid", Component: GridComponents },
       { path: "interaction", Component: InteractionDesign },
       { path: "ai", Component: AIInteraction },
+      { path: "marketing", Component: MarketingSite },
+      { path: "uikit", Component: AppUIKit },
     ],
   },
 ]);
