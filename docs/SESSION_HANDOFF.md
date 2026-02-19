@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T19:17:01.881Z`
+- Snapshot Timestamp: `2026-02-19T19:21:50.497Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T19:17:00.535Z`
+- Last Successful Mirror Verify: `2026-02-19T19:21:47.653Z`
 
 ## Canonical Context Routing (Linear-First)
 

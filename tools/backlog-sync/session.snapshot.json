@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-19T19:17:01.881Z",
+  "generatedAt": "2026-02-19T19:21:50.497Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,9 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 53,
     "stateCounts": {
-      "Backlog": 11,
-      "Done": 42
+      "In Review": 1,
+      "Done": 42,
+      "Backlog": 10
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
@@ -42,8 +43,8 @@
       {
         "key": "KAR-67",
         "title": "Complete matter dashboard task and calendar lifecycle operations",
-        "state": "Backlog",
-        "updatedAt": "2026-02-19T19:10:10.502Z",
+        "state": "In Review",
+        "updatedAt": "2026-02-19T19:21:29.309Z",
         "requirementId": "REQ-PMS-CORE-005"
       },
       {
@@ -122,26 +123,14 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:17:00.535Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-19T19:21:47.653Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "06b09ce7569bea113d43a2435fbe7c1c6cc3f8f4",
+    "gitHead": "6f1ddd3cf09f4b3644f2030d2af9d8721fb102f2",
     "gitStatusShort": [
-      "## lin/KAR-67-task-calendar-lifecycle-ops",
-      " M apps/api/src/calendar/calendar.controller.ts",
-      " M apps/api/src/calendar/calendar.service.ts",
-      " M apps/api/src/tasks/tasks.controller.ts",
-      " M apps/api/src/tasks/tasks.service.ts",
-      " M apps/api/test/tasks.spec.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/test/matter-dashboard-page.spec.tsx",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/api/src/calendar/dto/update-event.dto.ts",
-      "?? apps/api/test/calendar-events.spec.ts",
-      "?? docs/parity/matter-dashboard-task-calendar-lifecycle.md"
+      "## lin/KAR-67-task-calendar-lifecycle-ops...origin/lin/KAR-67-task-calendar-lifecycle-ops"
     ],
-    "dirtyFileCount": 12
+    "dirtyFileCount": 0
   }
 }
