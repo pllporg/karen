@@ -11,6 +11,7 @@
     "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\"",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:ui-regression": "pnpm --filter web test:regression && pnpm --filter web build",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
     "backlog:github:bootstrap": "node tools/backlog-sync/bootstrap_github_repo.mjs",

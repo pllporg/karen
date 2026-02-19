@@ -99,10 +99,12 @@ Refactor the app UI into a standards-manual style system: controlled, procedural
 - `KAR-59`: responsive behavior matrix + breakpoints doctrine.
 - `KAR-60`: regression + rollout gate enforcement.
 - Canonical token/global reconciliation is enforced as acceptance criteria within `KAR-56` and `KAR-57` execution.
+- Rollout gate runbook: `docs/UI_REGRESSION_ROLLOUT_GATES.md`.
 
 ## Verification Standard per Slice
 
 - `pnpm --filter web test`
+- `pnpm --filter web test:regression`
 - `pnpm --filter web build`
 - `pnpm test`
 - `pnpm build`

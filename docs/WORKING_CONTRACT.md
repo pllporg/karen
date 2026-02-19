@@ -54,6 +54,7 @@ UI-affecting issues must also include:
 
 1. Explicit checklist sign-off against `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
 2. Any Brand Identity exceptions plus follow-up ticket
+3. Regression gate evidence (`pnpm test:ui-regression`) and screenshot references in PR template UI sections.
 
 ## Bootstrap Check Command
 
