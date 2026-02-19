@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Redirect,
@@ -18,6 +19,7 @@ import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthenticatedUser, UploadedFile as UploadedBinary } from '../common/types';
 import { UploadDocumentDto } from './dto/upload-document.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
 import { CreateRetentionPolicyDto } from './dto/create-retention-policy.dto';
 import { AssignRetentionPolicyDto } from './dto/assign-retention-policy.dto';
 import { PlaceLegalHoldDto, ReleaseLegalHoldDto } from './dto/legal-hold.dto';
@@ -70,6 +72,24 @@ export class DocumentsController {
       user,
       documentId: id,
       file,
+    });
+  }
+
+  @UseGuards(SessionAuthGuard, PermissionGuard)
+  @Patch(':id')
+  @RequirePermissions('documents:write')
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateDocumentDto,
+  ) {
+    return this.documentsService.updateDocument({
+      user,
+      documentId: id,
+      title: dto.title,
+      category: dto.category,
+      tags: dto.tags,
+      sharedWithClient: dto.sharedWithClient,
     });
   }
 

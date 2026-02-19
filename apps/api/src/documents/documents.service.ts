@@ -866,7 +866,74 @@ export class DocumentsService {
       },
     });
 
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.version.uploaded',
+      entityType: 'documentVersion',
+      entityId: version.id,
+      metadata: {
+        documentId: document.id,
+        versionId: version.id,
+      },
+    });
+
     return version;
+  }
+
+  async updateDocument(input: {
+    user: AuthenticatedUser;
+    documentId: string;
+    title?: string;
+    category?: string;
+    tags?: string[];
+    sharedWithClient?: boolean;
+  }) {
+    const document = await this.prisma.document.findFirst({
+      where: {
+        id: input.documentId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+    if (document.dispositionStatus === DocumentDispositionStatus.DISPOSED) {
+      throw new UnprocessableEntityException('Disposed documents cannot be modified');
+    }
+
+    await this.access.assertMatterAccess(input.user, document.matterId, 'write');
+
+    const updated = await this.prisma.document.update({
+      where: { id: document.id },
+      data: {
+        title: input.title,
+        category: input.category,
+        tags: input.tags,
+        sharedWithClient: input.sharedWithClient,
+      },
+      include: {
+        versions: {
+          orderBy: { uploadedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.updated',
+      entityType: 'document',
+      entityId: updated.id,
+      metadata: {
+        title: updated.title,
+        category: updated.category,
+        sharedWithClient: updated.sharedWithClient,
+      },
+    });
+
+    return updated;
   }
 
   async signedDownloadUrl(user: AuthenticatedUser, documentVersionId: string) {
@@ -915,13 +982,26 @@ export class DocumentsService {
     const token = randomUUID();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * (input.expiresInHours ?? 24));
 
-    await this.prisma.documentShareLink.create({
+    const shareLink = await this.prisma.documentShareLink.create({
       data: {
         organizationId: input.user.organizationId,
         documentId: document.id,
         token,
         expiresAt,
         createdByUserId: input.user.id,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'document.share_link.created',
+      entityType: 'documentShareLink',
+      entityId: shareLink.id,
+      metadata: {
+        token,
+        documentId: document.id,
+        expiresAt: expiresAt.toISOString(),
       },
     });
 
