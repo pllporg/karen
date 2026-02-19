@@ -99,6 +99,95 @@ export class CalendarService {
     return event;
   }
 
+  async update(input: {
+    user: AuthenticatedUser;
+    eventId: string;
+    type?: string;
+    startAt?: string;
+    endAt?: string;
+    clearEndAt?: boolean;
+    location?: string;
+    description?: string;
+  }) {
+    const existing = await this.prisma.calendarEvent.findFirst({
+      where: {
+        id: input.eventId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Calendar event not found');
+    }
+
+    await this.access.assertMatterAccess(input.user, existing.matterId, 'write');
+
+    const event = await this.prisma.calendarEvent.update({
+      where: { id: existing.id },
+      data: {
+        type: input.type,
+        startAt: input.startAt ? new Date(input.startAt) : undefined,
+        endAt: input.clearEndAt ? null : input.endAt ? new Date(input.endAt) : undefined,
+        location: input.location,
+        description: input.description,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'calendar_event.updated',
+      entityType: 'calendarEvent',
+      entityId: event.id,
+      metadata: {
+        eventId: event.id,
+        matterId: event.matterId,
+        type: event.type,
+        startAt: event.startAt.toISOString(),
+        endAt: event.endAt?.toISOString() || null,
+      },
+    });
+
+    return event;
+  }
+
+  async remove(input: {
+    user: AuthenticatedUser;
+    eventId: string;
+  }) {
+    const existing = await this.prisma.calendarEvent.findFirst({
+      where: {
+        id: input.eventId,
+        organizationId: input.user.organizationId,
+      },
+    });
+    if (!existing) {
+      throw new NotFoundException('Calendar event not found');
+    }
+
+    await this.access.assertMatterAccess(input.user, existing.matterId, 'write');
+
+    await this.prisma.calendarEvent.delete({
+      where: { id: existing.id },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'calendar_event.deleted',
+      entityType: 'calendarEvent',
+      entityId: existing.id,
+      metadata: {
+        eventId: existing.id,
+        matterId: existing.matterId,
+      },
+    });
+
+    return {
+      id: existing.id,
+      removed: true,
+    };
+  }
+
   async listRulesPacks(user: AuthenticatedUser) {
     const templates = await this.prisma.deadlineRuleTemplate.findMany({
       where: {

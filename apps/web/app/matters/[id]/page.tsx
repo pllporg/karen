@@ -53,6 +53,17 @@ const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
 
+function toDateTimeLocalValue(value?: string | null) {
+  if (!value) {
+    return '';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  return date.toISOString().slice(0, 16);
+}
+
 export default function MatterDashboardPage() {
   const params = useParams() as { id: string };
   const matterId = params.id;
@@ -68,9 +79,13 @@ export default function MatterDashboardPage() {
   const [taskDueAt, setTaskDueAt] = useState('');
   const [taskPriority, setTaskPriority] = useState<(typeof TASK_PRIORITY_OPTIONS)[number]>('MEDIUM');
   const [taskStatusMessage, setTaskStatusMessage] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [eventType, setEventType] = useState('');
   const [eventStartAt, setEventStartAt] = useState('');
+  const [eventEndAt, setEventEndAt] = useState('');
+  const [eventLocation, setEventLocation] = useState('');
   const [calendarStatusMessage, setCalendarStatusMessage] = useState<string | null>(null);
+  const [editingCalendarEventId, setEditingCalendarEventId] = useState<string | null>(null);
   const [participantContacts, setParticipantContacts] = useState<ParticipantContactOption[]>([]);
   const [participantRoleOptions, setParticipantRoleOptions] = useState<ParticipantRoleOption[]>([]);
   const [selectedParticipantContactId, setSelectedParticipantContactId] = useState('');
@@ -174,26 +189,39 @@ export default function MatterDashboardPage() {
     await refreshDashboard();
   }
 
-  async function createTask() {
+  async function createOrUpdateTask() {
     if (!matterId || !taskTitle.trim()) {
       setTaskStatusMessage('Task title is required.');
       return;
     }
 
-    await apiFetch('/tasks', {
-      method: 'POST',
-      body: JSON.stringify({
-        matterId,
-        title: taskTitle.trim(),
-        ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
-        priority: taskPriority,
-      }),
-    });
+    if (editingTaskId) {
+      await apiFetch(`/tasks/${editingTaskId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: taskTitle.trim(),
+          ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
+          priority: taskPriority,
+        }),
+      });
+      setTaskStatusMessage('Task updated.');
+      setEditingTaskId(null);
+    } else {
+      await apiFetch('/tasks', {
+        method: 'POST',
+        body: JSON.stringify({
+          matterId,
+          title: taskTitle.trim(),
+          ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
+          priority: taskPriority,
+        }),
+      });
+      setTaskStatusMessage('Task created.');
+    }
 
     setTaskTitle('');
     setTaskDueAt('');
     setTaskPriority('MEDIUM');
-    setTaskStatusMessage('Task created.');
     await refreshDashboard();
   }
 
@@ -211,24 +239,116 @@ export default function MatterDashboardPage() {
     await refreshDashboard();
   }
 
-  async function createCalendarEvent() {
+  function startEditingTask(task: {
+    id: string;
+    title: string;
+    dueAt?: string | null;
+    priority?: (typeof TASK_PRIORITY_OPTIONS)[number];
+  }) {
+    setEditingTaskId(task.id);
+    setTaskTitle(task.title || '');
+    setTaskDueAt(toDateTimeLocalValue(task.dueAt));
+    setTaskPriority(task.priority || 'MEDIUM');
+    setTaskStatusMessage(`Editing task ${task.id}.`);
+  }
+
+  function cancelEditingTask() {
+    setEditingTaskId(null);
+    setTaskTitle('');
+    setTaskDueAt('');
+    setTaskPriority('MEDIUM');
+    setTaskStatusMessage('Task edit cancelled.');
+  }
+
+  async function deleteTask(taskId: string) {
+    await apiFetch(`/tasks/${taskId}`, {
+      method: 'DELETE',
+    });
+    if (editingTaskId === taskId) {
+      setEditingTaskId(null);
+      setTaskTitle('');
+      setTaskDueAt('');
+      setTaskPriority('MEDIUM');
+    }
+    setTaskStatusMessage('Task removed.');
+    await refreshDashboard();
+  }
+
+  async function createOrUpdateCalendarEvent() {
     if (!matterId || !eventType.trim() || !eventStartAt) {
       setCalendarStatusMessage('Event type and start time are required.');
       return;
     }
 
-    await apiFetch('/calendar/events', {
-      method: 'POST',
-      body: JSON.stringify({
-        matterId,
-        type: eventType.trim(),
-        startAt: new Date(eventStartAt).toISOString(),
-      }),
-    });
+    if (editingCalendarEventId) {
+      await apiFetch(`/calendar/events/${editingCalendarEventId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          type: eventType.trim(),
+          startAt: new Date(eventStartAt).toISOString(),
+          ...(eventEndAt ? { endAt: new Date(eventEndAt).toISOString() } : { clearEndAt: true }),
+          ...(eventLocation.trim() ? { location: eventLocation.trim() } : {}),
+        }),
+      });
+      setCalendarStatusMessage('Calendar event updated.');
+      setEditingCalendarEventId(null);
+    } else {
+      await apiFetch('/calendar/events', {
+        method: 'POST',
+        body: JSON.stringify({
+          matterId,
+          type: eventType.trim(),
+          startAt: new Date(eventStartAt).toISOString(),
+          ...(eventEndAt ? { endAt: new Date(eventEndAt).toISOString() } : {}),
+          ...(eventLocation.trim() ? { location: eventLocation.trim() } : {}),
+        }),
+      });
+      setCalendarStatusMessage('Calendar event created.');
+    }
 
     setEventType('');
     setEventStartAt('');
-    setCalendarStatusMessage('Calendar event created.');
+    setEventEndAt('');
+    setEventLocation('');
+    await refreshDashboard();
+  }
+
+  function startEditingCalendarEvent(event: {
+    id: string;
+    type: string;
+    startAt: string;
+    endAt?: string | null;
+    location?: string | null;
+  }) {
+    setEditingCalendarEventId(event.id);
+    setEventType(event.type || '');
+    setEventStartAt(toDateTimeLocalValue(event.startAt));
+    setEventEndAt(toDateTimeLocalValue(event.endAt));
+    setEventLocation(event.location || '');
+    setCalendarStatusMessage(`Editing calendar event ${event.id}.`);
+  }
+
+  function cancelEditingCalendarEvent() {
+    setEditingCalendarEventId(null);
+    setEventType('');
+    setEventStartAt('');
+    setEventEndAt('');
+    setEventLocation('');
+    setCalendarStatusMessage('Calendar event edit cancelled.');
+  }
+
+  async function deleteCalendarEvent(eventId: string) {
+    await apiFetch(`/calendar/events/${eventId}`, {
+      method: 'DELETE',
+    });
+    if (editingCalendarEventId === eventId) {
+      setEditingCalendarEventId(null);
+      setEventType('');
+      setEventStartAt('');
+      setEventEndAt('');
+      setEventLocation('');
+    }
+    setCalendarStatusMessage('Calendar event removed.');
     await refreshDashboard();
   }
 
@@ -539,10 +659,17 @@ export default function MatterDashboardPage() {
                   </option>
                 ))}
               </select>
-              <button className="button" type="button" onClick={createTask}>
-                Add Task
+              <button className="button" type="button" onClick={createOrUpdateTask}>
+                {editingTaskId ? 'Save Task Edit' : 'Add Task'}
               </button>
             </div>
+            {editingTaskId ? (
+              <div style={{ marginTop: 8 }}>
+                <button className="button secondary" type="button" onClick={cancelEditingTask}>
+                  Cancel Task Edit
+                </button>
+              </div>
+            ) : null}
             {taskStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{taskStatusMessage}</p> : null}
             <table className="table" style={{ marginTop: 10 }}>
               <thead>
@@ -550,6 +677,7 @@ export default function MatterDashboardPage() {
                   <th>Title</th>
                   <th>Status</th>
                   <th>Due</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -571,6 +699,31 @@ export default function MatterDashboardPage() {
                       </select>
                     </td>
                     <td>{task.dueAt ? new Date(task.dueAt).toLocaleString() : '-'}</td>
+                    <td style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        aria-label={`Edit Task ${task.id}`}
+                        onClick={() =>
+                          startEditingTask({
+                            id: task.id,
+                            title: task.title,
+                            dueAt: task.dueAt,
+                            priority: task.priority,
+                          })
+                        }
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        aria-label={`Delete Task ${task.id}`}
+                        onClick={() => deleteTask(task.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -579,7 +732,7 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Calendar</h3>
-            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px auto' }}>
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 180px 1fr auto' }}>
               <input
                 className="input"
                 aria-label="Calendar Event Type"
@@ -594,18 +747,86 @@ export default function MatterDashboardPage() {
                 value={eventStartAt}
                 onChange={(event) => setEventStartAt(event.target.value)}
               />
-              <button className="button" type="button" onClick={createCalendarEvent}>
-                Add Event
+              <input
+                className="input"
+                aria-label="Calendar Event End"
+                type="datetime-local"
+                value={eventEndAt}
+                onChange={(event) => setEventEndAt(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Calendar Event Location"
+                placeholder="Location (optional)"
+                value={eventLocation}
+                onChange={(event) => setEventLocation(event.target.value)}
+              />
+              <button className="button" type="button" onClick={createOrUpdateCalendarEvent}>
+                {editingCalendarEventId ? 'Save Event Edit' : 'Add Event'}
               </button>
             </div>
+            {editingCalendarEventId ? (
+              <div style={{ marginTop: 8 }}>
+                <button className="button secondary" type="button" onClick={cancelEditingCalendarEvent}>
+                  Cancel Event Edit
+                </button>
+              </div>
+            ) : null}
             {calendarStatusMessage ? (
               <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{calendarStatusMessage}</p>
             ) : null}
-            <ul style={{ margin: 0, marginTop: 10, paddingLeft: 18 }}>
-              {dashboard.calendarEvents?.map((event: any) => (
-                <li key={event.id}>{new Date(event.startAt).toLocaleDateString()} - {event.type}</li>
-              ))}
-            </ul>
+            <table className="table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Location</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dashboard.calendarEvents || []).map((event: any) => (
+                  <tr key={event.id}>
+                    <td>{event.type}</td>
+                    <td>{new Date(event.startAt).toLocaleString()}</td>
+                    <td>{event.endAt ? new Date(event.endAt).toLocaleString() : '-'}</td>
+                    <td>{event.location || '-'}</td>
+                    <td style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        aria-label={`Edit Calendar Event ${event.id}`}
+                        onClick={() =>
+                          startEditingCalendarEvent({
+                            id: event.id,
+                            type: event.type,
+                            startAt: event.startAt,
+                            endAt: event.endAt,
+                            location: event.location,
+                          })
+                        }
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        aria-label={`Delete Calendar Event ${event.id}`}
+                        onClick={() => deleteCalendarEvent(event.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {(dashboard.calendarEvents || []).length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No calendar events for this matter yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
           </div>
 
           <div className="card" style={{ gridColumn: '1 / -1' }}>
