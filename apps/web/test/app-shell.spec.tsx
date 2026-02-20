@@ -20,6 +20,8 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('link', { name: /Matter Registry/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sign Out/i })).toBeInTheDocument();
-    expect(screen.getByText('Body Content')).toBeInTheDocument();
+    const mainPanelContent = document.querySelector('.main-panel-content');
+    expect(mainPanelContent).toBeInTheDocument();
+    expect(mainPanelContent).toContainElement(screen.getByText('Body Content'));
   });
 });

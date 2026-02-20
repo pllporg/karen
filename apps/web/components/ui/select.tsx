@@ -8,14 +8,19 @@ export type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
 };
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { className, invalid, 'aria-invalid': ariaInvalid, ...props },
+  { className, invalid, disabled, 'aria-invalid': ariaInvalid, ...props },
   ref,
 ) {
+  const resolvedInvalid = ariaInvalid === true || ariaInvalid === 'true' || Boolean(invalid);
+  const state = disabled ? 'disabled' : resolvedInvalid ? 'error' : 'default';
+
   return (
     <select
       ref={ref}
       className={cx('select', className)}
-      aria-invalid={ariaInvalid ?? (invalid ? 'true' : undefined)}
+      disabled={disabled}
+      aria-invalid={ariaInvalid ?? (resolvedInvalid ? 'true' : undefined)}
+      data-state={state}
       {...props}
     />
   );

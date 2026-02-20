@@ -1,43 +1,45 @@
-# KAR-55 UI Token Contract (Canonicalized to Brand Identity Document)
+# KAR-55 UI Token Contract
 
-## Canonical Source
+## Canonical Source and Precedence
 
-All UI tokens and interaction constants derive from `brand/Brand Identity Document`.
-Canonical component state behavior derives from `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
-If any existing implementation differs, implementation must migrate to this contract.
-If this contract conflicts with legacy docs or AGENTS token guidance, this contract (and Brand Identity source files) prevails.
-Product app parity excludes `MarketingSite` tab visuals and interactions.
+- Canonical precedence is defined in `docs/UI_CANONICAL_PRECEDENCE.md`.
+- Product UI tokens and interaction constants must follow:
+  1. `lic-design-system/references/interaction-and-ai.md`
+  2. `lic-design-system/references/ui-kit.md`
+  3. `lic-design-system/references/design-tokens.md`
+  4. `brand/Brand Identity Document/src/app/components/sections/**` and `src/styles/tailwind.css`
+- Product app scope excludes `MarketingSite` visuals/interactions.
 
 ## Color Tokens (Fixed Palette)
 
 ### Primary
-- `--lic-ink`: `#0B0D0F`
-- `--lic-paper`: `#F2EFE6`
+- `--lic-ink`: `#0B0B0B`
+- `--lic-paper`: `#F7F5F0`
 
 ### Neutrals
-- `--lic-graphite`: `#2A2D31`
-- `--lic-slate`: `#5C6066`
-- `--lic-silver`: `#8B857A`
-- `--lic-fog`: `#D9D5CC`
-- `--lic-parchment`: `#ECE8DE`
+- `--lic-graphite`: `#3A3A3A`
+- `--lic-slate`: `#6B6B6B`
+- `--lic-silver`: `#A8A8A8`
+- `--lic-fog`: `#D4D2CD`
+- `--lic-parchment`: `#ECEAE4`
 
 ### Functional
-- `--lic-institutional`: `#0B3D91` (links, active, focus)
-- `--lic-filing-red`: `#B23A2B` (destructive, errors)
+- `--lic-institutional`: `#2B4C7E` (links, active, focus)
+- `--lic-filing-red`: `#8B2500` (destructive, errors)
 - `--lic-ledger`: `#2D5F3A` (success/approval)
 
-Rule: do not introduce additional ad hoc color values for core UI.
+Rule: do not introduce ad hoc colors outside the token set.
 
 ## Typography Tokens
 
-- `--lic-font-condensed`: IBM Plex Sans Condensed (primary headings, uppercase + 0.06em tracking)
-- `--lic-font-sans`: IBM Plex Sans (body and long-form text)
-- `--lic-font-mono`: IBM Plex Mono (labels/metadata/codes/status)
+- `--lic-font-condensed`: IBM Plex Sans Condensed (page/module headings, uppercase + 0.06em tracking)
+- `--lic-font-sans`: IBM Plex Sans (body/help/prose)
+- `--lic-font-mono`: IBM Plex Mono (labels/metadata/codes/status/table headings)
 
 ### Role Mapping
-- Heading/module labels/nav section titles -> Condensed
+- Route/page headings and section titles -> Condensed
 - Body/descriptions/form help -> Sans
-- Labels/codes/audit metadata/status chips -> Mono
+- Labels/codes/audit metadata/status/table headers -> Mono
 
 ## Spacing + Grid Tokens
 
@@ -45,29 +47,27 @@ Rule: do not introduce additional ad hoc color values for core UI.
 - 8px base: `4, 8, 16, 24, 32, 48, 64, 96`
 
 ### Layout doctrine
-- 12-column grid for desktop layouts.
-- Max content width 960px.
-- Horizontal margins never below 32px.
+- 12-column desktop layout.
+- Max content width `960px` for dense procedural surfaces.
+- Horizontal margins never below `32px`.
 
 ### Responsive behavior doctrine
-- `>=1280px`: full desktop shell, persistent sidebar, 12-column density.
-- `1024-1279px`: compact desktop shell (collapsed rail/hamburger permitted), dense data remains table-first with horizontal scroll when needed.
-- `768-1023px`: tablet overlay navigation drawer, single-column content, 48px minimum touch targets.
-- `<768px`: unsupported viewport notice; do not present full operator workflow UI.
+- `>=1280px`: full desktop shell, persistent sidebar, dense table-first layouts.
+- `1024-1279px`: compact desktop shell; maintain dense-data readability.
+- `768-1023px`: tablet drawer navigation, single-column content, `48px` touch targets.
+- `<768px`: unsupported viewport notice for operator workflows.
 
 ## Geometry + Rule Tokens
 
 - `--lic-radius`: `0px`
-- Border/rule hierarchy:
-  - `--lic-rule-1`: `1px` (default containment)
-  - `--lic-rule-2`: `2px` (section separators, table headers)
-  - `--lic-rule-3`: `4px` (left-rule emphasis only)
+- Rule hierarchy:
+  - `--lic-rule-1`: `1px`
+  - `--lic-rule-2`: `2px`
+  - `--lic-rule-3`: `4px`
 
-Rule: no rounded corners, no drop shadows, no decorative gradients.
+Rule: no rounded corners, no decorative shadows, no gradients.
 
 ## Motion + Interaction Tokens
-
-Allowed motion is functional and linear only.
 
 - `--lic-motion-instant`: `0ms`
 - `--lic-motion-fast`: `80ms`
@@ -75,41 +75,40 @@ Allowed motion is functional and linear only.
 - `--lic-motion-panel`: `120ms`
 - `--lic-motion-easing`: `linear`
 
-Prohibited: spring/bounce, parallax, staggered reveals, page transitions, skeleton shimmer.
+Prohibited: spring/bounce/parallax/staggered entrance animation and shimmer placeholders.
 
 ## Accessibility Tokens/Contracts
 
-- Focus ring: 2px Institutional Blue, offset 2px, visible on light/dark contexts.
-- Must support reduced motion (`prefers-reduced-motion`) by disabling non-essential transitions.
-- Status/error communication cannot rely on color alone.
+- Focus ring: `2px` Institutional Blue with `2px` offset.
+- Reduced motion required via `prefers-reduced-motion`.
+- State/error semantics must never rely on color alone.
 
-## Primitive Class Contract (Target)
+## Primitive Contract
 
-Required primitive set for migration:
+Required primitives:
 - `Button`
 - `Input`
 - `Textarea`
 - `Select`
-- `Badge` / status marker
+- `Badge`
 - `Table`
 - `Card`
 - `Drawer`
 - `Modal`
 - `Toast`
 
-Current primitive implementation path:
+Implementation path:
 - `apps/web/components/ui/`
 
-All primitives must consume token variables directly or via shared utility wrappers.
-State matrices for these primitives must align with `AppUIKit` (default/hover/focus/active/disabled/loading where applicable).
+State model must align with `AppUIKit` and interaction doctrine.
 
-## Compliance Rule
+## Compliance Gate
 
-A UI change is non-compliant if it introduces any of:
-- non-canonical colors,
+UI changes are non-compliant if they introduce:
+- non-canonical token values,
 - rounded corners,
 - shadow/gradient decoration,
 - non-linear decorative animation,
 - inconsistent typography role usage,
-- hidden/unlabeled state transitions.
-- missing references to `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md` in issue/PR verification evidence.
+- hidden/unlabeled state transitions,
+- missing checklist evidence from `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`.

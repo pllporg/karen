@@ -84,8 +84,10 @@ export function Modal({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
+        aria-busy={busy ? 'true' : 'false'}
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
+        data-state="open"
         className={cx('ui-modal', className)}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}

@@ -11,9 +11,12 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, tone = 'default', block = false, type = 'button', ...props },
+  { className, tone = 'default', block = false, type = 'button', disabled, ...props },
   ref,
 ) {
+  const state =
+    disabled || props['aria-disabled'] === true || props['aria-disabled'] === 'true' ? 'disabled' : 'enabled';
+
   return (
     <button
       ref={ref}
@@ -26,6 +29,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         block && 'button-block',
         className,
       )}
+      disabled={disabled}
+      data-tone={tone}
+      data-state={state}
       {...props}
     />
   );

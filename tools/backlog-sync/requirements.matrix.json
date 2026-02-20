@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "generatedFrom": "Prompt-Context",
     "assessmentDate": "2026-02-16",
-    "notes": "Initial parity matrix based on prompt requirements and current repo behavior.",
+    "notes": "Parity matrix with LIC UI canonical-precedence lane and PRD/screen coverage backlog.",
     "uiCompliance": {
-      "canonicalSource": "brand/Brand Identity Document/",
+      "canonicalSource": "docs/UI_CANONICAL_PRECEDENCE.md",
       "componentMatrixSource": "brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx",
       "interactionChecklist": "docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      "precedenceRule": "If UI standards conflict with legacy implementation/docs, Brand Identity Document wins.",
+      "precedenceRule": "If UI standards conflict across legacy docs and LIC references, follow docs/UI_CANONICAL_PRECEDENCE.md.",
       "exclusions": [
         "MarketingSite tab/section is excluded from product app parity scope."
       ]
@@ -19,7 +19,10 @@
       "code": "PARITY-01",
       "title": "Security + Tenancy",
       "description": "Close security and isolation gaps to meet production-grade SaaS expectations.",
-      "labels": ["parity", "security"],
+      "labels": [
+        "parity",
+        "security"
+      ],
       "tasks": [
         {
           "title": "Harden tenant isolation test coverage across all core entities",
@@ -28,7 +31,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "security"],
+          "labels": [
+            "parity",
+            "security"
+          ],
           "problemStatement": "Tenant isolation coverage is now verified across expanded core entity surfaces, including retention/disposition workflows, trust reconciliation/LEDES entities, and AI style pack administration.",
           "requirementExcerpt": "Tenant isolation tests must be present and enforced server-side.",
           "acceptanceCriteria": [
@@ -50,7 +56,11 @@
           "parityStatus": "Verified",
           "component": "Infra",
           "risk": "High",
-          "labels": ["parity", "security", "documents"],
+          "labels": [
+            "parity",
+            "security",
+            "documents"
+          ],
           "problemStatement": "Current malware scanner is a stub and always returns clean.",
           "requirementExcerpt": "Malware scanning hook required for uploads.",
           "acceptanceCriteria": [
@@ -72,7 +82,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "security", "integrations"],
+          "labels": [
+            "parity",
+            "security",
+            "integrations"
+          ],
           "problemStatement": "Token encryption-at-rest, decrypt-on-read usage, and key rotation guidance/tests are implemented.",
           "requirementExcerpt": "OAuth tokens must be stored encrypted.",
           "acceptanceCriteria": [
@@ -93,7 +107,10 @@
       "code": "PARITY-02",
       "title": "Data Model Completeness",
       "description": "Ensure Prisma and domain entities fully cover prompt object model requirements.",
-      "labels": ["parity", "data-model"],
+      "labels": [
+        "parity",
+        "data-model"
+      ],
       "tasks": [
         {
           "title": "Validate all required entities and relation semantics against prompt",
@@ -102,7 +119,10 @@
           "parityStatus": "Verified",
           "component": "Data",
           "risk": "High",
-          "labels": ["parity", "data-model"],
+          "labels": [
+            "parity",
+            "data-model"
+          ],
           "problemStatement": "Prisma model coverage and high-risk schema semantics are now verified by executable conformance tests plus an explicit gap register for non-REQ-DATA-001 follow-on work.",
           "requirementExcerpt": "Minimum entities and capabilities cannot be omitted.",
           "acceptanceCriteria": [
@@ -125,7 +145,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "security", "matters"],
+          "labels": [
+            "parity",
+            "security",
+            "matters"
+          ],
           "problemStatement": "Matter access ABAC now uses a composable policy evaluation contract with explicit reason codes and stable service integration semantics.",
           "requirementExcerpt": "AccessPolicy / ABAC hooks required for ethical wall controls.",
           "acceptanceCriteria": [
@@ -147,7 +171,10 @@
           "parityStatus": "Verified",
           "component": "Data",
           "risk": "Medium",
-          "labels": ["parity", "ai-governance"],
+          "labels": [
+            "parity",
+            "ai-governance"
+          ],
           "problemStatement": "Embeddings are stored but retrieval flow should explicitly support vector similarity queries.",
           "requirementExcerpt": "RAG via pgvector required.",
           "acceptanceCriteria": [
@@ -167,7 +194,12 @@
       "code": "PARITY-03",
       "title": "Import/Export Portability",
       "description": "Deliver migration parity for inbound and outbound data portability.",
-      "labels": ["parity", "migration", "imports", "exports"],
+      "labels": [
+        "parity",
+        "migration",
+        "imports",
+        "exports"
+      ],
       "tasks": [
         {
           "title": "Finalize MyCase ZIP importer field coverage and error mapping",
@@ -176,7 +208,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "migration", "imports"],
+          "labels": [
+            "parity",
+            "migration",
+            "imports"
+          ],
           "problemStatement": "MyCase ZIP importer coverage is now verification-hardened with dependency-order safety checks, warning-context assertions for unlinked communications, and external-reference lineage/raw-payload integrity validation.",
           "requirementExcerpt": "Map contacts, cases, tasks, calendar, invoices/payments, time, notes/messages where possible.",
           "acceptanceCriteria": [
@@ -199,7 +235,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "migration", "imports"],
+          "labels": [
+            "parity",
+            "migration",
+            "imports"
+          ],
           "problemStatement": "Clio CSV/XLSX importer verification is hardened with executable checks for source-entity lineage, row-level unresolved-reference diagnostics, and cross-sheet external-reference payload integrity.",
           "requirementExcerpt": "Map contacts, matters, tasks, calendar, activities/time entries, notes, phone logs/emails where available.",
           "acceptanceCriteria": [
@@ -223,7 +263,12 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
-          "labels": ["parity", "migration", "imports", "contacts"],
+          "labels": [
+            "parity",
+            "migration",
+            "imports",
+            "contacts"
+          ],
           "problemStatement": "Dedupe merge workflow is verification-hardened with self-merge guardrails, expanded referential-integrity reassignment coverage, and explicit reviewer-cancel UI protections for merge actions.",
           "requirementExcerpt": "Dedupe engine with fuzzy matching and user-confirm merge UI required.",
           "acceptanceCriteria": [
@@ -246,7 +291,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "migration", "exports"],
+          "labels": [
+            "parity",
+            "migration",
+            "exports"
+          ],
           "problemStatement": "Full-backup export is now verification-hardened with deterministic manifest integrity checks (duplicate path/documentVersion detection and placeholder/path consistency) in addition to required file/column/schema validation.",
           "requirementExcerpt": "ZIP with CSVs per entity and docs manifest; data dictionary page.",
           "acceptanceCriteria": [
@@ -268,7 +317,11 @@
       "code": "PARITY-04",
       "title": "Contacts + Matters + Participants",
       "description": "Achieve workflow completeness for case-centric legal operations objects.",
-      "labels": ["parity", "contacts", "matters"],
+      "labels": [
+        "parity",
+        "contacts",
+        "matters"
+      ],
       "tasks": [
         {
           "title": "Complete participant role configurability and side semantics coverage",
@@ -277,7 +330,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "matters"],
+          "labels": [
+            "parity",
+            "matters"
+          ],
           "problemStatement": "Participant-role semantics are now verified with explicit edge-case regression coverage for counsel/non-counsel constraints, self-reference guards, side/isPrimary overrides, and full category matrix coverage.",
           "requirementExcerpt": "Support opposing counsel, adjusters, insurer, mediator, judge, expert, inspector, etc.",
           "acceptanceCriteria": [
@@ -300,7 +356,10 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "Medium",
-          "labels": ["parity", "contacts"],
+          "labels": [
+            "parity",
+            "contacts"
+          ],
           "problemStatement": "Contacts graph/filter workflows are verification-hardened with explicit controller parsing support for both CSV and repeated query parameters (include/exclude tags + relationship types), while preserving compound filters and inline dedupe indicators.",
           "requirementExcerpt": "People/org contacts with relationship graph and tags/filters.",
           "acceptanceCriteria": [
@@ -322,7 +381,11 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
-          "labels": ["parity", "domain-construction", "matters"],
+          "labels": [
+            "parity",
+            "domain-construction",
+            "matters"
+          ],
           "problemStatement": "Intake wizard coverage is now verified with API + web regression checks for required domain validation gates, draft save/resume behavior, full section payload composition, and fallback contact resolution for lien/insurance/expert records.",
           "requirementExcerpt": "Intake wizard must populate property, contract, defects, damages, lien, insurance, expert sections.",
           "acceptanceCriteria": [
@@ -345,7 +408,12 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "matters", "security", "phase-2"],
+          "labels": [
+            "parity",
+            "matters",
+            "security",
+            "phase-2"
+          ],
           "problemStatement": "Conflict profile workflows are verification-hardened with safe partial-update merge semantics and scoped profile selection precedence (specific active scope beats global default).",
           "requirementExcerpt": "Advanced conflict rules should support profile-based matching, relationship-aware scoring, and logged attorney override decisions.",
           "acceptanceCriteria": [
@@ -367,7 +435,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "matters", "phase-2"],
+          "labels": [
+            "parity",
+            "matters",
+            "phase-2"
+          ],
           "problemStatement": "Jurisdictional rules-pack workflows are verification-hardened with deterministic scoped-pack resolution (specificity + effective-window), explicit inactive/out-of-window pack rejection, and strict apply-selection validation (no unknown/duplicate rule IDs).",
           "requirementExcerpt": "Jurisdictional deadline rules packs should be versioned and selectable by jurisdiction/court/procedure with attorney override controls.",
           "acceptanceCriteria": [
@@ -389,7 +461,11 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "Medium",
-          "labels": ["parity", "matters", "pms-core"],
+          "labels": [
+            "parity",
+            "matters",
+            "pms-core"
+          ],
           "problemStatement": "Matter dashboard task/calendar lifecycle is now complete with create/edit/delete operations, matter-scoped write checks, audit logging, and regression coverage across API and web workflows.",
           "requirementExcerpt": "Matter dashboard must provide operational task and calendar management with reliable auditability and matter-scoped access controls.",
           "acceptanceCriteria": [
@@ -411,7 +487,11 @@
       "code": "PARITY-05",
       "title": "Communications + Documents",
       "description": "Close comms/document parity and integration workflows.",
-      "labels": ["parity", "communications", "documents"],
+      "labels": [
+        "parity",
+        "communications",
+        "documents"
+      ],
       "tasks": [
         {
           "title": "Implement production email/SMS providers behind provider interface",
@@ -420,7 +500,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "communications"],
+          "labels": [
+            "parity",
+            "communications"
+          ],
           "problemStatement": "Production email/SMS providers are now verified with retry-policy guardrails, deterministic non-retryable handling, and persisted delivery provenance.",
           "requirementExcerpt": "Provider interfaces exist; MVP includes stub, but production providers needed for parity.",
           "acceptanceCriteria": [
@@ -443,7 +526,10 @@
           "parityStatus": "Verified",
           "component": "Data",
           "risk": "Medium",
-          "labels": ["parity", "communications"],
+          "labels": [
+            "parity",
+            "communications"
+          ],
           "problemStatement": "Communications search relevance/indexing is now verified with ranked full-text behavior, wildcard-safe fallback matching, and matter-scope/query-normalization guardrails.",
           "requirementExcerpt": "Search communications by keyword.",
           "acceptanceCriteria": [
@@ -466,7 +552,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "documents"],
+          "labels": [
+            "parity",
+            "documents"
+          ],
           "problemStatement": "Document automation is now verified with strict template governance, merge patch sanitization, and generated artifact provenance/audit coverage.",
           "requirementExcerpt": "DOCX template merge from matter/contact/custom fields and PDF generation for invoices/finalized letters.",
           "acceptanceCriteria": [
@@ -489,7 +578,12 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "documents", "security", "phase-2"],
+          "labels": [
+            "parity",
+            "documents",
+            "security",
+            "phase-2"
+          ],
           "problemStatement": "Retention/legal-hold workflows are verification-hardened with execution-time legal-hold precedence checks so pending disposition items are skipped when hold status changes before execution.",
           "requirementExcerpt": "Support retention policy assignment, legal hold precedence, disposition queue, and auditable retention actions.",
           "acceptanceCriteria": [
@@ -511,7 +605,12 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "Medium",
-          "labels": ["parity", "documents", "matters", "pms-core"],
+          "labels": [
+            "parity",
+            "documents",
+            "matters",
+            "pms-core"
+          ],
           "problemStatement": "Matter dashboard document lifecycle is now complete with in-context upload/version/share/download operations, client-sharing toggles, and audit-backed server-side enforcement.",
           "requirementExcerpt": "Matter dashboard must support operational document management with secure sharing and auditability.",
           "acceptanceCriteria": [
@@ -533,7 +632,10 @@
       "code": "PARITY-06",
       "title": "Billing + Trust + Payments",
       "description": "Complete billing and trust workflows with compliance-oriented reporting.",
-      "labels": ["parity", "billing"],
+      "labels": [
+        "parity",
+        "billing"
+      ],
       "tasks": [
         {
           "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
@@ -542,7 +644,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "billing"],
+          "labels": [
+            "parity",
+            "billing"
+          ],
           "problemStatement": "Stripe checkout + reconciliation is now verified with event-level idempotency, signature-path coverage, and deterministic invoice status transition tests.",
           "requirementExcerpt": "Stripe Checkout pay link required with payments tracking.",
           "acceptanceCriteria": [
@@ -564,7 +669,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "billing"],
+          "labels": [
+            "parity",
+            "billing"
+          ],
           "problemStatement": "Trust invariants and reporting are now verified with atomic transfer updates, transfer-aware reconciliation delta logic, and expanded regression coverage.",
           "requirementExcerpt": "Trust ledger and basic trust reporting required.",
           "acceptanceCriteria": [
@@ -586,7 +694,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "billing", "phase-2"],
+          "labels": [
+            "parity",
+            "billing",
+            "phase-2"
+          ],
           "problemStatement": "Trust reconciliation workflows are verification-hardened with discrepancy reason-code capture, strict resolution status guards, and immutable resolution semantics for non-open discrepancies.",
           "requirementExcerpt": "Trust reconciliation should support statement-period runs, discrepancy tracking, resolution notes, and sign-off evidence.",
           "acceptanceCriteria": [
@@ -608,7 +720,12 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "billing", "exports", "phase-2"],
+          "labels": [
+            "parity",
+            "billing",
+            "exports",
+            "phase-2"
+          ],
           "problemStatement": "LEDES export workflows are verification-hardened with default-profile rotation checks, explicit invoice-id selection integrity assertions, and expense-line filtering conformance coverage.",
           "requirementExcerpt": "Provide executable LEDES export jobs, validation statuses, and downloadable LEDES outputs.",
           "acceptanceCriteria": [
@@ -629,7 +746,10 @@
       "code": "PARITY-07",
       "title": "Client Portal",
       "description": "Bring portal capabilities to parity with secure client collaboration requirements.",
-      "labels": ["parity", "portal"],
+      "labels": [
+        "parity",
+        "portal"
+      ],
       "tasks": [
         {
           "title": "Implement secure portal attachments in message workflow",
@@ -638,7 +758,11 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
-          "labels": ["parity", "portal", "documents"],
+          "labels": [
+            "parity",
+            "portal",
+            "documents"
+          ],
           "problemStatement": "Portal attachment workflow is verification-hardened with disposed-document guardrails, snapshot attachment filtering, and explicit audit coverage for link/download issuance actions.",
           "requirementExcerpt": "Secure messaging with attachments required for clients.",
           "acceptanceCriteria": [
@@ -662,7 +786,10 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "Medium",
-          "labels": ["parity", "portal"],
+          "labels": [
+            "parity",
+            "portal"
+          ],
           "problemStatement": "Portal e-sign flow is verification-hardened with provider abstraction lifecycle coverage, idempotent webhook handling, invalid-signature rejection, and portal-side status refresh assertions.",
           "requirementExcerpt": "E-sign interface required; stub acceptable for MVP but parity backlog needs production-ready integration path.",
           "acceptanceCriteria": [
@@ -684,7 +811,10 @@
       "code": "PARITY-08",
       "title": "AI Workspace + Governance",
       "description": "Complete AI workforce tools and governance controls required by prompt.",
-      "labels": ["parity", "ai-governance"],
+      "labels": [
+        "parity",
+        "ai-governance"
+      ],
       "tasks": [
         {
           "title": "Implement source-cited deadline extraction side-by-side evidence UI",
@@ -693,7 +823,10 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
-          "labels": ["parity", "ai-governance"],
+          "labels": [
+            "parity",
+            "ai-governance"
+          ],
           "problemStatement": "Deadline extraction UX, server-side confirmation guardrails, and auditable confirmation events are now verified end-to-end with regression coverage.",
           "requirementExcerpt": "Must show side-by-side excerpt for each extracted date and require confirmation before creating tasks/events.",
           "acceptanceCriteria": [
@@ -715,7 +848,11 @@
           "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
-          "labels": ["parity", "ai-governance", "security"],
+          "labels": [
+            "parity",
+            "ai-governance",
+            "security"
+          ],
           "problemStatement": "Ingestion hardening now has defense-in-depth verification with citation-policy enforcement, quarantined chunk metadata, audit events, and adversarial regression coverage.",
           "requirementExcerpt": "Isolate system prompts, filter malicious instructions, always cite sources used.",
           "acceptanceCriteria": [
@@ -737,7 +874,10 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "Medium",
-          "labels": ["parity", "ai-governance"],
+          "labels": [
+            "parity",
+            "ai-governance"
+          ],
           "problemStatement": "Style pack governance is verification-hardened with detach-path matter-access enforcement and richer detached-source provenance in audit metadata, in addition to existing style-pack selection provenance.",
           "requirementExcerpt": "Firm style packs should inform drafting tools.",
           "acceptanceCriteria": [
@@ -759,7 +899,10 @@
       "code": "PARITY-09",
       "title": "Integrations + Webhooks",
       "description": "Replace connector stubs with production-grade integration flows.",
-      "labels": ["parity", "integrations"],
+      "labels": [
+        "parity",
+        "integrations"
+      ],
       "tasks": [
         {
           "title": "Implement Clio connector OAuth + incremental sync + webhook subscription",
@@ -768,7 +911,11 @@
           "parityStatus": "Verified",
           "component": "Integrations",
           "risk": "High",
-          "labels": ["parity", "integrations", "migration"],
+          "labels": [
+            "parity",
+            "integrations",
+            "migration"
+          ],
           "problemStatement": "Clio OAuth callback validation, refresh-grant token lifecycle, incremental idempotent sync checkpoints, and webhook subscription registration paths are now covered by connector + integration orchestration regression suites.",
           "requirementExcerpt": "Connector must support OAuth, incremental sync, webhook subscriptions with idempotency keys.",
           "acceptanceCriteria": [
@@ -791,7 +938,11 @@
           "parityStatus": "Verified",
           "component": "Integrations",
           "risk": "High",
-          "labels": ["parity", "integrations", "migration"],
+          "labels": [
+            "parity",
+            "integrations",
+            "migration"
+          ],
           "problemStatement": "MyCase OAuth callback validation, refresh-grant token lifecycle, incremental idempotent sync checkpoints, and webhook subscription registration paths are now covered by connector + integration orchestration tests.",
           "requirementExcerpt": "Connector must support incremental sync + webhooks where available.",
           "acceptanceCriteria": [
@@ -814,7 +965,11 @@
           "parityStatus": "Verified",
           "component": "Integrations",
           "risk": "Medium",
-          "labels": ["parity", "integrations", "migration"],
+          "labels": [
+            "parity",
+            "integrations",
+            "migration"
+          ],
           "problemStatement": "Filevine and PracticePanther connectors are verification-hardened for live/scaffold incremental pulls and webhook subscription registration, including provider error surfacing and external-subscription-id extraction.",
           "requirementExcerpt": "Provide connector structure with incremental sync and webhook support.",
           "acceptanceCriteria": [
@@ -836,7 +991,10 @@
       "code": "PARITY-10",
       "title": "Testing + Reliability + Ops",
       "description": "Strengthen release confidence, CI policy enforcement, and operational controls.",
-      "labels": ["parity", "ops"],
+      "labels": [
+        "parity",
+        "ops"
+      ],
       "tasks": [
         {
           "title": "Add web application automated test suite for critical workflows",
@@ -845,7 +1003,10 @@
           "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
-          "labels": ["parity", "ops"],
+          "labels": [
+            "parity",
+            "ops"
+          ],
           "problemStatement": "Web suite now includes broad page coverage plus a multi-surface smoke journey spanning sign-in, dashboard, matter creation, and portal messaging.",
           "requirementExcerpt": "Tests should verify core auth/RBAC/matter/document/import/AI flows.",
           "acceptanceCriteria": [
@@ -867,7 +1028,10 @@
           "parityStatus": "Verified",
           "component": "Infra",
           "risk": "Medium",
-          "labels": ["parity", "ops"],
+          "labels": [
+            "parity",
+            "ops"
+          ],
           "problemStatement": "Operations documentation is now verification-hardened with executable checks that enforce required runbook sections, baseline SLO targets, and README/parity linkage integrity.",
           "requirementExcerpt": "Production-ready system requires clear operational playbooks.",
           "acceptanceCriteria": [
@@ -889,7 +1053,10 @@
           "parityStatus": "Verified",
           "component": "Infra",
           "risk": "Medium",
-          "labels": ["parity", "ops"],
+          "labels": [
+            "parity",
+            "ops"
+          ],
           "problemStatement": "Linear-key governance is verification-hardened with executable checks that guard workflow regex enforcement and required PR template metadata sections.",
           "requirementExcerpt": "Branch and PR title must include Linear key for auto-linking.",
           "acceptanceCriteria": [
@@ -903,6 +1070,178 @@
             "Policy workflow active on all PRs.",
             "Automated governance test verifies workflow regex/policy guards and required PR template sections.",
             "Verification artifact documented at docs/parity/pr-linear-policy-verification.md."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-11",
+      "title": "UI Refactor + PRD/Screen Coverage",
+      "description": "Execute LIC canonical UI migration with full PRD/screen coverage for existing and backlog functionality.",
+      "labels": [
+        "parity",
+        "ui-ux",
+        "design-system"
+      ],
+      "tasks": [
+        {
+          "title": "Lock canonical LIC precedence and enforce style guardrails",
+          "requirementId": "REQ-UI-008",
+          "promptSection": "UI Refactor / Canonical conflict resolution + enforcement",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "Canonical LIC precedence, style guardrails, and CI enforcement are implemented; remaining work is review/approval and rollout governance adoption.",
+          "requirementExcerpt": "Resolve conflicts with previous UI instructions and enforce a deterministic LIC implementation baseline.",
+          "acceptanceCriteria": [
+            "Canonical precedence document is published and referenced by UI governance docs.",
+            "Automated guardrails fail on non-canonical gradients, shadows, rounded corners, and raw colors.",
+            "UI rollout workflow includes style guardrail execution in CI."
+          ],
+          "apiImpact": "No API contract changes.",
+          "securityImpact": "Reduces operator-error risk by preventing unsafe visual drift in review-critical flows.",
+          "definitionOfDone": [
+            "Precedence and token contracts are updated and linked from README.",
+            "Style guardrail script is wired to local and CI workflows."
+          ]
+        },
+        {
+          "title": "Create PRD + screen specifications for existing product routes",
+          "requirementId": "REQ-UI-009",
+          "promptSection": "UI Refactor / Existing functionality PRDs and screens",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "prd",
+            "screen-spec"
+          ],
+          "problemStatement": "Existing product routes now have drafted LIC-aligned PRD and screen specifications; the route coverage matrix needs review/approval and implementation linkage before full verification.",
+          "requirementExcerpt": "UI refactor must include PRDs/screens for existing functionality with enforceable interaction and review-gate requirements.",
+          "acceptanceCriteria": [
+            "Each existing route has a PRD and screen spec artifact with state model, accessibility checks, and audit evidence expectations.",
+            "Specs include role-based visibility and review-gate behavior where applicable.",
+            "Specs are linked in backlog tickets and PR evidence sections."
+          ],
+          "apiImpact": "No API changes; product-spec artifacts only.",
+          "securityImpact": "Improves consistency of review-gated and auditable UI workflows.",
+          "definitionOfDone": [
+            "Route coverage matrix is complete and versioned in docs.",
+            "All active UI work items link to a route-level PRD/screen spec."
+          ]
+        },
+        {
+          "title": "Create blocked PRD/screen placeholders for backlog features",
+          "requirementId": "REQ-UI-010",
+          "promptSection": "UI Refactor / Backlog functionality PRDs and screens",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "prd",
+            "screen-spec",
+            "blocked-prd"
+          ],
+          "problemStatement": "Blocked placeholder specs for backlog-driven flows are now defined with dependency markers and unblock criteria in the UI PRD/screen backlog matrix.",
+          "requirementExcerpt": "Create umbrella and child tickets for redesign of user flows tied to TBD PRDs/screens and mark them blocked where necessary.",
+          "acceptanceCriteria": [
+            "Blocked placeholder items exist for all known backlog workflows requiring new PRD/screen design.",
+            "Each placeholder includes acceptance skeleton, dependencies, and unblock criteria.",
+            "Backlog reflects blocked state until PRD/screen approvals exist."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Prevents ambiguous UX implementations in high-risk operational workflows.",
+          "definitionOfDone": [
+            "Blocked placeholder matrix is documented and synchronized to issue tracker.",
+            "Unblock criteria is explicit on each placeholder item."
+          ]
+        },
+        {
+          "title": "Migrate global shell and foundation tokens to canonical LIC profile",
+          "requirementId": "REQ-UI-011",
+          "promptSection": "UI Refactor / Foundation migration",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "Global shell and token layers remain partially coupled to legacy profile choices and need canonical alignment.",
+          "requirementExcerpt": "Apply canonical tokens, typography roles, spacing, and layout doctrine across shell and core routes.",
+          "acceptanceCriteria": [
+            "Global token definitions match canonical profile values.",
+            "Shell/nav surfaces are rule-based, table-first, and state-explicit.",
+            "No prohibited decorative patterns remain in shell and top-level layout primitives."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Supports clarity in privileged workflows and review states.",
+          "definitionOfDone": [
+            "Foundation styles pass guardrail checks and regression suite.",
+            "Manual walkthrough confirms no console errors on shell routes."
+          ]
+        },
+        {
+          "title": "Normalize primitive components to LIC state and accessibility model",
+          "requirementId": "REQ-UI-012",
+          "promptSection": "UI Refactor / Primitive normalization",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "a11y",
+            "design-system"
+          ],
+          "problemStatement": "Primitive state handling and keyboard/focus behavior can drift without a strict LIC component contract.",
+          "requirementExcerpt": "Button/Input/Select/Badge/Table/Card/Drawer/Modal/Toast must align with canonical state and accessibility behavior.",
+          "acceptanceCriteria": [
+            "All required primitives expose explicit default/hover/focus/active/disabled/error states.",
+            "Focus-visible behavior is present and test-covered for interactive primitives.",
+            "Destructive interactions use explicit confirmation and consequence messaging."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Improves reliability of destructive-action handling and review workflows.",
+          "definitionOfDone": [
+            "Primitive tests cover state class behavior and accessibility interactions.",
+            "Checklist evidence attached for representative route migrations."
+          ]
+        },
+        {
+          "title": "Standardize review-gate, audit visibility, and procedural microcopy",
+          "requirementId": "REQ-UI-013",
+          "promptSection": "UI Refactor / Interaction + workflow doctrine",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "ai-governance"
+          ],
+          "problemStatement": "Workflow surfaces still need consistent review-gate statusing, audit visibility, and procedural copy across modules.",
+          "requirementExcerpt": "Apply review gates, explicit approvals, and audit trail visibility while removing non-procedural AI tone.",
+          "acceptanceCriteria": [
+            "Generated-output workflows show review gate status sequence and actor/time context.",
+            "Client-facing send actions require explicit confirmation with consequence text.",
+            "Microcopy aligns with procedural LIC voice and removes hype language."
+          ],
+          "apiImpact": "No API changes expected.",
+          "securityImpact": "Reduces accidental client-facing actions by enforcing explicit approvals.",
+          "definitionOfDone": [
+            "Workflow surfaces demonstrate consistent status and audit metadata presentation.",
+            "Manual validation confirms no hidden auto-send paths."
           ]
         }
       ]

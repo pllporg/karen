@@ -140,6 +140,8 @@ describe('Web smoke journey', () => {
       target: { value: state.matters[0]?.id || 'matter-1' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

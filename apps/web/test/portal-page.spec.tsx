@@ -59,6 +59,8 @@ describe('PortalPage', () => {
 
     fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -70,8 +72,9 @@ describe('PortalPage', () => {
       );
     });
 
-    const sendCall = fetchMock.mock.calls[1];
-    expect(JSON.parse(sendCall[1]?.body as string)).toEqual({
+    const sendCall = fetchMock.mock.calls.find(([url]) => String(url) === 'http://localhost:4000/portal/messages');
+    expect(sendCall).toBeDefined();
+    expect(JSON.parse((sendCall?.[1]?.body as string) || '{}')).toEqual({
       matterId: 'matter-1',
       body: 'Can you share the latest mediation timeline?',
     });
@@ -111,6 +114,8 @@ describe('PortalPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit Intake' }));
     fireEvent.click(screen.getByRole('button', { name: 'Create E-Sign Envelope' }));
+    await screen.findByRole('dialog', { name: 'Confirm E-Sign Envelope Dispatch' });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -274,6 +279,8 @@ describe('PortalPage', () => {
     const file = new File(['binary'], 'defect-photo.jpg', { type: 'image/jpeg' });
     fireEvent.change(screen.getByLabelText('Attachment File'), { target: { files: [file] } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -285,8 +292,9 @@ describe('PortalPage', () => {
       );
     });
 
-    const sendCall = fetchMock.mock.calls[2];
-    expect(JSON.parse(sendCall[1]?.body as string)).toEqual({
+    const sendCall = fetchMock.mock.calls.find(([url]) => String(url) === 'http://localhost:4000/portal/messages');
+    expect(sendCall).toBeDefined();
+    expect(JSON.parse((sendCall?.[1]?.body as string) || '{}')).toEqual({
       matterId: 'matter-1',
       body: 'See attached defect photo',
       attachmentVersionIds: ['ver-up'],

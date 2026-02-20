@@ -1,0 +1,4 @@
+interface:
+  display_name: "LIC Design System"
+  short_description: "Enforce LIC UI, brand, and interaction standards."
+  default_prompt: "Apply the LIC design system to this repository and enforce its tokens, component contracts, interaction rules, AI doctrine, and GP-01 patterns where relevant."

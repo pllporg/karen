@@ -271,8 +271,56 @@ describe('AiPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('APPROVED')).toBeInTheDocument();
+      expect(screen.getAllByText('APPROVED').length).toBeGreaterThan(0);
     });
+  });
+
+  it('shows review-gate sequence and audit context for generated artifacts', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: 'job-ctx-1',
+            toolName: 'case_summary',
+            matterId: 'matter-ctx-1',
+            status: 'COMPLETED',
+            createdByUserId: 'user-42',
+            createdAt: '2026-02-20T00:00:00.000Z',
+            artifacts: [
+              {
+                id: 'artifact-ctx-1',
+                type: 'case_summary',
+                content: 'Draft case summary',
+                reviewedStatus: 'DRAFT',
+                reviewedByUserId: null,
+                reviewedAt: null,
+                createdAt: '2026-02-20T00:00:30.000Z',
+                metadataJson: {},
+              },
+            ],
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(jsonResponse([]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AiPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('PROPOSED').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('IN REVIEW').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('APPROVED').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('EXECUTED').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('RETURNED').length).toBeGreaterThan(0);
+    });
+
+    expect(
+      screen.getByText(
+        'Submitted 2026-02-20T00:00:30.000Z by user-42 | Review: pending at pending',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('External send/file actions remain blocked until review status is APPROVED.')).toBeInTheDocument();
   });
 
   it('includes selected style pack id when creating AI jobs', async () => {

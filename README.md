@@ -226,12 +226,20 @@ Included suites cover:
 ## UI/UX Refactor Lane
 
 - Canonical source and precedence:
-  - `brand/Brand Identity Document/` (source of truth)
-  - If conflicts exist with legacy UI setup/docs, Brand Identity Document wins.
+  - `docs/UI_CANONICAL_PRECEDENCE.md` (source-of-truth precedence order)
   - Component states/patterns come from `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
   - Product app work explicitly excludes the `MarketingSite` tab/section.
 - Planning artifact for LIC-aligned UI migration:
   - `docs/UI_REFACTOR_LANE_PLAN.md`
+- PRD/screen coverage backlog:
+  - `docs/UI_PRD_SCREEN_BACKLOG.md`
+- PRD/screen templates:
+  - `docs/templates/UI_PRD_TEMPLATE.md`
+  - `docs/templates/UI_SCREEN_SPEC_TEMPLATE.md`
+- Drafted route specs for current `REQ-UI-009` coverage are tracked in:
+  - `docs/UI_PRD_SCREEN_BACKLOG.md` (all draft links)
+  - `docs/prd/`
+  - `docs/screens/`
 - Token contract and baseline architecture:
   - `docs/UI_TOKEN_CONTRACT.md`
 - Design + interaction compliance checklist:
@@ -244,6 +252,8 @@ Included suites cover:
   - `pnpm backlog:ui:sync`
 - Local UI regression gate command:
   - `pnpm test:ui-regression`
+- Local LIC style guard command:
+  - `pnpm ui:contract:check`
 
 ## Important Notes
 

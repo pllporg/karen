@@ -2,6 +2,7 @@
 
 Source of truth: `brand/Brand Identity Document/`
 Canonical component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+Canonical precedence contract: `docs/UI_CANONICAL_PRECEDENCE.md`
 Explicitly out of scope for product app parity: `MarketingSite` tab/section.
 
 Use this checklist for any UI-affecting ticket or PR.
@@ -62,6 +63,7 @@ Use this checklist for any UI-affecting ticket or PR.
 
 ## 8) Verification Evidence in PR/Issue
 - Screens/routes touched listed.
+- Linked PRD/screen spec reference for each touched route (or explicit `Blocked by PRD/Screens` ticket for future flow work).
 - Test/build commands listed and passed.
 - Manual checklist outcomes documented.
 - Any intentional exception documented with rationale and follow-up ticket.

@@ -18,7 +18,11 @@ export function Drawer({
 }) {
   return (
     <>
-      <aside className={cx('ui-drawer', `ui-drawer-${side}`, open && 'is-open')} aria-hidden={!open}>
+      <aside
+        className={cx('ui-drawer', `ui-drawer-${side}`, open && 'is-open')}
+        data-state={open ? 'open' : 'closed'}
+        aria-hidden={!open}
+      >
         <div className="ui-drawer-header">
           {title ? <p className="ui-drawer-title">{title}</p> : null}
           <button className="button ghost" type="button" onClick={onClose}>

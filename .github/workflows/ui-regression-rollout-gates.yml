@@ -72,5 +72,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install
+      - run: pnpm ui:contract:check
       - run: pnpm --filter web test:regression
       - run: pnpm --filter web build
