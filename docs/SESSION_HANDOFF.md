@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-19T22:52:37.020Z`
+- Snapshot Timestamp: `2026-02-20T01:35:01.307Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-19T22:52:35.822Z`
+- Last Successful Mirror Verify: `2026-02-20T00:08:33.330Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -55,9 +55,10 @@ Selection policy:
 UI refactor lane continuity:
 
 1. Use `tools/backlog-sync/session.snapshot.json` -> `uiLaneSummary.openIssueKeys` for active UI queue.
-2. Current UI queue is `KAR-56` through `KAR-60` with Brand Identity Document compliance criteria embedded in each issue.
+2. Current refactor planning queue is tracked in `PARITY-11` (`REQ-UI-008` through `REQ-UI-013`) in `tools/backlog-sync/requirements.matrix.json`.
 3. UI primitives/state behavior should be checked against `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
 4. `MarketingSite` section remains out-of-scope for product app parity.
+5. If Linear sync was not run in the current shell, execute `pnpm backlog:seed && pnpm backlog:sync && pnpm backlog:verify && pnpm backlog:snapshot` after exporting `LINEAR_API_TOKEN`/`GITHUB_TOKEN`.
 
 ## Dirty Tree Policy
 
@@ -89,6 +90,15 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-20: Completed `REQ-UI-013` by standardizing review-gate visibility and audit context in AI workflows (explicit gate sequence + actor/time metadata), adding explicit confirmation gates for client-facing portal send actions (message send + e-sign dispatch), documenting evidence in `docs/parity/ui-review-gate-audit-microcopy-verification.md`, moving `KAR-75` to `In Review`, and syncing mirror issue `#148`.
+- 2026-02-19: Completed `REQ-UI-012` by normalizing primitive state semantics (added shared `Textarea` primitive, explicit primitive `data-state`/`data-tone` metadata, modal `aria-busy` contract, and expanded primitive regression coverage), documented evidence at `docs/parity/ui-primitive-normalization-verification.md`, moved `KAR-74` to `In Review`, synced mirror issue `#149`, and refreshed snapshot/verify metadata.
+- 2026-02-19: Completed `REQ-UI-011` by finishing shell foundation token alignment (`--lic-shell-sidebar-width`, `--lic-shell-sidebar-compact-width`, `--lic-content-max-width`), adding canonical `main-panel-content` wrapper semantics, and documenting verification evidence (`docs/parity/ui-shell-foundation-verification.md`); moved `KAR-73` to `In Review`, synced mirror issue `#150`, and refreshed snapshot/verify metadata.
+- 2026-02-19: Moved `KAR-70` (`REQ-UI-008`) to `In Review` with canonical-precedence and guardrail evidence (`docs/UI_CANONICAL_PRECEDENCE.md`, `tools/ui/check_lic_style_guards.mjs`, `.github/workflows/ui-regression-rollout-gates.yml`), and synced mirror issue `#153`.
+- 2026-02-19: Moved `KAR-72` (`REQ-UI-010`) to `In Review` after documenting blocked backlog-flow placeholders (`REQ-UI-BLOCK-001`..`REQ-UI-BLOCK-006`) in `docs/UI_PRD_SCREEN_BACKLOG.md`; mirror issue `#151` synced.
+- 2026-02-19: Completed full `REQ-UI-009` existing-route PRD/screen draft coverage (`dashboard`, `matters`, `matters/[id]`, `contacts`, `communications`, `documents`, `billing`, `portal`, `ai`, `imports`, `exports`, `reporting`, `admin`, `login`, `shared-doc/[token]`), updated tracker `docs/UI_PRD_SCREEN_BACKLOG.md`, set matrix status for `REQ-UI-009` to `Complete`, moved `KAR-71` to `In Review`, and synced mirror issue `#152`.
+- 2026-02-19: Moved `KAR-71` (`REQ-UI-009`) to `In Progress`, synced mirror issue `#152`, and attached verification evidence for initial route-spec draft batch.
+- 2026-02-19: Drafted initial `REQ-UI-009` route specs and screen specs for `dashboard`, `matters`, and `matters/[id]` (`docs/prd/REQ-UI-009-dashboard.prd.md`, `docs/prd/REQ-UI-009-matters-list.prd.md`, `docs/prd/REQ-UI-009-matter-workspace.prd.md`, `docs/screens/REQ-UI-009-dashboard.screen-spec.md`, `docs/screens/REQ-UI-009-matters-list.screen-spec.md`, `docs/screens/REQ-UI-009-matter-workspace.screen-spec.md`), and updated PRD backlog status tracking in `docs/UI_PRD_SCREEN_BACKLOG.md`.
+- 2026-02-19: Started Phase-0 LIC canonical refactor lock: added precedence contract (`docs/UI_CANONICAL_PRECEDENCE.md`), PRD/screen backlog scaffold (`docs/UI_PRD_SCREEN_BACKLOG.md` + templates), canonical token contract/lane-plan updates, style guardrail script (`pnpm ui:contract:check`) wired into CI and regression gates, and PARITY-11 matrix tasks (`REQ-UI-008`..`REQ-UI-013`); validated with `pnpm ui:contract:check`, `pnpm lint`, `pnpm test:ui-regression`, `pnpm test`, `pnpm build`.
 - 2026-02-19: Completed `KAR-68` / `REQ-PMS-CORE-006`; PR `#146` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).
 - 2026-02-19: Advanced `KAR-68` / `REQ-PMS-CORE-006` to `In Review` by implementing matter-dashboard document lifecycle operations: added document metadata update endpoint (`PATCH /documents/:id`) with matter-scoped write enforcement, expanded document audit coverage for version upload/share-link creation (`document.version.uploaded`, `document.share_link.created`, `document.updated`), upgraded dashboard documents panel with in-context upload/version/share/download controls and client-sharing toggle (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/documents.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published parity evidence at `docs/parity/matter-dashboard-document-lifecycle.md`; validation passed via `pnpm --filter api test -- test/documents.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
 - 2026-02-19: Completed `KAR-67` / `REQ-PMS-CORE-005`; PR `#142` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).

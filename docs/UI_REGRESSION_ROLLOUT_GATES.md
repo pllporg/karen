@@ -8,6 +8,7 @@ This runbook defines the mandatory release gates for UI-affecting pull requests.
 
 - Brand source: `brand/Brand Identity Document/`
 - Component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+- Precedence contract: `docs/UI_CANONICAL_PRECEDENCE.md`
 - Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
 - Marketing scope exclusion: `MarketingSite` section is out-of-scope for product app parity.
 
@@ -17,6 +18,7 @@ This runbook defines the mandatory release gates for UI-affecting pull requests.
    - branch/title/linkage policy
    - required `Linear Issue` + `Requirement ID` sections
 2. `UI Regression and Rollout Gates` must pass:
+   - LIC style guardrail check (`pnpm ui:contract:check`)
    - PR evidence validation for UI file changes (`UI Interaction Checklist` + `Screenshot Evidence`)
    - deterministic UI regression suite (`pnpm --filter web test:regression`)
    - production build check (`pnpm --filter web build`)
