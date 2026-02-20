@@ -61,7 +61,7 @@ describe('AdminPage webhook delivery monitor', () => {
       const url = String(input);
       const method = init?.method || 'GET';
 
-      if (url.endsWith('/admin/organization')) return jsonResponse({ name: 'Karen Legal', slug: 'karen' });
+      if (url.endsWith('/admin/organization')) return jsonResponse({ name: 'LIC Legal', slug: 'lic' });
       if (url.endsWith('/admin/users')) return jsonResponse([]);
       if (url.endsWith('/admin/roles')) return jsonResponse([]);
       if (url.endsWith('/admin/stages')) return jsonResponse([]);

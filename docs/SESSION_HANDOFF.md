@@ -1,13 +1,13 @@
-# Karen Legal Suite Session Handoff
+# LIC Legal Suite Session Handoff
 
 This document is the persistent handoff layer for new chats. Linear is canonical; this file provides the minimal runbook to reconstruct context quickly and consistently.
 
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-20T01:35:01.307Z`
+- Snapshot Timestamp: `2026-02-20T16:54:34.436Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-20T00:08:33.330Z`
+- Last Successful Mirror Verify: `2026-02-20T16:54:33.144Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -90,6 +90,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-20: Started `KAR-76` branding migration by switching product-facing naming to `LIC Legal Suite` across web shell/login metadata and API descriptors, adding a canonical app icon (`apps/web/app/icon.svg`), and adopting `x-lic-*` webhook/e-sign header conventions with legacy `x-karen-*` compatibility retained for integrations (`apps/api/src/webhooks/webhooks.service.ts`, `apps/api/src/portal/esign/*.ts`, `apps/api/test/webhooks-delivery.spec.ts`); validation passed via `pnpm --filter api test -- test/webhooks-delivery.spec.ts`, `pnpm --filter web test -- test/app-shell.spec.tsx test/admin-page.spec.tsx`, `pnpm lint`, `pnpm test`, and `pnpm build`.
 - 2026-02-20: Completed `REQ-UI-013` by standardizing review-gate visibility and audit context in AI workflows (explicit gate sequence + actor/time metadata), adding explicit confirmation gates for client-facing portal send actions (message send + e-sign dispatch), documenting evidence in `docs/parity/ui-review-gate-audit-microcopy-verification.md`, moving `KAR-75` to `In Review`, and syncing mirror issue `#148`.
 - 2026-02-19: Completed `REQ-UI-012` by normalizing primitive state semantics (added shared `Textarea` primitive, explicit primitive `data-state`/`data-tone` metadata, modal `aria-busy` contract, and expanded primitive regression coverage), documented evidence at `docs/parity/ui-primitive-normalization-verification.md`, moved `KAR-74` to `In Review`, synced mirror issue `#149`, and refreshed snapshot/verify metadata.
 - 2026-02-19: Completed `REQ-UI-011` by finishing shell foundation token alignment (`--lic-shell-sidebar-width`, `--lic-shell-sidebar-compact-width`, `--lic-content-max-width`), adding canonical `main-panel-content` wrapper semantics, and documenting verification evidence (`docs/parity/ui-shell-foundation-verification.md`); moved `KAR-73` to `In Review`, synced mirror issue `#150`, and refreshed snapshot/verify metadata.

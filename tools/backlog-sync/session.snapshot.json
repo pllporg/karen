@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-20T01:35:01.307Z",
+  "generatedAt": "2026-02-20T16:54:34.436Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -96,15 +96,43 @@
   "linearSummary": {
     "projectName": "Prompt Parity - Karen Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 61,
+    "scopedIssueCount": 63,
     "stateCounts": {
+      "Backlog": 12,
       "In Review": 6,
-      "Backlog": 11,
-      "Done": 44
+      "Done": 45
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-71",
+        "title": "Create PRD + screen specifications for existing product routes",
+        "state": "In Review",
+        "updatedAt": "2026-02-20T16:18:58.941Z",
+        "requirementId": "REQ-UI-009"
+      },
+      {
+        "key": "KAR-77",
+        "title": "Execute full UI compliance review against LIC canonical standards",
+        "state": "Backlog",
+        "updatedAt": "2026-02-20T16:16:53.034Z",
+        "requirementId": "REQ-UI-015"
+      },
+      {
+        "key": "KAR-76",
+        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
+        "state": "Backlog",
+        "updatedAt": "2026-02-20T16:16:52.284Z",
+        "requirementId": "REQ-UI-014"
+      },
+      {
+        "key": "KAR-69",
+        "title": "PARITY-11 UI Refactor + PRD/Screen Coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-20T01:42:59.902Z",
+        "requirementId": "PARITY-11"
+      },
       {
         "key": "KAR-68",
         "title": "Implement matter dashboard document lifecycle operations",
@@ -146,48 +174,18 @@
         "state": "In Review",
         "updatedAt": "2026-02-19T23:49:17.007Z",
         "requirementId": "REQ-UI-010"
-      },
-      {
-        "key": "KAR-71",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T23:48:13.231Z",
-        "requirementId": "REQ-UI-009"
-      },
-      {
-        "key": "KAR-69",
-        "title": "PARITY-11 UI Refactor + PRD/Screen Coverage",
-        "state": "Backlog",
-        "updatedAt": "2026-02-19T23:23:36.843Z",
-        "requirementId": "PARITY-11"
-      },
-      {
-        "key": "KAR-67",
-        "title": "Complete matter dashboard task and calendar lifecycle operations",
-        "state": "Done",
-        "updatedAt": "2026-02-19T19:39:03.964Z",
-        "requirementId": "REQ-PMS-CORE-005"
-      },
-      {
-        "key": "KAR-18",
-        "title": "PARITY-04 Contacts + Matters + Participants",
-        "state": "Backlog",
-        "updatedAt": "2026-02-19T19:10:10.502Z",
-        "requirementId": "PARITY-04"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 14,
-    "openIssueCount": 7,
+    "openIssueCount": 6,
     "stateCounts": {
       "In Review": 6,
-      "Backlog": 1,
-      "Done": 7
+      "Done": 8
     },
     "openIssueKeys": [
-      "KAR-69",
       "KAR-70",
       "KAR-71",
       "KAR-72",
@@ -196,13 +194,6 @@
       "KAR-75"
     ],
     "openIssues": [
-      {
-        "key": "KAR-69",
-        "title": "PARITY-11 UI Refactor + PRD/Screen Coverage",
-        "state": "Backlog",
-        "requirementId": "PARITY-11",
-        "updatedAt": "2026-02-19T23:23:36.843Z"
-      },
       {
         "key": "KAR-70",
         "title": "Lock canonical LIC precedence and enforce style guardrails",
@@ -215,7 +206,7 @@
         "title": "Create PRD + screen specifications for existing product routes",
         "state": "In Review",
         "requirementId": "REQ-UI-009",
-        "updatedAt": "2026-02-19T23:48:13.231Z"
+        "updatedAt": "2026-02-20T16:18:58.941Z"
       },
       {
         "key": "KAR-72",
@@ -248,55 +239,33 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-20T00:08:33.330Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-20T16:54:33.144Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "5b1ef8a2a1ff4395f3ceb6739c16ed205c42a75e",
+    "gitHead": "60779eb9be828111709bd1b0f2090fe53d68de2c",
     "gitStatusShort": [
-      "## lin/KAR-69-ui-refactor-lane-resume",
-      " M .github/workflows/ui-regression-rollout-gates.yml",
+      "## lin/KAR-76-lic-branding-migration",
       " M README.md",
-      " M apps/web/app/ai/page.tsx",
+      " M apps/api/src/auth/auth.service.ts",
+      " M apps/api/src/communications/communications.service.ts",
+      " M apps/api/src/communications/providers/resend-email.provider.ts",
+      " M apps/api/src/main.ts",
+      " M apps/api/src/portal/esign/sandbox-esign.provider.ts",
+      " M apps/api/src/portal/esign/stub-esign.provider.ts",
+      " M apps/api/src/webhooks/webhooks.service.ts",
+      " M apps/api/test/webhooks-delivery.spec.ts",
       " M apps/web/app/globals.css",
-      " M apps/web/app/lic-tokens.css",
-      " M apps/web/app/portal/page.tsx",
+      " M apps/web/app/layout.tsx",
+      " M apps/web/app/login/page.tsx",
       " M apps/web/components/app-shell.tsx",
-      " M apps/web/components/ui/badge.tsx",
-      " M apps/web/components/ui/button.tsx",
-      " M apps/web/components/ui/drawer.tsx",
-      " M apps/web/components/ui/input.tsx",
-      " M apps/web/components/ui/modal.tsx",
-      " M apps/web/components/ui/select.tsx",
-      " M apps/web/components/ui/toast.tsx",
-      " M apps/web/package.json",
-      " M apps/web/test/ai-page.spec.tsx",
+      " M apps/web/test/admin-page.spec.tsx",
       " M apps/web/test/app-shell.spec.tsx",
-      " M apps/web/test/portal-page.spec.tsx",
-      " M apps/web/test/ui-primitives.spec.tsx",
+      " M docs/DEPLOYMENT_RUNBOOK.md",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
-      " M docs/UI_REFACTOR_LANE_PLAN.md",
-      " M docs/UI_REGRESSION_ROLLOUT_GATES.md",
-      " M docs/UI_TOKEN_CONTRACT.md",
       " M docs/WORKING_CONTRACT.md",
-      " M package.json",
-      " M pnpm-lock.yaml",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      "?? apps/web/.eslintrc.json",
-      "?? apps/web/components/ui/textarea.tsx",
-      "?? docs/UI_CANONICAL_PRECEDENCE.md",
-      "?? docs/UI_PRD_SCREEN_BACKLOG.md",
-      "?? docs/parity/ui-primitive-normalization-verification.md",
-      "?? docs/parity/ui-review-gate-audit-microcopy-verification.md",
-      "?? docs/parity/ui-shell-foundation-verification.md",
-      "?? docs/prd/",
-      "?? docs/screens/",
-      "?? docs/templates/",
-      "?? lic-design-system/",
-      "?? tools/ui/"
+      "?? apps/web/app/icon.svg"
     ],
-    "dirtyFileCount": 41
+    "dirtyFileCount": 19
   }
 }

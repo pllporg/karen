@@ -12,8 +12,9 @@ describe('AppShell', () => {
     );
 
     expect(screen.getByText('Standards Manual')).toBeInTheDocument();
+    expect(screen.getByText('LIC Legal Suite')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#karen-main-content');
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#lic-main-content');
 
     const activeLink = screen.getByRole('link', { name: /Command Center/i });
     expect(activeLink).toHaveAttribute('aria-current', 'page');

@@ -1,4 +1,4 @@
-# Karen Legal Suite Working Contract
+# LIC Legal Suite Working Contract
 
 This contract defines how implementation sessions are executed to preserve parity progress and context continuity.
 

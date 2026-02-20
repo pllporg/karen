@@ -137,6 +137,26 @@ pre {
   border-bottom: var(--lic-rule-1) solid var(--lic-graphite);
 }
 
+.shell-brand-lockup {
+  margin: 0 0 var(--lic-2);
+}
+
+.shell-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 32px;
+  border: var(--lic-rule-1) solid var(--lic-paper);
+  padding: 0 var(--lic-2);
+  font-family: var(--lic-font-condensed);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lic-paper);
+}
+
 .shell-header-kicker {
   margin: 0;
   font-family: var(--lic-font-mono);

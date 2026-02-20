@@ -40,7 +40,7 @@ export class ResendEmailProvider implements EmailProvider {
       body: JSON.stringify({
         from,
         to: [input.to],
-        subject: input.subject || 'Message from Karen Legal Suite',
+        subject: input.subject || 'Message from LIC Legal Suite',
         text: input.body,
       }),
     });

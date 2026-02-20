@@ -216,6 +216,12 @@ export class WebhooksService {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
+            'x-lic-signature-v1': signature,
+            'x-lic-signature-timestamp': timestamp,
+            'x-lic-delivery-id': input.deliveryId,
+            'x-lic-idempotency-key': input.idempotencyKey,
+            'x-lic-event-type': input.eventType,
+            // Legacy compatibility for existing webhook consumers.
             'x-karen-signature-v1': signature,
             'x-karen-signature-timestamp': timestamp,
             'x-karen-delivery-id': input.deliveryId,

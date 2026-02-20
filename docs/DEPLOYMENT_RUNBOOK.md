@@ -1,6 +1,6 @@
 # Deployment Runbook + Operational SLOs
 
-This runbook defines baseline production operations for Karen Legal Suite:
+This runbook defines baseline production operations for LIC Legal Suite:
 
 - deployment and migration flow
 - startup readiness checks

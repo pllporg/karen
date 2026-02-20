@@ -1,4 +1,4 @@
-# Karen Legal Suite
+# LIC Legal Suite
 
 Production-oriented monorepo scaffold for a multi-tenant legal practice management SaaS + legal AI case workforce, tailored to residential construction litigation.
 
@@ -171,7 +171,7 @@ Webhook delivery hardening controls:
 
 - `WEBHOOK_DELIVERY_MAX_ATTEMPTS` (default `3`)
 - `WEBHOOK_DELIVERY_RETRY_BASE_DELAY_MS` (default `100`)
-- outbound headers include `x-karen-signature-v1`, `x-karen-signature-timestamp`, `x-karen-delivery-id`, and `x-karen-idempotency-key`
+- outbound headers include `x-lic-signature-v1`, `x-lic-signature-timestamp`, `x-lic-delivery-id`, and `x-lic-idempotency-key` (legacy `x-karen-*` headers are still sent for compatibility)
 
 Document template merge workflow:
 

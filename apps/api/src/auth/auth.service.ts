@@ -160,7 +160,7 @@ export class AuthService {
 
     return {
       secret,
-      otpauthUrl: authenticator.keyuri(userId, 'Karen Legal Suite', secret),
+      otpauthUrl: authenticator.keyuri(userId, 'LIC Legal Suite', secret),
     };
   }
 

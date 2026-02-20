@@ -315,7 +315,7 @@ export class CommunicationsService {
         input.type === 'EMAIL'
           ? await this.messageDispatch.sendEmail({
               to: recipient.destination,
-              subject: input.subject || 'Message from Karen Legal Suite',
+              subject: input.subject || 'Message from LIC Legal Suite',
               body: input.body,
             })
           : await this.messageDispatch.sendSms({
