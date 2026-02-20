@@ -41,7 +41,7 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Litigation Command Center"
+        title="Matter Operations Dashboard"
         subtitle="Construction litigation operations, billing, documents, and AI workflows in one tenant-isolated workspace."
       />
 

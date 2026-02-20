@@ -3,7 +3,7 @@
 ## Canonical Source + Conflict Rule
 
 - Canonical precedence: `docs/UI_CANONICAL_PRECEDENCE.md`.
-- Product app scope uses LIC references and Brand Identity Document; `MarketingSite` is excluded.
+- Product app scope uses LIC design-system references only; `lic-design-system/references/marketing-site.md` is excluded.
 - If local legacy docs/components conflict, canonical precedence wins.
 
 ## Why This Lane Exists
@@ -26,6 +26,7 @@ UI work is currently split across legacy styling decisions and partially migrate
 - Add automated style guard checks (`pnpm ui:contract:check`).
 - Wire guardrails into UI rollout CI workflow.
 - Update token contract and checklist references.
+- Enforce standards-manual boundary: extract standards from manual sections, but do not copy manual-app shell/nav/metadata UX into product routes.
 
 ### Phase 1: Product PRD + screen inventory (existing functionality)
 
@@ -90,6 +91,10 @@ Migrate in small PRs:
 4. Communications/documents/billing
 5. Portal and AI surfaces
 6. Admin/reporting/import/export
+
+Shell + navigation acceptance gate:
+- Header copy and nav taxonomy are product-operational (not documentation-taxonomy).
+- No standards-manual copy markers in app shell or page headings.
 
 ### Phase 6: Regression + rollout hardening
 

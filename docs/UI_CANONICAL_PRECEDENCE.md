@@ -6,14 +6,16 @@ This document resolves conflicting UI guidance across legacy repo docs, AGENTS g
 
 - Applies to product application UI under `apps/web/**`.
 - Excludes marketing-site visuals and interactions.
+- Treat the Brand Identity "standards manual app" as a documentation container, not as product UX to clone.
 
 ## Canonical Source Order
 
 1. `lic-design-system/references/interaction-and-ai.md`
 2. `lic-design-system/references/ui-kit.md`
 3. `lic-design-system/references/design-tokens.md`
-4. `brand/Brand Identity Document/src/app/components/sections/**` and `src/styles/tailwind.css`
-5. Legacy local docs (`brand/Brandguide.md`, `agents.md`, prior `docs/UI_*.md`)
+4. `lic-design-system/references/source-map.md`
+5. Legacy local docs (`brand/**`, `uirefactorprompt.md`, prior superseded `docs/UI_*.md`) are archive-only and non-canonical.
+6. `AGENTS.md` / `agents.md` remain execution constraints and must stay aligned with this precedence contract for UI values.
 
 If a rule conflicts, higher-order source wins.
 
@@ -35,6 +37,22 @@ If a rule conflicts, higher-order source wins.
 - Labels, metadata, status, table headers: IBM Plex Mono (uppercase where applicable).
 - Page/module headings: IBM Plex Sans Condensed uppercase with tracked letter spacing.
 - This split preserves procedural readability and resolves mono-vs-condensed conflict without adding new font families.
+
+### Branding transition compatibility (Decision 1A)
+
+- Keep compatibility naming identifiers until `KAR-76` is completed and verified.
+- Transitional identifiers may remain in non-UI/runtime compatibility surfaces:
+  - package/repo identifiers (for example `karen-legal-suite`)
+  - demo seed domains (for example `@karen-demo.local`)
+  - legacy integration headers (`x-karen-*`) where backward compatibility is required
+- New UI copy and new user-facing branding must use LIC naming immediately.
+
+### Standards-manual boundary (Design Source Rule)
+
+- The standards-manual shell/navigation in `brand/Brand Identity Document*/src/app/components/Layout.tsx` is documentation UX for designers.
+- Product UX must not reuse standards-manual copy markers in operator-facing surfaces (for example: `Standards Manual`, `LIC / IDENTITY`, revision/confidential banners, or section-number nav motifs).
+- Canonical product behavior comes from standards sections (tokens, primitives, interaction, GP-01 screens/flow), not from the manual app's site IA.
+- Route labels, headings, and metadata in `apps/web/**` must reflect live product operations (matters, billing, portal, AI workflows), not documentation taxonomy.
 
 ### Motion and geometry
 

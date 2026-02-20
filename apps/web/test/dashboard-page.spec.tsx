@@ -8,7 +8,7 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByRole('heading', { name: 'Litigation Command Center' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Matter Operations Dashboard' })).toBeInTheDocument();
     expect(
       screen.getByText(/AI outputs are drafts only\. Attorney review and approval are required before use\./i),
     ).toBeInTheDocument();
