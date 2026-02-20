@@ -341,6 +341,84 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
+  it('edits and saves matter overview fields', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    const overview = {
+      matterNumber: 'M-100',
+      name: 'Doe v. Builder',
+      practiceArea: 'Construction Litigation',
+      status: 'OPEN',
+      venue: 'Superior',
+      jurisdiction: 'CA',
+      openedAt: '2026-01-02T16:00:00.000Z',
+      closedAt: null as string | null,
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state, overview));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1') && method === 'PATCH') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        overview.name = body.name;
+        overview.matterNumber = body.matterNumber;
+        overview.practiceArea = body.practiceArea;
+        overview.status = body.status;
+        overview.venue = body.venue;
+        overview.jurisdiction = body.jurisdiction;
+        overview.openedAt = body.openedAt;
+        overview.closedAt = body.closedAt;
+        return jsonResponse(buildDashboardFixture(state, overview));
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Overview' }));
+
+    fireEvent.change(screen.getByLabelText('Matter Name'), { target: { value: 'Updated Builder Dispute' } });
+    fireEvent.change(screen.getByLabelText('Matter Number'), { target: { value: 'M-101' } });
+    fireEvent.change(screen.getByLabelText('Practice Area'), { target: { value: 'General Civil Litigation' } });
+    fireEvent.change(screen.getByLabelText('Matter Status'), { target: { value: 'PENDING' } });
+    fireEvent.change(screen.getByLabelText('Matter Venue'), { target: { value: 'Downtown Court' } });
+    fireEvent.change(screen.getByLabelText('Matter Jurisdiction'), { target: { value: 'NV' } });
+    fireEvent.change(screen.getByLabelText('Matter Opened At'), { target: { value: '2026-02-03T11:45' } });
+    fireEvent.change(screen.getByLabelText('Matter Closed At'), { target: { value: '2026-03-03T15:30' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Overview' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/matters/matter-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Matter overview updated.')).toBeInTheDocument();
+      expect(screen.getByText('M-101 - Updated Builder Dispute')).toBeInTheDocument();
+      expect(screen.getByText('Practice Area: General Civil Litigation')).toBeInTheDocument();
+      expect(screen.getByText('Status: PENDING')).toBeInTheDocument();
+      expect(screen.getByText('Venue: Downtown Court')).toBeInTheDocument();
+      expect(screen.getByText('Jurisdiction: NV')).toBeInTheDocument();
+    });
+  });
+
   it('adds and removes participants in matter context', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 

@@ -52,6 +52,7 @@ const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
+const MATTER_STATUS_OPTIONS = ['OPEN', 'PENDING', 'CLOSED', 'ARCHIVED'] as const;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
 function toDateTimeLocalValue(value?: string | null) {
@@ -69,6 +70,16 @@ export default function MatterDashboardPage() {
   const params = useParams() as { id: string };
   const matterId = params.id;
   const [dashboard, setDashboard] = useState<any>(null);
+  const [editingOverview, setEditingOverview] = useState(false);
+  const [overviewName, setOverviewName] = useState('');
+  const [overviewMatterNumber, setOverviewMatterNumber] = useState('');
+  const [overviewPracticeArea, setOverviewPracticeArea] = useState('');
+  const [overviewStatus, setOverviewStatus] = useState<(typeof MATTER_STATUS_OPTIONS)[number]>('OPEN');
+  const [overviewVenue, setOverviewVenue] = useState('');
+  const [overviewJurisdiction, setOverviewJurisdiction] = useState('');
+  const [overviewOpenedAt, setOverviewOpenedAt] = useState('');
+  const [overviewClosedAt, setOverviewClosedAt] = useState('');
+  const [overviewStatusMessage, setOverviewStatusMessage] = useState<string | null>(null);
   const [rulesPacks, setRulesPacks] = useState<Array<{ id: string; name: string; pack?: { version?: string } }>>([]);
   const [selectedRulesPackId, setSelectedRulesPackId] = useState('');
   const [triggerDate, setTriggerDate] = useState(new Date().toISOString().slice(0, 10));
@@ -115,6 +126,18 @@ export default function MatterDashboardPage() {
     }
     const nextDashboard = await apiFetch<any>(`/matters/${matterId}/dashboard`);
     setDashboard(nextDashboard);
+    setOverviewName(nextDashboard.name || '');
+    setOverviewMatterNumber(nextDashboard.matterNumber || '');
+    setOverviewPracticeArea(nextDashboard.practiceArea || '');
+    setOverviewStatus(
+      MATTER_STATUS_OPTIONS.includes(nextDashboard.status as (typeof MATTER_STATUS_OPTIONS)[number])
+        ? nextDashboard.status
+        : 'OPEN',
+    );
+    setOverviewVenue(nextDashboard.venue || '');
+    setOverviewJurisdiction(nextDashboard.jurisdiction || '');
+    setOverviewOpenedAt(toDateTimeLocalValue(nextDashboard.openedAt));
+    setOverviewClosedAt(toDateTimeLocalValue(nextDashboard.closedAt));
     const threadIds = (nextDashboard.communicationThreads || []).map((thread: CommunicationThread) => thread.id);
     setSelectedCommunicationThreadId((current) => {
       if (threadIds.length === 0) {
@@ -191,6 +214,59 @@ export default function MatterDashboardPage() {
     setPreviewRows([]);
     setOverrideDates({});
     setOverrideReasons({});
+    await refreshDashboard();
+  }
+
+  function cancelOverviewEdit() {
+    if (!dashboard) {
+      setEditingOverview(false);
+      return;
+    }
+    setOverviewName(dashboard.name || '');
+    setOverviewMatterNumber(dashboard.matterNumber || '');
+    setOverviewPracticeArea(dashboard.practiceArea || '');
+    setOverviewStatus(
+      MATTER_STATUS_OPTIONS.includes(dashboard.status as (typeof MATTER_STATUS_OPTIONS)[number])
+        ? dashboard.status
+        : 'OPEN',
+    );
+    setOverviewVenue(dashboard.venue || '');
+    setOverviewJurisdiction(dashboard.jurisdiction || '');
+    setOverviewOpenedAt(toDateTimeLocalValue(dashboard.openedAt));
+    setOverviewClosedAt(toDateTimeLocalValue(dashboard.closedAt));
+    setEditingOverview(false);
+    setOverviewStatusMessage('Matter overview edit cancelled.');
+  }
+
+  async function updateMatterOverview() {
+    if (!matterId) {
+      return;
+    }
+    if (!overviewName.trim() || !overviewMatterNumber.trim() || !overviewPracticeArea.trim()) {
+      setOverviewStatusMessage('Matter name, number, and practice area are required.');
+      return;
+    }
+    if (!MATTER_STATUS_OPTIONS.includes(overviewStatus)) {
+      setOverviewStatusMessage('Matter status is invalid.');
+      return;
+    }
+
+    await apiFetch(`/matters/${matterId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: overviewName.trim(),
+        matterNumber: overviewMatterNumber.trim(),
+        practiceArea: overviewPracticeArea.trim(),
+        status: overviewStatus,
+        venue: overviewVenue.trim() ? overviewVenue.trim() : null,
+        jurisdiction: overviewJurisdiction.trim() ? overviewJurisdiction.trim() : null,
+        ...(overviewOpenedAt ? { openedAt: new Date(overviewOpenedAt).toISOString() } : {}),
+        closedAt: overviewClosedAt ? new Date(overviewClosedAt).toISOString() : null,
+      }),
+    });
+
+    setEditingOverview(false);
+    setOverviewStatusMessage('Matter overview updated.');
     await refreshDashboard();
   }
 
@@ -618,10 +694,96 @@ export default function MatterDashboardPage() {
         <div className="card-grid">
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Overview</h3>
-            <p>Practice Area: {dashboard.practiceArea}</p>
-            <p>Status: {dashboard.status}</p>
-            <p>Venue: {dashboard.venue || '-'}</p>
-            <p>Jurisdiction: {dashboard.jurisdiction || '-'}</p>
+            {editingOverview ? (
+              <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                <input
+                  className="input"
+                  aria-label="Matter Name"
+                  value={overviewName}
+                  onChange={(event) => setOverviewName(event.target.value)}
+                  placeholder="Matter name"
+                />
+                <input
+                  className="input"
+                  aria-label="Matter Number"
+                  value={overviewMatterNumber}
+                  onChange={(event) => setOverviewMatterNumber(event.target.value)}
+                  placeholder="Matter number"
+                />
+                <input
+                  className="input"
+                  aria-label="Practice Area"
+                  value={overviewPracticeArea}
+                  onChange={(event) => setOverviewPracticeArea(event.target.value)}
+                  placeholder="Practice area"
+                />
+                <select
+                  className="select"
+                  aria-label="Matter Status"
+                  value={overviewStatus}
+                  onChange={(event) => setOverviewStatus(event.target.value as (typeof MATTER_STATUS_OPTIONS)[number])}
+                >
+                  {MATTER_STATUS_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="input"
+                  aria-label="Matter Venue"
+                  value={overviewVenue}
+                  onChange={(event) => setOverviewVenue(event.target.value)}
+                  placeholder="Venue"
+                />
+                <input
+                  className="input"
+                  aria-label="Matter Jurisdiction"
+                  value={overviewJurisdiction}
+                  onChange={(event) => setOverviewJurisdiction(event.target.value)}
+                  placeholder="Jurisdiction"
+                />
+                <input
+                  className="input"
+                  aria-label="Matter Opened At"
+                  type="datetime-local"
+                  value={overviewOpenedAt}
+                  onChange={(event) => setOverviewOpenedAt(event.target.value)}
+                />
+                <input
+                  className="input"
+                  aria-label="Matter Closed At"
+                  type="datetime-local"
+                  value={overviewClosedAt}
+                  onChange={(event) => setOverviewClosedAt(event.target.value)}
+                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="button" type="button" onClick={updateMatterOverview}>
+                    Save Overview
+                  </button>
+                  <button className="button secondary" type="button" onClick={cancelOverviewEdit}>
+                    Cancel Overview Edit
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p>Name: {dashboard.name}</p>
+                <p>Matter Number: {dashboard.matterNumber}</p>
+                <p>Practice Area: {dashboard.practiceArea}</p>
+                <p>Status: {dashboard.status}</p>
+                <p>Venue: {dashboard.venue || '-'}</p>
+                <p>Jurisdiction: {dashboard.jurisdiction || '-'}</p>
+                <p>Opened: {dashboard.openedAt ? new Date(dashboard.openedAt).toLocaleString() : '-'}</p>
+                <p>Closed: {dashboard.closedAt ? new Date(dashboard.closedAt).toLocaleString() : '-'}</p>
+                <button className="button secondary" type="button" onClick={() => setEditingOverview(true)}>
+                  Edit Overview
+                </button>
+              </div>
+            )}
+            {overviewStatusMessage ? (
+              <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{overviewStatusMessage}</p>
+            ) : null}
           </div>
 
           <div className="card">
