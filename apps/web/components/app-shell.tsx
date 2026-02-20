@@ -175,7 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           }
         }}
       >
-        {children}
+        <div className="main-panel-content">{children}</div>
       </main>
     </div>
   );

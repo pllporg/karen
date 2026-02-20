@@ -1,18 +1,18 @@
 :root {
-  --lic-paper: #f2efe6;
-  --lic-ink: #0b0d0f;
+  --lic-paper: #f7f5f0;
+  --lic-ink: #0b0b0b;
 
-  --lic-graphite: #2a2d31;
-  --lic-slate: #5c6066;
-  --lic-silver: #8b857a;
-  --lic-fog: #d9d5cc;
-  --lic-parchment: #ece8de;
+  --lic-graphite: #3a3a3a;
+  --lic-slate: #6b6b6b;
+  --lic-silver: #a8a8a8;
+  --lic-fog: #d4d2cd;
+  --lic-parchment: #eceae4;
 
-  --lic-institutional: #0b3d91;
-  --lic-filing-red: #b23a2b;
+  --lic-institutional: #2b4c7e;
+  --lic-filing-red: #8b2500;
   --lic-ledger: #2d5f3a;
 
-  --lic-warm-gray: #8b857a;
+  --lic-warm-gray: var(--lic-silver);
   --lic-blue: var(--lic-institutional);
   --lic-red: var(--lic-filing-red);
 
@@ -38,6 +38,9 @@
   --lic-6: 48px;
   --lic-7: 64px;
   --lic-8: 96px;
+  --lic-content-max-width: 960px;
+  --lic-shell-sidebar-width: 280px;
+  --lic-shell-sidebar-compact-width: 88px;
 
   --lic-font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --lic-font-condensed: var(--font-condensed), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
@@ -48,6 +51,8 @@
   --lic-motion-toast: 100ms;
   --lic-motion-panel: 120ms;
   --lic-motion-easing: linear;
+
+  --lic-overlay-70: rgb(11 11 11 / 70%);
 
   --lic-focus: 0 0 0 2px var(--lic-paper), 0 0 0 4px var(--lic-blue);
 

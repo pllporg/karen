@@ -18,8 +18,10 @@ export function Badge({
   className,
   ...props
 }: HTMLAttributes<HTMLSpanElement> & { children: ReactNode; tone?: BadgeTone }) {
+  const resolvedTone = tone === 'default' ? 'default' : tone;
+
   return (
-    <span className={cx('badge', tone !== 'default' && `status-${tone}`, className)} {...props}>
+    <span className={cx('badge', tone !== 'default' && `status-${tone}`, className)} data-tone={resolvedTone} {...props}>
       {children}
     </span>
   );

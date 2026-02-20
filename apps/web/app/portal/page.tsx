@@ -2,10 +2,12 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
+import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
 import { apiFetch, getSessionToken } from '../../lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+type PortalConfirmAction = 'send-message' | 'create-esign' | null;
 
 export default function PortalPage() {
   const [snapshot, setSnapshot] = useState<any>(null);
@@ -17,6 +19,8 @@ export default function PortalPage() {
   const [engagementLetterTemplateId, setEngagementLetterTemplateId] = useState('');
   const [eSignProvider, setEsignProvider] = useState('stub');
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<PortalConfirmAction>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   useEffect(() => {
     apiFetch('/portal/snapshot').then(setSnapshot).catch(() => undefined);
@@ -24,6 +28,11 @@ export default function PortalPage() {
 
   async function sendPortalMessage(e: FormEvent) {
     e.preventDefault();
+    if (!matterId) return;
+    setConfirmAction('send-message');
+  }
+
+  async function executeSendPortalMessage() {
     if (!matterId) return;
     setError(null);
 
@@ -87,6 +96,11 @@ export default function PortalPage() {
 
   async function createEsignEnvelope() {
     if (!engagementLetterTemplateId) return;
+    setConfirmAction('create-esign');
+  }
+
+  async function executeCreateEsignEnvelope() {
+    if (!engagementLetterTemplateId) return;
     await apiFetch('/portal/esign', {
       method: 'POST',
       body: JSON.stringify({
@@ -96,6 +110,24 @@ export default function PortalPage() {
       }),
     });
     setSnapshot(await apiFetch('/portal/snapshot'));
+  }
+
+  async function confirmClientAction() {
+    setConfirmBusy(true);
+    try {
+      if (confirmAction === 'send-message') {
+        await executeSendPortalMessage();
+      }
+      if (confirmAction === 'create-esign') {
+        await executeCreateEsignEnvelope();
+      }
+      setConfirmAction(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to complete client-facing action');
+      setConfirmAction(null);
+    } finally {
+      setConfirmBusy(false);
+    }
   }
 
   async function refreshEsignEnvelope(envelopeId: string) {
@@ -149,9 +181,14 @@ export default function PortalPage() {
               type="file"
               onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
             />
-            <button className="button" type="submit">Send</button>
+            <button className="button" type="submit" disabled={confirmBusy}>
+              Send
+            </button>
           </form>
           {error ? <p style={{ color: 'var(--lic-red)', marginTop: 8 }}>{error}</p> : null}
+          <p className="mono-meta" style={{ marginTop: 8 }}>
+            External client sends require explicit approval and are logged in audit history.
+          </p>
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Shared Documents</h3>
@@ -199,7 +236,9 @@ export default function PortalPage() {
           <h3 style={{ marginTop: 0 }}>Intake + E-Sign</h3>
           <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto' }}>
             <input className="input" value={intakeFormDefinitionId} onChange={(e) => setIntakeFormDefinitionId(e.target.value)} placeholder="Intake Form Definition ID" />
-            <button className="button ghost" onClick={submitIntake}>Submit Intake</button>
+            <button className="button ghost" type="button" onClick={submitIntake}>
+              Submit Intake
+            </button>
             <input className="input" value={engagementLetterTemplateId} onChange={(e) => setEngagementLetterTemplateId(e.target.value)} placeholder="Engagement Letter Template ID" />
             <select
               className="select"
@@ -210,7 +249,9 @@ export default function PortalPage() {
               <option value="stub">Stub Provider</option>
               <option value="sandbox">Sandbox Provider</option>
             </select>
-            <button className="button ghost" onClick={createEsignEnvelope}>Create E-Sign Envelope</button>
+            <button className="button ghost" type="button" onClick={createEsignEnvelope} disabled={confirmBusy}>
+              Create E-Sign Envelope
+            </button>
           </div>
           <div style={{ marginTop: 12 }}>
             {(snapshot?.eSignEnvelopes || []).length === 0 ? <p>No e-sign envelopes yet.</p> : null}
@@ -230,6 +271,22 @@ export default function PortalPage() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={confirmAction === 'create-esign' ? 'Confirm E-Sign Envelope Dispatch' : 'Confirm Client Message Send'}
+        description={
+          confirmAction === 'create-esign'
+            ? 'Approving this action dispatches an external envelope workflow to the selected provider and cannot be silently undone.'
+            : 'Approving this action sends the portal message to the client for matter review. Verify content and attachments before proceeding.'
+        }
+        confirmLabel="Approve Send"
+        cancelLabel="Return to Review"
+        busy={confirmBusy}
+        onCancel={() => {
+          if (!confirmBusy) setConfirmAction(null);
+        }}
+        onConfirm={confirmClientAction}
+      />
     </AppShell>
   );
 }

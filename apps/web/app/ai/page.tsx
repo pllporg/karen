@@ -32,6 +32,7 @@ type ArtifactMetadata = {
   citations?: Array<{ chunkId: string }>;
   excerptEvidence?: Array<{ chunkId: string; excerpt: string }>;
   deadlineCandidates?: DeadlineCandidate[];
+  executedAt?: string;
   stylePack?: {
     id: string;
     name: string;
@@ -46,6 +47,9 @@ type AiArtifact = {
   type: string;
   content: string;
   reviewedStatus: string;
+  reviewedByUserId?: string | null;
+  reviewedAt?: string | null;
+  createdAt?: string;
   metadataJson?: ArtifactMetadata;
 };
 
@@ -54,6 +58,8 @@ type AiJob = {
   toolName: string;
   matterId: string;
   status: string;
+  createdByUserId?: string | null;
+  createdAt?: string;
   artifacts?: AiArtifact[];
 };
 
@@ -94,6 +100,9 @@ type StylePackDraft = {
 
 const DATE_TOKEN_REGEX =
   /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},\s+\d{4})\b/gi;
+
+const REVIEW_GATE_SEQUENCE = ['PROPOSED', 'IN REVIEW', 'APPROVED', 'EXECUTED', 'RETURNED'] as const;
+type ReviewGateStep = (typeof REVIEW_GATE_SEQUENCE)[number];
 
 export default function AiPage() {
   const [jobs, setJobs] = useState<AiJob[]>([]);
@@ -237,18 +246,24 @@ export default function AiPage() {
     }
   }
 
-  async function approveArtifact(artifactId: string) {
+  async function reviewArtifact(artifactId: string, status: 'APPROVED' | 'REJECTED') {
     setError(null);
     setBusyArtifactId(artifactId);
     try {
       await apiFetch(`/ai/artifacts/${artifactId}/review`, {
         method: 'POST',
-        body: JSON.stringify({ status: 'APPROVED' }),
+        body: JSON.stringify({ status }),
       });
-      setStatusByArtifact((previous) => ({ ...previous, [artifactId]: 'Artifact approved.' }));
+      setStatusByArtifact((previous) => ({
+        ...previous,
+        [artifactId]:
+          status === 'APPROVED'
+            ? 'Review gate advanced to APPROVED.'
+            : 'Artifact returned to review queue for revision.',
+      }));
       await load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to approve artifact');
+      setError(cause instanceof Error ? cause.message : 'Failed to update artifact review status');
     } finally {
       setBusyArtifactId(null);
     }
@@ -513,20 +528,52 @@ export default function AiPage() {
                     <tr key={artifact.id}>
                       <td colSpan={4}>
                         <div className="card" style={{ margin: '10px 0', borderColor: 'var(--lic-blue)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                            <div>
-                              <strong>{artifact.type}</strong>
-                              <span className="badge" style={{ marginLeft: 8 }}>{artifact.reviewedStatus}</span>
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                              <div>
+                                <strong>{artifact.type}</strong>
+                                <span className="badge" style={{ marginLeft: 8 }}>
+                                  {resolveReviewGateStep(artifact)}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                  className="button secondary"
+                                  type="button"
+                                  style={{ width: 140 }}
+                                  onClick={() => reviewArtifact(artifact.id, 'APPROVED')}
+                                  disabled={busyArtifactId === artifact.id}
+                                >
+                                  {busyArtifactId === artifact.id ? 'Saving...' : 'Approve'}
+                                </button>
+                                <button
+                                  className="button danger"
+                                  type="button"
+                                  style={{ width: 140 }}
+                                  onClick={() => reviewArtifact(artifact.id, 'REJECTED')}
+                                  disabled={busyArtifactId === artifact.id}
+                                >
+                                  {busyArtifactId === artifact.id ? 'Saving...' : 'Return'}
+                                </button>
+                              </div>
                             </div>
-                            <button
-                              className="button ghost"
-                              type="button"
-                              style={{ width: 120 }}
-                              onClick={() => approveArtifact(artifact.id)}
-                              disabled={busyArtifactId === artifact.id}
-                            >
-                              {busyArtifactId === artifact.id ? 'Saving...' : 'Approve'}
-                            </button>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              {REVIEW_GATE_SEQUENCE.map((step) => (
+                                <span
+                                  key={`${artifact.id}-${step}`}
+                                  className={`badge ${
+                                    reviewGateReached(resolveReviewGateStep(artifact), step) ? `status-${reviewGateTone(step)}` : ''
+                                  }`}
+                                >
+                                  {step}
+                                </span>
+                              ))}
+                            </div>
+                            <p className="mono-meta">
+                              Submitted {formatUtcTimestamp(artifact.createdAt)} by {job.createdByUserId || 'system'} | Review:{' '}
+                              {artifact.reviewedByUserId || 'pending'} at {formatUtcTimestamp(artifact.reviewedAt)}
+                            </p>
+                            <div className="notice">External send/file actions remain blocked until review status is APPROVED.</div>
                           </div>
 
                           {metadata.banner ? <div className="notice" style={{ marginTop: 10 }}>{metadata.banner}</div> : null}
@@ -667,6 +714,42 @@ export default function AiPage() {
       </div>
     </AppShell>
   );
+}
+
+function resolveReviewGateStep(artifact: AiArtifact): ReviewGateStep {
+  if (artifact.reviewedStatus === 'REJECTED') return 'RETURNED';
+  if (artifact.metadataJson?.executedAt) return 'EXECUTED';
+  if (artifact.reviewedStatus === 'APPROVED') return 'APPROVED';
+  return 'IN REVIEW';
+}
+
+function reviewGateReached(current: ReviewGateStep, step: ReviewGateStep): boolean {
+  if (current === 'RETURNED') {
+    return step === 'PROPOSED' || step === 'IN REVIEW' || step === 'RETURNED';
+  }
+  const order: Record<Exclude<ReviewGateStep, 'RETURNED'>, number> = {
+    PROPOSED: 0,
+    'IN REVIEW': 1,
+    APPROVED: 2,
+    EXECUTED: 3,
+  };
+  if (step === 'RETURNED') return false;
+  return order[step] <= order[current as Exclude<ReviewGateStep, 'RETURNED'>];
+}
+
+function reviewGateTone(step: ReviewGateStep): 'proposed' | 'in-review' | 'approved' | 'executed' | 'returned' {
+  if (step === 'IN REVIEW') return 'in-review';
+  if (step === 'APPROVED') return 'approved';
+  if (step === 'EXECUTED') return 'executed';
+  if (step === 'RETURNED') return 'returned';
+  return 'proposed';
+}
+
+function formatUtcTimestamp(value: string | null | undefined): string {
+  if (!value) return 'pending';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'invalid';
+  return parsed.toISOString();
 }
 
 function buildSelectionState(

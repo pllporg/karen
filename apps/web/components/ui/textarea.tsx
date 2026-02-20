@@ -1,13 +1,13 @@
 'use client';
 
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef, type TextareaHTMLAttributes } from 'react';
 import { cx } from './cx';
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   invalid?: boolean;
 };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
   { className, invalid, disabled, 'aria-invalid': ariaInvalid, ...props },
   ref,
 ) {
@@ -15,9 +15,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const state = disabled ? 'disabled' : resolvedInvalid ? 'error' : 'default';
 
   return (
-    <input
+    <textarea
       ref={ref}
-      className={cx('input', className)}
+      className={cx('textarea', className)}
       disabled={disabled}
       aria-invalid={ariaInvalid ?? (resolvedInvalid ? 'true' : undefined)}
       data-state={state}
