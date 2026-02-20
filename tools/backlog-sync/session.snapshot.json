@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-20T16:54:34.436Z",
+  "generatedAt": "2026-02-20T16:56:44.512Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -98,13 +98,23 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 63,
     "stateCounts": {
-      "Backlog": 12,
+      "Backlog": 11,
+      "In Progress": 1,
       "In Review": 6,
       "Done": 45
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-76"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-76",
+        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
+        "state": "In Progress",
+        "updatedAt": "2026-02-20T16:56:25.264Z",
+        "requirementId": "REQ-UI-014"
+      },
       {
         "key": "KAR-71",
         "title": "Create PRD + screen specifications for existing product routes",
@@ -118,13 +128,6 @@
         "state": "Backlog",
         "updatedAt": "2026-02-20T16:16:53.034Z",
         "requirementId": "REQ-UI-015"
-      },
-      {
-        "key": "KAR-76",
-        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
-        "state": "Backlog",
-        "updatedAt": "2026-02-20T16:16:52.284Z",
-        "requirementId": "REQ-UI-014"
       },
       {
         "key": "KAR-69",
@@ -239,33 +242,14 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-20T16:54:33.144Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-20T16:56:43.063Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "60779eb9be828111709bd1b0f2090fe53d68de2c",
+    "gitHead": "29aaef731eedc6ee1042c2ddb258ad76014d77a4",
     "gitStatusShort": [
-      "## lin/KAR-76-lic-branding-migration",
-      " M README.md",
-      " M apps/api/src/auth/auth.service.ts",
-      " M apps/api/src/communications/communications.service.ts",
-      " M apps/api/src/communications/providers/resend-email.provider.ts",
-      " M apps/api/src/main.ts",
-      " M apps/api/src/portal/esign/sandbox-esign.provider.ts",
-      " M apps/api/src/portal/esign/stub-esign.provider.ts",
-      " M apps/api/src/webhooks/webhooks.service.ts",
-      " M apps/api/test/webhooks-delivery.spec.ts",
-      " M apps/web/app/globals.css",
-      " M apps/web/app/layout.tsx",
-      " M apps/web/app/login/page.tsx",
-      " M apps/web/components/app-shell.tsx",
-      " M apps/web/test/admin-page.spec.tsx",
-      " M apps/web/test/app-shell.spec.tsx",
-      " M docs/DEPLOYMENT_RUNBOOK.md",
-      " M docs/SESSION_HANDOFF.md",
-      " M docs/WORKING_CONTRACT.md",
-      "?? apps/web/app/icon.svg"
+      "## lin/KAR-76-lic-branding-migration...origin/lin/KAR-76-lic-branding-migration"
     ],
-    "dirtyFileCount": 19
+    "dirtyFileCount": 0
   }
 }
