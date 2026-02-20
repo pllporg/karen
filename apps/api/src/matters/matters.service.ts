@@ -75,6 +75,201 @@ export class MattersService {
     return matter;
   }
 
+  async updateMatter(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    name?: string;
+    matterNumber?: string;
+    practiceArea?: string;
+    status?: MatterStatus;
+    jurisdiction?: string | null;
+    venue?: string | null;
+    stageId?: string | null;
+    matterTypeId?: string | null;
+    openedAt?: string;
+    closedAt?: string | null;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const matter = await this.prisma.matter.findFirst({
+      where: {
+        id: input.matterId,
+        organizationId: input.user.organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!matter) {
+      throw new NotFoundException('Matter not found');
+    }
+
+    const data: Prisma.MatterUpdateInput = {};
+    const updatedFields: string[] = [];
+
+    if (input.name !== undefined) {
+      const name = this.safeString(input.name);
+      if (!name) {
+        throw new BadRequestException('Matter name cannot be empty');
+      }
+      data.name = name;
+      updatedFields.push('name');
+    }
+
+    if (input.matterNumber !== undefined) {
+      const matterNumber = this.safeString(input.matterNumber);
+      if (!matterNumber) {
+        throw new BadRequestException('Matter number cannot be empty');
+      }
+      const duplicate = await this.prisma.matter.findFirst({
+        where: {
+          organizationId: input.user.organizationId,
+          matterNumber,
+          id: {
+            not: input.matterId,
+          },
+        },
+        select: { id: true },
+      });
+      if (duplicate) {
+        throw new BadRequestException('Matter number already exists in this organization');
+      }
+      data.matterNumber = matterNumber;
+      updatedFields.push('matterNumber');
+    }
+
+    if (input.practiceArea !== undefined) {
+      const practiceArea = this.safeString(input.practiceArea);
+      if (!practiceArea) {
+        throw new BadRequestException('Practice area cannot be empty');
+      }
+      data.practiceArea = practiceArea;
+      updatedFields.push('practiceArea');
+    }
+
+    if (input.status !== undefined) {
+      data.status = input.status;
+      updatedFields.push('status');
+    }
+
+    if (input.jurisdiction !== undefined) {
+      data.jurisdiction = this.normalizeOptionalText(input.jurisdiction) ?? null;
+      updatedFields.push('jurisdiction');
+    }
+
+    if (input.venue !== undefined) {
+      data.venue = this.normalizeOptionalText(input.venue) ?? null;
+      updatedFields.push('venue');
+    }
+
+    if (input.stageId !== undefined) {
+      const stageId = this.normalizeOptionalText(input.stageId);
+      if (stageId) {
+        const stage = await this.prisma.matterStage.findFirst({
+          where: {
+            id: stageId,
+            organizationId: input.user.organizationId,
+          },
+          select: { id: true },
+        });
+        if (!stage) {
+          throw new NotFoundException('Matter stage not found');
+        }
+        data.stage = {
+          connect: { id: stageId },
+        };
+      } else {
+        data.stage = {
+          disconnect: true,
+        };
+      }
+      updatedFields.push('stageId');
+    }
+
+    if (input.matterTypeId !== undefined) {
+      const matterTypeId = this.normalizeOptionalText(input.matterTypeId);
+      if (matterTypeId) {
+        const matterType = await this.prisma.matterType.findFirst({
+          where: {
+            id: matterTypeId,
+            organizationId: input.user.organizationId,
+          },
+          select: { id: true },
+        });
+        if (!matterType) {
+          throw new NotFoundException('Matter type not found');
+        }
+        data.matterType = {
+          connect: { id: matterTypeId },
+        };
+      } else {
+        data.matterType = {
+          disconnect: true,
+        };
+      }
+      updatedFields.push('matterTypeId');
+    }
+
+    if (input.openedAt !== undefined) {
+      const openedAt = new Date(input.openedAt);
+      if (Number.isNaN(openedAt.getTime())) {
+        throw new BadRequestException('Invalid openedAt timestamp');
+      }
+      data.openedAt = openedAt;
+      updatedFields.push('openedAt');
+    }
+
+    if (input.closedAt !== undefined) {
+      const closedAtValue = this.normalizeOptionalText(input.closedAt);
+      if (!closedAtValue) {
+        data.closedAt = null;
+      } else {
+        const closedAt = new Date(closedAtValue);
+        if (Number.isNaN(closedAt.getTime())) {
+          throw new BadRequestException('Invalid closedAt timestamp');
+        }
+        data.closedAt = closedAt;
+      }
+      updatedFields.push('closedAt');
+    }
+
+    if (updatedFields.length === 0) {
+      return this.dashboard(input.user, input.matterId);
+    }
+
+    const updatedMatter = await this.prisma.matter.update({
+      where: { id: input.matterId },
+      data,
+      select: {
+        id: true,
+        matterNumber: true,
+        name: true,
+        practiceArea: true,
+        status: true,
+        stageId: true,
+        matterTypeId: true,
+        jurisdiction: true,
+        venue: true,
+        openedAt: true,
+        closedAt: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.updated',
+      entityType: 'matter',
+      entityId: input.matterId,
+      metadata: {
+        updatedFields,
+        matter: updatedMatter,
+      },
+    });
+
+    return this.dashboard(input.user, input.matterId);
+  }
+
   async addParticipant(input: {
     user: AuthenticatedUser;
     matterId: string;

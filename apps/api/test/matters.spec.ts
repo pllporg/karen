@@ -973,4 +973,90 @@ describe('MattersService', () => {
     expect(loaded.id).toBe('draft-1');
     expect(loaded.payload.matterNumber).toBe('M-21-INTAKE');
   });
+
+  it('updates matter overview fields and emits audit events', async () => {
+    const prisma = {
+      matter: {
+        findFirst: jest.fn().mockResolvedValueOnce({ id: 'matter-1' }).mockResolvedValueOnce(null),
+        update: jest.fn().mockResolvedValue({
+          id: 'matter-1',
+          matterNumber: 'M-2',
+          name: 'Updated Matter',
+          practiceArea: 'Construction Litigation',
+          status: 'PENDING',
+          stageId: null,
+          matterTypeId: null,
+          jurisdiction: 'CA',
+          venue: 'Los Angeles',
+          openedAt: new Date('2026-02-01T12:00:00.000Z'),
+          closedAt: null,
+        }),
+      },
+    } as any;
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+    jest.spyOn(service, 'dashboard').mockResolvedValue({ id: 'matter-1', name: 'Updated Matter' } as any);
+
+    const result = await service.updateMatter({
+      user: baseUser,
+      matterId: 'matter-1',
+      name: ' Updated Matter ',
+      matterNumber: ' M-2 ',
+      practiceArea: ' Construction Litigation ',
+      status: 'PENDING' as any,
+      jurisdiction: ' CA ',
+      venue: ' Los Angeles ',
+      openedAt: '2026-02-01T12:00:00.000Z',
+      closedAt: null,
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter-1', 'write');
+    expect(prisma.matter.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'matter-1' },
+        data: expect.objectContaining({
+          name: 'Updated Matter',
+          matterNumber: 'M-2',
+          practiceArea: 'Construction Litigation',
+          status: 'PENDING',
+          jurisdiction: 'CA',
+          venue: 'Los Angeles',
+          openedAt: expect.any(Date),
+          closedAt: null,
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.updated',
+        entityType: 'matter',
+        entityId: 'matter-1',
+      }),
+    );
+    expect(result).toEqual({ id: 'matter-1', name: 'Updated Matter' });
+  });
+
+  it('rejects duplicate matter number updates within organization', async () => {
+    const prisma = {
+      matter: {
+        findFirst: jest.fn().mockResolvedValueOnce({ id: 'matter-1' }).mockResolvedValueOnce({ id: 'matter-2' }),
+        update: jest.fn(),
+      },
+    } as any;
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.updateMatter({
+        user: baseUser,
+        matterId: 'matter-1',
+        matterNumber: 'M-2',
+      }),
+    ).rejects.toThrow('Matter number already exists in this organization');
+    expect(prisma.matter.update).not.toHaveBeenCalled();
+  });
 });

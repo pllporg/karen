@@ -11,6 +11,7 @@ import { IntakeWizardDto } from './dto/intake-wizard.dto';
 import { SaveIntakeDraftDto } from './dto/save-intake-draft.dto';
 import { LogCommunicationEntryDto } from './dto/log-communication-entry.dto';
 import { UpdateCommunicationEntryDto } from './dto/update-communication-entry.dto';
+import { UpdateMatterDto } from './dto/update-matter.dto';
 
 @Controller('matters')
 @UseGuards(SessionAuthGuard, PermissionGuard)
@@ -29,6 +30,16 @@ export class MattersController {
     return this.mattersService.create({
       organizationId: user.organizationId,
       actorUserId: user.id,
+      ...dto,
+    });
+  }
+
+  @Patch(':id')
+  @RequirePermissions('matters:write')
+  update(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: UpdateMatterDto) {
+    return this.mattersService.updateMatter({
+      user,
+      matterId: id,
       ...dto,
     });
   }
