@@ -479,6 +479,10 @@ describe('MattersService', () => {
         entityId: 'participant-1',
       }),
     );
+    expect(result).not.toBeNull();
+    if (!result) {
+      throw new Error('Expected updated participant payload');
+    }
     expect(result.id).toBe('participant-1');
   });
 
