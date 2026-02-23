@@ -1,7 +1,7 @@
 # Matter Dashboard Task + Calendar Lifecycle Verification
 
 Requirement: `REQ-PMS-CORE-005`  
-Scope: verify matter dashboard task and calendar lifecycle operations (create/edit/delete), including server-side matter access checks and audit logging.
+Scope: verify matter dashboard task and calendar lifecycle operations (create/edit/delete + ICS export), including server-side matter access checks and audit logging.
 
 ## Artifact
 
@@ -26,9 +26,10 @@ Scope: verify matter dashboard task and calendar lifecycle operations (create/ed
 - UI behavior:
   - task/calendar edit mode supports explicit cancel behavior and contextual status feedback.
   - dashboard tables expose edit/delete actions with keyboard-accessible controls and stable labels.
+  - matter dashboard calendar panel provides in-context ICS export action with deterministic status messaging.
 - Regression hardening:
-  - API service unit tests cover update/delete happy paths + not-found guards.
-  - web workflow test covers full task and calendar lifecycle interactions.
+  - API service unit tests cover update/delete happy paths, not-found guards, and ICS export payload semantics.
+  - web workflow tests cover full task/calendar lifecycle interactions plus ICS export download flow.
 
 ## Verification Commands
 

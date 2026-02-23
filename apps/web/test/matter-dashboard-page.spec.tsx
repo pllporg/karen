@@ -341,6 +341,86 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
+  it('exports matter calendar events as an ICS file', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    const createObjectUrl = vi.fn(() => 'blob:calendar-ics');
+    const revokeObjectUrl = vi.fn();
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, writable: true, value: createObjectUrl });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, writable: true, value: revokeObjectUrl });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/calendar/events/matter-1/ics') && method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({
+            'content-disposition': 'attachment; filename=\"matter-1.ics\"',
+          }),
+          blob: async () => new Blob(['BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n'], { type: 'text/calendar' }),
+          text: async () => '',
+          json: async () => ({}),
+        } as Response;
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      render(<MatterDashboardPage />);
+
+      await screen.findByText('M-100 - Doe v. Builder');
+      fireEvent.click(screen.getByRole('button', { name: 'Export ICS' }));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://localhost:4000/calendar/events/matter-1/ics',
+          expect.objectContaining({
+            method: 'GET',
+            credentials: 'include',
+          }),
+        );
+        expect(createObjectUrl).toHaveBeenCalled();
+        expect(anchorClick).toHaveBeenCalled();
+        expect(revokeObjectUrl).toHaveBeenCalledWith('blob:calendar-ics');
+        expect(screen.getByText('Calendar ICS exported: matter-1.ics.')).toBeInTheDocument();
+      });
+    } finally {
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        writable: true,
+        value: originalCreateObjectUrl,
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        writable: true,
+        value: originalRevokeObjectUrl,
+      });
+    }
+  });
+
   it('edits and saves matter overview fields', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 

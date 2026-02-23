@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-23T17:35:39.310Z",
+  "generatedAt": "2026-02-23T17:54:11.620Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -122,18 +122,21 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:35:36.534Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:54:10.146Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "fa3e15afbe6d3e64d690176d9cc26e5272216707",
+    "gitHead": "637c70c5e08088a3fd61c56d4d0b0d6ede9fa72e",
     "gitStatusShort": [
-      "## lin/KAR-77-ui-compliance-closure",
+      "## lin/KAR-77-ui-compliance-closure...origin/lin/KAR-77-ui-compliance-closure",
       " M .github/workflows/context-freshness.yml",
       " M .gitignore",
+      " M apps/api/test/calendar-events.spec.ts",
+      " M apps/web/app/matters/[id]/page.tsx",
+      " M apps/web/test/matter-dashboard-page.spec.tsx",
       " M brand/Brandguide.md",
       " M brand/Brandguideprompt.md",
-      " M docs/parity/ui-full-compliance-review.md",
+      " M docs/parity/matter-dashboard-task-calendar-lifecycle.md",
       " M docs/parity/ui-primitive-normalization-verification.md",
       " M docs/parity/ui-primitives-state-verification.md",
       " M docs/parity/ui-responsive-behavior-verification.md",
@@ -157,7 +160,6 @@
       " M tools/backlog-sync/config.example.env",
       " M tools/backlog-sync/linear_issue_template.md",
       " M tools/backlog-sync/linear_to_github.mjs",
-      " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/seed_parity_backlog.mjs",
       " M tools/backlog-sync/setup_linear_workspace.mjs",
       " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
@@ -168,6 +170,6 @@
       "?? consistencycleanup",
       "?? tools/backlog-sync/check_matrix_linear_alignment.mjs"
     ],
-    "dirtyFileCount": 38
+    "dirtyFileCount": 40
   }
 }
