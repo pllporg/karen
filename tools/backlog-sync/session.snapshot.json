@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-23T17:54:11.620Z",
+  "generatedAt": "2026-02-23T17:55:28.117Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -39,6 +39,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-67",
+        "title": "Complete matter dashboard task and calendar lifecycle operations",
+        "state": "Done",
+        "updatedAt": "2026-02-23T17:55:13.822Z",
+        "requirementId": "REQ-PMS-CORE-005"
+      },
       {
         "key": "KAR-77",
         "title": "Execute full UI compliance review against LIC canonical standards",
@@ -101,13 +108,6 @@
         "state": "Done",
         "updatedAt": "2026-02-20T17:35:27.969Z",
         "requirementId": "REQ-BILL-001"
-      },
-      {
-        "key": "KAR-62",
-        "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-20T17:35:27.121Z",
-        "requirementId": "REQ-BILL-002"
       }
     ]
   },
@@ -122,21 +122,17 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:54:10.146Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:55:26.354Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "637c70c5e08088a3fd61c56d4d0b0d6ede9fa72e",
+    "gitHead": "9c15f186ee52343948bf6e2356e92d305d85d2c6",
     "gitStatusShort": [
-      "## lin/KAR-77-ui-compliance-closure...origin/lin/KAR-77-ui-compliance-closure",
+      "## lin/KAR-67-ics-export-hardening...origin/lin/KAR-67-ics-export-hardening",
       " M .github/workflows/context-freshness.yml",
       " M .gitignore",
-      " M apps/api/test/calendar-events.spec.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/test/matter-dashboard-page.spec.tsx",
       " M brand/Brandguide.md",
       " M brand/Brandguideprompt.md",
-      " M docs/parity/matter-dashboard-task-calendar-lifecycle.md",
       " M docs/parity/ui-primitive-normalization-verification.md",
       " M docs/parity/ui-primitives-state-verification.md",
       " M docs/parity/ui-responsive-behavior-verification.md",
@@ -170,6 +166,6 @@
       "?? consistencycleanup",
       "?? tools/backlog-sync/check_matrix_linear_alignment.mjs"
     ],
-    "dirtyFileCount": 40
+    "dirtyFileCount": 36
   }
 }
