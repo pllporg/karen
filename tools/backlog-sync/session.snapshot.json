@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-23T17:35:39.310Z",
+  "generatedAt": "2026-02-23T17:55:28.117Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -39,6 +39,13 @@
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-67",
+        "title": "Complete matter dashboard task and calendar lifecycle operations",
+        "state": "Done",
+        "updatedAt": "2026-02-23T17:55:13.822Z",
+        "requirementId": "REQ-PMS-CORE-005"
+      },
       {
         "key": "KAR-77",
         "title": "Execute full UI compliance review against LIC canonical standards",
@@ -101,13 +108,6 @@
         "state": "Done",
         "updatedAt": "2026-02-20T17:35:27.969Z",
         "requirementId": "REQ-BILL-001"
-      },
-      {
-        "key": "KAR-62",
-        "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
-        "state": "Done",
-        "updatedAt": "2026-02-20T17:35:27.121Z",
-        "requirementId": "REQ-BILL-002"
       }
     ]
   },
@@ -122,18 +122,17 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:35:36.534Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:55:26.354Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "fa3e15afbe6d3e64d690176d9cc26e5272216707",
+    "gitHead": "9c15f186ee52343948bf6e2356e92d305d85d2c6",
     "gitStatusShort": [
-      "## lin/KAR-77-ui-compliance-closure",
+      "## lin/KAR-67-ics-export-hardening...origin/lin/KAR-67-ics-export-hardening",
       " M .github/workflows/context-freshness.yml",
       " M .gitignore",
       " M brand/Brandguide.md",
       " M brand/Brandguideprompt.md",
-      " M docs/parity/ui-full-compliance-review.md",
       " M docs/parity/ui-primitive-normalization-verification.md",
       " M docs/parity/ui-primitives-state-verification.md",
       " M docs/parity/ui-responsive-behavior-verification.md",
@@ -157,7 +156,6 @@
       " M tools/backlog-sync/config.example.env",
       " M tools/backlog-sync/linear_issue_template.md",
       " M tools/backlog-sync/linear_to_github.mjs",
-      " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/seed_parity_backlog.mjs",
       " M tools/backlog-sync/setup_linear_workspace.mjs",
       " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
@@ -168,6 +166,6 @@
       "?? consistencycleanup",
       "?? tools/backlog-sync/check_matrix_linear_alignment.mjs"
     ],
-    "dirtyFileCount": 38
+    "dirtyFileCount": 36
   }
 }

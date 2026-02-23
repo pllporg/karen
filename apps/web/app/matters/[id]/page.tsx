@@ -433,6 +433,37 @@ export default function MatterDashboardPage() {
     await refreshDashboard();
   }
 
+  async function exportCalendarIcs() {
+    if (!matterId) {
+      return;
+    }
+
+    const token = getSessionToken();
+    const response = await fetch(`${API_BASE}/calendar/events/${matterId}/ics`, {
+      method: 'GET',
+      headers: token ? { 'x-session-token': token } : undefined,
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`${response.status} ${response.statusText}: ${text}`);
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get('content-disposition') || '';
+    const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+    const filename = filenameMatch?.[1] || `${matterId}.ics`;
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+    setCalendarStatusMessage(`Calendar ICS exported: ${filename}.`);
+  }
+
   async function addParticipant() {
     if (!matterId || !selectedParticipantContactId || !selectedParticipantRoleKey) {
       setParticipantStatusMessage('Contact and participant role are required.');
@@ -979,7 +1010,12 @@ export default function MatterDashboardPage() {
           </div>
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Calendar</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <h3 style={{ marginTop: 0, marginBottom: 0 }}>Calendar</h3>
+              <button className="button secondary" type="button" onClick={exportCalendarIcs}>
+                Export ICS
+              </button>
+            </div>
             <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 180px 1fr auto' }}>
               <input
                 className="input"
