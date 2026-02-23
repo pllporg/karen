@@ -1,4 +1,4 @@
-# REQ-UI-005 Verification (KAR-58)
+# REQ-UI-005 Verification (KAR-58, KAR-81)
 
 ## Scope
 - Add deterministic confirmation dialog with focus trap and focus return.
@@ -19,6 +19,15 @@
 ## Validation Commands
 - `pnpm --filter web test -- contacts-page.spec.tsx confirm-dialog.spec.tsx communications-page.spec.tsx app-shell.spec.tsx`
 - `pnpm --filter web build`
+- `pnpm ui:contract:check`
+
+## Latest Verification Run (KAR-81)
+- Focus trap and focus return behavior passed in `confirm-dialog.spec.tsx`.
+- Keyboard-first thread selection and live status feedback passed in `communications-page.spec.tsx`.
+- Confirmation and inline feedback hierarchy passed in `contacts-page.spec.tsx`.
+- App shell navigation semantics and active-route accessibility passed in `app-shell.spec.tsx`.
+- LIC style guard check passed with no prohibited styling regressions.
+- `next build` completed successfully (non-blocking existing `react-hooks/exhaustive-deps` warnings remain outside this requirement scope).
 
 ## Manual Walkthrough
 1. Open `/contacts`; trigger `Merge` or `Ignore` from dedupe suggestions.

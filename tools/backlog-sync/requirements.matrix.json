@@ -1380,7 +1380,7 @@
           "title": "Execute accessibility and interaction compliance remediation lane",
           "requirementId": "REQ-UI-005",
           "promptSection": "UI Refactor / Accessibility + interaction compliance",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1388,7 +1388,7 @@
             "ui-ux",
             "a11y"
           ],
-          "problemStatement": "Keyboard, focus, feedback hierarchy, and confirmation patterns needed systematic remediation.",
+          "problemStatement": "Keyboard, focus, feedback hierarchy, and confirmation patterns are now verified through deterministic component behavior and regression coverage on core LIC workflows.",
           "requirementExcerpt": "Enforce keyboard-first interaction, visible focus, and explicit feedback/confirmation hierarchy.",
           "acceptanceCriteria": [
             "Keyboard navigation and modal focus management verified on core routes.",
@@ -1398,8 +1398,8 @@
           "apiImpact": "No API changes.",
           "securityImpact": "Reduces operator error risk.",
           "definitionOfDone": [
-            "Accessibility compliance evidence is documented.",
-            "Regression tests cover key interaction contracts."
+            "Accessibility compliance evidence is documented at docs/parity/ui-interaction-accessibility-verification.md.",
+            "Regression tests cover focus trap/return, keyboard thread selection, skip-link behavior, and confirmation feedback flows."
           ]
         },
         {
