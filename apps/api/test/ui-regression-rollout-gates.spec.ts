@@ -17,6 +17,7 @@ describe('UI regression rollout gate policy', () => {
     expect(workflow).toContain('UI Interaction Checklist');
     expect(workflow).toContain('Screenshot Evidence');
     expect(workflow).toContain('No console errors');
+    expect(workflow).toContain('pnpm ui:contract:check');
     expect(workflow).toContain('pnpm --filter web test:regression');
     expect(workflow).toContain('pnpm --filter web build');
     expect(workflow).toContain("file.filename.startsWith('apps/web/')");
@@ -32,6 +33,7 @@ describe('UI regression rollout gate policy', () => {
     expect(webPackage.scripts?.['test:regression']).toContain('test/matters-page.spec.tsx');
     expect(webPackage.scripts?.['test:regression']).toContain('test/portal-page.spec.tsx');
     expect(webPackage.scripts?.['test:regression']).toContain('test/ai-page.spec.tsx');
+    expect(rootPackage.scripts?.['test:ui-regression']).toContain('pnpm ui:contract:check');
     expect(rootPackage.scripts?.['test:ui-regression']).toContain('pnpm --filter web test:regression');
     expect(rootPackage.scripts?.['test:ui-regression']).toContain('pnpm --filter web build');
   });

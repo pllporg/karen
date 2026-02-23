@@ -1115,7 +1115,7 @@
           "title": "Lock canonical LIC precedence and enforce style guardrails",
           "requirementId": "REQ-UI-008",
           "promptSection": "UI Refactor / Canonical conflict resolution + enforcement",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1123,7 +1123,7 @@
             "ui-ux",
             "design-system"
           ],
-          "problemStatement": "Canonical LIC precedence, style guardrails, and CI enforcement are implemented; remaining work is review/approval and rollout governance adoption.",
+          "problemStatement": "Canonical LIC precedence, style guardrails, and CI enforcement are verified through executable guard checks and workflow policy tests.",
           "requirementExcerpt": "Resolve conflicts with previous UI instructions and enforce a deterministic LIC implementation baseline.",
           "acceptanceCriteria": [
             "Canonical precedence document is published and referenced by UI governance docs.",
@@ -1133,8 +1133,9 @@
           "apiImpact": "No API contract changes.",
           "securityImpact": "Reduces operator-error risk by preventing unsafe visual drift in review-critical flows.",
           "definitionOfDone": [
-            "Precedence and token contracts are updated and linked from README.",
-            "Style guardrail script is wired to local and CI workflows."
+            "Precedence and token contracts are updated and linked from README/canonical docs.",
+            "Style guardrail script is wired to local and CI workflows and verified by policy tests.",
+            "Verification artifact documented at docs/parity/ui-canonical-precedence-guardrail-verification.md."
           ]
         },
         {
