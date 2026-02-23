@@ -485,7 +485,7 @@
           "title": "Harden matter participant relationship mapping and lifecycle editing",
           "requirementId": "REQ-PMS-CORE-007",
           "promptSection": "Matters / Participants / represented-by + law-firm relationship mapping",
-          "parityStatus": "Partial",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -493,7 +493,7 @@
             "matters",
             "pms-core"
           ],
-          "problemStatement": "Matter participant workflows currently allow create/remove but do not support complete in-context editing of side semantics, primary flags, represented-by counsel mapping, and law-firm mapping across role categories.",
+          "problemStatement": "Matter participant lifecycle hardening is now verified with in-context add/edit/remove operations, strict counsel linkage validation, and regression coverage across API and web workflows.",
           "requirementExcerpt": "Matter participants must support rich role semantics and counsel/party linkage in matter context.",
           "acceptanceCriteria": [
             "Users can edit existing participant role key, side, primary flag, represented-by contact, law-firm contact, and notes from matter dashboard context.",
@@ -503,9 +503,9 @@
           "apiImpact": "Adds matter participant update mutation endpoint and validation path for represented-by/law-firm linkage updates.",
           "securityImpact": "Maintains tenant and matter access constraints while reducing data-integrity drift in party/counsel relationship records.",
           "definitionOfDone": [
-            "API regression coverage validates participant update constraints, linkage edits, and audit events.",
-            "Matter dashboard UI supports participant edit/save/cancel/remove flows with clear status feedback.",
-            "Verification artifact documented at docs/parity/matter-participant-lifecycle-hardening.md."
+            "API regression coverage validates participant update constraints, linkage edits, and audit events in matters service tests.",
+            "Matter dashboard UI supports participant add/edit/save/cancel/remove flows with clear status feedback and role-side linkage controls.",
+            "Verification artifact is documented at docs/parity/matter-participant-lifecycle-hardening.md."
           ]
         }
       ]
