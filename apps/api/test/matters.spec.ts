@@ -391,6 +391,155 @@ describe('MattersService', () => {
     expect(new Set(createdKeys)).toEqual(new Set(categories.map((category) => category.key)));
   });
 
+  it('updates participant relationship mapping and emits audit event', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'contact-2' })
+          .mockResolvedValueOnce({ id: 'firm-1' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role-counsel',
+          key: 'opposing_counsel',
+          label: 'Opposing Counsel',
+          sideDefault: 'OPPOSING_SIDE',
+        }),
+      },
+      matterParticipant: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'participant-1',
+          organizationId: 'org1',
+          matterId: 'matter1',
+          contactId: 'contact-1',
+          participantRoleKey: 'expert',
+          participantRoleDefinition: {
+            id: 'role-expert',
+            key: 'expert',
+            label: 'Expert Witness',
+            sideDefault: 'NEUTRAL',
+          },
+          side: 'NEUTRAL',
+          isPrimary: false,
+          representedByContactId: 'contact-3',
+          lawFirmContactId: null,
+          notes: 'Initial note',
+        }),
+        update: jest.fn().mockResolvedValue({
+          id: 'participant-1',
+          participantRoleKey: 'opposing_counsel',
+          contactId: 'contact-2',
+          side: 'OPPOSING_SIDE',
+          isPrimary: true,
+          representedByContactId: null,
+          lawFirmContactId: 'firm-1',
+          notes: 'Updated note',
+        }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const access = { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MattersService(prisma, audit, access);
+
+    const result = await service.updateParticipant({
+      user: baseUser,
+      matterId: 'matter1',
+      participantId: 'participant-1',
+      contactId: 'contact-2',
+      participantRoleKey: 'opposing_counsel',
+      side: 'OPPOSING_SIDE',
+      isPrimary: true,
+      representedByContactId: '',
+      lawFirmContactId: 'firm-1',
+      notes: 'Updated note',
+    });
+
+    expect(access.assertMatterAccess).toHaveBeenCalledWith(baseUser, 'matter1', 'write');
+    expect(prisma.matterParticipant.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'participant-1' },
+        data: expect.objectContaining({
+          contactId: 'contact-2',
+          participantRoleKey: 'opposing_counsel',
+          participantRoleDefinitionId: 'role-counsel',
+          side: 'OPPOSING_SIDE',
+          isPrimary: true,
+          representedByContactId: null,
+          lawFirmContactId: 'firm-1',
+          notes: 'Updated note',
+        }),
+      }),
+    );
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'matter.participant.updated',
+        entityType: 'matterParticipant',
+        entityId: 'participant-1',
+      }),
+    );
+    expect(result.id).toBe('participant-1');
+  });
+
+  it('rejects representedByContactId when update target role is counsel', async () => {
+    const prisma = {
+      contact: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'contact-1' })
+          .mockResolvedValueOnce({ id: 'contact-3' }),
+      },
+      participantRoleDefinition: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'role-counsel',
+          key: 'opposing_counsel',
+          label: 'Opposing Counsel',
+          sideDefault: 'OPPOSING_SIDE',
+        }),
+      },
+      matterParticipant: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'participant-1',
+          organizationId: 'org1',
+          matterId: 'matter1',
+          contactId: 'contact-1',
+          participantRoleKey: 'expert',
+          participantRoleDefinition: {
+            id: 'role-expert',
+            key: 'expert',
+            label: 'Expert Witness',
+            sideDefault: 'NEUTRAL',
+          },
+          side: 'NEUTRAL',
+          isPrimary: false,
+          representedByContactId: null,
+          lawFirmContactId: null,
+          notes: null,
+        }),
+        update: jest.fn(),
+      },
+    } as any;
+
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    await expect(
+      service.updateParticipant({
+        user: baseUser,
+        matterId: 'matter1',
+        participantId: 'participant-1',
+        participantRoleKey: 'opposing_counsel',
+        representedByContactId: 'contact-3',
+      }),
+    ).rejects.toThrow('Counsel roles cannot use representedByContactId');
+
+    expect(prisma.matterParticipant.update).not.toHaveBeenCalled();
+  });
+
   it('removes participant within matter scope and emits audit event', async () => {
     const prisma = {
       matterParticipant: {

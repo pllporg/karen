@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-23T17:55:28.117Z`
+- Snapshot Timestamp: `2026-02-23T19:47:42.008Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-23T17:55:26.354Z`
+- Last Successful Mirror Verify: `2026-02-23T19:47:37.845Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -93,6 +93,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-23: Advanced `KAR-78` / `REQ-PMS-CORE-007` to `In Review` by hardening matter participant lifecycle editing: added participant update endpoint (`PATCH /matters/:id/participants/:participantId`) with counsel/non-counsel linkage guards + org-scoped contact validation + `matter.participant.updated` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/update-participant.dto.ts`), expanded matter dashboard participant workflow to support role/side/primary/represented-by/law-firm/notes add-edit-remove operations with explicit feedback states (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published verification artifact `docs/parity/matter-participant-lifecycle-hardening.md`; validation passed via `pnpm --filter api test -- matters.spec.ts`, `pnpm --filter web test -- matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, and `pnpm lint`, followed by backlog sync/verify/snapshot/handoff check.
 - 2026-02-23: Extended `REQ-PMS-CORE-005` hardening with matter-level ICS export workflow coverage: added calendar-panel `Export ICS` action in `apps/web/app/matters/[id]/page.tsx`, added web regression for authenticated ICS download flow (`apps/web/test/matter-dashboard-page.spec.tsx`), and expanded API service regression coverage for ICS export payload/access behavior (`apps/api/test/calendar-events.spec.ts`), with artifact update in `docs/parity/matter-dashboard-task-calendar-lifecycle.md`.
 - 2026-02-23: Completed `KAR-77` / `REQ-UI-015` by finalizing full UI compliance review closure: updated route-by-route compliance artifact with fixed status for all findings and explicit closure evidence (`docs/parity/ui-full-compliance-review.md`), set matrix parity status for `REQ-UI-015` to `Complete`, moved Linear `KAR-77` to `Done` with `parity-status:complete`, and synced mirror/snapshot (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:matrix:check`, `pnpm backlog:snapshot`).
 - 2026-02-23: Completed `KAR-76` / `REQ-UI-014` by finalizing LIC branding migration closure: moved seeded/login demo account domains to `@lic-demo.local` (`apps/api/prisma/seed.ts`, `apps/web/app/login/page.tsx`, `README.md`), closed transitional compatibility note in precedence docs (`docs/UI_CANONICAL_PRECEDENCE.md`), refreshed boundary verification evidence (`docs/parity/ui-manual-ux-boundary-verification.md`), updated matrix parity status to `Complete`, moved Linear `KAR-76` to `Done` with `parity-status:complete`, and synced mirror/snapshot (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`).

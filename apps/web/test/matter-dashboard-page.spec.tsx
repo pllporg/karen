@@ -20,7 +20,13 @@ function createDashboardState() {
       contactId: string;
       participantRoleKey: string;
       side: string;
+      isPrimary?: boolean;
+      representedByContactId?: string | null;
+      lawFirmContactId?: string | null;
+      notes?: string | null;
       contact: { id: string; displayName: string };
+      representedByContact?: { id: string; displayName: string } | null;
+      lawFirmContact?: { id: string; displayName: string } | null;
       participantRoleDefinition?: { id: string; label: string; key: string } | null;
     }>,
     tasks: [] as Array<{ id: string; title: string; status: string; dueAt: string | null; priority?: string }>,
@@ -499,17 +505,19 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
-  it('adds and removes participants in matter context', async () => {
+  it('adds, edits, and removes participants in matter context', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();
     const contacts = [
       { id: 'contact-1', displayName: 'Jordan Homeowner', kind: 'PERSON' },
       { id: 'contact-2', displayName: 'Taylor Expert', kind: 'PERSON' },
+      { id: 'contact-3', displayName: 'Opposing Counsel', kind: 'PERSON' },
+      { id: 'contact-4', displayName: 'Builder Defense LLP', kind: 'ORGANIZATION' },
     ];
     const roles = [
       { id: 'role-1', key: 'expert', label: 'Expert Witness', sideDefault: 'NEUTRAL' as const },
-      { id: 'role-2', key: 'opposing_party', label: 'Opposing Party', sideDefault: 'OPPOSING_SIDE' as const },
+      { id: 'role-2', key: 'opposing_counsel', label: 'Opposing Counsel', sideDefault: 'OPPOSING_SIDE' as const },
     ];
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -532,16 +540,60 @@ describe('MatterDashboardPage operational workflows', () => {
         const body = JSON.parse(String(init?.body || '{}'));
         const contact = contacts.find((item) => item.id === body.contactId);
         const role = roles.find((item) => item.key === body.participantRoleKey);
+        const representedBy = contacts.find((item) => item.id === body.representedByContactId);
+        const lawFirm = contacts.find((item) => item.id === body.lawFirmContactId);
         const participant = {
           id: `participant-${state.participants.length + 1}`,
           contactId: body.contactId,
           participantRoleKey: body.participantRoleKey,
-          side: role?.sideDefault || 'NEUTRAL',
+          side: body.side || role?.sideDefault || 'NEUTRAL',
+          isPrimary: Boolean(body.isPrimary),
+          representedByContactId: body.representedByContactId || null,
+          lawFirmContactId: body.lawFirmContactId || null,
+          notes: body.notes || null,
           contact: contact ? { id: contact.id, displayName: contact.displayName } : { id: body.contactId, displayName: body.contactId },
           participantRoleDefinition: role ? { id: role.id, key: role.key, label: role.label } : null,
+          representedByContact: representedBy
+            ? { id: representedBy.id, displayName: representedBy.displayName }
+            : null,
+          lawFirmContact: lawFirm ? { id: lawFirm.id, displayName: lawFirm.displayName } : null,
         };
         state.participants.push(participant);
         return jsonResponse(participant);
+      }
+      if (url.endsWith('/matters/matter-1/participants/participant-1') && method === 'PATCH') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const contact = contacts.find((item) => item.id === body.contactId);
+        const role = roles.find((item) => item.key === body.participantRoleKey);
+        const representedBy = contacts.find((item) => item.id === body.representedByContactId);
+        const lawFirm = contacts.find((item) => item.id === body.lawFirmContactId);
+        state.participants = state.participants.map((participant) =>
+          participant.id === 'participant-1'
+            ? {
+                ...participant,
+                contactId: body.contactId || participant.contactId,
+                participantRoleKey: body.participantRoleKey || participant.participantRoleKey,
+                side: body.side || participant.side,
+                isPrimary: body.isPrimary ?? participant.isPrimary,
+                representedByContactId: body.representedByContactId || null,
+                lawFirmContactId: body.lawFirmContactId || null,
+                notes: body.notes || null,
+                contact: contact
+                  ? { id: contact.id, displayName: contact.displayName }
+                  : participant.contact,
+                participantRoleDefinition: role
+                  ? { id: role.id, key: role.key, label: role.label }
+                  : participant.participantRoleDefinition,
+                representedByContact: representedBy
+                  ? { id: representedBy.id, displayName: representedBy.displayName }
+                  : null,
+                lawFirmContact: lawFirm
+                  ? { id: lawFirm.id, displayName: lawFirm.displayName }
+                  : null,
+              }
+            : participant,
+        );
+        return jsonResponse(state.participants[0]);
       }
       if (url.endsWith('/matters/matter-1/participants/participant-1') && method === 'DELETE') {
         state.participants = state.participants.filter((participant) => participant.id !== 'participant-1');
@@ -559,6 +611,10 @@ describe('MatterDashboardPage operational workflows', () => {
 
     fireEvent.change(screen.getByLabelText('Participant Contact'), { target: { value: 'contact-2' } });
     fireEvent.change(screen.getByLabelText('Participant Role'), { target: { value: 'expert' } });
+    fireEvent.change(screen.getByLabelText('Participant Side'), { target: { value: 'NEUTRAL' } });
+    fireEvent.click(screen.getByLabelText('Participant Is Primary'));
+    fireEvent.change(screen.getByLabelText('Participant Represented By Contact'), { target: { value: 'contact-1' } });
+    fireEvent.change(screen.getByLabelText('Participant Notes'), { target: { value: 'Initial expert disclosure' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add Participant' }));
 
     await waitFor(() => {
@@ -569,6 +625,24 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByText('Participant added.')).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'Taylor Expert' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'Expert Witness' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'YES' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Jordan Homeowner' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Initial expert disclosure' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Participant participant-1' }));
+    fireEvent.change(screen.getByLabelText('Participant Role'), { target: { value: 'opposing_counsel' } });
+    fireEvent.change(screen.getByLabelText('Participant Law Firm Contact'), { target: { value: 'contact-4' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Participant Edit' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/matters/matter-1/participants/participant-1',
+        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
+      );
+      expect(screen.getByText('Participant updated.')).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Opposing Counsel' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'Builder Defense LLP' })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove Participant participant-1' }));
