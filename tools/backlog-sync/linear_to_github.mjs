@@ -8,6 +8,7 @@ import {
   getLinearProjectByName,
   getLinearProjectIssues,
   githubRequest,
+  listGitHubIssuesGraphQL,
   linearPriorityToGitHubLabel,
   linearStateToGitHub,
   normalizeLabelName,
@@ -60,21 +61,17 @@ async function listRepoLabels() {
 }
 
 async function listRepoIssues({ labels = null } = {}) {
-  const issues = [];
-  let page = 1;
-  while (true) {
-    const query = new URLSearchParams({
-      state: 'all',
-      per_page: '100',
-      page: String(page),
-    });
-    if (labels) query.set('labels', labels);
-    const chunk = await githubRequest(githubToken, `/repos/${owner}/${repo}/issues?${query.toString()}`);
-    if (!Array.isArray(chunk) || chunk.length === 0) break;
-    issues.push(...chunk.filter((item) => !item.pull_request));
-    page += 1;
-  }
-  return issues;
+  const normalizedLabels = labels
+    ? String(labels)
+        .split(',')
+        .map((value) => normalizeLabelName(value))
+        .filter(Boolean)
+    : null;
+  return listGitHubIssuesGraphQL(githubToken, {
+    owner,
+    repo,
+    labels: normalizedLabels,
+  });
 }
 
 function colorForLabel(name) {
@@ -122,7 +119,8 @@ async function loadMirrorIssueMap() {
   for (const issue of issues) {
     const linearId = parseLinearId(issue.body);
     if (!linearId) continue;
-    if (!byLinearId.has(linearId)) {
+    const existing = byLinearId.get(linearId);
+    if (!existing || Number(issue.number) > Number(existing.number)) {
       byLinearId.set(linearId, issue);
     }
   }

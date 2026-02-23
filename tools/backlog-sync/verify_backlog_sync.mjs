@@ -8,7 +8,7 @@ import {
   extractRequirementId,
   getLinearProjectByName,
   getLinearProjectIssues,
-  githubRequest,
+  listGitHubIssuesGraphQL,
   normalizeLabelName,
   requiredEnv,
 } from './common.mjs';
@@ -33,18 +33,11 @@ function parseRequirementFromBody(body) {
 }
 
 async function listMirroredGitHubIssues() {
-  const issues = [];
-  let page = 1;
-  while (true) {
-    const chunk = await githubRequest(
-      githubToken,
-      `/repos/${owner}/${repo}/issues?state=all&labels=${encodeURIComponent(scopeLabel)}&per_page=100&page=${page}`,
-    );
-    if (!Array.isArray(chunk) || chunk.length === 0) break;
-    issues.push(...chunk.filter((item) => !item.pull_request));
-    page += 1;
-  }
-  return issues;
+  return listGitHubIssuesGraphQL(githubToken, {
+    owner,
+    repo,
+    labels: [scopeLabel],
+  });
 }
 
 async function main() {
@@ -61,7 +54,11 @@ async function main() {
   const githubByLinearId = new Map();
   for (const issue of githubIssues) {
     const linearId = parseLinearId(issue.body);
-    if (linearId) githubByLinearId.set(linearId, issue);
+    if (!linearId) continue;
+    const existing = githubByLinearId.get(linearId);
+    if (!existing || Number(issue.number) > Number(existing.number)) {
+      githubByLinearId.set(linearId, issue);
+    }
   }
 
   const missingMirrors = [];
