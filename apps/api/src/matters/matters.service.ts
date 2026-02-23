@@ -398,6 +398,186 @@ export class MattersService {
     return { id: participant.id, removed: true };
   }
 
+  async updateParticipant(input: {
+    user: AuthenticatedUser;
+    matterId: string;
+    participantId: string;
+    contactId?: string;
+    participantRoleKey?: string;
+    side?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT';
+    isPrimary?: boolean;
+    representedByContactId?: string;
+    lawFirmContactId?: string;
+    notes?: string;
+  }) {
+    await this.accessService.assertMatterAccess(input.user, input.matterId, 'write');
+
+    const participant = await this.prisma.matterParticipant.findFirst({
+      where: {
+        id: input.participantId,
+        matterId: input.matterId,
+        organizationId: input.user.organizationId,
+      },
+      include: {
+        participantRoleDefinition: true,
+      },
+    });
+    if (!participant) {
+      throw new NotFoundException('Matter participant not found');
+    }
+
+    const hasContactId = Object.prototype.hasOwnProperty.call(input, 'contactId');
+    const hasRoleKey = Object.prototype.hasOwnProperty.call(input, 'participantRoleKey');
+    const hasSide = Object.prototype.hasOwnProperty.call(input, 'side');
+    const hasIsPrimary = Object.prototype.hasOwnProperty.call(input, 'isPrimary');
+    const hasRepresentedBy = Object.prototype.hasOwnProperty.call(input, 'representedByContactId');
+    const hasLawFirm = Object.prototype.hasOwnProperty.call(input, 'lawFirmContactId');
+    const hasNotes = Object.prototype.hasOwnProperty.call(input, 'notes');
+
+    const nextContactId = hasContactId ? this.normalizeOptionalText(input.contactId) : participant.contactId;
+    if (!nextContactId) {
+      throw new BadRequestException('Participant contactId cannot be empty');
+    }
+
+    let roleDef = participant.participantRoleDefinition;
+    let nextRoleKey = participant.participantRoleKey;
+    if (hasRoleKey) {
+      const participantRoleKey = this.normalizeOptionalText(input.participantRoleKey);
+      if (!participantRoleKey) {
+        throw new BadRequestException('participantRoleKey cannot be empty');
+      }
+      roleDef = await this.prisma.participantRoleDefinition.findFirst({
+        where: {
+          organizationId: input.user.organizationId,
+          key: participantRoleKey,
+        },
+      });
+      if (!roleDef) {
+        throw new NotFoundException(`Participant role definition not found: ${participantRoleKey}`);
+      }
+      nextRoleKey = participantRoleKey;
+    }
+
+    const nextRepresentedByContactId = hasRepresentedBy
+      ? this.normalizeOptionalText(input.representedByContactId) || null
+      : participant.representedByContactId;
+    const nextLawFirmContactId = hasLawFirm ? this.normalizeOptionalText(input.lawFirmContactId) || null : participant.lawFirmContactId;
+
+    if (nextRepresentedByContactId && nextRepresentedByContactId === nextContactId) {
+      throw new BadRequestException('representedByContactId cannot match contactId');
+    }
+    if (nextLawFirmContactId && nextLawFirmContactId === nextContactId) {
+      throw new BadRequestException('lawFirmContactId cannot match contactId');
+    }
+
+    await this.assertContactInOrganization(
+      input.user.organizationId,
+      nextContactId,
+      `Participant contact not found: ${nextContactId}`,
+    );
+
+    if (nextRepresentedByContactId) {
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        nextRepresentedByContactId,
+        `Representing contact not found: ${nextRepresentedByContactId}`,
+      );
+    }
+    if (nextLawFirmContactId) {
+      await this.assertContactInOrganization(
+        input.user.organizationId,
+        nextLawFirmContactId,
+        `Law firm contact not found: ${nextLawFirmContactId}`,
+      );
+    }
+
+    const counselRole = this.isCounselRole(nextRoleKey, roleDef?.label);
+    if (counselRole && nextRepresentedByContactId) {
+      throw new BadRequestException('Counsel roles cannot use representedByContactId; add represented parties instead');
+    }
+    if (!counselRole && nextLawFirmContactId) {
+      throw new BadRequestException('lawFirmContactId is only valid for counsel roles');
+    }
+
+    const data: Prisma.MatterParticipantUncheckedUpdateInput = {};
+    const updatedFields: string[] = [];
+
+    if (hasContactId && nextContactId !== participant.contactId) {
+      data.contactId = nextContactId;
+      updatedFields.push('contactId');
+    }
+    if (hasRoleKey && nextRoleKey !== participant.participantRoleKey) {
+      data.participantRoleKey = nextRoleKey;
+      data.participantRoleDefinitionId = roleDef?.id ?? null;
+      updatedFields.push('participantRoleKey');
+    }
+    if (hasSide && input.side !== participant.side) {
+      data.side = input.side;
+      updatedFields.push('side');
+    }
+    if (hasIsPrimary && input.isPrimary !== participant.isPrimary) {
+      data.isPrimary = input.isPrimary;
+      updatedFields.push('isPrimary');
+    }
+    if (hasRepresentedBy && nextRepresentedByContactId !== participant.representedByContactId) {
+      data.representedByContactId = nextRepresentedByContactId;
+      updatedFields.push('representedByContactId');
+    }
+    if (hasLawFirm && nextLawFirmContactId !== participant.lawFirmContactId) {
+      data.lawFirmContactId = nextLawFirmContactId;
+      updatedFields.push('lawFirmContactId');
+    }
+    if (hasNotes) {
+      const nextNotes = this.normalizeOptionalText(input.notes) || null;
+      if (nextNotes !== participant.notes) {
+        data.notes = nextNotes;
+        updatedFields.push('notes');
+      }
+    }
+
+    if (updatedFields.length === 0) {
+      return this.prisma.matterParticipant.findFirst({
+        where: {
+          id: input.participantId,
+          matterId: input.matterId,
+          organizationId: input.user.organizationId,
+        },
+        include: {
+          contact: true,
+          participantRoleDefinition: true,
+          representedByContact: true,
+          lawFirmContact: true,
+        },
+      });
+    }
+
+    const updatedParticipant = await this.prisma.matterParticipant.update({
+      where: { id: input.participantId },
+      data,
+      include: {
+        contact: true,
+        participantRoleDefinition: true,
+        representedByContact: true,
+        lawFirmContact: true,
+      },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: 'matter.participant.updated',
+      entityType: 'matterParticipant',
+      entityId: updatedParticipant.id,
+      metadata: {
+        matterId: input.matterId,
+        updatedFields,
+        participant: updatedParticipant,
+      },
+    });
+
+    return updatedParticipant;
+  }
+
   async listParticipantRoleOptions(user: AuthenticatedUser, matterId: string) {
     await this.accessService.assertMatterAccess(user, matterId, 'read');
 
@@ -762,6 +942,8 @@ export class MattersService {
           include: {
             contact: true,
             participantRoleDefinition: true,
+            representedByContact: true,
+            lawFirmContact: true,
           },
           orderBy: { createdAt: 'asc' },
         },

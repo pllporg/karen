@@ -26,6 +26,8 @@ type ParticipantRoleOption = {
   sideDefault: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' | null;
 };
 
+type ParticipantSideOption = 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT';
+
 type CommunicationThread = {
   id: string;
   subject?: string | null;
@@ -53,6 +55,7 @@ const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
 const MATTER_STATUS_OPTIONS = ['OPEN', 'PENDING', 'CLOSED', 'ARCHIVED'] as const;
+const PARTICIPANT_SIDE_OPTIONS = ['CLIENT_SIDE', 'OPPOSING_SIDE', 'NEUTRAL', 'COURT'] as const;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
 function toDateTimeLocalValue(value?: string | null) {
@@ -64,6 +67,11 @@ function toDateTimeLocalValue(value?: string | null) {
     return '';
   }
   return date.toISOString().slice(0, 16);
+}
+
+function isCounselRole(roleKey?: string, roleLabel?: string | null) {
+  const fingerprint = `${roleKey || ''} ${roleLabel || ''}`.toLowerCase();
+  return /(counsel|attorney|lawyer)/.test(fingerprint);
 }
 
 export default function MatterDashboardPage() {
@@ -102,6 +110,12 @@ export default function MatterDashboardPage() {
   const [participantRoleOptions, setParticipantRoleOptions] = useState<ParticipantRoleOption[]>([]);
   const [selectedParticipantContactId, setSelectedParticipantContactId] = useState('');
   const [selectedParticipantRoleKey, setSelectedParticipantRoleKey] = useState('');
+  const [participantSide, setParticipantSide] = useState<ParticipantSideOption>('NEUTRAL');
+  const [participantIsPrimary, setParticipantIsPrimary] = useState(false);
+  const [participantRepresentedByContactId, setParticipantRepresentedByContactId] = useState('');
+  const [participantLawFirmContactId, setParticipantLawFirmContactId] = useState('');
+  const [participantNotes, setParticipantNotes] = useState('');
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const [participantStatusMessage, setParticipantStatusMessage] = useState<string | null>(null);
   const [selectedCommunicationThreadId, setSelectedCommunicationThreadId] = useState('__new__');
   const [newCommunicationThreadSubject, setNewCommunicationThreadSubject] = useState('');
@@ -174,10 +188,32 @@ export default function MatterDashboardPage() {
         setParticipantRoleOptions(roles);
         if (roles.length > 0) {
           setSelectedParticipantRoleKey((current) => current || roles[0].key);
+          setParticipantSide((current) =>
+            current || (roles[0].sideDefault as ParticipantSideOption | null) || 'NEUTRAL',
+          );
         }
       })
       .catch(() => undefined);
   }, [matterId]);
+
+  const selectedParticipantRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey);
+  const participantRoleIsCounsel = isCounselRole(selectedParticipantRole?.key, selectedParticipantRole?.label);
+
+  useEffect(() => {
+    if (!selectedParticipantRole) {
+      return;
+    }
+
+    if (!editingParticipantId && selectedParticipantRole.sideDefault) {
+      setParticipantSide(selectedParticipantRole.sideDefault as ParticipantSideOption);
+    }
+
+    if (participantRoleIsCounsel) {
+      setParticipantRepresentedByContactId('');
+    } else {
+      setParticipantLawFirmContactId('');
+    }
+  }, [selectedParticipantRole, participantRoleIsCounsel, editingParticipantId]);
 
   async function previewDeadlines() {
     if (!matterId || !selectedRulesPackId || !triggerDate) return;
@@ -464,22 +500,79 @@ export default function MatterDashboardPage() {
     setCalendarStatusMessage(`Calendar ICS exported: ${filename}.`);
   }
 
-  async function addParticipant() {
-    if (!matterId || !selectedParticipantContactId || !selectedParticipantRoleKey) {
+  function resetParticipantForm() {
+    setEditingParticipantId(null);
+    setParticipantIsPrimary(false);
+    setParticipantRepresentedByContactId('');
+    setParticipantLawFirmContactId('');
+    setParticipantNotes('');
+    const defaultRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey) || participantRoleOptions[0];
+    if (defaultRole) {
+      setSelectedParticipantRoleKey(defaultRole.key);
+      setParticipantSide((defaultRole.sideDefault as ParticipantSideOption | null) || 'NEUTRAL');
+    }
+  }
+
+  async function createOrUpdateParticipant() {
+    if (!matterId || !selectedParticipantContactId || !selectedParticipantRoleKey || !participantSide) {
       setParticipantStatusMessage('Contact and participant role are required.');
       return;
     }
 
-    await apiFetch(`/matters/${matterId}/participants`, {
-      method: 'POST',
-      body: JSON.stringify({
-        contactId: selectedParticipantContactId,
-        participantRoleKey: selectedParticipantRoleKey,
-      }),
-    });
+    const payload = {
+      contactId: selectedParticipantContactId,
+      participantRoleKey: selectedParticipantRoleKey,
+      side: participantSide,
+      isPrimary: participantIsPrimary,
+      representedByContactId: participantRoleIsCounsel ? null : participantRepresentedByContactId || null,
+      lawFirmContactId: participantRoleIsCounsel ? participantLawFirmContactId || null : null,
+      notes: participantNotes.trim() ? participantNotes.trim() : null,
+    };
 
-    setParticipantStatusMessage('Participant added.');
+    if (editingParticipantId) {
+      await apiFetch(`/matters/${matterId}/participants/${editingParticipantId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      setParticipantStatusMessage('Participant updated.');
+    } else {
+      await apiFetch(`/matters/${matterId}/participants`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      setParticipantStatusMessage('Participant added.');
+    }
+
+    resetParticipantForm();
     await refreshDashboard();
+  }
+
+  function startEditingParticipant(participant: {
+    id: string;
+    contactId: string;
+    participantRoleKey: string;
+    side?: ParticipantSideOption | null;
+    isPrimary?: boolean;
+    representedByContactId?: string | null;
+    lawFirmContactId?: string | null;
+    representedByContact?: { id: string } | null;
+    lawFirmContact?: { id: string } | null;
+    notes?: string | null;
+  }) {
+    setEditingParticipantId(participant.id);
+    setSelectedParticipantContactId(participant.contactId);
+    setSelectedParticipantRoleKey(participant.participantRoleKey);
+    setParticipantSide(participant.side || 'NEUTRAL');
+    setParticipantIsPrimary(Boolean(participant.isPrimary));
+    setParticipantRepresentedByContactId(participant.representedByContact?.id || participant.representedByContactId || '');
+    setParticipantLawFirmContactId(participant.lawFirmContact?.id || participant.lawFirmContactId || '');
+    setParticipantNotes(participant.notes || '');
+    setParticipantStatusMessage(`Editing participant ${participant.id}.`);
+  }
+
+  function cancelEditingParticipant() {
+    resetParticipantForm();
+    setParticipantStatusMessage('Participant edit cancelled.');
   }
 
   async function removeParticipant(participantId: string) {
@@ -491,6 +584,9 @@ export default function MatterDashboardPage() {
       method: 'DELETE',
     });
 
+    if (editingParticipantId === participantId) {
+      resetParticipantForm();
+    }
     setParticipantStatusMessage('Participant removed.');
     await refreshDashboard();
   }
@@ -835,36 +931,116 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Participants</h3>
-            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr auto' }}>
-              <select
-                className="select"
-                aria-label="Participant Contact"
-                value={selectedParticipantContactId}
-                onChange={(event) => setSelectedParticipantContactId(event.target.value)}
-              >
-                <option value="">Select contact</option>
-                {participantContacts.map((contact) => (
-                  <option key={contact.id} value={contact.id}>
-                    {contact.displayName}
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                <select
+                  className="select"
+                  aria-label="Participant Contact"
+                  value={selectedParticipantContactId}
+                  onChange={(event) => setSelectedParticipantContactId(event.target.value)}
+                >
+                  <option value="">Select contact</option>
+                  {participantContacts.map((contact) => (
+                    <option key={contact.id} value={contact.id}>
+                      {contact.displayName}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="select"
+                  aria-label="Participant Role"
+                  value={selectedParticipantRoleKey}
+                  onChange={(event) => {
+                    const nextRoleKey = event.target.value;
+                    setSelectedParticipantRoleKey(nextRoleKey);
+                    const role = participantRoleOptions.find((option) => option.key === nextRoleKey);
+                    if (role?.sideDefault) {
+                      setParticipantSide(role.sideDefault as ParticipantSideOption);
+                    }
+                  }}
+                >
+                  <option value="">Select role</option>
+                  {participantRoleOptions.map((role) => (
+                    <option key={role.id} value={role.key}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="select"
+                  aria-label="Participant Side"
+                  value={participantSide}
+                  onChange={(event) => setParticipantSide(event.target.value as ParticipantSideOption)}
+                >
+                  {PARTICIPANT_SIDE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input
+                    type="checkbox"
+                    aria-label="Participant Is Primary"
+                    checked={participantIsPrimary}
+                    onChange={(event) => setParticipantIsPrimary(event.target.checked)}
+                  />
+                  Primary participant
+                </label>
+                <select
+                  className="select"
+                  aria-label="Participant Represented By Contact"
+                  value={participantRepresentedByContactId}
+                  onChange={(event) => setParticipantRepresentedByContactId(event.target.value)}
+                  disabled={participantRoleIsCounsel}
+                >
+                  <option value="">
+                    {participantRoleIsCounsel ? 'Represented-by disabled for counsel roles' : 'No represented-by contact'}
                   </option>
-                ))}
-              </select>
-              <select
-                className="select"
-                aria-label="Participant Role"
-                value={selectedParticipantRoleKey}
-                onChange={(event) => setSelectedParticipantRoleKey(event.target.value)}
-              >
-                <option value="">Select role</option>
-                {participantRoleOptions.map((role) => (
-                  <option key={role.id} value={role.key}>
-                    {role.label}
+                  {participantContacts
+                    .filter((contact) => contact.id !== selectedParticipantContactId)
+                    .map((contact) => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.displayName}
+                      </option>
+                    ))}
+                </select>
+                <select
+                  className="select"
+                  aria-label="Participant Law Firm Contact"
+                  value={participantLawFirmContactId}
+                  onChange={(event) => setParticipantLawFirmContactId(event.target.value)}
+                  disabled={!participantRoleIsCounsel}
+                >
+                  <option value="">
+                    {participantRoleIsCounsel ? 'No law firm contact' : 'Law-firm mapping only for counsel roles'}
                   </option>
-                ))}
-              </select>
-              <button className="button" type="button" onClick={addParticipant}>
-                Add Participant
-              </button>
+                  {participantContacts
+                    .filter((contact) => contact.id !== selectedParticipantContactId)
+                    .map((contact) => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.displayName}
+                      </option>
+                    ))}
+                </select>
+                <input
+                  className="input"
+                  aria-label="Participant Notes"
+                  value={participantNotes}
+                  onChange={(event) => setParticipantNotes(event.target.value)}
+                  placeholder="Participant notes"
+                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="button" type="button" onClick={createOrUpdateParticipant}>
+                    {editingParticipantId ? 'Save Participant Edit' : 'Add Participant'}
+                  </button>
+                  {editingParticipantId ? (
+                    <button className="button secondary" type="button" onClick={cancelEditingParticipant}>
+                      Cancel Participant Edit
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             </div>
             {participantStatusMessage ? (
               <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{participantStatusMessage}</p>
@@ -875,6 +1051,10 @@ export default function MatterDashboardPage() {
                   <th>Contact</th>
                   <th>Role</th>
                   <th>Side</th>
+                  <th>Primary</th>
+                  <th>Represented By</th>
+                  <th>Law Firm</th>
+                  <th>Notes</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -884,15 +1064,29 @@ export default function MatterDashboardPage() {
                     <td>{participant.contact?.displayName || participant.contactId}</td>
                     <td>{participant.participantRoleDefinition?.label || participant.participantRoleKey}</td>
                     <td>{participant.side || 'N/A'}</td>
+                    <td>{participant.isPrimary ? 'YES' : 'NO'}</td>
+                    <td>{participant.representedByContact?.displayName || participant.representedByContactId || '-'}</td>
+                    <td>{participant.lawFirmContact?.displayName || participant.lawFirmContactId || '-'}</td>
+                    <td>{participant.notes || '-'}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="button danger"
-                        aria-label={`Remove Participant ${participant.id}`}
-                        onClick={() => removeParticipant(participant.id)}
-                      >
-                        Remove
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          type="button"
+                          className="button secondary"
+                          aria-label={`Edit Participant ${participant.id}`}
+                          onClick={() => startEditingParticipant(participant)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="button danger"
+                          aria-label={`Remove Participant ${participant.id}`}
+                          onClick={() => removeParticipant(participant.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

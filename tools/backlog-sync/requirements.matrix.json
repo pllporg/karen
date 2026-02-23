@@ -480,6 +480,33 @@
             "Matter dashboard UI supports create/edit/delete task and calendar operations with feedback states.",
             "Verification artifact documented at docs/parity/matter-dashboard-task-calendar-lifecycle.md."
           ]
+        },
+        {
+          "title": "Harden matter participant relationship mapping and lifecycle editing",
+          "requirementId": "REQ-PMS-CORE-007",
+          "promptSection": "Matters / Participants / represented-by + law-firm relationship mapping",
+          "parityStatus": "Partial",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "matters",
+            "pms-core"
+          ],
+          "problemStatement": "Matter participant workflows currently allow create/remove but do not support complete in-context editing of side semantics, primary flags, represented-by counsel mapping, and law-firm mapping across role categories.",
+          "requirementExcerpt": "Matter participants must support rich role semantics and counsel/party linkage in matter context.",
+          "acceptanceCriteria": [
+            "Users can edit existing participant role key, side, primary flag, represented-by contact, law-firm contact, and notes from matter dashboard context.",
+            "Server-side validation enforces counsel/non-counsel linkage rules and organization-scoped contact references on update as well as create.",
+            "Participant lifecycle operations emit audit events and are covered by regression tests in API and web layers."
+          ],
+          "apiImpact": "Adds matter participant update mutation endpoint and validation path for represented-by/law-firm linkage updates.",
+          "securityImpact": "Maintains tenant and matter access constraints while reducing data-integrity drift in party/counsel relationship records.",
+          "definitionOfDone": [
+            "API regression coverage validates participant update constraints, linkage edits, and audit events.",
+            "Matter dashboard UI supports participant edit/save/cancel/remove flows with clear status feedback.",
+            "Verification artifact documented at docs/parity/matter-participant-lifecycle-hardening.md."
+          ]
         }
       ]
     },

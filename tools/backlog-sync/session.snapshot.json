@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-23T17:55:28.117Z",
+  "generatedAt": "2026-02-23T19:47:42.008Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -13,101 +13,204 @@
     "githubIssues": "mirror-only"
   },
   "matrixSummary": {
-    "totalRequirements": 51,
-    "unresolvedRequirements": 0,
+    "totalRequirements": 52,
+    "unresolvedRequirements": 16,
     "totalCountsByPhase": {
-      "phase-1": 46,
+      "phase-1": 47,
       "phase-2": 5
     },
-    "unresolvedCountsByPhase": {},
-    "unresolvedCountsByStatus": {},
-    "unresolvedCountsByRisk": {},
-    "unresolvedCountsByStatusAndRisk": {}
+    "unresolvedCountsByPhase": {
+      "phase-1": 16
+    },
+    "unresolvedCountsByStatus": {
+      "Partial": 1,
+      "Complete": 15
+    },
+    "unresolvedCountsByRisk": {
+      "High": 9,
+      "Medium": 7
+    },
+    "unresolvedCountsByStatusAndRisk": {
+      "Partial:High": 1,
+      "Complete:High": 8,
+      "Complete:Medium": 7
+    }
   },
   "priority": {
-    "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
-    "topRequirements": []
+    "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
+    "topRequirements": [
+      {
+        "requirementId": "REQ-PMS-CORE-007",
+        "parityStatus": "Partial",
+        "risk": "High",
+        "title": "Harden matter participant relationship mapping and lifecycle editing",
+        "component": "Web",
+        "epicCode": "PARITY-04",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-005",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Execute accessibility and interaction compliance remediation lane",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-007",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Enforce UI regression and rollout gates for LIC compliance",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-008",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Lock canonical LIC precedence and enforce style guardrails",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-009",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Create PRD + screen specifications for existing product routes",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-011",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Migrate global shell and foundation tokens to canonical LIC profile",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-012",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Normalize primitive components to LIC state and accessibility model",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-013",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Standardize review-gate, audit visibility, and procedural microcopy",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-015",
+        "parityStatus": "Complete",
+        "risk": "High",
+        "title": "Execute full UI compliance review against LIC canonical standards",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-001",
+        "parityStatus": "Complete",
+        "risk": "Medium",
+        "title": "Plan UI/UX refactor lane with LIC canonical precedence",
+        "component": "Web",
+        "epicCode": "PARITY-11",
+        "phase": "phase-1"
+      }
+    ]
   },
   "linearSummary": {
     "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 63,
+    "scopedIssueCount": 64,
     "stateCounts": {
-      "Done": 53,
-      "Backlog": 10
+      "In Review": 1,
+      "Done": 63
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-67",
-        "title": "Complete matter dashboard task and calendar lifecycle operations",
-        "state": "Done",
-        "updatedAt": "2026-02-23T17:55:13.822Z",
-        "requirementId": "REQ-PMS-CORE-005"
+        "key": "KAR-78",
+        "title": "Harden matter participant relationship mapping and lifecycle editing",
+        "state": "In Review",
+        "updatedAt": "2026-02-23T19:47:08.440Z",
+        "requirementId": "REQ-PMS-CORE-007"
       },
       {
-        "key": "KAR-77",
-        "title": "Execute full UI compliance review against LIC canonical standards",
+        "key": "KAR-18",
+        "title": "PARITY-04 Contacts + Matters + Participants",
         "state": "Done",
-        "updatedAt": "2026-02-23T17:35:23.932Z",
-        "requirementId": "REQ-UI-015"
+        "updatedAt": "2026-02-23T19:31:17.850Z",
+        "requirementId": "PARITY-04"
       },
       {
-        "key": "KAR-76",
-        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
+        "key": "KAR-40",
+        "title": "PARITY-10 Testing + Reliability + Ops",
         "state": "Done",
-        "updatedAt": "2026-02-23T17:23:53.631Z",
-        "requirementId": "REQ-UI-014"
+        "updatedAt": "2026-02-23T18:27:46.400Z",
+        "requirementId": "PARITY-10"
       },
       {
-        "key": "KAR-43",
-        "title": "Enforce Linear key branch/PR policy in CI",
+        "key": "KAR-36",
+        "title": "PARITY-09 Integrations + Webhooks",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:29.914Z",
-        "requirementId": "REQ-OPS-003"
+        "updatedAt": "2026-02-23T18:27:46.052Z",
+        "requirementId": "PARITY-09"
       },
       {
-        "key": "KAR-52",
-        "title": "Strengthen REQ-OPS-001 web smoke coverage for critical user journey",
+        "key": "KAR-32",
+        "title": "PARITY-08 AI Workspace + Governance",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:29.312Z",
-        "requirementId": "REQ-OPS-001"
+        "updatedAt": "2026-02-23T18:27:45.687Z",
+        "requirementId": "PARITY-08"
       },
       {
-        "key": "KAR-41",
-        "title": "Add web application automated test suite for critical workflows",
+        "key": "KAR-29",
+        "title": "PARITY-07 Client Portal",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:29.312Z",
-        "requirementId": "REQ-OPS-001"
+        "updatedAt": "2026-02-23T18:27:45.431Z",
+        "requirementId": "PARITY-07"
       },
       {
-        "key": "KAR-53",
-        "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
+        "key": "KAR-26",
+        "title": "PARITY-06 Billing + Trust + Payments",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:28.733Z",
-        "requirementId": "REQ-AI-001"
+        "updatedAt": "2026-02-23T18:27:45.152Z",
+        "requirementId": "PARITY-06"
       },
       {
-        "key": "KAR-33",
-        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+        "key": "KAR-22",
+        "title": "PARITY-05 Communications + Documents",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:28.733Z",
-        "requirementId": "REQ-AI-001"
+        "updatedAt": "2026-02-23T18:27:44.962Z",
+        "requirementId": "PARITY-05"
       },
       {
-        "key": "KAR-61",
-        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
+        "key": "KAR-13",
+        "title": "PARITY-03 Import/Export Portability",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:27.969Z",
-        "requirementId": "REQ-BILL-001"
+        "updatedAt": "2026-02-23T18:27:44.534Z",
+        "requirementId": "PARITY-03"
       },
       {
-        "key": "KAR-27",
-        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
+        "key": "KAR-9",
+        "title": "PARITY-02 Data Model Completeness",
         "state": "Done",
-        "updatedAt": "2026-02-20T17:35:27.969Z",
-        "requirementId": "REQ-BILL-001"
+        "updatedAt": "2026-02-23T18:27:43.925Z",
+        "requirementId": "PARITY-02"
       }
     ]
   },
@@ -122,50 +225,22 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:55:26.354Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-23T19:47:37.845Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "9c15f186ee52343948bf6e2356e92d305d85d2c6",
+    "gitHead": "fb99490df540534bd1b81035dd1ffd1f523190b2",
     "gitStatusShort": [
-      "## lin/KAR-67-ics-export-hardening...origin/lin/KAR-67-ics-export-hardening",
-      " M .github/workflows/context-freshness.yml",
-      " M .gitignore",
-      " M brand/Brandguide.md",
-      " M brand/Brandguideprompt.md",
-      " M docs/parity/ui-primitive-normalization-verification.md",
-      " M docs/parity/ui-primitives-state-verification.md",
-      " M docs/parity/ui-responsive-behavior-verification.md",
-      " M docs/parity/ui-review-gate-audit-microcopy-verification.md",
-      " M docs/parity/ui-shell-foundation-verification.md",
-      " M docs/prd/REQ-UI-009-ai.prd.md",
-      " M docs/prd/REQ-UI-009-auth-shared-doc.prd.md",
-      " M docs/prd/REQ-UI-009-billing.prd.md",
-      " M docs/prd/REQ-UI-009-communications.prd.md",
-      " M docs/prd/REQ-UI-009-contacts.prd.md",
-      " M docs/prd/REQ-UI-009-dashboard.prd.md",
-      " M docs/prd/REQ-UI-009-documents.prd.md",
-      " M docs/prd/REQ-UI-009-imports-exports.prd.md",
-      " M docs/prd/REQ-UI-009-matter-workspace.prd.md",
-      " M docs/prd/REQ-UI-009-portal.prd.md",
-      " M docs/prd/REQ-UI-009-reporting-admin.prd.md",
-      " M package.json",
-      " M tools/backlog-sync/backlog_snapshot.mjs",
-      " M tools/backlog-sync/check_handoff_freshness.mjs",
-      " M tools/backlog-sync/common.mjs",
-      " M tools/backlog-sync/config.example.env",
-      " M tools/backlog-sync/linear_issue_template.md",
-      " M tools/backlog-sync/linear_to_github.mjs",
-      " M tools/backlog-sync/seed_parity_backlog.mjs",
-      " M tools/backlog-sync/setup_linear_workspace.mjs",
-      " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
-      " M tools/backlog-sync/verify_backlog_sync.mjs",
-      " M uirefactorprompt.md",
-      "?? \"Backlog Audit Responses\"",
-      "?? \"brand/Brand Identity Document v. 2.19.2026_5/\"",
-      "?? consistencycleanup",
-      "?? tools/backlog-sync/check_matrix_linear_alignment.mjs"
+      "## lin/KAR-78-practice-management-core-hardening...origin/main",
+      " M apps/api/src/matters/matters.controller.ts",
+      " M apps/api/src/matters/matters.service.ts",
+      " M apps/api/test/matters.spec.ts",
+      " M apps/web/app/matters/[id]/page.tsx",
+      " M apps/web/test/matter-dashboard-page.spec.tsx",
+      " M tools/backlog-sync/requirements.matrix.json",
+      "?? apps/api/src/matters/dto/update-participant.dto.ts",
+      "?? docs/parity/matter-participant-lifecycle-hardening.md"
     ],
-    "dirtyFileCount": 36
+    "dirtyFileCount": 8
   }
 }
