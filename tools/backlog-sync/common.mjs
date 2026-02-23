@@ -182,6 +182,84 @@ export async function githubRequest(token, path, { method = 'GET', body, extraHe
   return payload;
 }
 
+export async function githubGraphQL(token, query, variables = {}) {
+  const response = await fetch(`${GITHUB_API_URL}/graphql`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`GitHub GraphQL request failed (${response.status}): ${JSON.stringify(payload)}`);
+  }
+  if (payload.errors?.length) {
+    throw new Error(`GitHub GraphQL errors: ${JSON.stringify(payload.errors)}`);
+  }
+  return payload.data;
+}
+
+export async function listGitHubIssuesGraphQL(token, { owner, repo, labels = null }) {
+  const issues = [];
+  let hasNextPage = true;
+  let cursor = null;
+
+  while (hasNextPage) {
+    const data = await githubGraphQL(
+      token,
+      `
+        query RepoIssues($owner: String!, $repo: String!, $after: String, $labels: [String!]) {
+          repository(owner: $owner, name: $repo) {
+            issues(
+              first: 100
+              after: $after
+              states: [OPEN, CLOSED]
+              orderBy: { field: UPDATED_AT, direction: DESC }
+              labels: $labels
+            ) {
+              nodes {
+                id
+                number
+                title
+                body
+                state
+                updatedAt
+                labels(first: 50) {
+                  nodes {
+                    name
+                  }
+                }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        }
+      `,
+      {
+        owner,
+        repo,
+        after: cursor,
+        labels: labels?.length ? labels : null,
+      },
+    );
+
+    const page = data?.repository?.issues;
+    issues.push(...ensureArray(page?.nodes));
+    hasNextPage = Boolean(page?.pageInfo?.hasNextPage);
+    cursor = page?.pageInfo?.endCursor || null;
+  }
+
+  return issues;
+}
+
 export async function getLinearTeamByKey(token, teamKey) {
   const data = await linearGraphQL(
     token,
