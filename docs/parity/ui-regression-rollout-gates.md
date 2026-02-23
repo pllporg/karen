@@ -1,4 +1,4 @@
-# REQ-UI-007 Verification (KAR-60)
+# REQ-UI-007 Verification (KAR-60, KAR-82)
 
 ## Scope
 
@@ -17,10 +17,21 @@
 
 ## Validation Commands
 
+- `pnpm --filter api test -- ui-regression-rollout-gates.spec.ts`
 - `pnpm --filter web test:regression`
 - `pnpm --filter web build`
 - `pnpm test`
 - `pnpm build`
+
+## Latest Verification Run (KAR-82)
+
+- Workflow policy test passed:
+  - `apps/api/test/ui-regression-rollout-gates.spec.ts`
+  - confirms presence of `ui-rollout-evidence` and `ui-regression` jobs and required checklist text checks.
+- Web regression suite passed:
+  - shell, matters, matter dashboard, portal, and AI route regressions.
+- Web build passed:
+  - existing non-blocking `react-hooks/exhaustive-deps` warnings remain outside this requirement scope.
 
 ## Expected Gate Behavior
 
