@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-20T18:06:01.981Z`
+- Snapshot Timestamp: `2026-02-23T17:24:08.228Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-20T18:01:14.514Z`
+- Last Successful Mirror Verify: `2026-02-23T17:24:06.150Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -93,6 +93,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-23: Completed `KAR-76` / `REQ-UI-014` by finalizing LIC branding migration closure: moved seeded/login demo account domains to `@lic-demo.local` (`apps/api/prisma/seed.ts`, `apps/web/app/login/page.tsx`, `README.md`), closed transitional compatibility note in precedence docs (`docs/UI_CANONICAL_PRECEDENCE.md`), refreshed boundary verification evidence (`docs/parity/ui-manual-ux-boundary-verification.md`), updated matrix parity status to `Complete`, moved Linear `KAR-76` to `Done` with `parity-status:complete`, and synced mirror/snapshot (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`).
 - 2026-02-20: Started `KAR-77` / `REQ-UI-015` full UI compliance review and published consolidated route-by-route audit evidence at `docs/parity/ui-full-compliance-review.md`, including severity findings and ownership mapping tied to `KAR-76` remediation/guardrail work.
 - 2026-02-20: Audited product UI against the new Brand Identity Document bundle and removed standards-manual UX carryover from the app shell (`Standards Manual` kicker, revision/internal metadata, section-marker nav style), replacing it with product-operational copy/taxonomy; added guardrails to block reintroduction via `tools/ui/check_lic_style_guards.mjs`, codified the standards-manual boundary in canonical docs (`docs/UI_CANONICAL_PRECEDENCE.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/WORKING_CONTRACT.md`, `lic-design-system/references/source-map.md`), and recorded verification evidence in `docs/parity/ui-manual-ux-boundary-verification.md`.
 - 2026-02-20: Conflict resolutions locked with user decision: `1A` keep transitional compatibility identifiers (package/repo ids, demo domains, legacy integration headers) until `KAR-76` is closed; `2A` keep typography split (`IBM Plex Sans Condensed` headings + `IBM Plex Mono` metadata/tables + `IBM Plex Sans` body).

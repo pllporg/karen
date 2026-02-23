@@ -7,7 +7,7 @@ import { apiFetch, setSessionToken } from '../../lib/api';
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('admin@karen-demo.local');
+  const [email, setEmail] = useState('admin@lic-demo.local');
   const [password, setPassword] = useState('ChangeMe123!');
   const [organizationName, setOrganizationName] = useState('Stonebridge Construction Law');
   const [error, setError] = useState<string | null>(null);

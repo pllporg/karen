@@ -20,12 +20,16 @@ Observed examples before remediation:
    - `apps/web/app/globals.css`
 2. Updated dashboard heading copy:
    - `apps/web/app/dashboard/page.tsx`
-3. Added regression assertions:
+3. Migrated seeded/demo identity domain from Karen-era to LIC:
+   - `apps/api/prisma/seed.ts`
+   - `apps/web/app/login/page.tsx`
+   - `README.md`
+4. Added regression assertions:
    - `apps/web/test/app-shell.spec.tsx`
    - `apps/web/test/dashboard-page.spec.tsx`
-4. Added guardrail to block standards-manual documentation strings in product code:
+5. Added guardrail to block standards-manual documentation strings in product code:
    - `tools/ui/check_lic_style_guards.mjs`
-5. Codified the standards-manual boundary in canonical operational docs:
+6. Codified the standards-manual boundary in canonical operational docs:
    - `docs/UI_CANONICAL_PRECEDENCE.md`
    - `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
    - `docs/UI_REFACTOR_LANE_PLAN.md`
@@ -54,5 +58,6 @@ Results:
 - UI style guard passed.
 - Targeted shell/dashboard responsive tests passed.
 - Web build passed.
+- Demo/seed login identity defaults now use `@lic-demo.local`.
 - Backlog mirror verify passed with zero missing/orphan issues.
 - Handoff freshness check passed.

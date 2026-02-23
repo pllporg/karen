@@ -106,16 +106,16 @@ pnpm dev
 
 Seed script creates:
 
-- `admin@karen-demo.local` / `ChangeMe123!`
-- `attorney@karen-demo.local` / `ChangeMe123!`
-- `paralegal@karen-demo.local` / `ChangeMe123!`
-- `intake@karen-demo.local` / `ChangeMe123!`
-- `billing@karen-demo.local` / `ChangeMe123!`
-- `elena.client@karen-demo.local` / `ChangeMe123!`
-- `sam.client@karen-demo.local` / `ChangeMe123!`
-- `expert.vendor@karen-demo.local` / `ChangeMe123!`
+- `admin@lic-demo.local` / `ChangeMe123!`
+- `attorney@lic-demo.local` / `ChangeMe123!`
+- `paralegal@lic-demo.local` / `ChangeMe123!`
+- `intake@lic-demo.local` / `ChangeMe123!`
+- `billing@lic-demo.local` / `ChangeMe123!`
+- `elena.client@lic-demo.local` / `ChangeMe123!`
+- `sam.client@lic-demo.local` / `ChangeMe123!`
+- `expert.vendor@lic-demo.local` / `ChangeMe123!`
 
-Note: the `@karen-demo.local` seed domain is intentionally retained as a temporary compatibility identifier while `KAR-76` branding migration remains in progress.
+Note: seeded demo accounts now use the LIC domain (`@lic-demo.local`) as part of the completed branding migration.
 
 ## Import Usage
 
@@ -344,6 +344,18 @@ This repository includes automation to maintain a persistent parity backlog wher
 - GitHub issues are a one-way mirror from Linear.
 
 Artifacts live in `tools/backlog-sync`.
+
+Backlog scripts auto-load environment values from:
+
+1. `tools/backlog-sync/config.env` (preferred, local-only, gitignored)
+2. `.env` (root)
+3. shell exports (highest precedence)
+
+One-time local setup:
+
+```bash
+cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
+```
 
 ### 1) Bootstrap GitHub repo + protections
 

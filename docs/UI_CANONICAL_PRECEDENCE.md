@@ -38,14 +38,13 @@ If a rule conflicts, higher-order source wins.
 - Page/module headings: IBM Plex Sans Condensed uppercase with tracked letter spacing.
 - This split preserves procedural readability and resolves mono-vs-condensed conflict without adding new font families.
 
-### Branding transition compatibility (Decision 1A)
+### Branding compatibility boundary (Decision 1A, closed)
 
-- Keep compatibility naming identifiers until `KAR-76` is completed and verified.
-- Transitional identifiers may remain in non-UI/runtime compatibility surfaces:
+- `KAR-76` completed LIC naming/logo migration for product-facing surfaces.
+- Compatibility identifiers may remain only in non-UI/runtime compatibility surfaces:
   - package/repo identifiers (for example `karen-legal-suite`)
-  - demo seed domains (for example `@karen-demo.local`)
   - legacy integration headers (`x-karen-*`) where backward compatibility is required
-- New UI copy and new user-facing branding must use LIC naming immediately.
+- New UI copy and all user-facing identity surfaces must use LIC naming.
 
 ### Standards-manual boundary (Design Source Rule)
 

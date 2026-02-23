@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-20T16:56:44.512Z",
+  "generatedAt": "2026-02-23T17:24:08.228Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -13,80 +13,33 @@
     "githubIssues": "mirror-only"
   },
   "matrixSummary": {
-    "totalRequirements": 42,
-    "unresolvedRequirements": 6,
+    "totalRequirements": 51,
+    "unresolvedRequirements": 1,
     "totalCountsByPhase": {
-      "phase-1": 37,
+      "phase-1": 46,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 6
+      "phase-1": 1
     },
     "unresolvedCountsByStatus": {
-      "Complete": 6
+      "Partial": 1
     },
     "unresolvedCountsByRisk": {
-      "High": 5,
-      "Medium": 1
+      "High": 1
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Complete:High": 5,
-      "Complete:Medium": 1
+      "Partial:High": 1
     }
   },
   "priority": {
-    "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
+    "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
       {
-        "requirementId": "REQ-UI-008",
-        "parityStatus": "Complete",
+        "requirementId": "REQ-UI-015",
+        "parityStatus": "Partial",
         "risk": "High",
-        "title": "Lock canonical LIC precedence and enforce style guardrails",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-009",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-011",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Migrate global shell and foundation tokens to canonical LIC profile",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-012",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Normalize primitive components to LIC state and accessibility model",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-013",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Standardize review-gate, audit visibility, and procedural microcopy",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-010",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Create blocked PRD/screen placeholders for backlog features",
+        "title": "Execute full UI compliance review against LIC canonical standards",
         "component": "Web",
         "epicCode": "PARITY-11",
         "phase": "phase-1"
@@ -94,162 +47,150 @@
     ]
   },
   "linearSummary": {
-    "projectName": "Prompt Parity - Karen Legal Suite",
+    "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
     "scopedIssueCount": 63,
     "stateCounts": {
       "Backlog": 11,
-      "In Progress": 1,
-      "In Review": 6,
-      "Done": 45
+      "Done": 52
     },
-    "inProgressIssueKeys": [
-      "KAR-76"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
         "key": "KAR-76",
         "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
-        "state": "In Progress",
-        "updatedAt": "2026-02-20T16:56:25.264Z",
+        "state": "Done",
+        "updatedAt": "2026-02-23T17:23:53.631Z",
         "requirementId": "REQ-UI-014"
       },
       {
-        "key": "KAR-71",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "state": "In Review",
-        "updatedAt": "2026-02-20T16:18:58.941Z",
-        "requirementId": "REQ-UI-009"
-      },
-      {
-        "key": "KAR-77",
-        "title": "Execute full UI compliance review against LIC canonical standards",
-        "state": "Backlog",
-        "updatedAt": "2026-02-20T16:16:53.034Z",
-        "requirementId": "REQ-UI-015"
-      },
-      {
-        "key": "KAR-69",
-        "title": "PARITY-11 UI Refactor + PRD/Screen Coverage",
+        "key": "KAR-43",
+        "title": "Enforce Linear key branch/PR policy in CI",
         "state": "Done",
-        "updatedAt": "2026-02-20T01:42:59.902Z",
-        "requirementId": "PARITY-11"
+        "updatedAt": "2026-02-20T17:35:29.914Z",
+        "requirementId": "REQ-OPS-003"
       },
       {
-        "key": "KAR-68",
-        "title": "Implement matter dashboard document lifecycle operations",
+        "key": "KAR-52",
+        "title": "Strengthen REQ-OPS-001 web smoke coverage for critical user journey",
         "state": "Done",
-        "updatedAt": "2026-02-20T01:28:35.262Z",
-        "requirementId": "REQ-PMS-CORE-006"
+        "updatedAt": "2026-02-20T17:35:29.312Z",
+        "requirementId": "REQ-OPS-001"
       },
       {
-        "key": "KAR-75",
-        "title": "Standardize review-gate, audit visibility, and procedural microcopy",
-        "state": "In Review",
-        "updatedAt": "2026-02-20T00:08:16.183Z",
-        "requirementId": "REQ-UI-013"
+        "key": "KAR-41",
+        "title": "Add web application automated test suite for critical workflows",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:29.312Z",
+        "requirementId": "REQ-OPS-001"
       },
       {
-        "key": "KAR-74",
-        "title": "Normalize primitive components to LIC state and accessibility model",
-        "state": "In Review",
-        "updatedAt": "2026-02-20T00:01:33.153Z",
-        "requirementId": "REQ-UI-012"
+        "key": "KAR-53",
+        "title": "Harden REQ-AI-001 deadline confirmation audit + validation coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:28.733Z",
+        "requirementId": "REQ-AI-001"
       },
       {
-        "key": "KAR-73",
-        "title": "Migrate global shell and foundation tokens to canonical LIC profile",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T23:56:40.505Z",
-        "requirementId": "REQ-UI-011"
+        "key": "KAR-33",
+        "title": "Implement source-cited deadline extraction side-by-side evidence UI",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:28.733Z",
+        "requirementId": "REQ-AI-001"
       },
       {
-        "key": "KAR-70",
-        "title": "Lock canonical LIC precedence and enforce style guardrails",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T23:50:20.818Z",
-        "requirementId": "REQ-UI-008"
+        "key": "KAR-61",
+        "title": "Harden REQ-BILL-001 Stripe reconciliation idempotency + verification coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:27.969Z",
+        "requirementId": "REQ-BILL-001"
       },
       {
-        "key": "KAR-72",
-        "title": "Create blocked PRD/screen placeholders for backlog features",
-        "state": "In Review",
-        "updatedAt": "2026-02-19T23:49:17.007Z",
-        "requirementId": "REQ-UI-010"
+        "key": "KAR-27",
+        "title": "Finalize Stripe payment flow lifecycle and webhook reconciliation",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:27.969Z",
+        "requirementId": "REQ-BILL-001"
+      },
+      {
+        "key": "KAR-62",
+        "title": "Harden REQ-BILL-002 trust invariants + reconciliation verification coverage",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:27.121Z",
+        "requirementId": "REQ-BILL-002"
+      },
+      {
+        "key": "KAR-28",
+        "title": "Complete trust accounting reports and ledger invariants",
+        "state": "Done",
+        "updatedAt": "2026-02-20T17:35:27.121Z",
+        "requirementId": "REQ-BILL-002"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 14,
-    "openIssueCount": 6,
+    "openIssueCount": 0,
     "stateCounts": {
-      "In Review": 6,
-      "Done": 8
+      "Done": 14
     },
-    "openIssueKeys": [
-      "KAR-70",
-      "KAR-71",
-      "KAR-72",
-      "KAR-73",
-      "KAR-74",
-      "KAR-75"
-    ],
-    "openIssues": [
-      {
-        "key": "KAR-70",
-        "title": "Lock canonical LIC precedence and enforce style guardrails",
-        "state": "In Review",
-        "requirementId": "REQ-UI-008",
-        "updatedAt": "2026-02-19T23:50:20.818Z"
-      },
-      {
-        "key": "KAR-71",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "state": "In Review",
-        "requirementId": "REQ-UI-009",
-        "updatedAt": "2026-02-20T16:18:58.941Z"
-      },
-      {
-        "key": "KAR-72",
-        "title": "Create blocked PRD/screen placeholders for backlog features",
-        "state": "In Review",
-        "requirementId": "REQ-UI-010",
-        "updatedAt": "2026-02-19T23:49:17.007Z"
-      },
-      {
-        "key": "KAR-73",
-        "title": "Migrate global shell and foundation tokens to canonical LIC profile",
-        "state": "In Review",
-        "requirementId": "REQ-UI-011",
-        "updatedAt": "2026-02-19T23:56:40.505Z"
-      },
-      {
-        "key": "KAR-74",
-        "title": "Normalize primitive components to LIC state and accessibility model",
-        "state": "In Review",
-        "requirementId": "REQ-UI-012",
-        "updatedAt": "2026-02-20T00:01:33.153Z"
-      },
-      {
-        "key": "KAR-75",
-        "title": "Standardize review-gate, audit visibility, and procedural microcopy",
-        "state": "In Review",
-        "requirementId": "REQ-UI-013",
-        "updatedAt": "2026-02-20T00:08:16.183Z"
-      }
-    ]
+    "openIssueKeys": [],
+    "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-20T16:56:43.063Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-23T17:24:06.150Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "29aaef731eedc6ee1042c2ddb258ad76014d77a4",
+    "gitHead": "e818125ac6cc9b523fb2cb2f48f0b525cc0c9430",
     "gitStatusShort": [
-      "## lin/KAR-76-lic-branding-migration...origin/lin/KAR-76-lic-branding-migration"
+      "## lin/KAR-76-lic-branding-migration...origin/lin/KAR-76-lic-branding-migration",
+      " M .github/workflows/context-freshness.yml",
+      " M .gitignore",
+      " M README.md",
+      " M apps/api/prisma/seed.ts",
+      " M apps/web/app/login/page.tsx",
+      " M brand/Brandguide.md",
+      " M brand/Brandguideprompt.md",
+      " M docs/UI_CANONICAL_PRECEDENCE.md",
+      " M docs/parity/ui-manual-ux-boundary-verification.md",
+      " M docs/parity/ui-primitive-normalization-verification.md",
+      " M docs/parity/ui-primitives-state-verification.md",
+      " M docs/parity/ui-responsive-behavior-verification.md",
+      " M docs/parity/ui-review-gate-audit-microcopy-verification.md",
+      " M docs/parity/ui-shell-foundation-verification.md",
+      " M docs/prd/REQ-UI-009-ai.prd.md",
+      " M docs/prd/REQ-UI-009-auth-shared-doc.prd.md",
+      " M docs/prd/REQ-UI-009-billing.prd.md",
+      " M docs/prd/REQ-UI-009-communications.prd.md",
+      " M docs/prd/REQ-UI-009-contacts.prd.md",
+      " M docs/prd/REQ-UI-009-dashboard.prd.md",
+      " M docs/prd/REQ-UI-009-documents.prd.md",
+      " M docs/prd/REQ-UI-009-imports-exports.prd.md",
+      " M docs/prd/REQ-UI-009-matter-workspace.prd.md",
+      " M docs/prd/REQ-UI-009-portal.prd.md",
+      " M docs/prd/REQ-UI-009-reporting-admin.prd.md",
+      " M package.json",
+      " M tools/backlog-sync/backlog_snapshot.mjs",
+      " M tools/backlog-sync/check_handoff_freshness.mjs",
+      " M tools/backlog-sync/common.mjs",
+      " M tools/backlog-sync/config.example.env",
+      " M tools/backlog-sync/linear_issue_template.md",
+      " M tools/backlog-sync/linear_to_github.mjs",
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/seed_parity_backlog.mjs",
+      " M tools/backlog-sync/session.snapshot.json",
+      " M tools/backlog-sync/setup_linear_workspace.mjs",
+      " M tools/backlog-sync/sync_ui_refactor_backlog.mjs",
+      " M tools/backlog-sync/verify_backlog_sync.mjs",
+      " M uirefactorprompt.md",
+      "?? \"Backlog Audit Responses\"",
+      "?? \"brand/Brand Identity Document v. 2.19.2026_5/\"",
+      "?? consistencycleanup",
+      "?? tools/backlog-sync/check_matrix_linear_alignment.mjs"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 43
   }
 }
