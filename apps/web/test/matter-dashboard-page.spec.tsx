@@ -55,6 +55,40 @@ function createDashboardState() {
       sharedWithClient: boolean;
       versions: Array<{ id: string }>;
     }>,
+    invoices: [] as Array<{
+      id: string;
+      invoiceNumber: string;
+      status: string;
+      total: number;
+      balanceDue: number;
+      payments: Array<{ id: string; amount: number; method: string; reference?: string | null }>;
+      lineItems: Array<{ id: string; description: string; quantity: number; unitPrice: number }>;
+    }>,
+    timeEntries: [] as Array<{
+      id: string;
+      startedAt: string;
+      durationMinutes: number;
+      amount: number;
+    }>,
+    expenses: [] as Array<{
+      id: string;
+      description: string;
+      incurredAt: string;
+      amount: number;
+    }>,
+    trustLedgers: [] as Array<{
+      id: string;
+      trustAccountId: string;
+      balance: number;
+      trustAccount?: { id: string; name: string } | null;
+    }>,
+    trustTransactions: [] as Array<{
+      id: string;
+      type: string;
+      amount: number;
+      occurredAt: string;
+      trustAccountId: string;
+    }>,
   };
 }
 
@@ -75,7 +109,11 @@ function buildDashboardFixture(
     calendarEvents: state.calendarEvents,
     communicationThreads: state.communicationThreads,
     documents: state.documents,
-    invoices: [],
+    invoices: state.invoices,
+    timeEntries: state.timeEntries,
+    expenses: state.expenses,
+    trustLedgers: state.trustLedgers,
+    trustTransactions: state.trustTransactions,
     aiJobs: [],
     domainSectionCompleteness: { completedCount: 0, totalCount: 0, completionPercent: 0, sections: {} },
     ...overrides,
@@ -344,6 +382,203 @@ describe('MatterDashboardPage operational workflows', () => {
       );
       expect(screen.getByText('Calendar event removed.')).toBeInTheDocument();
       expect(screen.getByText('No calendar events for this matter yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('executes matter-level billing operations (time, expense, invoice, payment, trust)', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    state.trustLedgers.push({
+      id: 'ledger-1',
+      trustAccountId: 'trust-1',
+      balance: 5000,
+      trustAccount: { id: 'trust-1', name: 'Client Trust Main' },
+    });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/billing/time-entries') && method === 'POST') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const startedAt = new Date(body.startedAt);
+        const endedAt = new Date(body.endedAt);
+        const durationMinutes = Math.max(1, Math.round((endedAt.getTime() - startedAt.getTime()) / 60000));
+        const billableRate = Number(body.billableRate || 350);
+        const amount = Number(((durationMinutes / 60) * billableRate).toFixed(2));
+        const row = {
+          id: `time-${state.timeEntries.length + 1}`,
+          startedAt: body.startedAt,
+          durationMinutes,
+          amount,
+        };
+        state.timeEntries.unshift(row);
+        return jsonResponse({ ...row, billableRate });
+      }
+      if (url.endsWith('/billing/expenses') && method === 'POST') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const row = {
+          id: `expense-${state.expenses.length + 1}`,
+          description: body.description,
+          incurredAt: body.incurredAt,
+          amount: Number(body.amount),
+        };
+        state.expenses.unshift(row);
+        return jsonResponse(row);
+      }
+      if (url.endsWith('/billing/invoices') && method === 'POST') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const line = body.lineItems?.[0] || { description: 'Matter services', quantity: 1, unitPrice: 425 };
+        const total = Number((Number(line.quantity) * Number(line.unitPrice)).toFixed(2));
+        const invoice = {
+          id: 'invoice-1',
+          invoiceNumber: 'INV-00001',
+          status: 'DRAFT',
+          total,
+          balanceDue: total,
+          payments: [] as Array<{ id: string; amount: number; method: string; reference?: string | null }>,
+          lineItems: [{ id: 'line-1', description: line.description, quantity: line.quantity, unitPrice: line.unitPrice }],
+        };
+        state.invoices.unshift(invoice);
+        return jsonResponse(invoice);
+      }
+      if (url.endsWith('/billing/invoices/invoice-1/checkout') && method === 'POST') {
+        return jsonResponse({
+          url: 'https://checkout.example.test/invoice-1',
+        });
+      }
+      if (url.endsWith('/billing/invoices/invoice-1/payments') && method === 'POST') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const invoice = state.invoices.find((item) => item.id === 'invoice-1');
+        if (!invoice) throw new Error('Missing invoice in test state');
+        const payment = {
+          id: `payment-${invoice.payments.length + 1}`,
+          amount: Number(body.amount),
+          method: body.method,
+          reference: body.reference || null,
+        };
+        invoice.payments.unshift(payment);
+        invoice.balanceDue = Number((invoice.balanceDue - payment.amount).toFixed(2));
+        return jsonResponse(payment);
+      }
+      if (url.endsWith('/billing/trust/transactions') && method === 'POST') {
+        const body = JSON.parse(String(init?.body || '{}'));
+        const row = {
+          id: `trust-tx-${state.trustTransactions.length + 1}`,
+          type: body.type,
+          amount: Number(body.amount),
+          occurredAt: new Date().toISOString(),
+          trustAccountId: body.trustAccountId,
+        };
+        state.trustTransactions.unshift(row);
+        const ledger = state.trustLedgers.find((item) => item.trustAccountId === body.trustAccountId);
+        if (ledger) {
+          ledger.balance = Number((ledger.balance + Number(body.amount)).toFixed(2));
+        }
+        return jsonResponse(row);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+
+    fireEvent.change(screen.getByLabelText('Billing Time Description'), { target: { value: 'Prepare status memo' } });
+    fireEvent.change(screen.getByLabelText('Billing Time Start'), { target: { value: '2026-02-20T09:00' } });
+    fireEvent.change(screen.getByLabelText('Billing Time End'), { target: { value: '2026-02-20T10:30' } });
+    fireEvent.change(screen.getByLabelText('Billing Time Rate'), { target: { value: '400' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Time Entry' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/time-entries',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Time entry created/)).toBeInTheDocument();
+      expect(screen.getByText('90m')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Billing Expense Description'), { target: { value: 'Court filing fee' } });
+    fireEvent.change(screen.getByLabelText('Billing Expense Amount'), { target: { value: '95' } });
+    fireEvent.change(screen.getByLabelText('Billing Expense Incurred At'), { target: { value: '2026-02-20T12:00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Expense' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/expenses',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Expense created/)).toBeInTheDocument();
+      expect(screen.getByText('Court filing fee')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Billing Invoice Line Description'), { target: { value: 'Litigation services' } });
+    fireEvent.change(screen.getByLabelText('Billing Invoice Quantity'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Billing Invoice Unit Price'), { target: { value: '300' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Invoice' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/invoices',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Invoice INV-00001 created/)).toBeInTheDocument();
+      expect(screen.getByText('INV-00001')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Invoice Payment Amount invoice-1'), { target: { value: '150' } });
+    fireEvent.change(screen.getByLabelText('Invoice Payment Method invoice-1'), { target: { value: 'CHECK' } });
+    fireEvent.change(screen.getByLabelText('Invoice Payment Reference invoice-1'), { target: { value: 'CHK-778' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record Payment invoice-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/invoices/invoice-1/payments',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Payment recorded for invoice invoice-1/)).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: '$450.00' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Checkout Link invoice-1' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/invoices/invoice-1/checkout',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Checkout link issued for invoice invoice-1/)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Billing Trust Transaction Type'), { target: { value: 'DEPOSIT' } });
+    fireEvent.change(screen.getByLabelText('Billing Trust Transaction Amount'), { target: { value: '500' } });
+    fireEvent.change(screen.getByLabelText('Billing Trust Transaction Description'), { target: { value: 'Retainer replenish' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Trust Transaction' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/billing/trust/transactions',
+        expect.objectContaining({ method: 'POST', credentials: 'include' }),
+      );
+      expect(screen.getByText(/Trust transaction DEPOSIT posted/)).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: '$5500.00' })).toBeInTheDocument();
     });
   });
 
