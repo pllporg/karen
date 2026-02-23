@@ -12,7 +12,7 @@ const condensed = IBM_Plex_Sans_Condensed({
 const mono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500'] });
 
 export const metadata: Metadata = {
-  title: 'Karen Legal Suite',
+  title: 'LIC Legal Suite',
   description: 'Construction litigation practice management + AI workforce',
 };
 

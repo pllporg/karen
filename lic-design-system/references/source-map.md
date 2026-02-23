@@ -29,3 +29,10 @@ This file maps the original manual source files to this packaged skill.
 - `src/styles/tailwind.css` -> `references/design-tokens.md`
 - `src/styles/theme.css` -> `references/design-tokens.md`
 - `src/styles/fonts.css` -> `references/design-tokens.md`
+
+## Boundary Rules (Do Not Copy As Product UX)
+
+- `src/app/components/Layout.tsx` (standards-manual app shell/navigation)
+- `src/app/routes.ts` (standards-manual site IA)
+
+These files define designer-documentation navigation for the standards manual app and are not canonical product UX for `apps/web/**`.

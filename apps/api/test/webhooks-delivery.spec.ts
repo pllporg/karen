@@ -119,13 +119,14 @@ describe('WebhooksService delivery hardening', () => {
     const request = fetchMock.mock.calls[0][1];
     const headers = request.headers as Record<string, string>;
     const body = request.body as string;
-    const timestamp = headers['x-karen-signature-timestamp'];
-    const signature = headers['x-karen-signature-v1'];
+    const timestamp = headers['x-lic-signature-timestamp'];
+    const signature = headers['x-lic-signature-v1'];
     const expectedSignature = createHmac('sha256', endpoint.secret).update(`${timestamp}.${body}`).digest('hex');
 
-    expect(headers['x-karen-delivery-id']).toBe('delivery-1');
-    expect(headers['x-karen-idempotency-key']).toBe('record.updated:endpoint-1:evt-signature');
-    expect(headers['x-karen-event-type']).toBe('record.updated');
+    expect(headers['x-lic-delivery-id']).toBe('delivery-1');
+    expect(headers['x-lic-idempotency-key']).toBe('record.updated:endpoint-1:evt-signature');
+    expect(headers['x-lic-event-type']).toBe('record.updated');
+    expect(headers['x-karen-signature-v1']).toBe(signature);
     expect(signature).toBe(expectedSignature);
   });
 

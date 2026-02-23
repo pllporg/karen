@@ -1,4 +1,4 @@
-# Karen Legal Suite
+# LIC Legal Suite
 
 Production-oriented monorepo scaffold for a multi-tenant legal practice management SaaS + legal AI case workforce, tailored to residential construction litigation.
 
@@ -106,14 +106,16 @@ pnpm dev
 
 Seed script creates:
 
-- `admin@karen-demo.local` / `ChangeMe123!`
-- `attorney@karen-demo.local` / `ChangeMe123!`
-- `paralegal@karen-demo.local` / `ChangeMe123!`
-- `intake@karen-demo.local` / `ChangeMe123!`
-- `billing@karen-demo.local` / `ChangeMe123!`
-- `elena.client@karen-demo.local` / `ChangeMe123!`
-- `sam.client@karen-demo.local` / `ChangeMe123!`
-- `expert.vendor@karen-demo.local` / `ChangeMe123!`
+- `admin@lic-demo.local` / `ChangeMe123!`
+- `attorney@lic-demo.local` / `ChangeMe123!`
+- `paralegal@lic-demo.local` / `ChangeMe123!`
+- `intake@lic-demo.local` / `ChangeMe123!`
+- `billing@lic-demo.local` / `ChangeMe123!`
+- `elena.client@lic-demo.local` / `ChangeMe123!`
+- `sam.client@lic-demo.local` / `ChangeMe123!`
+- `expert.vendor@lic-demo.local` / `ChangeMe123!`
+
+Note: seeded demo accounts now use the LIC domain (`@lic-demo.local`) as part of the completed branding migration.
 
 ## Import Usage
 
@@ -171,7 +173,7 @@ Webhook delivery hardening controls:
 
 - `WEBHOOK_DELIVERY_MAX_ATTEMPTS` (default `3`)
 - `WEBHOOK_DELIVERY_RETRY_BASE_DELAY_MS` (default `100`)
-- outbound headers include `x-karen-signature-v1`, `x-karen-signature-timestamp`, `x-karen-delivery-id`, and `x-karen-idempotency-key`
+- outbound headers include `x-lic-signature-v1`, `x-lic-signature-timestamp`, `x-lic-delivery-id`, and `x-lic-idempotency-key` (legacy `x-karen-*` headers are still sent for compatibility)
 
 Document template merge workflow:
 
@@ -227,8 +229,9 @@ Included suites cover:
 
 - Canonical source and precedence:
   - `docs/UI_CANONICAL_PRECEDENCE.md` (source-of-truth precedence order)
-  - Component states/patterns come from `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`.
-  - Product app work explicitly excludes the `MarketingSite` tab/section.
+  - Component states/patterns come from `lic-design-system/references/ui-kit.md`.
+  - Product app work explicitly excludes `lic-design-system/references/marketing-site.md`.
+  - The Brand Identity standards-manual app shell (`brand/Brand Identity Document*/src/app/components/Layout.tsx`) is designer documentation UX and is non-canonical for product route IA/copy.
 - Planning artifact for LIC-aligned UI migration:
   - `docs/UI_REFACTOR_LANE_PLAN.md`
 - PRD/screen coverage backlog:
@@ -305,17 +308,19 @@ Use this protocol at the start of every new chat to avoid context-compaction dri
 ```bash
 git status --short --branch
 pnpm backlog:verify
+pnpm backlog:matrix:check
 pnpm backlog:snapshot
 ```
 
 Then read context in this order:
 
 1. Active Linear issue(s) for current slice
-2. Linear project state (`Prompt Parity - Karen Legal Suite`)
+2. Linear project state (`Prompt Parity - LIC Legal Suite`)
 3. `tools/backlog-sync/requirements.matrix.json`
 4. `README.md` (this section)
 5. `Prompt-Context`
-6. `brand/Brand Identity Document/` (mandatory for UI/interaction slices)
+6. `docs/PROMPT_CANONICAL_SOURCES.md` (prompt/instruction precedence registry)
+7. `docs/UI_CANONICAL_PRECEDENCE.md` + `lic-design-system/references/` (mandatory for UI/interaction slices)
 
 Handoff artifacts:
 
@@ -339,6 +344,18 @@ This repository includes automation to maintain a persistent parity backlog wher
 - GitHub issues are a one-way mirror from Linear.
 
 Artifacts live in `tools/backlog-sync`.
+
+Backlog scripts auto-load environment values from:
+
+1. `tools/backlog-sync/config.env` (preferred, local-only, gitignored)
+2. `.env` (root)
+3. shell exports (highest precedence)
+
+One-time local setup:
+
+```bash
+cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
+```
 
 ### 1) Bootstrap GitHub repo + protections
 
@@ -373,7 +390,7 @@ Required env:
 Optional:
 
 - `LINEAR_TEAM_KEY` (`KAR` default)
-- `LINEAR_PROJECT_NAME` (`Prompt Parity - Karen Legal Suite` default)
+- `LINEAR_PROJECT_NAME` (`Prompt Parity - LIC Legal Suite` default)
 
 ### 3) Seed parity backlog (epics + tasks)
 
@@ -415,7 +432,20 @@ Checks:
 - Orphan mirrors.
 - Missing requirement IDs.
 
-### 6) Generate machine-readable session snapshot
+### 6) Verify manual matrix <-> Linear alignment
+
+```bash
+pnpm backlog:matrix:check
+```
+
+Checks:
+
+- Every open Linear parity requirement issue is represented in `requirements.matrix.json`.
+- `Missing`/`Partial` matrix requirements have an open Linear issue.
+- `Complete`/`Verified` matrix requirements do not have open Linear issues.
+- No duplicate open Linear issues share the same requirement ID.
+
+### 7) Generate machine-readable session snapshot
 
 ```bash
 pnpm backlog:snapshot
@@ -433,7 +463,7 @@ Includes:
 - UI refactor lane summary (`ui-ux` label) with open issue keys
 - last successful `backlog:verify` timestamp
 
-### 7) Local bootstrap check shortcut
+### 8) Local bootstrap check shortcut
 
 ```bash
 pnpm backlog:bootstrap:check
@@ -442,7 +472,7 @@ pnpm backlog:bootstrap:check
 Equivalent to:
 
 ```bash
-pnpm backlog:verify && pnpm backlog:snapshot
+pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot
 ```
 
 Fallback rule:

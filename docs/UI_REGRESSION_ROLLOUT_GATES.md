@@ -6,11 +6,12 @@ This runbook defines the mandatory release gates for UI-affecting pull requests.
 
 ## Canonical Standards
 
-- Brand source: `brand/Brand Identity Document/`
-- Component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+- Canonical source: `lic-design-system/references/`
+- Component matrix: `lic-design-system/references/ui-kit.md`
 - Precedence contract: `docs/UI_CANONICAL_PRECEDENCE.md`
 - Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
-- Marketing scope exclusion: `MarketingSite` section is out-of-scope for product app parity.
+- Marketing scope exclusion: `lic-design-system/references/marketing-site.md` is out-of-scope for product app parity.
+- Standards-manual shell exclusion: `brand/Brand Identity Document*/src/app/components/Layout.tsx` is documentation UX and must not be copied into product route IA/copy.
 
 ## Automated Gates
 

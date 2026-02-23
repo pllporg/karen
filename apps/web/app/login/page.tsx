@@ -7,7 +7,7 @@ import { apiFetch, setSessionToken } from '../../lib/api';
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('admin@karen-demo.local');
+  const [email, setEmail] = useState('admin@lic-demo.local');
   const [password, setPassword] = useState('ChangeMe123!');
   const [organizationName, setOrganizationName] = useState('Stonebridge Construction Law');
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +37,9 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
       <div className="card" style={{ width: 'min(520px, 100%)' }}>
+        <p className="meta-note" style={{ marginBottom: 8 }}>
+          LIC LEGAL SUITE
+        </p>
         <h1 style={{ marginTop: 0 }}>{mode === 'login' ? 'Sign In' : 'Create Organization'}</h1>
         <p style={{ color: 'var(--lic-text-muted)' }}>Secure session auth with optional MFA (TOTP)</p>
         <div style={{ display: 'grid', gap: 10 }}>

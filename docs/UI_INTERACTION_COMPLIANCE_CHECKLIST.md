@@ -1,14 +1,14 @@
 # UI + Interaction Compliance Checklist
 
-Source of truth: `brand/Brand Identity Document/`
-Canonical component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+Source of truth: `lic-design-system/references/`
+Canonical component matrix: `lic-design-system/references/ui-kit.md`
 Canonical precedence contract: `docs/UI_CANONICAL_PRECEDENCE.md`
-Explicitly out of scope for product app parity: `MarketingSite` tab/section.
+Explicitly out of scope for product app parity: `lic-design-system/references/marketing-site.md`.
 
 Use this checklist for any UI-affecting ticket or PR.
 
 ## 1) Visual System
-- Uses canonical palette only (`Paper #F2EFE6`, `Ink #0B0D0F`, `Process Blue #0B3D91`, `Oxide Red #B23A2B`, tokenized neutrals).
+- Uses canonical palette only (`Paper #F7F5F0`, `Ink #0B0B0B`, `Institutional #2B4C7E`, `Filing Red #8B2500`, `Ledger #2D5F3A`, tokenized neutrals).
 - No gradients.
 - No shadows.
 - No rounded corners.
@@ -21,6 +21,7 @@ Use this checklist for any UI-affecting ticket or PR.
 - Serif used sparingly for approved emphasis contexts only.
 - Voice is procedural and terse.
 - No hype/friendly filler phrases.
+- Product copy does not include standards-manual scaffolding markers (`Standards Manual`, `LIC / IDENTITY`, revision/confidential banner language).
 
 ## 3) Layout + Density
 - 12-column desktop structure respected.
@@ -67,3 +68,4 @@ Use this checklist for any UI-affecting ticket or PR.
 - Test/build commands listed and passed.
 - Manual checklist outcomes documented.
 - Any intentional exception documented with rationale and follow-up ticket.
+- For shell/navigation edits: explicit confirmation that standards-manual app UX artifacts were not copied into product UI.

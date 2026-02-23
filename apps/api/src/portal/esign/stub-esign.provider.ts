@@ -39,7 +39,8 @@ export class StubEsignProvider implements EsignProvider {
 
   parseWebhook(input: EsignWebhookPayload): EsignWebhookResult {
     const payload = this.requireObject(input.payload);
-    const signature = input.headers['x-esign-signature'] || input.headers['x-karen-esign-signature'] || '';
+    const signature =
+      input.headers['x-esign-signature'] || input.headers['x-lic-esign-signature'] || input.headers['x-karen-esign-signature'] || '';
     const secret = process.env.ESIGN_STUB_WEBHOOK_SECRET?.trim();
     if (secret) {
       const valid = verifyHmacSignature({

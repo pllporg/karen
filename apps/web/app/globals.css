@@ -137,6 +137,26 @@ pre {
   border-bottom: var(--lic-rule-1) solid var(--lic-graphite);
 }
 
+.shell-brand-lockup {
+  margin: 0 0 var(--lic-2);
+}
+
+.shell-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 32px;
+  border: var(--lic-rule-1) solid var(--lic-paper);
+  padding: 0 var(--lic-2);
+  font-family: var(--lic-font-condensed);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lic-paper);
+}
+
 .shell-header-kicker {
   margin: 0;
   font-family: var(--lic-font-mono);
@@ -193,12 +213,14 @@ pre {
   background: var(--lic-graphite);
 }
 
-.shell-nav-code {
+.shell-nav-short {
+  display: none;
   width: 28px;
   flex-shrink: 0;
   font-size: 0.625rem;
   letter-spacing: 0.12em;
   color: var(--lic-silver);
+  text-align: center;
 }
 
 .shell-nav-label {
@@ -803,6 +825,7 @@ textarea:focus-visible,
 
 .shell-root[data-shell-mode='compact'] .shell-nav-link {
   justify-content: center;
+  gap: 0;
   padding: var(--lic-3) var(--lic-1);
   border-left-color: transparent;
   border-right: var(--lic-rule-2) solid transparent;
@@ -812,7 +835,8 @@ textarea:focus-visible,
   border-right-color: var(--lic-paper);
 }
 
-.shell-root[data-shell-mode='compact'] .shell-nav-code {
+.shell-root[data-shell-mode='compact'] .shell-nav-short {
+  display: inline-block;
   width: auto;
   color: var(--lic-paper);
 }

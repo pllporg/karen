@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="LIC">
+  <rect x="2" y="2" width="60" height="60" fill="#F2EFE6" stroke="#0B0D0F" stroke-width="4" />
+  <rect x="2" y="2" width="60" height="10" fill="#0B3D91" />
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-size="22"
+    font-family="'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif"
+    font-weight="700"
+    letter-spacing="3"
+    fill="#0B0D0F"
+  >
+    LIC
+  </text>
+</svg>

@@ -7,8 +7,9 @@
   1. `lic-design-system/references/interaction-and-ai.md`
   2. `lic-design-system/references/ui-kit.md`
   3. `lic-design-system/references/design-tokens.md`
-  4. `brand/Brand Identity Document/src/app/components/sections/**` and `src/styles/tailwind.css`
-- Product app scope excludes `MarketingSite` visuals/interactions.
+  4. `lic-design-system/references/source-map.md` (traceability to original manual sections)
+- Product app scope excludes `lic-design-system/references/marketing-site.md`.
+- Standards-manual app shell/routing (`brand/Brand Identity Document*/src/app/components/Layout.tsx`, `src/app/routes.ts`) are documentation UX and not canonical product layout/copy sources.
 
 ## Color Tokens (Fixed Palette)
 

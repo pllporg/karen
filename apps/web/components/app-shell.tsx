@@ -6,19 +6,19 @@ import { clearSessionToken } from '../lib/api';
 import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
-  { href: '/dashboard', label: 'Command Center', code: '00' },
-  { href: '/admin', label: 'Administration', code: '01' },
-  { href: '/contacts', label: 'Contacts Graph', code: '02' },
-  { href: '/matters', label: 'Matter Registry', code: '03' },
-  { href: '/communications', label: 'Communications', code: '04' },
-  { href: '/documents', label: 'Document Vault', code: '05' },
-  { href: '/billing', label: 'Billing Trust', code: '06' },
-  { href: '/imports', label: 'Import Queue', code: '07' },
-  { href: '/exports', label: 'Export Archive', code: '08' },
-  { href: '/ai', label: 'AI Workspace', code: '09' },
-  { href: '/reporting', label: 'Reporting', code: '10' },
-  { href: '/portal', label: 'Client Portal', code: '11' },
-  { href: '/data-dictionary', label: 'Data Dictionary', code: '12' },
+  { href: '/dashboard', label: 'Dashboard', shortCode: 'DB' },
+  { href: '/admin', label: 'Admin', shortCode: 'AD' },
+  { href: '/contacts', label: 'Contacts', shortCode: 'CT' },
+  { href: '/matters', label: 'Matters', shortCode: 'MT' },
+  { href: '/communications', label: 'Communications', shortCode: 'CM' },
+  { href: '/documents', label: 'Documents', shortCode: 'DC' },
+  { href: '/billing', label: 'Billing & Trust', shortCode: 'BL' },
+  { href: '/imports', label: 'Imports', shortCode: 'IM' },
+  { href: '/exports', label: 'Exports', shortCode: 'EX' },
+  { href: '/ai', label: 'AI Workspace', shortCode: 'AI' },
+  { href: '/reporting', label: 'Reporting', shortCode: 'RP' },
+  { href: '/portal', label: 'Client Portal', shortCode: 'PT' },
+  { href: '/data-dictionary', label: 'Data Dictionary', shortCode: 'DD' },
 ];
 
 type ShellViewportMode = 'desktop' | 'compact' | 'tablet' | 'unsupported';
@@ -83,10 +83,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (shellMode === 'unsupported') {
     return (
       <div className="page-shell unsupported-shell" data-shell-mode={shellMode}>
-        <a className="skip-link" href="#karen-unsupported-content">
+        <a className="skip-link" href="#lic-unsupported-content">
           Skip to main content
         </a>
-        <main id="karen-unsupported-content" tabIndex={-1} className="unsupported-panel">
+        <main id="lic-unsupported-content" tabIndex={-1} className="unsupported-panel">
           <div className="unsupported-card" role="status" aria-live="polite">
             <p className="unsupported-code">Viewport Notice</p>
             <h1>Desktop Required</h1>
@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="page-shell shell-root" data-shell-mode={shellMode}>
-      <a className="skip-link" href="#karen-main-content">
+      <a className="skip-link" href="#lic-main-content">
         Skip to main content
       </a>
       <button
@@ -117,7 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           }
         }}
         aria-expanded={shellMode === 'tablet' ? mobileOpen : false}
-        aria-controls="karen-primary-nav"
+        aria-controls="lic-primary-nav"
       >
         {shellMode === 'tablet' && mobileOpen ? 'Close' : 'Menu'}
       </button>
@@ -128,12 +128,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         data-shell-mode={shellMode}
       >
         <div className="shell-sidebar-header">
-          <p className="shell-header-kicker">Standards Manual</p>
-          <p className="shell-header-title">Karen Legal Suite</p>
-          <p className="shell-header-meta">Rev. 2026 - Internal</p>
+          <div className="shell-brand-lockup" aria-hidden="true">
+            <span className="shell-brand-mark">LIC</span>
+          </div>
+          <p className="shell-header-kicker">Practice Operations</p>
+          <p className="shell-header-title">LIC Legal Suite</p>
+          <p className="shell-header-meta">Tenant-Isolated Workspace</p>
         </div>
 
-        <nav id="karen-primary-nav" className="shell-nav" aria-label="Primary navigation">
+        <nav id="lic-primary-nav" className="shell-nav" aria-label="Primary navigation">
           {LINKS.map((item) => {
             const active = isActivePath(path, item.href);
             return (
@@ -144,7 +147,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-current={active ? 'page' : undefined}
                 onClick={() => setMobileOpen(false)}
               >
-                <span className="shell-nav-code">§{item.code}</span>
+                <span className="shell-nav-short" aria-hidden="true">
+                  {item.shortCode}
+                </span>
                 <span className="shell-nav-label">{item.label}</span>
               </Link>
             );
@@ -166,7 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       ) : null}
 
       <main
-        id="karen-main-content"
+        id="lic-main-content"
         tabIndex={-1}
         className="main-panel"
         onClick={() => {

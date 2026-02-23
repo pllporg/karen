@@ -25,7 +25,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Karen Legal Suite API')
+    .setTitle('LIC Legal Suite API')
     .setDescription('Practice management + legal AI API')
     .setVersion('1.0.0')
     .addCookieAuth('session_token')

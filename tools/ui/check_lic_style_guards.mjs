@@ -25,6 +25,11 @@ const requiredTokenValues = {
 const textExtensions = new Set(['.css', '.ts', '.tsx']);
 const ignoredDirectories = new Set(['.next', 'node_modules']);
 const violations = [];
+const bannedManualCopyPatterns = [
+  /standards\s+manual/i,
+  /lic\s*\/\s*identity/i,
+  /rev\.\s*\d{4}\s*[-—]\s*internal/i,
+];
 
 function readFile(filePath) {
   return fs.readFileSync(filePath, 'utf8');
@@ -77,6 +82,14 @@ function checkFile(filePath) {
   const relativePath = path.relative(repoRoot, filePath);
   const source = readFile(filePath);
   const ext = path.extname(filePath);
+
+  for (const pattern of bannedManualCopyPatterns) {
+    if (pattern.test(source)) {
+      violations.push(
+        `${relativePath}: contains standards-manual documentation copy (${pattern.toString()}) which is not allowed in product UI`,
+      );
+    }
+  }
 
   if (/linear-gradient|radial-gradient|conic-gradient|\bgradient\b/i.test(source)) {
     violations.push(`${relativePath}: gradient usage is not allowed`);

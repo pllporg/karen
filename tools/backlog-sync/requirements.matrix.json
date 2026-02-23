@@ -1,16 +1,16 @@
 {
   "metadata": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "generatedFrom": "Prompt-Context",
     "assessmentDate": "2026-02-16",
     "notes": "Parity matrix with LIC UI canonical-precedence lane and PRD/screen coverage backlog.",
     "uiCompliance": {
       "canonicalSource": "docs/UI_CANONICAL_PRECEDENCE.md",
-      "componentMatrixSource": "brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx",
+      "componentMatrixSource": "lic-design-system/references/ui-kit.md",
       "interactionChecklist": "docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md",
       "precedenceRule": "If UI standards conflict across legacy docs and LIC references, follow docs/UI_CANONICAL_PRECEDENCE.md.",
       "exclusions": [
-        "MarketingSite tab/section is excluded from product app parity scope."
+        "`lic-design-system/references/marketing-site.md` is excluded from product app parity scope."
       ]
     }
   },
@@ -1242,6 +1242,243 @@
           "definitionOfDone": [
             "Workflow surfaces demonstrate consistent status and audit metadata presentation.",
             "Manual validation confirms no hidden auto-send paths."
+          ]
+        },
+        {
+          "title": "Plan UI/UX refactor lane with LIC canonical precedence",
+          "requirementId": "REQ-UI-001",
+          "promptSection": "UI Refactor / Canonical source + precedence",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "The UI lane needed a deterministic canonical source and precedence rule to avoid conflicting execution directives.",
+          "requirementExcerpt": "Define and document canonical LIC UI precedence and conflict resolution for product-app surfaces.",
+          "acceptanceCriteria": [
+            "Canonical precedence document exists and is linked by backlog/process docs.",
+            "Legacy conflicting guidance is explicitly marked as non-canonical.",
+            "UI lane planning references one canonical source chain."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Improves operational consistency for review-critical interfaces.",
+          "definitionOfDone": [
+            "Canonical precedence is documented and referenced.",
+            "UI backlog planning uses the canonical chain."
+          ]
+        },
+        {
+          "title": "Define canonical UI token contract from LIC design-system references",
+          "requirementId": "REQ-UI-002",
+          "promptSection": "UI Refactor / Foundation realignment",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "Token, typography, spacing, and motion rules needed a stable contract anchored to LIC references.",
+          "requirementExcerpt": "Normalize and enforce design tokens and typography mappings using canonical LIC references.",
+          "acceptanceCriteria": [
+            "Token contract maps palette, type, spacing, radius, and border rules.",
+            "Contract includes non-negotiable UI constraints and failure conditions.",
+            "UI docs reference the token contract for implementation and reviews."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Reduces UI drift in high-stakes workflows.",
+          "definitionOfDone": [
+            "Token contract document is committed.",
+            "Compliance checklist references token contract."
+          ]
+        },
+        {
+          "title": "Refactor global app shell and navigation to LIC standards",
+          "requirementId": "REQ-UI-003",
+          "promptSection": "UI Refactor / Shell + navigation",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "Shell and navigation required canonical hierarchy, density, and state visibility alignment.",
+          "requirementExcerpt": "App shell/navigation must align with LIC layout, typography, and interaction-state doctrine.",
+          "acceptanceCriteria": [
+            "Shell follows canonical spacing/rule hierarchy.",
+            "Navigation semantics and active-state behavior are deterministic.",
+            "No forbidden visual patterns in shell/nav surfaces."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Improves operational clarity for privileged workflows.",
+          "definitionOfDone": [
+            "Shell refactor merged with regression coverage.",
+            "Checklist evidence is attached."
+          ]
+        },
+        {
+          "title": "Uplift shared UI primitives and interaction state model",
+          "requirementId": "REQ-UI-004",
+          "promptSection": "UI Refactor / Primitive system uplift",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system",
+            "a11y"
+          ],
+          "problemStatement": "Primitive behavior/states were inconsistent across modules and needed canonical normalization.",
+          "requirementExcerpt": "Shared primitives must expose consistent explicit states and accessibility behavior.",
+          "acceptanceCriteria": [
+            "Required primitives implement default/hover/focus/disabled/error states.",
+            "Focus-visible behavior is explicit and test-covered.",
+            "Destructive states and confirmations follow procedural standards."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Improves safety of destructive or review-gated actions.",
+          "definitionOfDone": [
+            "Primitive suite normalized with tests.",
+            "Representative route adoption is complete."
+          ]
+        },
+        {
+          "title": "Execute accessibility and interaction compliance remediation lane",
+          "requirementId": "REQ-UI-005",
+          "promptSection": "UI Refactor / Accessibility + interaction compliance",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "a11y"
+          ],
+          "problemStatement": "Keyboard, focus, feedback hierarchy, and confirmation patterns needed systematic remediation.",
+          "requirementExcerpt": "Enforce keyboard-first interaction, visible focus, and explicit feedback/confirmation hierarchy.",
+          "acceptanceCriteria": [
+            "Keyboard navigation and modal focus management verified on core routes.",
+            "Feedback hierarchy is standardized across flows.",
+            "Accessibility remediations have regression coverage where patterns exist."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Reduces operator error risk.",
+          "definitionOfDone": [
+            "Accessibility compliance evidence is documented.",
+            "Regression tests cover key interaction contracts."
+          ]
+        },
+        {
+          "title": "Define and apply responsive behavior matrix under LIC constraints",
+          "requirementId": "REQ-UI-006",
+          "promptSection": "UI Refactor / Responsive + breakpoint doctrine",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux"
+          ],
+          "problemStatement": "Responsive behavior required deterministic breakpoint handling and unsupported-viewport policy.",
+          "requirementExcerpt": "Define responsive matrix preserving hierarchy and dense-data readability for supported breakpoints.",
+          "acceptanceCriteria": [
+            "Responsive behavior matrix documented and implemented for key routes.",
+            "Tablet/compact/desktop shell behavior is deterministic.",
+            "Unsupported viewport handling is explicit."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "No direct security impact.",
+          "definitionOfDone": [
+            "Responsive regression coverage is in place.",
+            "Behavior matrix evidence is documented."
+          ]
+        },
+        {
+          "title": "Enforce UI regression and rollout gates for LIC compliance",
+          "requirementId": "REQ-UI-007",
+          "promptSection": "UI Refactor / Regression + rollout gates",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "ops"
+          ],
+          "problemStatement": "UI rollout needed deterministic gates to prevent non-canonical regressions.",
+          "requirementExcerpt": "UI-affecting changes must satisfy checklist evidence and regression/build gate requirements.",
+          "acceptanceCriteria": [
+            "UI regression workflow enforces required evidence fields.",
+            "Core route regression suite runs in CI.",
+            "Release gate expectations are documented and testable."
+          ],
+          "apiImpact": "No API changes.",
+          "securityImpact": "Prevents unsafe UI regressions in operational workflows.",
+          "definitionOfDone": [
+            "Workflow gate + runbook are active.",
+            "Policy checks are covered by tests."
+          ]
+        },
+        {
+          "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
+          "requirementId": "REQ-UI-014",
+          "promptSection": "UI Refactor / Branding migration",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system"
+          ],
+          "problemStatement": "Product naming/logo/app identity has been normalized to LIC across user-facing app surfaces with compatibility headers retained for integrations.",
+          "requirementExcerpt": "Replace product-facing Karen naming/logo surfaces with LIC branding while preserving behavior and integration compatibility.",
+          "acceptanceCriteria": [
+            "Web shell/login/layout metadata and app icon use LIC naming.",
+            "API/product-facing descriptors use LIC naming.",
+            "Legacy integration header compatibility is retained where required."
+          ],
+          "apiImpact": "No breaking API contract changes; compatibility headers retained.",
+          "securityImpact": "No direct security impact.",
+          "definitionOfDone": [
+            "All user-facing branding surfaces are LIC-aligned.",
+            "Regression tests pass for updated branding surfaces."
+          ]
+        },
+        {
+          "title": "Execute full UI compliance review against LIC canonical standards",
+          "requirementId": "REQ-UI-015",
+          "promptSection": "UI Refactor / Compliance review",
+          "parityStatus": "Complete",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "ui-ux",
+            "design-system",
+            "a11y"
+          ],
+          "problemStatement": "A full route-by-route UI compliance pass is documented with findings/remediation mapping and closure evidence.",
+          "requirementExcerpt": "Run a comprehensive compliance audit against LIC canonical references and capture remediation backlog.",
+          "acceptanceCriteria": [
+            "Route inventory reviewed against checklist and canonical references.",
+            "Non-compliant findings are documented with severity and owning ticket.",
+            "Compliance evidence is attached to KAR-77 and linked remediation issues.",
+            "Compliance audit artifact is published at docs/parity/ui-full-compliance-review.md with finding ownership mapping."
+          ],
+          "apiImpact": "No API changes expected.",
+          "securityImpact": "Improves reliability and review safety in legal workflows.",
+          "definitionOfDone": [
+            "Compliance review report is complete.",
+            "All findings are mapped to actionable backlog items.",
+            "KAR-77 includes verification evidence linking tests/guardrails to resolved findings."
           ]
         }
       ]

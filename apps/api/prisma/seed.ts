@@ -260,14 +260,14 @@ async function main() {
 
   const [adminUser, attorneyUser, paralegalUser, intakeUser, billingUser, clientUser1, clientUser2, vendorUser] =
     await Promise.all([
-      prisma.user.create({ data: { email: 'admin@karen-demo.local', passwordHash: hashed, fullName: 'Avery Admin' } }),
-      prisma.user.create({ data: { email: 'attorney@karen-demo.local', passwordHash: hashed, fullName: 'Jordan Attorney' } }),
-      prisma.user.create({ data: { email: 'paralegal@karen-demo.local', passwordHash: hashed, fullName: 'Casey Paralegal' } }),
-      prisma.user.create({ data: { email: 'intake@karen-demo.local', passwordHash: hashed, fullName: 'Riley Intake' } }),
-      prisma.user.create({ data: { email: 'billing@karen-demo.local', passwordHash: hashed, fullName: 'Morgan Billing' } }),
-      prisma.user.create({ data: { email: 'elena.client@karen-demo.local', passwordHash: hashed, fullName: 'Elena Ortega' } }),
-      prisma.user.create({ data: { email: 'sam.client@karen-demo.local', passwordHash: hashed, fullName: 'Sam Patel' } }),
-      prisma.user.create({ data: { email: 'expert.vendor@karen-demo.local', passwordHash: hashed, fullName: 'Dr. Maya Expert' } }),
+      prisma.user.create({ data: { email: 'admin@lic-demo.local', passwordHash: hashed, fullName: 'Avery Admin' } }),
+      prisma.user.create({ data: { email: 'attorney@lic-demo.local', passwordHash: hashed, fullName: 'Jordan Attorney' } }),
+      prisma.user.create({ data: { email: 'paralegal@lic-demo.local', passwordHash: hashed, fullName: 'Casey Paralegal' } }),
+      prisma.user.create({ data: { email: 'intake@lic-demo.local', passwordHash: hashed, fullName: 'Riley Intake' } }),
+      prisma.user.create({ data: { email: 'billing@lic-demo.local', passwordHash: hashed, fullName: 'Morgan Billing' } }),
+      prisma.user.create({ data: { email: 'elena.client@lic-demo.local', passwordHash: hashed, fullName: 'Elena Ortega' } }),
+      prisma.user.create({ data: { email: 'sam.client@lic-demo.local', passwordHash: hashed, fullName: 'Sam Patel' } }),
+      prisma.user.create({ data: { email: 'expert.vendor@lic-demo.local', passwordHash: hashed, fullName: 'Dr. Maya Expert' } }),
     ]);
 
   const clientContact1 = await prisma.contact.create({
@@ -275,7 +275,7 @@ async function main() {
       organizationId: org.id,
       kind: 'PERSON',
       displayName: 'Elena Ortega',
-      primaryEmail: 'elena.client@karen-demo.local',
+      primaryEmail: 'elena.client@lic-demo.local',
       primaryPhone: '555-100-1101',
       tags: ['client'],
       personProfile: { create: { firstName: 'Elena', lastName: 'Ortega' } },
@@ -287,7 +287,7 @@ async function main() {
       organizationId: org.id,
       kind: 'PERSON',
       displayName: 'Sam Patel',
-      primaryEmail: 'sam.client@karen-demo.local',
+      primaryEmail: 'sam.client@lic-demo.local',
       primaryPhone: '555-100-1102',
       tags: ['client'],
       personProfile: { create: { firstName: 'Sam', lastName: 'Patel' } },
@@ -318,7 +318,7 @@ async function main() {
       organizationId: org.id,
       kind: 'PERSON',
       displayName: 'Dr. Maya Expert',
-      primaryEmail: 'expert.vendor@karen-demo.local',
+      primaryEmail: 'expert.vendor@lic-demo.local',
       tags: ['expert'],
       personProfile: {
         create: {
@@ -1099,9 +1099,9 @@ async function main() {
 
   console.log('Seed complete');
   console.log('Demo credentials:');
-  console.log('admin@karen-demo.local / ChangeMe123!');
-  console.log('attorney@karen-demo.local / ChangeMe123!');
-  console.log('elena.client@karen-demo.local / ChangeMe123!');
+  console.log('admin@lic-demo.local / ChangeMe123!');
+  console.log('attorney@lic-demo.local / ChangeMe123!');
+  console.log('elena.client@lic-demo.local / ChangeMe123!');
 }
 
 main()
