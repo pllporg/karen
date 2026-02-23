@@ -971,7 +971,39 @@ export class MattersService {
           orderBy: { createdAt: 'desc' },
           take: 20,
         },
-        invoices: { orderBy: { issuedAt: 'desc' }, take: 10 },
+        invoices: {
+          orderBy: { issuedAt: 'desc' },
+          take: 10,
+          include: {
+            lineItems: { orderBy: { createdAt: 'asc' } },
+            payments: { orderBy: { receivedAt: 'desc' } },
+          },
+        },
+        timeEntries: { orderBy: { startedAt: 'desc' }, take: 20 },
+        expenses: { orderBy: { incurredAt: 'desc' }, take: 20 },
+        trustTransactions: {
+          orderBy: { occurredAt: 'desc' },
+          take: 20,
+          include: {
+            trustAccount: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        trustLedgers: {
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            trustAccount: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         aiJobs: {
           include: { artifacts: true },
           orderBy: { createdAt: 'desc' },

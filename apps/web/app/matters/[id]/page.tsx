@@ -56,6 +56,8 @@ const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE'
 const COMMUNICATION_DIRECTION_OPTIONS = ['INBOUND', 'OUTBOUND', 'INTERNAL'] as const;
 const MATTER_STATUS_OPTIONS = ['OPEN', 'PENDING', 'CLOSED', 'ARCHIVED'] as const;
 const PARTICIPANT_SIDE_OPTIONS = ['CLIENT_SIDE', 'OPPOSING_SIDE', 'NEUTRAL', 'COURT'] as const;
+const PAYMENT_METHOD_OPTIONS = ['MANUAL', 'CHECK', 'ACH', 'CASH', 'STRIPE'] as const;
+const TRUST_TRANSACTION_TYPE_OPTIONS = ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'ADJUSTMENT'] as const;
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
 function toDateTimeLocalValue(value?: string | null) {
@@ -72,6 +74,10 @@ function toDateTimeLocalValue(value?: string | null) {
 function isCounselRole(roleKey?: string, roleLabel?: string | null) {
   const fingerprint = `${roleKey || ''} ${roleLabel || ''}`.toLowerCase();
   return /(counsel|attorney|lawyer)/.test(fingerprint);
+}
+
+function withTimestamp(message: string) {
+  return `${message} ${new Date().toLocaleString()}`;
 }
 
 export default function MatterDashboardPage() {
@@ -133,6 +139,28 @@ export default function MatterDashboardPage() {
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentVersionFiles, setDocumentVersionFiles] = useState<Record<string, File | null>>({});
   const [documentStatusMessage, setDocumentStatusMessage] = useState<string | null>(null);
+  const [timeEntryDescription, setTimeEntryDescription] = useState('');
+  const [timeEntryStartAt, setTimeEntryStartAt] = useState(new Date().toISOString().slice(0, 16));
+  const [timeEntryEndAt, setTimeEntryEndAt] = useState(new Date(Date.now() + 30 * 60000).toISOString().slice(0, 16));
+  const [timeEntryRate, setTimeEntryRate] = useState('350');
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseIncurredAt, setExpenseIncurredAt] = useState(new Date().toISOString().slice(0, 16));
+  const [invoiceLineDescription, setInvoiceLineDescription] = useState('Matter services');
+  const [invoiceLineQuantity, setInvoiceLineQuantity] = useState('1');
+  const [invoiceLineUnitPrice, setInvoiceLineUnitPrice] = useState('425');
+  const [invoiceDueAt, setInvoiceDueAt] = useState('');
+  const [invoicePaymentAmountById, setInvoicePaymentAmountById] = useState<Record<string, string>>({});
+  const [invoicePaymentReferenceById, setInvoicePaymentReferenceById] = useState<Record<string, string>>({});
+  const [invoicePaymentMethodById, setInvoicePaymentMethodById] = useState<
+    Record<string, (typeof PAYMENT_METHOD_OPTIONS)[number]>
+  >({});
+  const [trustAccountId, setTrustAccountId] = useState('');
+  const [trustTransactionType, setTrustTransactionType] =
+    useState<(typeof TRUST_TRANSACTION_TYPE_OPTIONS)[number]>('DEPOSIT');
+  const [trustTransactionAmount, setTrustTransactionAmount] = useState('');
+  const [trustTransactionDescription, setTrustTransactionDescription] = useState('');
+  const [billingStatusMessage, setBillingStatusMessage] = useState<string | null>(null);
 
   async function refreshDashboard() {
     if (!matterId) {
@@ -161,6 +189,12 @@ export default function MatterDashboardPage() {
         return current;
       }
       return threadIds[0];
+    });
+    setTrustAccountId((current) => {
+      if (current) {
+        return current;
+      }
+      return nextDashboard.trustLedgers?.[0]?.trustAccountId || '';
     });
   }
 
@@ -788,6 +822,155 @@ export default function MatterDashboardPage() {
     }
     const download = await apiFetch<{ url: string }>(`/documents/versions/${latestVersionId}/download-url`);
     setDocumentStatusMessage(`Signed download URL issued: ${download.url}`);
+  }
+
+  async function createMatterTimeEntry() {
+    if (!matterId || !timeEntryStartAt || !timeEntryEndAt) {
+      setBillingStatusMessage('Time entry start/end are required.');
+      return;
+    }
+
+    const created = await apiFetch<any>('/billing/time-entries', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        ...(timeEntryDescription.trim() ? { description: timeEntryDescription.trim() } : {}),
+        startedAt: new Date(timeEntryStartAt).toISOString(),
+        endedAt: new Date(timeEntryEndAt).toISOString(),
+        ...(timeEntryRate.trim() ? { billableRate: Number(timeEntryRate) } : {}),
+      }),
+    });
+
+    setTimeEntryDescription('');
+    setBillingStatusMessage(
+      withTimestamp(
+        `Time entry created (${created.durationMinutes} minutes, $${Number(created.amount || 0).toFixed(2)}).`,
+      ),
+    );
+    await refreshDashboard();
+  }
+
+  async function createMatterExpense() {
+    if (!matterId || !expenseDescription.trim() || !expenseAmount.trim() || !expenseIncurredAt) {
+      setBillingStatusMessage('Expense description, amount, and incurred time are required.');
+      return;
+    }
+
+    await apiFetch('/billing/expenses', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        description: expenseDescription.trim(),
+        amount: Number(expenseAmount),
+        incurredAt: new Date(expenseIncurredAt).toISOString(),
+      }),
+    });
+
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setBillingStatusMessage(withTimestamp('Expense created.'));
+    await refreshDashboard();
+  }
+
+  async function createMatterInvoice() {
+    if (!matterId || !invoiceLineDescription.trim() || !invoiceLineQuantity.trim() || !invoiceLineUnitPrice.trim()) {
+      setBillingStatusMessage('Invoice line description, quantity, and unit price are required.');
+      return;
+    }
+
+    const quantity = Number(invoiceLineQuantity);
+    const unitPrice = Number(invoiceLineUnitPrice);
+    if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0) {
+      setBillingStatusMessage('Invoice quantity and unit price must be valid numbers.');
+      return;
+    }
+
+    const created = await apiFetch<any>('/billing/invoices', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        ...(invoiceDueAt ? { dueAt: new Date(invoiceDueAt).toISOString() } : {}),
+        lineItems: [
+          {
+            description: invoiceLineDescription.trim(),
+            quantity,
+            unitPrice,
+          },
+        ],
+      }),
+    });
+
+    setBillingStatusMessage(
+      withTimestamp(`Invoice ${created.invoiceNumber} created (balance $${Number(created.balanceDue || 0).toFixed(2)}).`),
+    );
+    await refreshDashboard();
+  }
+
+  async function createInvoiceCheckoutLink(invoiceId: string) {
+    const checkout = await apiFetch<{ url?: string | null; warning?: string | null }>(`/billing/invoices/${invoiceId}/checkout`, {
+      method: 'POST',
+    });
+    if (checkout.url) {
+      setBillingStatusMessage(withTimestamp(`Checkout link issued for invoice ${invoiceId}: ${checkout.url}`));
+      return;
+    }
+    setBillingStatusMessage(withTimestamp(checkout.warning || `Checkout link not generated for invoice ${invoiceId}.`));
+  }
+
+  async function recordInvoicePayment(invoiceId: string) {
+    const amountRaw = invoicePaymentAmountById[invoiceId];
+    const method = invoicePaymentMethodById[invoiceId] || 'MANUAL';
+    const amount = Number(amountRaw);
+
+    if (!amountRaw || !Number.isFinite(amount) || amount <= 0) {
+      setBillingStatusMessage('Payment amount must be greater than zero.');
+      return;
+    }
+
+    await apiFetch(`/billing/invoices/${invoiceId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        method,
+        ...(invoicePaymentReferenceById[invoiceId]?.trim()
+          ? { reference: invoicePaymentReferenceById[invoiceId].trim() }
+          : {}),
+      }),
+    });
+
+    setInvoicePaymentAmountById((current) => ({ ...current, [invoiceId]: '' }));
+    setInvoicePaymentReferenceById((current) => ({ ...current, [invoiceId]: '' }));
+    setBillingStatusMessage(withTimestamp(`Payment recorded for invoice ${invoiceId}.`));
+    await refreshDashboard();
+  }
+
+  async function createMatterTrustTransaction() {
+    if (!matterId || !trustAccountId.trim() || !trustTransactionAmount.trim()) {
+      setBillingStatusMessage('Trust account and amount are required for trust transactions.');
+      return;
+    }
+
+    const amount = Number(trustTransactionAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBillingStatusMessage('Trust transaction amount must be greater than zero.');
+      return;
+    }
+
+    await apiFetch('/billing/trust/transactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterId,
+        trustAccountId: trustAccountId.trim(),
+        type: trustTransactionType,
+        amount,
+        ...(trustTransactionDescription.trim() ? { description: trustTransactionDescription.trim() } : {}),
+      }),
+    });
+
+    setTrustTransactionAmount('');
+    setTrustTransactionDescription('');
+    setBillingStatusMessage(withTimestamp(`Trust transaction ${trustTransactionType} posted.`));
+    await refreshDashboard();
   }
 
   const communicationRows = dashboard
@@ -1655,11 +1838,387 @@ export default function MatterDashboardPage() {
 
           <div className="card">
             <h3 style={{ marginTop: 0 }}>Billing</h3>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {dashboard.invoices?.map((invoice: any) => (
-                <li key={invoice.id}>{invoice.invoiceNumber} - {invoice.status} - ${invoice.balanceDue}</li>
-              ))}
-            </ul>
+            <div className="notice" style={{ marginBottom: 10 }}>
+              Attorney approval remains required before sending billing artifacts or trust disbursements.
+            </div>
+            {billingStatusMessage ? <p style={{ color: 'var(--lic-text-muted)' }}>{billingStatusMessage}</p> : null}
+
+            <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: 12 }}>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label htmlFor="billing-time-description">Time Description</label>
+                <input
+                  id="billing-time-description"
+                  className="input"
+                  aria-label="Billing Time Description"
+                  placeholder="Prepare inspection memo"
+                  value={timeEntryDescription}
+                  onChange={(event) => setTimeEntryDescription(event.target.value)}
+                />
+                <label htmlFor="billing-time-start">Time Start</label>
+                <input
+                  id="billing-time-start"
+                  className="input"
+                  aria-label="Billing Time Start"
+                  type="datetime-local"
+                  value={timeEntryStartAt}
+                  onChange={(event) => setTimeEntryStartAt(event.target.value)}
+                />
+                <label htmlFor="billing-time-end">Time End</label>
+                <input
+                  id="billing-time-end"
+                  className="input"
+                  aria-label="Billing Time End"
+                  type="datetime-local"
+                  value={timeEntryEndAt}
+                  onChange={(event) => setTimeEntryEndAt(event.target.value)}
+                />
+                <label htmlFor="billing-time-rate">Rate (USD/hr)</label>
+                <input
+                  id="billing-time-rate"
+                  className="input"
+                  aria-label="Billing Time Rate"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={timeEntryRate}
+                  onChange={(event) => setTimeEntryRate(event.target.value)}
+                />
+                <button className="button secondary" type="button" aria-label="Create Time Entry" onClick={createMatterTimeEntry}>
+                  Create Time Entry
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label htmlFor="billing-expense-description">Expense Description</label>
+                <input
+                  id="billing-expense-description"
+                  className="input"
+                  aria-label="Billing Expense Description"
+                  placeholder="Court filing fee"
+                  value={expenseDescription}
+                  onChange={(event) => setExpenseDescription(event.target.value)}
+                />
+                <label htmlFor="billing-expense-amount">Amount (USD)</label>
+                <input
+                  id="billing-expense-amount"
+                  className="input"
+                  aria-label="Billing Expense Amount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={expenseAmount}
+                  onChange={(event) => setExpenseAmount(event.target.value)}
+                />
+                <label htmlFor="billing-expense-incurred">Incurred At</label>
+                <input
+                  id="billing-expense-incurred"
+                  className="input"
+                  aria-label="Billing Expense Incurred At"
+                  type="datetime-local"
+                  value={expenseIncurredAt}
+                  onChange={(event) => setExpenseIncurredAt(event.target.value)}
+                />
+                <button className="button secondary" type="button" aria-label="Create Expense" onClick={createMatterExpense}>
+                  Create Expense
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label htmlFor="billing-invoice-description">Invoice Line Description</label>
+                <input
+                  id="billing-invoice-description"
+                  className="input"
+                  aria-label="Billing Invoice Line Description"
+                  value={invoiceLineDescription}
+                  onChange={(event) => setInvoiceLineDescription(event.target.value)}
+                />
+                <label htmlFor="billing-invoice-quantity">Quantity</label>
+                <input
+                  id="billing-invoice-quantity"
+                  className="input"
+                  aria-label="Billing Invoice Quantity"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={invoiceLineQuantity}
+                  onChange={(event) => setInvoiceLineQuantity(event.target.value)}
+                />
+                <label htmlFor="billing-invoice-unit-price">Unit Price (USD)</label>
+                <input
+                  id="billing-invoice-unit-price"
+                  className="input"
+                  aria-label="Billing Invoice Unit Price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={invoiceLineUnitPrice}
+                  onChange={(event) => setInvoiceLineUnitPrice(event.target.value)}
+                />
+                <label htmlFor="billing-invoice-due-at">Due At (optional)</label>
+                <input
+                  id="billing-invoice-due-at"
+                  className="input"
+                  aria-label="Billing Invoice Due At"
+                  type="datetime-local"
+                  value={invoiceDueAt}
+                  onChange={(event) => setInvoiceDueAt(event.target.value)}
+                />
+                <button className="button secondary" type="button" aria-label="Create Invoice" onClick={createMatterInvoice}>
+                  Create Invoice
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 140px 1fr auto', marginBottom: 12 }}>
+              <input
+                className="input"
+                aria-label="Billing Trust Account Id"
+                placeholder="Trust account ID"
+                value={trustAccountId}
+                onChange={(event) => setTrustAccountId(event.target.value)}
+              />
+              <select
+                className="input"
+                aria-label="Billing Trust Transaction Type"
+                value={trustTransactionType}
+                onChange={(event) =>
+                  setTrustTransactionType(event.target.value as (typeof TRUST_TRANSACTION_TYPE_OPTIONS)[number])
+                }
+              >
+                {TRUST_TRANSACTION_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="input"
+                aria-label="Billing Trust Transaction Amount"
+                type="number"
+                min={0}
+                step="0.01"
+                value={trustTransactionAmount}
+                onChange={(event) => setTrustTransactionAmount(event.target.value)}
+              />
+              <input
+                className="input"
+                aria-label="Billing Trust Transaction Description"
+                placeholder="Retainer deposit"
+                value={trustTransactionDescription}
+                onChange={(event) => setTrustTransactionDescription(event.target.value)}
+              />
+              <button
+                className="button secondary"
+                type="button"
+                aria-label="Create Trust Transaction"
+                onClick={createMatterTrustTransaction}
+              >
+                Post Trust
+              </button>
+            </div>
+
+            <h4 style={{ marginTop: 0 }}>Invoices</h4>
+            <table className="table" style={{ marginBottom: 12 }}>
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Balance</th>
+                  <th>Payments</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dashboard.invoices || []).map((invoice: any) => (
+                  <tr key={invoice.id}>
+                    <td>{invoice.invoiceNumber}</td>
+                    <td>{invoice.status}</td>
+                    <td>${Number(invoice.total || 0).toFixed(2)}</td>
+                    <td>${Number(invoice.balanceDue || 0).toFixed(2)}</td>
+                    <td>{invoice.payments?.length || 0}</td>
+                    <td>
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        <button
+                          className="button secondary"
+                          type="button"
+                          aria-label={`Create Checkout Link ${invoice.id}`}
+                          onClick={() => createInvoiceCheckoutLink(invoice.id)}
+                        >
+                          Create Checkout Link
+                        </button>
+                        <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '120px 110px 1fr auto' }}>
+                          <input
+                            className="input"
+                            aria-label={`Invoice Payment Amount ${invoice.id}`}
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={invoicePaymentAmountById[invoice.id] || ''}
+                            onChange={(event) =>
+                              setInvoicePaymentAmountById((current) => ({
+                                ...current,
+                                [invoice.id]: event.target.value,
+                              }))
+                            }
+                          />
+                          <select
+                            className="input"
+                            aria-label={`Invoice Payment Method ${invoice.id}`}
+                            value={invoicePaymentMethodById[invoice.id] || 'MANUAL'}
+                            onChange={(event) =>
+                              setInvoicePaymentMethodById((current) => ({
+                                ...current,
+                                [invoice.id]: event.target.value as (typeof PAYMENT_METHOD_OPTIONS)[number],
+                              }))
+                            }
+                          >
+                            {PAYMENT_METHOD_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            className="input"
+                            aria-label={`Invoice Payment Reference ${invoice.id}`}
+                            placeholder="Reference"
+                            value={invoicePaymentReferenceById[invoice.id] || ''}
+                            onChange={(event) =>
+                              setInvoicePaymentReferenceById((current) => ({
+                                ...current,
+                                [invoice.id]: event.target.value,
+                              }))
+                            }
+                          />
+                          <button
+                            className="button secondary"
+                            type="button"
+                            aria-label={`Record Payment ${invoice.id}`}
+                            onClick={() => recordInvoicePayment(invoice.id)}
+                          >
+                            Record Payment
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {(dashboard.invoices || []).length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No invoices for this matter yet.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+              <div>
+                <h4 style={{ marginTop: 0 }}>Time Entries</h4>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Started</th>
+                      <th>Duration</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(dashboard.timeEntries || []).map((row: any) => (
+                      <tr key={row.id}>
+                        <td>{new Date(row.startedAt).toLocaleString()}</td>
+                        <td>{row.durationMinutes}m</td>
+                        <td>${Number(row.amount || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                    {(dashboard.timeEntries || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={3}>No time entries for this matter yet.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+
+              <div>
+                <h4 style={{ marginTop: 0 }}>Expenses</h4>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th>Incurred</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(dashboard.expenses || []).map((row: any) => (
+                      <tr key={row.id}>
+                        <td>{row.description}</td>
+                        <td>{new Date(row.incurredAt).toLocaleDateString()}</td>
+                        <td>${Number(row.amount || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                    {(dashboard.expenses || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={3}>No expenses for this matter yet.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+
+              <div>
+                <h4 style={{ marginTop: 0 }}>Trust Ledger</h4>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Trust Account</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(dashboard.trustLedgers || []).map((row: any) => (
+                      <tr key={row.id}>
+                        <td>{row.trustAccount?.name || row.trustAccountId}</td>
+                        <td>${Number(row.balance || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                    {(dashboard.trustLedgers || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={2}>No trust ledger rows for this matter yet.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+
+              <div>
+                <h4 style={{ marginTop: 0 }}>Trust Transactions</h4>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Occurred</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(dashboard.trustTransactions || []).map((row: any) => (
+                      <tr key={row.id}>
+                        <td>{row.type}</td>
+                        <td>${Number(row.amount || 0).toFixed(2)}</td>
+                        <td>{new Date(row.occurredAt).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {(dashboard.trustTransactions || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={3}>No trust transactions for this matter yet.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <div className="card">
