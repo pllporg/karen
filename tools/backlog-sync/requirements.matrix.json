@@ -1456,7 +1456,7 @@
           "title": "Execute full UI compliance review against LIC canonical standards",
           "requirementId": "REQ-UI-015",
           "promptSection": "UI Refactor / Compliance review",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1465,7 +1465,7 @@
             "design-system",
             "a11y"
           ],
-          "problemStatement": "A full route-by-route UI compliance pass is now documented with findings/remediation mapping; final closure requires review sign-off and any remaining evidence updates.",
+          "problemStatement": "A full route-by-route UI compliance pass is documented with findings/remediation mapping and closure evidence.",
           "requirementExcerpt": "Run a comprehensive compliance audit against LIC canonical references and capture remediation backlog.",
           "acceptanceCriteria": [
             "Route inventory reviewed against checklist and canonical references.",

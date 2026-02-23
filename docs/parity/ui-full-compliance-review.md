@@ -46,7 +46,7 @@ Non-canonical for product UX:
 | UI-015-F002 | Medium | Sidebar labels/taxonomy followed documentation IA instead of product-operational IA. | `KAR-76` | Fixed |
 | UI-015-F003 | Medium | No automated guardrail blocking standards-manual marker copy in product files. | `KAR-76` | Fixed |
 | UI-015-F004 | Medium | Canonical docs did not explicitly separate standards-manual app UX from product UX. | `KAR-76` | Fixed |
-| UI-015-F005 | Low | Full cross-route compliance evidence bundle not previously centralized in one artifact. | `KAR-77` | In Progress |
+| UI-015-F005 | Low | Full cross-route compliance evidence bundle not previously centralized in one artifact. | `KAR-77` | Fixed |
 
 ## Remediation Mapping
 
@@ -85,5 +85,15 @@ pnpm backlog:handoff:check
 
 ## Current Compliance Determination
 
-Current status: `Partial`  
-Rationale: major non-compliant artifacts have been removed and guarded, and this artifact now centralizes route/finding traceability; final closure depends on completing KAR-77 evidence sign-off and moving issue state through review.
+Current status: `Complete`  
+Rationale: route inventory coverage, canonical-source precedence, and finding-to-owner traceability are complete in this artifact; all findings are fixed and mapped to closed remediation.
+
+## Closure Evidence
+
+- 2026-02-23: Final sign-off validation completed for `KAR-77`.
+- Command results:
+  - `pnpm ui:contract:check` (pass)
+  - `pnpm --filter web test -- test/app-shell.spec.tsx test/dashboard-page.spec.tsx test/app-shell-responsive.spec.tsx` (pass)
+  - `pnpm --filter web build` (pass)
+  - `pnpm backlog:verify` (pass)
+  - `pnpm backlog:matrix:check` (pass)
