@@ -1431,7 +1431,7 @@
           "title": "Enforce UI regression and rollout gates for LIC compliance",
           "requirementId": "REQ-UI-007",
           "promptSection": "UI Refactor / Regression + rollout gates",
-          "parityStatus": "Complete",
+          "parityStatus": "Verified",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1439,7 +1439,7 @@
             "ui-ux",
             "ops"
           ],
-          "problemStatement": "UI rollout needed deterministic gates to prevent non-canonical regressions.",
+          "problemStatement": "UI rollout gates are verified with workflow enforcement, executable policy tests, and passing regression/build checks for LIC-critical routes.",
           "requirementExcerpt": "UI-affecting changes must satisfy checklist evidence and regression/build gate requirements.",
           "acceptanceCriteria": [
             "UI regression workflow enforces required evidence fields.",
@@ -1449,8 +1449,8 @@
           "apiImpact": "No API changes.",
           "securityImpact": "Prevents unsafe UI regressions in operational workflows.",
           "definitionOfDone": [
-            "Workflow gate + runbook are active.",
-            "Policy checks are covered by tests."
+            "Workflow gate + runbook are active and verified against current main behavior.",
+            "Policy checks are covered by apps/api/test/ui-regression-rollout-gates.spec.ts and regression/build command evidence."
           ]
         },
         {
