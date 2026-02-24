@@ -25,7 +25,7 @@ Verification Evidence:
 <contract, schema, UI, migration impact>
 
 ## Design + Interaction Compliance (required for UI-affecting work)
-- Canonical source reviewed: `brand/Brand Identity Document/`
+- Canonical source reviewed: `lic-design-system/references/`
 - Checklist reviewed: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
 - Compliance notes:
   - <token/typography/layout/interaction confirmations>

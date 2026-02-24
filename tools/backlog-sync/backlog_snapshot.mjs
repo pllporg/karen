@@ -14,7 +14,7 @@ import {
 } from './common.mjs';
 
 const linearToken = requiredEnv('LINEAR_API_TOKEN');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const scopeLabel = normalizeLabelName(env('LINEAR_SCOPE_LABEL', 'parity'));
 const uiLaneLabel = normalizeLabelName(env('UI_LANE_LABEL', 'ui-ux'));
 const topN = Math.max(1, Number(env('SNAPSHOT_TOP_N', '10')) || 10);
@@ -97,7 +97,7 @@ function safeGit(command) {
 async function main() {
   const requirementsMatrix = JSON.parse(await readFile(requirementsMatrixPath, 'utf8'));
   const tasks = flattenMatrixTasks(requirementsMatrix);
-  const unresolvedTasks = tasks.filter((task) => task.parityStatus !== 'Verified');
+  const unresolvedTasks = tasks.filter((task) => ['Missing', 'Partial'].includes(String(task.parityStatus || '')));
   const sortedUnresolved = [...unresolvedTasks].sort((a, b) => {
     const phaseCompare = phaseWeight(a.phase) - phaseWeight(b.phase);
     if (phaseCompare !== 0) return phaseCompare;
@@ -180,7 +180,7 @@ async function main() {
     },
     priority: {
       algorithm:
-        'phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)',
+        'phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)',
       topRequirements,
     },
     linearSummary: {
