@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "lint": "echo 'lint not configured yet'",
     "test": "jest --runInBand",
+    "test:core-workflow": "jest --runInBand test/core-workflow-e2e.spec.ts",
     "test:watch": "jest --watch",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

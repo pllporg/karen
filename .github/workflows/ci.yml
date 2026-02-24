@@ -48,6 +48,7 @@ jobs:
       - run: pnpm --filter api prisma:generate
       - run: pnpm --filter api prisma:deploy
       - run: pnpm --filter api prisma:seed
+      - run: pnpm --filter api test:core-workflow
       - run: pnpm --filter api test
       - run: pnpm --filter web test
       - run: pnpm --filter api build
