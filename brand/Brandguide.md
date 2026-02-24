@@ -1,3 +1,5 @@
+> Legacy brand guide artifact. Not canonical for active implementation. Use `lic-design-system/references/` and `docs/PROMPT_CANONICAL_SOURCES.md`.
+
 LIC Brand Guide
 Identity summary
 Legal Intelligence Corporation (LIC)

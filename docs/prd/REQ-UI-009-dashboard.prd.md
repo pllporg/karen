@@ -7,7 +7,7 @@
 - Primary roles: `Admin`, `Attorney`, `Paralegal`, `Intake Specialist`, `Billing`
 - Canonical sources:
   - `docs/UI_CANONICAL_PRECEDENCE.md`
-  - `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
+  - `lic-design-system/references/ui-kit.md`
   - `lic-design-system/references/interaction-and-ai.md`
 
 ## Problem Statement

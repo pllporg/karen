@@ -1,3 +1,5 @@
+> Legacy prompt artifact. Not canonical. Use `docs/PROMPT_CANONICAL_SOURCES.md`.
+
 TASK: Refactor the web app UI/UX to match the LIC design system (mid-century corporate, procedural, matte, reductive).
 You must follow AGENTS.md.
 

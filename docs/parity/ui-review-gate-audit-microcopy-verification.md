@@ -7,7 +7,7 @@
 - Canonical references:
   - `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`
   - `docs/UI_TOKEN_CONTRACT.md`
-  - `brand/Brand Identity Document/src/app/components/sections/InteractionDesign.tsx`
+  - `lic-design-system/references/interaction-and-ai.md`
 
 ## Implementation Summary
 

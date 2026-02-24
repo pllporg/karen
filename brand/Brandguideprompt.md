@@ -1,3 +1,5 @@
+> Legacy prompt artifact. Not canonical. Use `docs/PROMPT_CANONICAL_SOURCES.md`.
+
 You are acting as a Senior Product Designer + Design Systems Lead + Frontend Engineer.
 
 PRIMARY INPUT (source of truth):

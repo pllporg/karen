@@ -9,7 +9,7 @@
 - Canonical references:
   - docs/UI_CANONICAL_PRECEDENCE.md
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
-  - brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx
+  - lic-design-system/references/ui-kit.md
 
 ## Problem Statement
 

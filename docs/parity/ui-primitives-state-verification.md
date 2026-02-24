@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Normalize core UI primitives to canonical Brand Identity states:
+- Normalize core UI primitives to canonical LIC states:
   - `Button`, `Input`, `Select`, `Badge`, `Table`, `Card`, `Drawer`, `Modal`, `Toast`
 - Apply primitives to representative workflow screens (`Contacts`, `Communications`) and review-gate dialog surfaces.
 - Add regression coverage for primitive state behavior and representative page flows.
