@@ -1,0 +1,181 @@
+name: Main Linear Policy Fallback
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  enforce-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate merged PR linkage to Linear policy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const branchRegex = /^lin\/[A-Z]+-[0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*$/;
+            const titleRegex = /^\[[A-Z]+-[0-9]+\] .+/;
+            const keyRegex = /[A-Z]+-[0-9]+/;
+
+            const commits = (context.payload.commits || []).map((c) => c.id);
+            const after = context.payload.after;
+            if (after && !commits.includes(after)) commits.push(after);
+            const uniqueShas = [...new Set(commits)].filter(Boolean);
+
+            const mergedPrs = new Map();
+
+            for (const sha of uniqueShas) {
+              try {
+                const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner,
+                  repo,
+                  commit_sha: sha,
+                });
+
+                for (const pr of data) {
+                  if (pr.base?.ref === "main" && pr.merged_at) {
+                    mergedPrs.set(pr.number, pr);
+                  }
+                }
+              } catch (error) {
+                core.warning(`Could not resolve PRs for commit ${sha}: ${error.message}`);
+              }
+            }
+
+            const violations = [];
+
+            if (mergedPrs.size === 0) {
+              violations.push({
+                type: "DIRECT_PUSH",
+                message: "Push to main was not associated with a merged PR."
+              });
+            } else {
+              for (const pr of mergedPrs.values()) {
+                const branchName = pr.head?.ref || "";
+                const title = pr.title || "";
+                const body = pr.body || "";
+
+                const branchKey = (branchName.match(keyRegex) || [""])[0];
+                const titleKey = (title.match(keyRegex) || [""])[0];
+
+                const errors = [];
+
+                if (!branchRegex.test(branchName)) {
+                  errors.push(`branch '${branchName}' does not match lin/<LINEAR_KEY>-<slug>`);
+                }
+
+                if (!titleRegex.test(title)) {
+                  errors.push(`title '${title}' does not match [<LINEAR_KEY>] <title>`);
+                }
+
+                if (!branchKey || !titleKey || branchKey !== titleKey) {
+                  errors.push(`Linear key mismatch: branch='${branchKey || "none"}' title='${titleKey || "none"}'`);
+                }
+
+                if (!body.includes("Linear Issue")) {
+                  errors.push("PR body missing 'Linear Issue' section");
+                }
+
+                if (titleKey && !body.includes(titleKey)) {
+                  errors.push(`PR body missing key '${titleKey}'`);
+                }
+
+                if (!body.includes("Requirement ID")) {
+                  errors.push("PR body missing 'Requirement ID'");
+                }
+
+                if (errors.length > 0) {
+                  violations.push({
+                    type: "PR_POLICY",
+                    prNumber: pr.number,
+                    prUrl: pr.html_url,
+                    branchName,
+                    title,
+                    errors,
+                  });
+                }
+              }
+            }
+
+            if (violations.length === 0) {
+              core.info("Fallback check passed: all merged PRs on this push satisfy Linear policy.");
+              return;
+            }
+
+            const serverUrl = process.env.GITHUB_SERVER_URL || "https://github.com";
+            const runUrl = `${serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const marker = `linear-fallback-after:${after || "unknown"}`;
+
+            const lines = [];
+            lines.push("Automated fallback detected Linear policy violations after merge to `main`.");
+            lines.push("");
+            lines.push(`Marker: ${marker}`);
+            lines.push(`Run: ${runUrl}`);
+            lines.push("");
+            lines.push("Violations:");
+
+            for (const violation of violations) {
+              if (violation.type === "DIRECT_PUSH") {
+                lines.push(`- DIRECT_PUSH: ${violation.message}`);
+              } else {
+                lines.push(`- PR #${violation.prNumber} (${violation.prUrl})`);
+                for (const error of violation.errors) {
+                  lines.push(`  - ${error}`);
+                }
+              }
+            }
+
+            const issueBody = lines.join("\n");
+            const issueTitle = "[Linear Policy Fallback] Main merge policy violations";
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+
+            const existing = openIssues.find((issue) =>
+              !issue.pull_request &&
+              issue.title === issueTitle &&
+              (issue.body || "").includes(marker)
+            );
+
+            if (!existing) {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: issueTitle,
+                body: issueBody,
+              });
+            }
+
+            for (const violation of violations) {
+              if (violation.type !== "PR_POLICY") continue;
+
+              const commentBody = [
+                "Fallback linear-policy check detected missing linkage requirements after merge.",
+                "",
+                ...violation.errors.map((e) => `- ${e}`),
+                "",
+                `Workflow run: ${runUrl}`,
+              ].join("\n");
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: violation.prNumber,
+                body: commentBody,
+              });
+            }
+
+            core.setFailed(`Linear fallback policy failed with ${violations.length} violation(s).`);

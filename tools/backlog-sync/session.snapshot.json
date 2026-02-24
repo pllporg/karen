@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-23T19:47:42.008Z",
+  "generatedAt": "2026-02-24T17:22:16.809Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,139 +14,84 @@
   },
   "matrixSummary": {
     "totalRequirements": 52,
-    "unresolvedRequirements": 16,
+    "unresolvedRequirements": 0,
     "totalCountsByPhase": {
       "phase-1": 47,
       "phase-2": 5
     },
-    "unresolvedCountsByPhase": {
-      "phase-1": 16
-    },
-    "unresolvedCountsByStatus": {
-      "Partial": 1,
-      "Complete": 15
-    },
-    "unresolvedCountsByRisk": {
-      "High": 9,
-      "Medium": 7
-    },
-    "unresolvedCountsByStatusAndRisk": {
-      "Partial:High": 1,
-      "Complete:High": 8,
-      "Complete:Medium": 7
-    }
+    "unresolvedCountsByPhase": {},
+    "unresolvedCountsByStatus": {},
+    "unresolvedCountsByRisk": {},
+    "unresolvedCountsByStatusAndRisk": {}
   },
   "priority": {
-    "algorithm": "phase-1 before phase-2, then Missing -> Partial -> Complete (each ordered by risk High -> Medium -> Low)",
-    "topRequirements": [
-      {
-        "requirementId": "REQ-PMS-CORE-007",
-        "parityStatus": "Partial",
-        "risk": "High",
-        "title": "Harden matter participant relationship mapping and lifecycle editing",
-        "component": "Web",
-        "epicCode": "PARITY-04",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-005",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Execute accessibility and interaction compliance remediation lane",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-007",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Enforce UI regression and rollout gates for LIC compliance",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-008",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Lock canonical LIC precedence and enforce style guardrails",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-009",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-011",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Migrate global shell and foundation tokens to canonical LIC profile",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-012",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Normalize primitive components to LIC state and accessibility model",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-013",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Standardize review-gate, audit visibility, and procedural microcopy",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-015",
-        "parityStatus": "Complete",
-        "risk": "High",
-        "title": "Execute full UI compliance review against LIC canonical standards",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-001",
-        "parityStatus": "Complete",
-        "risk": "Medium",
-        "title": "Plan UI/UX refactor lane with LIC canonical precedence",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      }
-    ]
+    "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
+    "topRequirements": []
   },
   "linearSummary": {
     "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 64,
+    "scopedIssueCount": 70,
     "stateCounts": {
-      "In Review": 1,
-      "Done": 63
+      "Done": 70
     },
     "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-76",
+        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
+        "state": "Done",
+        "updatedAt": "2026-02-24T17:22:07.890Z",
+        "requirementId": "REQ-UI-014"
+      },
+      {
+        "key": "KAR-84",
+        "title": "Fix backlog mirror discovery to prevent duplicate GitHub issues",
+        "state": "Done",
+        "updatedAt": "2026-02-23T21:13:26.629Z",
+        "requirementId": "REQ-OPS-003"
+      },
+      {
+        "key": "KAR-83",
+        "title": "Finalize REQ-UI-008 canonical precedence verification",
+        "state": "Done",
+        "updatedAt": "2026-02-23T21:05:08.702Z",
+        "requirementId": "REQ-UI-008"
+      },
+      {
+        "key": "KAR-82",
+        "title": "Finalize REQ-UI-007 UI regression gate verification",
+        "state": "Done",
+        "updatedAt": "2026-02-23T20:58:08.634Z",
+        "requirementId": "REQ-UI-007"
+      },
+      {
+        "key": "KAR-81",
+        "title": "Finalize REQ-UI-005 accessibility verification closeout",
+        "state": "Done",
+        "updatedAt": "2026-02-23T20:51:31.533Z",
+        "requirementId": "REQ-UI-005"
+      },
+      {
+        "key": "KAR-80",
+        "title": "Close REQ-PMS-CORE-007 parity status drift",
+        "state": "Done",
+        "updatedAt": "2026-02-23T20:31:18.467Z",
+        "requirementId": "REQ-PMS-CORE-007"
+      },
+      {
+        "key": "KAR-79",
+        "title": "Matter dashboard billing operations hardening",
+        "state": "Done",
+        "updatedAt": "2026-02-23T20:24:16.972Z",
+        "requirementId": "REQ-PMS-CORE-005"
+      },
+      {
         "key": "KAR-78",
         "title": "Harden matter participant relationship mapping and lifecycle editing",
-        "state": "In Review",
-        "updatedAt": "2026-02-23T19:47:08.440Z",
+        "state": "Done",
+        "updatedAt": "2026-02-23T19:59:38.680Z",
         "requirementId": "REQ-PMS-CORE-007"
       },
       {
@@ -162,85 +107,29 @@
         "state": "Done",
         "updatedAt": "2026-02-23T18:27:46.400Z",
         "requirementId": "PARITY-10"
-      },
-      {
-        "key": "KAR-36",
-        "title": "PARITY-09 Integrations + Webhooks",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:46.052Z",
-        "requirementId": "PARITY-09"
-      },
-      {
-        "key": "KAR-32",
-        "title": "PARITY-08 AI Workspace + Governance",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:45.687Z",
-        "requirementId": "PARITY-08"
-      },
-      {
-        "key": "KAR-29",
-        "title": "PARITY-07 Client Portal",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:45.431Z",
-        "requirementId": "PARITY-07"
-      },
-      {
-        "key": "KAR-26",
-        "title": "PARITY-06 Billing + Trust + Payments",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:45.152Z",
-        "requirementId": "PARITY-06"
-      },
-      {
-        "key": "KAR-22",
-        "title": "PARITY-05 Communications + Documents",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:44.962Z",
-        "requirementId": "PARITY-05"
-      },
-      {
-        "key": "KAR-13",
-        "title": "PARITY-03 Import/Export Portability",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:44.534Z",
-        "requirementId": "PARITY-03"
-      },
-      {
-        "key": "KAR-9",
-        "title": "PARITY-02 Data Model Completeness",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:43.925Z",
-        "requirementId": "PARITY-02"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
-    "issueCount": 14,
+    "issueCount": 17,
     "openIssueCount": 0,
     "stateCounts": {
-      "Done": 14
+      "Done": 17
     },
     "openIssueKeys": [],
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-23T19:47:37.845Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-24T17:22:13.562Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "fb99490df540534bd1b81035dd1ffd1f523190b2",
+    "gitHead": "b4e769fc1015c5c50fc19fe45dfbf84d0ab66049",
     "gitStatusShort": [
-      "## lin/KAR-78-practice-management-core-hardening...origin/main",
-      " M apps/api/src/matters/matters.controller.ts",
-      " M apps/api/src/matters/matters.service.ts",
-      " M apps/api/test/matters.spec.ts",
-      " M apps/web/app/matters/[id]/page.tsx",
-      " M apps/web/test/matter-dashboard-page.spec.tsx",
-      " M tools/backlog-sync/requirements.matrix.json",
-      "?? apps/api/src/matters/dto/update-participant.dto.ts",
-      "?? docs/parity/matter-participant-lifecycle-hardening.md"
+      "## lin/KAR-84-main-linear-policy-fallback",
+      "?? .github/workflows/main-linear-policy-fallback.yml"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 1
   }
 }
