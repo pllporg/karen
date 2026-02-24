@@ -13,7 +13,7 @@ import {
 
 const token = requiredEnv('LINEAR_API_TOKEN');
 const teamKey = env('LINEAR_TEAM_KEY', 'KAR');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const labelList = String(
   env(
     'LINEAR_PARITY_LABELS',
@@ -74,7 +74,7 @@ async function ensureProject(teamId) {
         name: projectName,
         teamIds: [teamId],
         description:
-          'Canonical prompt-parity backlog for Karen Legal Suite. Linear is source of truth; GitHub issues are a mirror.',
+          'Canonical prompt-parity backlog for LIC Legal Suite. Linear is source of truth; GitHub issues are a mirror.',
       },
     },
   );

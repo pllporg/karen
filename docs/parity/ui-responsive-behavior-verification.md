@@ -4,7 +4,7 @@
 
 - Issue: `KAR-59`
 - Requirement: `REQ-UI-006`
-- Canonical source: `brand/Brand Identity Document/src/app/components/sections/InteractionDesign.tsx` (Responsive Interaction table)
+- Canonical source: `lic-design-system/references/interaction-and-ai.md` (Responsive Interaction table)
 
 ## Implementation Summary
 
@@ -32,5 +32,5 @@ pnpm build
 
 ## Notes
 
-- Unsupported viewport copy intentionally matches Brand Identity guidance:
+- Unsupported viewport copy intentionally matches LIC interaction guidance:
   - `LIC is designed for desktop use. For the best experience, use a device with a screen width of 768px or greater.`

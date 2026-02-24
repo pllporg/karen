@@ -18,7 +18,7 @@ import {
 const dryRun = asBool(env('DRY_RUN', 'false'), false) || process.argv.includes('--dry-run');
 const token = requiredEnv('LINEAR_API_TOKEN');
 const teamKey = env('LINEAR_TEAM_KEY', 'KAR');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const matrixPath = env(
   'REQUIREMENTS_MATRIX_PATH',
   path.join(process.cwd(), 'tools', 'backlog-sync', 'requirements.matrix.json'),
@@ -75,9 +75,9 @@ function buildTaskDescription(epic, task) {
       ? [
           '',
           '## Design + Interaction Compliance',
-          '- Canonical source: `brand/Brand Identity Document/`',
+          '- Canonical source: `lic-design-system/references/`',
           '- Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`',
-          '- Conflict rule: if legacy UI differs from Brand Identity standards, Brand Identity wins.',
+          '- Conflict rule: if legacy UI differs from LIC canonical references, LIC references win.',
         ].join('\n')
       : '';
   return [

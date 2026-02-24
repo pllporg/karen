@@ -1,7 +1,62 @@
 #!/usr/bin/env node
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 const GITHUB_API_URL = 'https://api.github.com';
+
+const BACKLOG_ENV_FILES = [path.join(__dirname, 'config.env'), path.join(REPO_ROOT, '.env')];
+
+function parseEnvLine(line) {
+  const trimmed = String(line || '').trim();
+  if (!trimmed || trimmed.startsWith('#')) return null;
+
+  const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+  if (!match) return null;
+
+  const key = match[1];
+  let value = match[2] ?? '';
+
+  if (value.startsWith('"') && value.endsWith('"')) {
+    value = value.slice(1, -1).replace(/\\n/g, '\n');
+  } else if (value.startsWith("'") && value.endsWith("'")) {
+    value = value.slice(1, -1);
+  } else {
+    const hashIndex = value.indexOf(' #');
+    if (hashIndex >= 0) {
+      value = value.slice(0, hashIndex);
+    }
+    value = value.trim();
+  }
+
+  return { key, value };
+}
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const contents = fs.readFileSync(filePath, 'utf8');
+  for (const line of contents.split(/\r?\n/)) {
+    const entry = parseEnvLine(line);
+    if (!entry) continue;
+    if (process.env[entry.key] === undefined) {
+      process.env[entry.key] = entry.value;
+    }
+  }
+}
+
+function preloadBacklogEnv() {
+  for (const filePath of BACKLOG_ENV_FILES) {
+    loadEnvFile(filePath);
+  }
+}
+
+preloadBacklogEnv();
 
 export function env(name, fallback = undefined) {
   const value = process.env[name];

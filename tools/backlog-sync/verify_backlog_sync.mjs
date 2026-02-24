@@ -17,7 +17,7 @@ const linearToken = requiredEnv('LINEAR_API_TOKEN');
 const githubToken = requiredEnv('GITHUB_TOKEN');
 const owner = requiredEnv('GITHUB_OWNER');
 const repo = requiredEnv('GITHUB_REPO');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const scopeLabel = normalizeLabelName(env('LINEAR_SCOPE_LABEL', 'parity'));
 const allowMismatch = normalizeLabelName(env('ALLOW_MISMATCH', 'false')) === 'true';
 const verifyStatePath = path.join(process.cwd(), 'tools', 'backlog-sync', 'state', 'verify.last.json');

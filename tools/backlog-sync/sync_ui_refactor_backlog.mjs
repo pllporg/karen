@@ -3,13 +3,13 @@
 import { asBool, env, getLinearProjectByName, getLinearProjectIssues, linearGraphQL, requiredEnv } from './common.mjs';
 
 const token = requiredEnv('LINEAR_API_TOKEN');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const dryRun = asBool(env('DRY_RUN', 'false'), false) || process.argv.includes('--dry-run');
 
 const issueSpecs = [
   {
     identifier: 'KAR-54',
-    title: 'Plan UI/UX refactor lane with Brand Identity canonical precedence',
+    title: 'Plan UI/UX refactor lane with LIC canonical precedence',
     requirementId: 'REQ-UI-001',
     promptSection: 'UI/UX Refactor Lane / Canonical source + precedence',
     parityStatus: 'Complete',
@@ -18,10 +18,10 @@ const issueSpecs = [
     problemStatement:
       'UI guidance drift existed across legacy docs, AGENTS instructions, and implementation tokens. The lane plan now needs one canonical source so refactor work is deterministic.',
     requirementExcerpt:
-      'When UI setup conflicts with the Brand Identity Document, the Brand Identity Document must be treated as canonical.',
+      'When UI setup conflicts with the LIC design-system references, the LIC design-system references must be treated as canonical.',
     acceptanceCriteria: [
-      'UI plan names `brand/Brand Identity Document/` as canonical source.',
-      'Plan explicitly states conflict-resolution rule: Brand Identity overrides legacy UI docs/setup.',
+      'UI plan names `lic-design-system/references/` as canonical source.',
+      'Plan explicitly states conflict-resolution rule: LIC canonical references override legacy UI docs/setup.',
       'Plan maps downstream execution tickets to enforce token/layout/interaction compliance.',
     ],
     apiImpact: 'No runtime API changes; planning and governance alignment only.',
@@ -34,16 +34,16 @@ const issueSpecs = [
   },
   {
     identifier: 'KAR-55',
-    title: 'Define canonical UI token contract from Brand Identity Document',
+    title: 'Define canonical UI token contract from LIC design-system references',
     requirementId: 'REQ-UI-002',
     promptSection: 'UI/UX Refactor Lane / Foundation realignment',
     parityStatus: 'Complete',
     risk: 'Medium',
     component: 'Web',
     problemStatement:
-      'Token, typography, spacing, geometry, and motion contracts must be derived from Brand Identity source files to prevent ad hoc UI drift.',
+      'Token, typography, spacing, geometry, and motion contracts must be derived from LIC canonical references to prevent ad hoc UI drift.',
     requirementExcerpt:
-      'Color, typography, spacing, rules, and motion constants must follow Brand Identity definitions and precedence rules.',
+      'Color, typography, spacing, rules, and motion constants must follow LIC reference definitions and precedence rules.',
     acceptanceCriteria: [
       'Token contract captures canonical palette and functional color constraints.',
       'Typography role mapping and spacing/grid constraints are documented.',
@@ -52,26 +52,26 @@ const issueSpecs = [
     apiImpact: 'No API changes; shared UI contract and implementation guidance only.',
     securityImpact: 'No direct security impact; improves procedural consistency.',
     definitionOfDone: [
-      'Token contract doc references canonical Brand Identity sections.',
+      'Token contract doc references canonical LIC sections.',
       'Compliance checklist linkage is documented for UI tickets.',
     ],
     verificationEvidence: ['docs/UI_TOKEN_CONTRACT.md', 'docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md'],
   },
   {
     identifier: 'KAR-56',
-    title: 'Refactor global app shell and navigation to Brand Identity standards',
+    title: 'Refactor global app shell and navigation to LIC standards',
     requirementId: 'REQ-UI-003',
     promptSection: 'UI/UX Refactor Lane / Shell + navigation',
-    parityStatus: 'Missing',
+    parityStatus: 'Complete',
     risk: 'Medium',
     component: 'Web',
     problemStatement:
-      'Current shell/navigation patterns are mixed-style and not fully aligned with Brand Identity layout density, hierarchy, and state visibility doctrine.',
+      'Current shell/navigation patterns are mixed-style and not fully aligned with LIC layout density, hierarchy, and state visibility doctrine.',
     requirementExcerpt:
       'App shell and navigation must follow canonical layout/grid/rule hierarchy and interaction visibility standards.',
     acceptanceCriteria: [
       'Global shell uses canonical layout spacing/grid constraints and rule hierarchy.',
-      'Shell/navigation aligns with `AppUIKit` Application Layout Shell patterns.',
+      'Shell/navigation aligns with LIC UI kit application shell patterns.',
       'Navigation labels/metadata typography and interaction states follow token contract.',
       'No prohibited decoration patterns (shadows, gradients, rounded corners) remain in shell/nav surfaces.',
     ],
@@ -88,15 +88,15 @@ const issueSpecs = [
     title: 'Uplift shared UI primitives and interaction state model to canonical standards',
     requirementId: 'REQ-UI-004',
     promptSection: 'UI/UX Refactor Lane / Primitive system uplift',
-    parityStatus: 'Missing',
+    parityStatus: 'Complete',
     risk: 'Medium',
     component: 'Web',
     problemStatement:
       'Shared primitives are inconsistent in state handling and styling, creating non-uniform behavior across workflows.',
     requirementExcerpt:
-      'Button/Input/Select/Badge/Table/Card/Drawer/Modal/Toast primitives must expose consistent, explicit state behavior under Brand Identity rules and AppUIKit state matrices.',
+      'Button/Input/Select/Badge/Table/Card/Drawer/Modal/Toast primitives must expose consistent, explicit state behavior under LIC rules and canonical state matrices.',
     acceptanceCriteria: [
-      'Primitive components consume canonical tokens and typography roles from `AppUIKit`.',
+      'Primitive components consume canonical tokens and typography roles from LIC references.',
       'Focus, disabled, error, success, and destructive states are explicit and consistent.',
       'Destructive actions require explicit confirmation patterns where applicable.',
     ],
@@ -113,7 +113,7 @@ const issueSpecs = [
     title: 'Execute accessibility and interaction compliance remediation lane',
     requirementId: 'REQ-UI-005',
     promptSection: 'UI/UX Refactor Lane / Accessibility + interaction compliance',
-    parityStatus: 'Missing',
+    parityStatus: 'Complete',
     risk: 'High',
     component: 'Web',
     problemStatement:
@@ -135,10 +135,10 @@ const issueSpecs = [
   },
   {
     identifier: 'KAR-59',
-    title: 'Define and apply responsive behavior matrix under Brand Identity constraints',
+    title: 'Define and apply responsive behavior matrix under LIC constraints',
     requirementId: 'REQ-UI-006',
     promptSection: 'UI/UX Refactor Lane / Responsive + breakpoint doctrine',
-    parityStatus: 'Missing',
+    parityStatus: 'Complete',
     risk: 'Medium',
     component: 'Web',
     problemStatement:
@@ -160,10 +160,10 @@ const issueSpecs = [
   },
   {
     identifier: 'KAR-60',
-    title: 'Enforce UI regression and rollout gates for Brand Identity compliance',
+    title: 'Enforce UI regression and rollout gates for LIC compliance',
     requirementId: 'REQ-UI-007',
     promptSection: 'UI/UX Refactor Lane / Regression + rollout gates',
-    parityStatus: 'Missing',
+    parityStatus: 'Complete',
     risk: 'High',
     component: 'Web',
     problemStatement:
@@ -212,11 +212,11 @@ function buildDescription(spec) {
     spec.apiImpact,
     '',
     '## Design + Interaction Compliance',
-    '- Canonical source: `brand/Brand Identity Document/`',
-    '- Canonical component matrix: `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`',
-    '- Product app exclusion: `MarketingSite` section is out-of-scope.',
+    '- Canonical source: `lic-design-system/references/`',
+    '- Canonical component matrix: `lic-design-system/references/ui-kit.md`',
+    '- Product app exclusion: `lic-design-system/references/marketing-site.md` is out-of-scope.',
     '- Checklist: `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`',
-    '- Conflict rule: Brand Identity standards override conflicting legacy UI setup/docs.',
+    '- Conflict rule: LIC canonical references override conflicting legacy UI setup/docs.',
     '',
     '## Security/privacy implications',
     spec.securityImpact,

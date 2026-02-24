@@ -13,7 +13,7 @@ import {
 } from './common.mjs';
 
 const linearToken = requiredEnv('LINEAR_API_TOKEN');
-const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - Karen Legal Suite');
+const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite');
 const scopeLabel = normalizeLabelName(env('LINEAR_SCOPE_LABEL', 'parity'));
 
 const snapshotPath = path.join(process.cwd(), 'tools', 'backlog-sync', 'session.snapshot.json');

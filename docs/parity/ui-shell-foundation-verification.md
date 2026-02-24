@@ -6,8 +6,8 @@
 - Requirement: `REQ-UI-011`
 - Canonical references:
   - `docs/UI_TOKEN_CONTRACT.md`
-  - `brand/Brand Identity Document/src/app/components/sections/AppUIKit.tsx`
-  - `brand/Brand Identity Document/src/app/components/sections/InteractionDesign.tsx`
+  - `lic-design-system/references/ui-kit.md`
+  - `lic-design-system/references/interaction-and-ai.md`
 
 ## Implementation Summary
 

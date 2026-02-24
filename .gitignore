@@ -11,3 +11,4 @@ coverage
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal
 tools/backlog-sync/state/
+tools/backlog-sync/config.env
