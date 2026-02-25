@@ -13,6 +13,14 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 describe('MattersPage', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('session_token', 'test-session-token');
+  });
+
+  afterEach(() => {
+    window.localStorage.removeItem('session_token');
+  });
+
   it('creates a matter and refreshes the list', async () => {
     const fetchMock = vi
       .fn()

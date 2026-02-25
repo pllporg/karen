@@ -2,19 +2,21 @@ import { apiFetch, setSessionToken } from '../lib/api';
 
 describe('apiFetch', () => {
   it('throws a detailed error for non-2xx responses', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      text: async () => 'invalid credentials',
+    });
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 401,
-        statusText: 'Unauthorized',
-        text: async () => 'invalid credentials',
-      }),
+      fetchMock,
     );
 
     await expect(apiFetch('/auth/login', { method: 'POST', body: '{}' })).rejects.toThrow(
       '401 Unauthorized: invalid credentials',
     );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('adds session token and default headers on successful requests', async () => {
@@ -37,6 +39,56 @@ describe('apiFetch', () => {
         headers: expect.objectContaining({
           'content-type': 'application/json',
           'x-session-token': 'session-token-123',
+        }),
+      }),
+    );
+  });
+
+  it('bootstraps session and retries request when token is missing', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        text: async () => 'missing session',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({
+          user: { id: 'user-1' },
+          token: 'session-token-recovered',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ ok: true }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    window.localStorage.removeItem('session_token');
+
+    const result = await apiFetch<{ ok: boolean }>('/matters');
+
+    expect(result.ok).toBe(true);
+    expect(window.localStorage.getItem('session_token')).toBe('session-token-recovered');
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:4000/auth/session',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'include',
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      'http://localhost:4000/matters',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-session-token': 'session-token-recovered',
         }),
       }),
     );

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { clearSessionToken } from '../lib/api';
+import { bootstrapSession, getSessionToken, logoutSession } from '../lib/api';
 import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
@@ -50,6 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname() || '';
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authReady, setAuthReady] = useState(() => Boolean(getSessionToken()));
   const [shellMode, setShellMode] = useState<ShellViewportMode>(() => {
     if (typeof window === 'undefined') {
       return 'desktop';
@@ -57,10 +58,42 @@ export function AppShell({ children }: { children: ReactNode }) {
     return resolveShellViewportMode(window.innerWidth);
   });
 
-  const handleSignOut = () => {
-    clearSessionToken();
+  const handleSignOut = async () => {
+    await logoutSession();
     router.push('/login');
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (path.startsWith('/login')) {
+      setAuthReady(true);
+      return undefined;
+    }
+    if (getSessionToken()) {
+      setAuthReady(true);
+      return undefined;
+    }
+
+    setAuthReady(false);
+    bootstrapSession()
+      .then((ok) => {
+        if (cancelled) return;
+        if (!ok) {
+          const nextPath = path && path !== '/' ? path : '/dashboard';
+          router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+          return;
+        }
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const nextPath = path && path !== '/' ? path : '/dashboard';
+        router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [path, router]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -97,6 +130,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button type="button" className="shell-signout unsupported-signout" onClick={handleSignOut}>
               Sign Out
             </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!authReady) {
+    return (
+      <div className="page-shell shell-root" data-shell-mode={shellMode}>
+        <a className="skip-link" href="#lic-main-content">
+          Skip to main content
+        </a>
+        <main id="lic-main-content" tabIndex={-1} className="main-panel">
+          <div className="main-panel-content">
+            <div className="card">
+              <p className="meta-note">SESSION CHECK</p>
+              <h1 style={{ marginTop: 0 }}>Verifying Session</h1>
+              <p style={{ color: 'var(--lic-text-muted)' }}>
+                Confirming authenticated access before loading tenant data.
+              </p>
+            </div>
           </div>
         </main>
       </div>
