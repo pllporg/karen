@@ -224,6 +224,9 @@ Included suites cover:
   - `docs/DEPLOYMENT_RUNBOOK.md`
 - Parity evidence artifact:
   - `docs/parity/ops-runbook-slos.md`
+- Recovery drill + provider evidence commands:
+  - `pnpm ops:drill:backup-restore -- --out-dir artifacts/ops`
+  - `pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json`
 
 ## UI/UX Refactor Lane
 
