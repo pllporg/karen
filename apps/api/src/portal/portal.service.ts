@@ -405,6 +405,35 @@ export class PortalService {
     });
   }
 
+  async listPortalIntakeFormDefinitions(user: AuthenticatedUser) {
+    this.assertClientRole(user);
+    return this.prisma.intakeFormDefinition.findMany({
+      where: {
+        organizationId: user.organizationId,
+        isClientPortalEnabled: true,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async listPortalEngagementLetterTemplates(user: AuthenticatedUser) {
+    this.assertClientRole(user);
+    return this.prisma.engagementLetterTemplate.findMany({
+      where: {
+        organizationId: user.organizationId,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async createEsignEnvelope(input: {
     user: AuthenticatedUser;
     engagementLetterTemplateId: string;

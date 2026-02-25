@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
@@ -8,9 +8,14 @@ import { apiFetch, getSessionToken } from '../../lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 type PortalConfirmAction = 'send-message' | 'create-esign' | null;
+type PortalMatterOption = { id: string; matterNumber?: string | null; name?: string | null };
+type PortalLookupOption = { id: string; name: string };
 
 export default function PortalPage() {
   const [snapshot, setSnapshot] = useState<any>(null);
+  const [matterOptions, setMatterOptions] = useState<PortalMatterOption[]>([]);
+  const [intakeFormOptions, setIntakeFormOptions] = useState<PortalLookupOption[]>([]);
+  const [engagementTemplateOptions, setEngagementTemplateOptions] = useState<PortalLookupOption[]>([]);
   const [matterId, setMatterId] = useState('');
   const [message, setMessage] = useState('Can you share the latest mediation timeline?');
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -22,9 +27,25 @@ export default function PortalPage() {
   const [confirmAction, setConfirmAction] = useState<PortalConfirmAction>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
-  useEffect(() => {
-    apiFetch('/portal/snapshot').then(setSnapshot).catch(() => undefined);
+  const loadPortalData = useCallback(async () => {
+    const [nextSnapshot, nextIntakeForms, nextTemplates] = await Promise.all([
+      apiFetch<any>('/portal/snapshot'),
+      apiFetch<PortalLookupOption[]>('/portal/intake-form-definitions').catch(() => []),
+      apiFetch<PortalLookupOption[]>('/portal/engagement-letter-templates').catch(() => []),
+    ]);
+    const matters = Array.isArray(nextSnapshot?.matters) ? nextSnapshot.matters : [];
+    setSnapshot(nextSnapshot);
+    setMatterOptions(matters);
+    setIntakeFormOptions(Array.isArray(nextIntakeForms) ? nextIntakeForms : []);
+    setEngagementTemplateOptions(Array.isArray(nextTemplates) ? nextTemplates : []);
+    setMatterId((current) => current || matters[0]?.id || '');
+    setIntakeFormDefinitionId((current) => current || nextIntakeForms[0]?.id || '');
+    setEngagementLetterTemplateId((current) => current || nextTemplates[0]?.id || '');
   }, []);
+
+  useEffect(() => {
+    loadPortalData().catch(() => undefined);
+  }, [loadPortalData]);
 
   async function sendPortalMessage(e: FormEvent) {
     e.preventDefault();
@@ -71,7 +92,7 @@ export default function PortalPage() {
 
     setAttachmentFile(null);
     setAttachmentTitle('');
-    setSnapshot(await apiFetch('/portal/snapshot'));
+    await loadPortalData();
   }
 
   async function downloadPortalAttachment(versionId: string) {
@@ -91,7 +112,7 @@ export default function PortalPage() {
         data: { homeownerGoal: 'Resolve defect damages and warranty claims' },
       }),
     });
-    setSnapshot(await apiFetch('/portal/snapshot'));
+    await loadPortalData();
   }
 
   async function createEsignEnvelope() {
@@ -109,7 +130,7 @@ export default function PortalPage() {
         provider: eSignProvider,
       }),
     });
-    setSnapshot(await apiFetch('/portal/snapshot'));
+    await loadPortalData();
   }
 
   async function confirmClientAction() {
@@ -134,7 +155,7 @@ export default function PortalPage() {
     await apiFetch(`/portal/esign/${envelopeId}/refresh`, {
       method: 'POST',
     });
-    setSnapshot(await apiFetch('/portal/snapshot'));
+    await loadPortalData();
   }
 
   return (
@@ -167,7 +188,19 @@ export default function PortalPage() {
             onSubmit={sendPortalMessage}
             style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 2fr 1fr 1fr auto' }}
           >
-            <input className="input" value={matterId} onChange={(e) => setMatterId(e.target.value)} placeholder="Matter ID" />
+            <select
+              className="select"
+              aria-label="Portal Matter"
+              value={matterId}
+              onChange={(e) => setMatterId(e.target.value)}
+            >
+              <option value="">Select matter</option>
+              {matterOptions.map((matter) => (
+                <option key={matter.id} value={matter.id}>
+                  {matter.matterNumber ? `${matter.matterNumber} - ${matter.name || matter.id}` : matter.name || matter.id}
+                </option>
+              ))}
+            </select>
             <input className="input" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message" />
             <input
               className="input"
@@ -235,11 +268,35 @@ export default function PortalPage() {
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Intake + E-Sign</h3>
           <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr auto' }}>
-            <input className="input" value={intakeFormDefinitionId} onChange={(e) => setIntakeFormDefinitionId(e.target.value)} placeholder="Intake Form Definition ID" />
+            <select
+              className="select"
+              aria-label="Portal Intake Form"
+              value={intakeFormDefinitionId}
+              onChange={(e) => setIntakeFormDefinitionId(e.target.value)}
+            >
+              <option value="">Select intake form</option>
+              {intakeFormOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
             <button className="button ghost" type="button" onClick={submitIntake}>
               Submit Intake
             </button>
-            <input className="input" value={engagementLetterTemplateId} onChange={(e) => setEngagementLetterTemplateId(e.target.value)} placeholder="Engagement Letter Template ID" />
+            <select
+              className="select"
+              aria-label="Portal Engagement Template"
+              value={engagementLetterTemplateId}
+              onChange={(e) => setEngagementLetterTemplateId(e.target.value)}
+            >
+              <option value="">Select engagement template</option>
+              {engagementTemplateOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
             <select
               className="select"
               aria-label="E-Sign Provider"

@@ -42,6 +42,16 @@ describe('BillingPage trust reconciliation workflow', () => {
       const url = String(input);
       const method = init?.method || 'GET';
 
+      if (url.endsWith('/lookups/matters?limit=200')) {
+        return jsonResponse([{ id: 'matter-1', matterNumber: 'M-1', name: 'Doe v Builder', label: 'M-1 - Doe v Builder' }]);
+      }
+      if (url.endsWith('/lookups/trust-accounts?limit=200')) {
+        return jsonResponse([{ id: 'trust-1', name: 'Client Trust', label: 'Client Trust' }]);
+      }
+      if (url.endsWith('/lookups/invoices?limit=200')) {
+        return jsonResponse([]);
+      }
+
       if (url.endsWith('/billing/invoices')) return jsonResponse([]);
       if (url.endsWith('/billing/trust/report')) return jsonResponse([]);
       if (url.endsWith('/billing/ledes/profiles')) return jsonResponse([]);
@@ -110,6 +120,16 @@ describe('BillingPage LEDES export workflow', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method || 'GET';
+
+      if (url.endsWith('/lookups/matters?limit=200')) {
+        return jsonResponse([{ id: 'matter-1', matterNumber: 'M-1', name: 'Doe v Builder', label: 'M-1 - Doe v Builder' }]);
+      }
+      if (url.endsWith('/lookups/trust-accounts?limit=200')) {
+        return jsonResponse([{ id: 'trust-1', name: 'Client Trust', label: 'Client Trust' }]);
+      }
+      if (url.endsWith('/lookups/invoices?limit=200')) {
+        return jsonResponse([]);
+      }
 
       if (url.endsWith('/billing/invoices')) return jsonResponse([]);
       if (url.endsWith('/billing/trust/report')) return jsonResponse([]);

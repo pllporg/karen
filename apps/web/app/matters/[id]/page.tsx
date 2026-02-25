@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/app-shell';
 import { PageHeader } from '../../../components/page-header';
@@ -50,6 +50,11 @@ type CommunicationThread = {
   }>;
 };
 
+type TrustAccountOption = {
+  id: string;
+  label: string;
+};
+
 const TASK_STATUS_OPTIONS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELED'] as const;
 const TASK_PRIORITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const COMMUNICATION_TYPE_OPTIONS = ['EMAIL', 'SMS', 'CALL_LOG', 'PORTAL_MESSAGE', 'INTERNAL_NOTE'] as const;
@@ -78,6 +83,35 @@ function isCounselRole(roleKey?: string, roleLabel?: string | null) {
 
 function withTimestamp(message: string) {
   return `${message} ${new Date().toLocaleString()}`;
+}
+
+function collectTrustAccountOptions(dashboard: any): TrustAccountOption[] {
+  if (!dashboard) {
+    return [];
+  }
+  const options: TrustAccountOption[] = [];
+  const seen = new Set<string>();
+
+  const push = (id?: string | null, name?: string | null) => {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId || seen.has(normalizedId)) {
+      return;
+    }
+    seen.add(normalizedId);
+    options.push({
+      id: normalizedId,
+      label: name && String(name).trim() ? String(name) : normalizedId,
+    });
+  };
+
+  for (const row of dashboard.trustLedgers || []) {
+    push(row.trustAccount?.id || row.trustAccountId, row.trustAccount?.name);
+  }
+  for (const row of dashboard.trustTransactions || []) {
+    push(row.trustAccount?.id || row.trustAccountId, row.trustAccount?.name);
+  }
+
+  return options;
 }
 
 export default function MatterDashboardPage() {
@@ -161,8 +195,9 @@ export default function MatterDashboardPage() {
   const [trustTransactionAmount, setTrustTransactionAmount] = useState('');
   const [trustTransactionDescription, setTrustTransactionDescription] = useState('');
   const [billingStatusMessage, setBillingStatusMessage] = useState<string | null>(null);
+  const trustAccountOptions = useMemo(() => collectTrustAccountOptions(dashboard), [dashboard]);
 
-  async function refreshDashboard() {
+  const refreshDashboard = useCallback(async () => {
     if (!matterId) {
       return;
     }
@@ -194,9 +229,10 @@ export default function MatterDashboardPage() {
       if (current) {
         return current;
       }
-      return nextDashboard.trustLedgers?.[0]?.trustAccountId || '';
+      const nextTrustAccounts = collectTrustAccountOptions(nextDashboard);
+      return nextTrustAccounts[0]?.id || '';
     });
-  }
+  }, [matterId]);
 
   useEffect(() => {
     if (!matterId) return;
@@ -228,7 +264,7 @@ export default function MatterDashboardPage() {
         }
       })
       .catch(() => undefined);
-  }, [matterId]);
+  }, [matterId, refreshDashboard]);
 
   const selectedParticipantRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey);
   const participantRoleIsCounsel = isCounselRole(selectedParticipantRole?.key, selectedParticipantRole?.label);
@@ -1970,13 +2006,19 @@ export default function MatterDashboardPage() {
             </div>
 
             <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 140px 1fr auto', marginBottom: 12 }}>
-              <input
+              <select
                 className="input"
-                aria-label="Billing Trust Account Id"
-                placeholder="Trust account ID"
+                aria-label="Billing Trust Account"
                 value={trustAccountId}
                 onChange={(event) => setTrustAccountId(event.target.value)}
-              />
+              >
+                <option value="">Select Trust Account</option>
+                {trustAccountOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <select
                 className="input"
                 aria-label="Billing Trust Transaction Type"

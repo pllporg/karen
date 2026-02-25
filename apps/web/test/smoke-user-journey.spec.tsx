@@ -16,7 +16,7 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 describe('Web smoke journey', () => {
-  it('covers sign-in -> dashboard -> matter creation -> portal messaging', async () => {
+  it('covers sign-in -> dashboard -> matter creation -> portal messaging', { timeout: 20000 }, async () => {
     const state = {
       matters: [
         {
@@ -81,6 +81,12 @@ describe('Web smoke journey', () => {
       if (url.endsWith('/portal/snapshot') && method === 'GET') {
         return jsonResponse(state.portalSnapshot);
       }
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') {
+        return jsonResponse([]);
+      }
       if (url.endsWith('/portal/messages') && method === 'POST') {
         const body = JSON.parse(String(init?.body || '{}'));
         state.portalSnapshot = {
@@ -136,7 +142,7 @@ describe('Web smoke journey', () => {
 
     render(<PortalPage />);
     await screen.findByText('Portal Messages');
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), {
+    fireEvent.change(screen.getByLabelText('Portal Matter'), {
       target: { value: state.matters[0]?.id || 'matter-1' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));

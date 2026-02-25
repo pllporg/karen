@@ -23,53 +23,60 @@ describe('AiPage', () => {
   });
 
   it('requires explicit deadline confirmation and submits selected rows', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse([
+    const jobs = [
+      {
+        id: 'job-1',
+        toolName: 'deadline_extraction',
+        matterId: 'matter-1',
+        status: 'COMPLETED',
+        artifacts: [
           {
-            id: 'job-1',
-            toolName: 'deadline_extraction',
-            matterId: 'matter-1',
-            status: 'COMPLETED',
-            artifacts: [
-              {
-                id: 'artifact-1',
-                type: 'deadline_extraction',
-                content: 'Draft deadline table',
-                reviewedStatus: 'DRAFT',
-                metadataJson: {
-                  banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
-                  deadlineCandidates: [
-                    {
-                      id: 'deadline-1',
-                      date: '2026-03-01',
-                      description: 'Serve initial disclosures',
-                      chunkId: 'chunk-abc',
-                      excerpt: 'Within 14 days after Rule 26(f) conference.',
-                    },
-                  ],
-                  excerptEvidence: [
-                    {
-                      chunkId: 'chunk-abc',
-                      excerpt: 'Within 14 days after Rule 26(f) conference.',
-                    },
-                  ],
+            id: 'artifact-1',
+            type: 'deadline_extraction',
+            content: 'Draft deadline table',
+            reviewedStatus: 'DRAFT',
+            metadataJson: {
+              banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
+              deadlineCandidates: [
+                {
+                  id: 'deadline-1',
+                  date: '2026-03-01',
+                  description: 'Serve initial disclosures',
+                  chunkId: 'chunk-abc',
+                  excerpt: 'Within 14 days after Rule 26(f) conference.',
                 },
-              },
-            ],
+              ],
+              excerptEvidence: [
+                {
+                  chunkId: 'chunk-abc',
+                  excerpt: 'Within 14 days after Rule 26(f) conference.',
+                },
+              ],
+            },
           },
-        ]),
-      )
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(
-        jsonResponse({
+        ],
+      },
+    ];
+    const matters = [{ id: 'matter-1', matterNumber: 'M-1', name: 'Builder Dispute', label: 'M-1 - Builder Dispute' }];
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse(jobs);
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
+      if (url.includes('/lookups/document-versions?limit=200')) return jsonResponse([]);
+      if (url.endsWith('/ai/artifacts/artifact-1/confirm-deadlines') && method === 'POST') {
+        return jsonResponse({
           created: [
             { type: 'task', id: 'task-1' },
             { type: 'event', id: 'event-1' },
           ],
-        }),
-      );
+        });
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AiPage />);
@@ -127,47 +134,52 @@ describe('AiPage', () => {
   });
 
   it('shows validation error when selected deadline has no task/event outputs enabled', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse([
+    const jobs = [
+      {
+        id: 'job-1',
+        toolName: 'deadline_extraction',
+        matterId: 'matter-1',
+        status: 'COMPLETED',
+        artifacts: [
           {
-            id: 'job-1',
-            toolName: 'deadline_extraction',
-            matterId: 'matter-1',
-            status: 'COMPLETED',
-            artifacts: [
-              {
-                id: 'artifact-1',
-                type: 'deadline_extraction',
-                content: 'Draft deadline table',
-                reviewedStatus: 'DRAFT',
-                metadataJson: {
-                  banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
-                  deadlineCandidates: [
-                    {
-                      id: 'deadline-1',
-                      date: '2026-03-01',
-                      description: 'Serve initial disclosures',
-                      chunkId: 'chunk-abc',
-                      excerpt: 'Within 14 days after Rule 26(f) conference.',
-                    },
-                  ],
+            id: 'artifact-1',
+            type: 'deadline_extraction',
+            content: 'Draft deadline table',
+            reviewedStatus: 'DRAFT',
+            metadataJson: {
+              banner: 'Attorney Review Required - AI output is a draft and not legal advice.',
+              deadlineCandidates: [
+                {
+                  id: 'deadline-1',
+                  date: '2026-03-01',
+                  description: 'Serve initial disclosures',
+                  chunkId: 'chunk-abc',
+                  excerpt: 'Within 14 days after Rule 26(f) conference.',
                 },
-              },
-            ],
+              ],
+            },
           },
-        ]),
-      )
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(
-        jsonResponse(
+        ],
+      },
+    ];
+    const matters = [{ id: 'matter-1', matterNumber: 'M-1', name: 'Builder Dispute', label: 'M-1 - Builder Dispute' }];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse(jobs);
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
+      if (url.includes('/lookups/document-versions?limit=200')) return jsonResponse([]);
+      if (url.endsWith('/ai/artifacts/artifact-1/confirm-deadlines') && method === 'POST') {
+        return jsonResponse(
           {
             message: 'Select at least one output (task/event) at row 1',
           },
           400,
-        ),
-      );
+        );
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
 
     vi.stubGlobal('fetch', fetchMock);
 
@@ -324,6 +336,9 @@ describe('AiPage', () => {
   });
 
   it('includes selected style pack id when creating AI jobs', async () => {
+    const matters = [
+      { id: 'matter-99', matterNumber: 'M-99', name: 'Demand Matter', label: 'M-99 - Demand Matter' },
+    ];
     const stylePacks = [
       {
         id: 'style-pack-1',
@@ -333,13 +348,17 @@ describe('AiPage', () => {
       },
     ];
 
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse(stylePacks))
-      .mockResolvedValueOnce(jsonResponse({ id: 'job-3' }))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse(stylePacks));
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/ai/jobs') && method === 'POST') return jsonResponse({ id: 'job-3' });
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse(stylePacks);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
+      if (url.includes('/lookups/document-versions?limit=200')) return jsonResponse([]);
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AiPage />);
@@ -348,7 +367,7 @@ describe('AiPage', () => {
       expect(screen.getByRole('option', { name: 'Plaintiff Demand Tone' })).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), {
+    fireEvent.change(screen.getByLabelText('AI Matter'), {
       target: { value: 'matter-99' },
     });
     fireEvent.change(screen.getByDisplayValue('No style pack'), {
@@ -368,6 +387,20 @@ describe('AiPage', () => {
   });
 
   it('creates, updates, attaches, and removes style pack source docs', async () => {
+    const matters = [
+      { id: 'matter-1', matterNumber: 'M-1', name: 'Builder Dispute', label: 'M-1 - Builder Dispute' },
+    ];
+    const lookupDocumentVersions = [
+      {
+        id: 'ver-1',
+        label: 'Sample Demand (ver-1)',
+        document: {
+          id: 'doc-1',
+          matterId: 'matter-1',
+          title: 'Sample Demand',
+        },
+      },
+    ];
     const stylePackBase = {
       id: 'style-pack-9',
       name: 'Builder Defense',
@@ -395,22 +428,38 @@ describe('AiPage', () => {
       ],
     };
 
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse({ ...stylePackBase, sourceDocs: [] }))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse([{ ...stylePackBase, sourceDocs: [] }]))
-      .mockResolvedValueOnce(jsonResponse({ ...stylePackBase, sourceDocs: [] }))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse([{ ...stylePackBase, sourceDocs: [] }]))
-      .mockResolvedValueOnce(jsonResponse(stylePackWithDoc))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse([stylePackWithDoc]))
-      .mockResolvedValueOnce(jsonResponse({ ...stylePackBase, sourceDocs: [] }))
-      .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse([{ ...stylePackBase, sourceDocs: [] }]));
+    let stylePacks: any[] = [];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse(stylePacks);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
+      if (url.includes('/lookups/document-versions?limit=200')) return jsonResponse(lookupDocumentVersions);
+
+      if (url.endsWith('/ai/style-packs') && method === 'POST') {
+        stylePacks = [{ ...stylePackBase, sourceDocs: [] }];
+        return jsonResponse(stylePacks[0]);
+      }
+
+      if (url.endsWith('/ai/style-packs/style-pack-9') && method === 'PATCH') {
+        stylePacks = [{ ...stylePacks[0], name: 'Builder Defense Updated' }];
+        return jsonResponse(stylePacks[0]);
+      }
+
+      if (url.endsWith('/ai/style-packs/style-pack-9/source-docs') && method === 'POST') {
+        stylePacks = [{ ...stylePackWithDoc, name: stylePacks[0]?.name || stylePackWithDoc.name }];
+        return jsonResponse(stylePacks[0]);
+      }
+
+      if (url.endsWith('/ai/style-packs/style-pack-9/source-docs/ver-1') && method === 'DELETE') {
+        stylePacks = [{ ...(stylePacks[0] || stylePackBase), sourceDocs: [] }];
+        return jsonResponse(stylePacks[0]);
+      }
+
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AiPage />);
@@ -451,7 +500,7 @@ describe('AiPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Attach source document version ID'), {
+    fireEvent.change(screen.getByLabelText('Style Pack Source Document style-pack-9'), {
       target: { value: 'ver-1' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Attach Source Doc' }));
@@ -467,7 +516,7 @@ describe('AiPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Sample Demand (ver-1)')).toBeInTheDocument();
+      expect(screen.getByText('Sample Demand (ver-1)', { selector: 'span' })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
