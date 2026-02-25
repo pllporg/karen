@@ -7,14 +7,22 @@ import { getSessionToken } from '../../lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
+type MatterLookup = {
+  id: string;
+  matterNumber: string;
+  name: string;
+  label: string;
+};
+
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<any[]>([]);
+  const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
   const [retentionPolicies, setRetentionPolicies] = useState<any[]>([]);
   const [dispositionRuns, setDispositionRuns] = useState<any[]>([]);
-  const [matterId, setMatterId] = useState('');
+  const [selectedMatterId, setSelectedMatterId] = useState('');
   const [title, setTitle] = useState('Inspection Report');
   const [file, setFile] = useState<File | null>(null);
-  const [pdfMatterId, setPdfMatterId] = useState('');
+  const [selectedPdfMatterId, setSelectedPdfMatterId] = useState('');
   const [policyName, setPolicyName] = useState('Default 7-year retention');
   const [policyScope, setPolicyScope] = useState<'ALL_DOCUMENTS' | 'MATTER' | 'CATEGORY'>('ALL_DOCUMENTS');
   const [policyTrigger, setPolicyTrigger] = useState<'DOCUMENT_UPLOADED' | 'MATTER_CLOSED'>('DOCUMENT_UPLOADED');
@@ -30,6 +38,19 @@ export default function DocumentsPage() {
     });
     if (!response.ok) return;
     setDocuments(await response.json());
+  }
+
+  async function loadMatterLookups() {
+    const token = getSessionToken();
+    const response = await fetch(`${API_BASE}/lookups/matters?limit=200`, {
+      headers: token ? { 'x-session-token': token } : {},
+      credentials: 'include',
+    });
+    if (!response.ok) return;
+    const matters = (await response.json()) as MatterLookup[];
+    setMatterOptions(matters);
+    setSelectedMatterId((current) => current || matters[0]?.id || '');
+    setSelectedPdfMatterId((current) => current || matters[0]?.id || '');
   }
 
   async function loadRetentionData() {
@@ -57,15 +78,15 @@ export default function DocumentsPage() {
   }
 
   useEffect(() => {
-    loadDocuments().catch(() => undefined);
+    Promise.all([loadDocuments(), loadMatterLookups()]).catch(() => undefined);
   }, []);
 
   async function upload(e: FormEvent) {
     e.preventDefault();
-    if (!file || !matterId) return;
+    if (!file || !selectedMatterId) return;
 
     const form = new FormData();
-    form.set('matterId', matterId);
+    form.set('matterId', selectedMatterId);
     form.set('title', title);
     form.set('file', file);
 
@@ -82,7 +103,7 @@ export default function DocumentsPage() {
   }
 
   async function generatePdf() {
-    if (!pdfMatterId) return;
+    if (!selectedPdfMatterId) return;
     const token = getSessionToken();
     await fetch(`${API_BASE}/documents/generate-pdf`, {
       method: 'POST',
@@ -91,7 +112,7 @@ export default function DocumentsPage() {
         ...(token ? { 'x-session-token': token } : {}),
       },
       body: JSON.stringify({
-        matterId: pdfMatterId,
+        matterId: selectedPdfMatterId,
         title: 'Generated Client Letter',
         lines: ['Attorney Review Required', 'Draft letter body here.'],
       }),
@@ -239,13 +260,37 @@ export default function DocumentsPage() {
       <PageHeader title="Documents" subtitle="Secure upload/versioning, malware-scan hook, signed links, and share links." />
       <div className="card" style={{ marginBottom: 14 }}>
         <form onSubmit={upload} style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 1fr 1fr auto' }}>
-          <input className="input" placeholder="Matter ID" value={matterId} onChange={(e) => setMatterId(e.target.value)} />
+          <select
+            className="input"
+            aria-label="Upload Matter"
+            value={selectedMatterId}
+            onChange={(event) => setSelectedMatterId(event.target.value)}
+          >
+            <option value="">Select matter</option>
+            {matterOptions.map((matter) => (
+              <option key={matter.id} value={matter.id}>
+                {matter.label}
+              </option>
+            ))}
+          </select>
           <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <input className="input" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
           <button className="button" type="submit">Upload</button>
         </form>
         <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
-          <input className="input" placeholder="Matter ID for generated PDF" value={pdfMatterId} onChange={(e) => setPdfMatterId(e.target.value)} />
+          <select
+            className="input"
+            aria-label="PDF Matter"
+            value={selectedPdfMatterId}
+            onChange={(event) => setSelectedPdfMatterId(event.target.value)}
+          >
+            <option value="">Select matter for generated PDF</option>
+            {matterOptions.map((matter) => (
+              <option key={matter.id} value={matter.id}>
+                {matter.label}
+              </option>
+            ))}
+          </select>
           <button className="button secondary" type="button" onClick={generatePdf}>Generate PDF Draft</button>
         </div>
       </div>

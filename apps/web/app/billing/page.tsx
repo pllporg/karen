@@ -5,35 +5,67 @@ import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { apiFetch } from '../../lib/api';
 
+type MatterLookup = {
+  id: string;
+  matterNumber: string;
+  name: string;
+  label: string;
+};
+
+type TrustAccountLookup = {
+  id: string;
+  name: string;
+  label: string;
+};
+
+type InvoiceLookup = {
+  id: string;
+  invoiceNumber: string;
+  label: string;
+};
+
 export default function BillingPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [trustRows, setTrustRows] = useState<any[]>([]);
   const [reconciliationRuns, setReconciliationRuns] = useState<any[]>([]);
   const [ledesProfiles, setLedesProfiles] = useState<any[]>([]);
   const [ledesJobs, setLedesJobs] = useState<any[]>([]);
-  const [matterId, setMatterId] = useState('');
+  const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
+  const [trustAccountOptions, setTrustAccountOptions] = useState<TrustAccountLookup[]>([]);
+  const [invoiceOptions, setInvoiceOptions] = useState<InvoiceLookup[]>([]);
+  const [selectedMatterId, setSelectedMatterId] = useState('');
   const [reconciliationTrustAccountId, setReconciliationTrustAccountId] = useState('');
   const [statementStartAt, setStatementStartAt] = useState('');
   const [statementEndAt, setStatementEndAt] = useState('');
   const [reconciliationStatus, setReconciliationStatus] = useState<string | null>(null);
   const [ledesProfileName, setLedesProfileName] = useState('Default LEDES 1998B');
   const [selectedLedesProfileId, setSelectedLedesProfileId] = useState('');
-  const [ledesInvoiceIds, setLedesInvoiceIds] = useState('');
+  const [selectedLedesInvoiceId, setSelectedLedesInvoiceId] = useState('');
+  const [selectedLedesInvoiceIds, setSelectedLedesInvoiceIds] = useState<string[]>([]);
   const [ledesStatus, setLedesStatus] = useState<string | null>(null);
 
   async function load() {
-    const [invoiceData, trustData, reconciliationData, profileData, ledesJobData] = await Promise.all([
+    const [invoiceData, trustData, reconciliationData, profileData, ledesJobData, mattersData, trustLookupData, invoiceLookupData] = await Promise.all([
       apiFetch<any[]>('/billing/invoices'),
       apiFetch<any[]>('/billing/trust/report'),
       apiFetch<any[]>('/billing/trust/reconciliation/runs'),
       apiFetch<any[]>('/billing/ledes/profiles'),
       apiFetch<any[]>('/billing/ledes/jobs'),
+      apiFetch<MatterLookup[]>('/lookups/matters?limit=200'),
+      apiFetch<TrustAccountLookup[]>('/lookups/trust-accounts?limit=200'),
+      apiFetch<InvoiceLookup[]>('/lookups/invoices?limit=200'),
     ]);
     setInvoices(invoiceData);
     setTrustRows(trustData);
     setReconciliationRuns(reconciliationData);
     setLedesProfiles(profileData);
     setLedesJobs(ledesJobData);
+    setMatterOptions(mattersData);
+    setTrustAccountOptions(trustLookupData);
+    setInvoiceOptions(invoiceLookupData);
+    setSelectedMatterId((current) => current || mattersData[0]?.id || '');
+    setReconciliationTrustAccountId((current) => current || trustLookupData[0]?.id || '');
+    setSelectedLedesInvoiceId((current) => current || invoiceLookupData[0]?.id || '');
     setSelectedLedesProfileId((current) => {
       if (current) return current;
       const defaultProfile = profileData.find((profile) => profile.isDefault);
@@ -47,12 +79,12 @@ export default function BillingPage() {
 
   async function createInvoice(e: FormEvent) {
     e.preventDefault();
-    if (!matterId) return;
+    if (!selectedMatterId) return;
 
     await apiFetch('/billing/invoices', {
       method: 'POST',
       body: JSON.stringify({
-        matterId,
+        matterId: selectedMatterId,
         lineItems: [{ description: 'Legal Services', quantity: 2, unitPrice: 425 }],
       }),
     });
@@ -125,10 +157,7 @@ export default function BillingPage() {
       return;
     }
 
-    const invoiceIds = ledesInvoiceIds
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
+    const invoiceIds = selectedLedesInvoiceIds.filter(Boolean);
 
     const created = await apiFetch<any>('/billing/ledes/jobs', {
       method: 'POST',
@@ -147,6 +176,22 @@ export default function BillingPage() {
     await load();
   }
 
+  function addSelectedLedesInvoice() {
+    if (!selectedLedesInvoiceId) {
+      return;
+    }
+    setSelectedLedesInvoiceIds((current) => {
+      if (current.includes(selectedLedesInvoiceId)) {
+        return current;
+      }
+      return [...current, selectedLedesInvoiceId];
+    });
+  }
+
+  function removeSelectedLedesInvoice(invoiceId: string) {
+    setSelectedLedesInvoiceIds((current) => current.filter((item) => item !== invoiceId));
+  }
+
   async function downloadLedesJob(jobId: string) {
     const result = await apiFetch<{ downloadUrl: string }>(`/billing/ledes/jobs/${jobId}/download`);
     if (typeof window !== 'undefined') {
@@ -163,7 +208,19 @@ export default function BillingPage() {
       </div>
       <div className="card" style={{ marginBottom: 14 }}>
         <form onSubmit={createInvoice} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
-          <input className="input" placeholder="Matter ID" value={matterId} onChange={(e) => setMatterId(e.target.value)} />
+          <select
+            className="input"
+            aria-label="Invoice Matter"
+            value={selectedMatterId}
+            onChange={(event) => setSelectedMatterId(event.target.value)}
+          >
+            <option value="">Select matter</option>
+            {matterOptions.map((matter) => (
+              <option key={matter.id} value={matter.id}>
+                {matter.label}
+              </option>
+            ))}
+          </select>
           <button className="button" type="submit">Create Invoice</button>
         </form>
       </div>
@@ -215,12 +272,19 @@ export default function BillingPage() {
       <div className="card" style={{ marginTop: 14 }}>
         <h3 style={{ marginTop: 0 }}>Trust Reconciliation Runs</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 180px auto', gap: 10, marginBottom: 12 }}>
-          <input
+          <select
             className="input"
-            placeholder="Trust Account ID (optional)"
+            aria-label="Reconciliation Trust Account"
             value={reconciliationTrustAccountId}
             onChange={(event) => setReconciliationTrustAccountId(event.target.value)}
-          />
+          >
+            <option value="">All trust accounts</option>
+            {trustAccountOptions.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.label}
+              </option>
+            ))}
+          </select>
           <input
             className="input"
             type="date"
@@ -320,16 +384,42 @@ export default function BillingPage() {
               </option>
             ))}
           </select>
-          <input
-            className="input"
-            placeholder="Invoice IDs (comma separated, optional)"
-            value={ledesInvoiceIds}
-            onChange={(event) => setLedesInvoiceIds(event.target.value)}
-          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select
+              className="input"
+              aria-label="LEDES Invoice Select"
+              value={selectedLedesInvoiceId}
+              onChange={(event) => setSelectedLedesInvoiceId(event.target.value)}
+            >
+              <option value="">Select invoice (optional)</option>
+              {invoiceOptions.map((invoice) => (
+                <option key={invoice.id} value={invoice.id}>
+                  {invoice.label}
+                </option>
+              ))}
+            </select>
+            <button className="button secondary" type="button" onClick={addSelectedLedesInvoice}>
+              Add Invoice
+            </button>
+          </div>
           <button className="button secondary" type="button" onClick={createLedesJob}>
             Run LEDES Export
           </button>
         </div>
+        {selectedLedesInvoiceIds.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+            {selectedLedesInvoiceIds.map((invoiceId) => (
+              <button
+                key={invoiceId}
+                className="button secondary"
+                type="button"
+                onClick={() => removeSelectedLedesInvoice(invoiceId)}
+              >
+                Remove {invoiceOptions.find((invoice) => invoice.id === invoiceId)?.invoiceNumber || invoiceId}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {ledesStatus ? <p style={{ color: 'var(--lic-text-muted)' }}>{ledesStatus}</p> : null}
         <table className="table">
           <thead>

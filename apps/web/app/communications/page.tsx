@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { Button } from '../../components/ui/button';
@@ -15,15 +15,15 @@ export default function CommunicationsPage() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  async function load() {
+  const load = useCallback(async () => {
     const data = await apiFetch<any[]>('/communications/threads');
     setThreads(data);
-    if (!threadId && data[0]?.id) setThreadId(data[0].id);
-  }
+    setThreadId((current) => current || data[0]?.id || '');
+  }, []);
 
   useEffect(() => {
     load().catch(() => undefined);
-  }, []);
+  }, [load]);
 
   async function createThread() {
     const created = await apiFetch<any>('/communications/threads', {
@@ -90,7 +90,19 @@ export default function CommunicationsPage() {
         <Card>
           <h3 style={{ marginTop: 0 }}>Log Message</h3>
           <form onSubmit={addMessage} style={{ display: 'grid', gap: 10 }}>
-            <Input value={threadId} onChange={(e) => setThreadId(e.target.value)} placeholder="Thread ID" />
+            <select
+              className="input"
+              aria-label="Communication Thread"
+              value={threadId}
+              onChange={(e) => setThreadId(e.target.value)}
+            >
+              <option value="">Select Thread</option>
+              {threads.map((thread) => (
+                <option key={thread.id} value={thread.id}>
+                  {thread.subject || thread.id}
+                </option>
+              ))}
+            </select>
             <textarea className="textarea" value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
             <Button type="submit">Save Call Log</Button>
           </form>

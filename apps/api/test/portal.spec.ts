@@ -653,4 +653,43 @@ describe('PortalService', () => {
       }),
     );
   });
+
+  it('lists client-portal intake forms and engagement templates for the organization', async () => {
+    const prisma = {
+      intakeFormDefinition: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'intake-1', name: 'Client Intake v1' }]),
+      },
+      engagementLetterTemplate: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'tpl-1', name: 'Engagement Letter v1' }]),
+      },
+    } as any;
+
+    const service = new PortalService(
+      prisma,
+      { upload: jest.fn(), signedDownloadUrl: jest.fn() } as any,
+      { scan: jest.fn() } as any,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const intakeForms = await service.listPortalIntakeFormDefinitions(buildClientUser());
+    const templates = await service.listPortalEngagementLetterTemplates(buildClientUser());
+
+    expect(intakeForms).toEqual([{ id: 'intake-1', name: 'Client Intake v1' }]);
+    expect(templates).toEqual([{ id: 'tpl-1', name: 'Engagement Letter v1' }]);
+    expect(prisma.intakeFormDefinition.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: 'org-1',
+          isClientPortalEnabled: true,
+        }),
+      }),
+    );
+    expect(prisma.engagementLetterTemplate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: 'org-1',
+        }),
+      }),
+    );
+  });
 });

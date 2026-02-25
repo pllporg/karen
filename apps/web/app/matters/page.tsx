@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
@@ -54,21 +54,19 @@ export default function MattersPage() {
   const [selectedDraftId, setSelectedDraftId] = useState('');
   const [wizardStatus, setWizardStatus] = useState<string | null>(null);
 
-  async function loadMatters() {
+  const loadMatters = useCallback(async () => {
     setMatters(await apiFetch<Matter[]>('/matters'));
-  }
+  }, []);
 
-  async function loadDrafts() {
+  const loadDrafts = useCallback(async () => {
     const rows = await apiFetch<IntakeDraftSummary[]>('/matters/intake-wizard/drafts');
     setDrafts(rows);
-    if (!selectedDraftId && rows[0]?.id) {
-      setSelectedDraftId(rows[0].id);
-    }
-  }
+    setSelectedDraftId((current) => current || rows[0]?.id || '');
+  }, []);
 
   useEffect(() => {
     Promise.all([loadMatters(), loadDrafts()]).catch(() => undefined);
-  }, []);
+  }, [loadDrafts, loadMatters]);
 
   async function createMatter(e: FormEvent) {
     e.preventDefault();
