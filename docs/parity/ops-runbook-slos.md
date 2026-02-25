@@ -25,6 +25,10 @@ Scope: deployment runbook, rollback + incident procedures, startup readiness gui
   - availability, latency, queue success rate, webhook reliability
   - RPO/RTO targets
   - key monitoring metrics
+- Evidence automation:
+  - backup/restore + rollback drill command (`pnpm ops:drill:backup-restore`)
+  - provider status evidence capture command (`pnpm ops:evidence:capture`)
+  - CI artifact workflow (`.github/workflows/ops-readiness-evidence.yml`)
 
 ## README Linkage
 
@@ -36,3 +40,6 @@ Scope: deployment runbook, rollback + incident procedures, startup readiness gui
   - required deploy/readiness/rollback/incident/SLO section presence in `docs/DEPLOYMENT_RUNBOOK.md`
   - required baseline SLO target lines
   - README linkage to runbook + parity artifact
+- `apps/api/test/ops-evidence-workflow.spec.ts` verifies:
+  - ops evidence workflow exists and uploads artifact bundle
+  - top-level ops evidence scripts remain available

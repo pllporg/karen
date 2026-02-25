@@ -17,6 +17,9 @@ describe('DocumentsPage', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(
+        jsonResponse([{ id: 'matter-1', matterNumber: 'M-1', name: 'Doe v Builder', label: 'M-1 - Doe v Builder' }]),
+      )
       .mockResolvedValueOnce(jsonResponse({ id: 'upload-ok' }))
       .mockResolvedValueOnce(
         jsonResponse([
@@ -42,7 +45,7 @@ describe('DocumentsPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
+    fireEvent.change(screen.getByLabelText('Upload Matter'), { target: { value: 'matter-1' } });
     const file = new File(['inspection text'], 'inspection.txt', { type: 'text/plain' });
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -59,7 +62,7 @@ describe('DocumentsPage', () => {
       );
     });
 
-    const uploadCall = fetchMock.mock.calls[1];
+    const uploadCall = fetchMock.mock.calls[2];
     const formData = uploadCall[1]?.body as FormData;
     expect(formData.get('matterId')).toBe('matter-1');
     expect(formData.get('title')).toBe('Inspection Report');
@@ -75,6 +78,9 @@ describe('DocumentsPage', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(
+        jsonResponse([{ id: 'matter-9', matterNumber: 'M-9', name: 'Client Letter Matter', label: 'M-9 - Client Letter Matter' }]),
+      )
       .mockResolvedValueOnce(jsonResponse({ id: 'pdf-ok' }))
       .mockResolvedValueOnce(
         jsonResponse([
@@ -100,7 +106,7 @@ describe('DocumentsPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID for generated PDF'), { target: { value: 'matter-9' } });
+    fireEvent.change(screen.getByLabelText('PDF Matter'), { target: { value: 'matter-9' } });
     fireEvent.click(screen.getByRole('button', { name: 'Generate PDF Draft' }));
 
     await waitFor(() => {
@@ -114,7 +120,7 @@ describe('DocumentsPage', () => {
       );
     });
 
-    const generateCall = fetchMock.mock.calls[1];
+    const generateCall = fetchMock.mock.calls[2];
     const payload = JSON.parse(generateCall[1]?.body as string);
     expect(payload).toEqual(
       expect.objectContaining({
@@ -152,6 +158,9 @@ describe('DocumentsPage', () => {
             retentionPolicy: null,
           },
         ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse([{ id: 'matter-1', matterNumber: 'M-1', name: 'Doe v Builder', label: 'M-1 - Doe v Builder' }]),
       )
       .mockResolvedValueOnce(jsonResponse([]))
       .mockResolvedValueOnce(jsonResponse([]))

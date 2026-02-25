@@ -144,6 +144,21 @@ describe('MyCaseConnector', () => {
     );
   });
 
+  it('requires webhook registration url in live sync mode', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    delete process.env.MYCASE_WEBHOOK_REGISTER_URL;
+
+    const connector = new MyCaseConnector();
+    await expect(
+      connector.subscribeWebhooks({
+        connectionId: 'conn-mycase',
+        event: 'matter.updated',
+        targetUrl: 'https://firm.example/webhooks/mycase',
+        accessToken: 'mycase-token',
+      }),
+    ).rejects.toThrow('MYCASE_WEBHOOK_REGISTER_URL');
+  });
+
   it('refreshes token in scaffold mode without network calls', async () => {
     const connector = new MyCaseConnector();
     const result = await connector.refreshAccessToken({
@@ -202,6 +217,8 @@ describe('MyCaseConnector', () => {
   it('throws when live oauth refresh response omits access token', async () => {
     process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
     process.env.MYCASE_TOKEN_URL = 'https://mycase.example/oauth/token';
+    process.env.MYCASE_CLIENT_ID = 'mycase-client';
+    process.env.MYCASE_CLIENT_SECRET = 'mycase-secret';
     (global.fetch as jest.Mock).mockResolvedValueOnce(
       mockResponse(200, {
         refresh_token: 'live-refresh-token',
@@ -215,5 +232,25 @@ describe('MyCaseConnector', () => {
         refreshToken: 'existing-refresh-token',
       }),
     ).rejects.toThrow('MyCase token refresh did not return access_token');
+  });
+
+  it('requires non-stub oauth credentials when live oauth is enabled', async () => {
+    process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
+    process.env.MYCASE_CLIENT_ID = 'stub-mycase-client-id';
+    process.env.MYCASE_CLIENT_SECRET = 'stub-mycase-client-secret';
+
+    const connector = new MyCaseConnector();
+    expect(() =>
+      connector.getAuthorizationUrl({
+        redirectUri: 'https://firm.example/callback',
+        state: 'state-123',
+      }),
+    ).toThrow('MYCASE_CLIENT_ID');
+
+    await expect(
+      connector.refreshAccessToken({
+        refreshToken: 'existing-refresh-token',
+      }),
+    ).rejects.toThrow('MYCASE_CLIENT_ID');
   });
 });

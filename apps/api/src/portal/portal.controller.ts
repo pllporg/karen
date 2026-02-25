@@ -15,6 +15,16 @@ export class PortalController {
     return this.portalService.getPortalSnapshot(user);
   }
 
+  @Get('intake-form-definitions')
+  intakeFormDefinitions(@CurrentUser() user: AuthenticatedUser) {
+    return this.portalService.listPortalIntakeFormDefinitions(user);
+  }
+
+  @Get('engagement-letter-templates')
+  engagementLetterTemplates(@CurrentUser() user: AuthenticatedUser) {
+    return this.portalService.listPortalEngagementLetterTemplates(user);
+  }
+
   @Post('messages')
   message(
     @CurrentUser() user: AuthenticatedUser,

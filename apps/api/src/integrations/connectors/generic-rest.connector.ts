@@ -3,7 +3,7 @@ import { ConnectorSyncParams, ConnectorSyncResult, ConnectorWebhookParams, Incre
 
 @Injectable()
 export class GenericRestConnector implements IncrementalSyncConnector {
-  provider: 'GENERIC_REST' = 'GENERIC_REST';
+  provider = 'GENERIC_REST' as const;
   supportsOAuth = false;
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {

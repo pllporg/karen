@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class PracticePantherConnector implements IncrementalSyncConnector {
-  provider: 'PRACTICEPANTHER' = 'PRACTICEPANTHER';
+  provider = 'PRACTICEPANTHER' as const;
   supportsOAuth = false;
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {

@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class FilevineConnector implements IncrementalSyncConnector {
-  provider: 'FILEVINE' = 'FILEVINE';
+  provider = 'FILEVINE' as const;
   supportsOAuth = false;
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {

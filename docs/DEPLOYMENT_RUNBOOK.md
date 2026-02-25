@@ -34,6 +34,13 @@ Validate env configuration:
 - `INTEGRATION_TOKEN_ENCRYPTION_KEYS` + `INTEGRATION_TOKEN_ACTIVE_KEY_ID` are set.
 - Storage/database/cache endpoints resolve.
 - Optional scanners/providers are configured per policy.
+- For `staging` and `production`, run provider-live readiness matrix before deploy:
+
+```bash
+pnpm test:provider-live
+pnpm test:integrations-live
+pnpm ops:drill:backup-restore -- --out-dir artifacts/ops
+```
 
 ## 3) Deployment Procedure
 
@@ -70,6 +77,7 @@ Operational readiness checklist:
 - migration status is current (`prisma:deploy` succeeded).
 - queue workers and Redis connectivity are healthy.
 - document storage read/write path works.
+- provider readiness reports healthy (`/ops/provider-status`) with no missing critical env.
 
 Post-start smoke tests (minimum):
 
@@ -138,3 +146,27 @@ Key metrics to track:
 
 - Every production release must map to a Linear issue/requirement.
 - Verification evidence (tests + runbook references) must be attached before marking requirement complete.
+
+## 10) Evidence Automation
+
+Operational evidence commands:
+
+```bash
+pnpm ops:drill:backup-restore -- --out-dir artifacts/ops
+pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
+```
+
+Prerequisites for backup drill command:
+
+- local `pg_dump` / `pg_restore` / `psql` available in `PATH`, or
+- running `docker compose` postgres service (the script can use container fallback).
+
+Generated artifacts:
+
+- `artifacts/ops/backup-restore-drill-*.json`
+- `artifacts/ops/provider-status-evidence.json`
+
+CI evidence workflow:
+
+- `.github/workflows/ops-readiness-evidence.yml`
+- uploads artifact bundle `ops-readiness-evidence` for release records.

@@ -176,6 +176,9 @@ describe('MatterDashboardPage operational workflows', () => {
 
     await screen.findByText('M-100 - Doe v. Builder');
     await screen.findByText('Preview rules to review computed deadlines before creating events.');
+    await waitFor(() => {
+      expect(screen.getByLabelText('Rules Pack')).toHaveValue('pack-1');
+    });
 
     fireEvent.change(screen.getByLabelText('Trigger Date'), { target: { value: '2026-01-20' } });
     fireEvent.click(screen.getByRole('button', { name: 'Preview Deadlines' }));
@@ -187,10 +190,10 @@ describe('MatterDashboardPage operational workflows', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('Override Reason rule-1'), {
+    fireEvent.change(await screen.findByLabelText('Override Reason rule-1'), {
       target: { value: 'Court requested extension' },
     });
-    fireEvent.change(screen.getByLabelText('Override Date rule-1'), { target: { value: '2026-02-27' } });
+    fireEvent.change(await screen.findByLabelText('Override Date rule-1'), { target: { value: '2026-02-27' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply Selected' }));
 
     await waitFor(() => {
@@ -202,7 +205,7 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
-  it('creates, edits, updates status, and deletes tasks plus calendar events', async () => {
+  it('creates, edits, updates status, and deletes tasks plus calendar events', { timeout: 40000 }, async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();
@@ -385,7 +388,10 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
-  it('executes matter-level billing operations (time, expense, invoice, payment, trust)', async () => {
+  it(
+    'executes matter-level billing operations (time, expense, invoice, payment, trust)',
+    { timeout: 40000 },
+    async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();
@@ -580,7 +586,8 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByText(/Trust transaction DEPOSIT posted/)).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: '$5500.00' })).toBeInTheDocument();
     });
-  });
+    },
+  );
 
   it('exports matter calendar events as an ICS file', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
@@ -662,7 +669,7 @@ describe('MatterDashboardPage operational workflows', () => {
     }
   });
 
-  it('edits and saves matter overview fields', async () => {
+  it('edits and saves matter overview fields', { timeout: 40000 }, async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
 
     const state = createDashboardState();

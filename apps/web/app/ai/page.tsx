@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, FormEvent, useEffect, useState } from 'react';
+import { Fragment, FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { apiFetch } from '../../lib/api';
@@ -98,6 +98,23 @@ type StylePackDraft = {
   documentVersionId: string;
 };
 
+type MatterLookup = {
+  id: string;
+  matterNumber: string;
+  name: string;
+  label: string;
+};
+
+type DocumentVersionLookup = {
+  id: string;
+  label: string;
+  document: {
+    id: string;
+    matterId: string;
+    title: string;
+  };
+};
+
 const DATE_TOKEN_REGEX =
   /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},\s+\d{4})\b/gi;
 
@@ -107,43 +124,55 @@ type ReviewGateStep = (typeof REVIEW_GATE_SEQUENCE)[number];
 export default function AiPage() {
   const [jobs, setJobs] = useState<AiJob[]>([]);
   const [stylePacks, setStylePacks] = useState<StylePack[]>([]);
+  const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
+  const [documentVersionOptions, setDocumentVersionOptions] = useState<DocumentVersionLookup[]>([]);
   const [stylePackDrafts, setStylePackDrafts] = useState<Record<string, StylePackDraft>>({});
   const [selectedStylePackId, setSelectedStylePackId] = useState('');
   const [newStylePackName, setNewStylePackName] = useState('');
   const [newStylePackDescription, setNewStylePackDescription] = useState('');
   const [busyStylePackId, setBusyStylePackId] = useState<string | null>(null);
-  const [matterId, setMatterId] = useState('');
+  const [selectedMatterId, setSelectedMatterId] = useState('');
   const [toolName, setToolName] = useState('case_summary');
   const [busyArtifactId, setBusyArtifactId] = useState<string | null>(null);
   const [statusByArtifact, setStatusByArtifact] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [deadlineSelections, setDeadlineSelections] = useState<Record<string, Record<string, DeadlineSelection>>>({});
 
-  async function load() {
+  const load = useCallback(async () => {
+    const query = selectedMatterId ? `&matterId=${encodeURIComponent(selectedMatterId)}` : '';
     const [nextJobs, nextStylePacks] = await Promise.all([
       apiFetch<AiJob[]>('/ai/jobs'),
       apiFetch<StylePack[]>('/ai/style-packs'),
     ]);
+    const [nextMattersRaw, nextDocumentVersionsRaw] = await Promise.all([
+      apiFetch<MatterLookup[]>('/lookups/matters?limit=200').catch(() => []),
+      apiFetch<DocumentVersionLookup[]>(`/lookups/document-versions?limit=200${query}`).catch(() => []),
+    ]);
+    const nextMatters = Array.isArray(nextMattersRaw) ? nextMattersRaw : [];
+    const nextDocumentVersions = Array.isArray(nextDocumentVersionsRaw) ? nextDocumentVersionsRaw : [];
     setJobs(nextJobs);
     setStylePacks(nextStylePacks);
+    setMatterOptions(nextMatters);
+    setDocumentVersionOptions(nextDocumentVersions);
     setStylePackDrafts((previous) => buildStylePackDrafts(nextStylePacks, previous));
     setDeadlineSelections((previous) => buildSelectionState(nextJobs, previous));
+    setSelectedMatterId((current) => current || nextMatters[0]?.id || '');
     if (selectedStylePackId && !nextStylePacks.some((stylePack) => stylePack.id === selectedStylePackId)) {
       setSelectedStylePackId('');
     }
-  }
+  }, [selectedMatterId, selectedStylePackId]);
 
   useEffect(() => {
     load().catch(() => undefined);
-  }, []);
+  }, [load]);
 
   async function createJob(e: FormEvent) {
     e.preventDefault();
-    if (!matterId) return;
+    if (!selectedMatterId) return;
     setError(null);
     try {
       const payload: { matterId: string; toolName: string; input: Record<string, unknown>; stylePackId?: string } = {
-        matterId,
+        matterId: selectedMatterId,
         toolName,
         input: {},
       };
@@ -418,16 +447,23 @@ export default function AiPage() {
               </div>
 
               <div style={{ marginTop: 8, display: 'grid', gap: 8, gridTemplateColumns: '1fr auto' }}>
-                <input
+                <select
                   className="input"
+                  aria-label={`Style Pack Source Document ${stylePack.id}`}
                   value={draft.documentVersionId}
                   onChange={(event) => updateStylePackDraft(stylePack.id, 'documentVersionId', event.target.value)}
-                  placeholder="Attach source document version ID"
-                />
+                >
+                  <option value="">Select source document version</option>
+                  {documentVersionOptions.map((version) => (
+                    <option key={version.id} value={version.id}>
+                      {version.label}
+                    </option>
+                  ))}
+                </select>
                 <button
                   className="button ghost"
                   type="button"
-                  disabled={isBusy || !draft.documentVersionId.trim()}
+                  disabled={isBusy || !draft.documentVersionId}
                   onClick={() => attachStylePackSourceDoc(stylePack.id)}
                 >
                   Attach Source Doc
@@ -476,7 +512,19 @@ export default function AiPage() {
 
       <div className="card" style={{ marginBottom: 14 }}>
         <form onSubmit={createJob} style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 220px 260px auto' }}>
-          <input className="input" value={matterId} onChange={(e) => setMatterId(e.target.value)} placeholder="Matter ID" />
+          <select
+            className="select"
+            aria-label="AI Matter"
+            value={selectedMatterId}
+            onChange={(event) => setSelectedMatterId(event.target.value)}
+          >
+            <option value="">Select matter</option>
+            {matterOptions.map((matter) => (
+              <option key={matter.id} value={matter.id}>
+                {matter.label}
+              </option>
+            ))}
+          </select>
           <select className="select" value={toolName} onChange={(e) => setToolName(e.target.value)}>
             {TOOLS.map((tool) => (
               <option key={tool} value={tool}>{tool}</option>

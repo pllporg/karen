@@ -3,7 +3,7 @@ import { ConnectorSyncParams, ConnectorSyncResult, ConnectorWebhookParams, Incre
 
 @Injectable()
 export class GmailConnector implements IncrementalSyncConnector {
-  provider: 'GMAIL' = 'GMAIL';
+  provider = 'GMAIL' as const;
   supportsOAuth = false;
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {

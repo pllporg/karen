@@ -19,27 +19,35 @@ describe('PortalPage', () => {
   });
 
   it('sends a portal message and refreshes snapshot counts', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'm1' }],
-          keyDates: [{ id: 'd1' }],
-          invoices: [{ id: 'i1' }],
-          messages: [],
-          documents: [{ id: 'doc1' }, { id: 'doc2' }],
-        }),
-      )
-      .mockResolvedValueOnce(jsonResponse({ id: 'msg-1' }))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'm1' }, { id: 'm2' }],
-          keyDates: [{ id: 'd1' }],
-          invoices: [{ id: 'i1' }],
-          messages: [],
-          documents: [{ id: 'doc1' }, { id: 'doc2' }, { id: 'doc3' }],
-        }),
-      );
+    const state = {
+      snapshot: {
+        matters: [{ id: 'matter-1', matterNumber: 'M-001', name: 'Portal Matter' }],
+        keyDates: [{ id: 'd1' }],
+        invoices: [{ id: 'i1' }],
+        messages: [],
+        documents: [{ id: 'doc1' }, { id: 'doc2' }],
+        eSignEnvelopes: [],
+      } as any,
+      intakeForms: [{ id: 'intake-def-1', name: 'Client Intake v1' }],
+      templates: [{ id: 'letter-template-5', name: 'Engagement Letter v5' }],
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
+      if (url.endsWith('/portal/messages') && method === 'POST') {
+        state.snapshot = {
+          ...state.snapshot,
+          matters: [...state.snapshot.matters, { id: 'matter-2', matterNumber: 'M-002', name: 'Second Matter' }],
+          documents: [...state.snapshot.documents, { id: 'doc3' }],
+        };
+        return jsonResponse({ id: 'msg-1' });
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<PortalPage />);
@@ -57,7 +65,7 @@ describe('PortalPage', () => {
     await screen.findByText('1 visible matters');
     await screen.findByText('2 shared docs');
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
+    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
     fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
@@ -86,13 +94,35 @@ describe('PortalPage', () => {
   });
 
   it('submits intake and creates e-sign envelope from portal actions', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ id: 'intake-1' }))
-      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [] }))
-      .mockResolvedValueOnce(jsonResponse({ id: 'esign-1' }))
-      .mockResolvedValueOnce(jsonResponse({ matters: [], keyDates: [], invoices: [], messages: [], documents: [], eSignEnvelopes: [{ id: 'esign-1' }] }));
+    const state = {
+      snapshot: {
+        matters: [{ id: 'matter-22', matterNumber: 'M-022', name: 'Client Matter 22' }],
+        keyDates: [],
+        invoices: [],
+        messages: [],
+        documents: [],
+        eSignEnvelopes: [],
+      } as any,
+      intakeForms: [{ id: 'intake-def-1', name: 'Client Intake v1' }],
+      templates: [{ id: 'letter-template-5', name: 'Engagement Letter v5' }],
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
+      if (url.endsWith('/portal/intake-submissions') && method === 'POST') return jsonResponse({ id: 'intake-1' });
+      if (url.endsWith('/portal/esign') && method === 'POST') {
+        state.snapshot = {
+          ...state.snapshot,
+          eSignEnvelopes: [{ id: 'esign-1', status: 'SENT', provider: 'stub' }],
+        };
+        return jsonResponse({ id: 'esign-1' });
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<PortalPage />);
@@ -106,9 +136,9 @@ describe('PortalPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-22' } });
-    fireEvent.change(screen.getByPlaceholderText('Intake Form Definition ID'), { target: { value: 'intake-def-1' } });
-    fireEvent.change(screen.getByPlaceholderText('Engagement Letter Template ID'), {
+    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-22' } });
+    fireEvent.change(screen.getByLabelText('Portal Intake Form'), { target: { value: 'intake-def-1' } });
+    fireEvent.change(screen.getByLabelText('Portal Engagement Template'), {
       target: { value: 'letter-template-5' },
     });
 
@@ -153,33 +183,35 @@ describe('PortalPage', () => {
   });
 
   it('refreshes an e-sign envelope status from the portal list', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'matter-9' }],
-          keyDates: [],
-          invoices: [],
-          messages: [],
-          documents: [],
-          eSignEnvelopes: [
-            {
-              id: 'env-9',
-              status: 'SENT',
-              provider: 'sandbox',
-              engagementLetterTemplate: { id: 'tpl-9', name: 'Engagement Letter v9' },
-            },
-          ],
-        }),
-      )
-      .mockResolvedValueOnce(jsonResponse({ id: 'env-9', status: 'SIGNED', provider: 'sandbox' }))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'matter-9' }],
-          keyDates: [],
-          invoices: [],
-          messages: [],
-          documents: [],
+    const state = {
+      snapshot: {
+        matters: [{ id: 'matter-9', matterNumber: 'M-009', name: 'Matter 9' }],
+        keyDates: [],
+        invoices: [],
+        messages: [],
+        documents: [],
+        eSignEnvelopes: [
+          {
+            id: 'env-9',
+            status: 'SENT',
+            provider: 'sandbox',
+            engagementLetterTemplate: { id: 'tpl-9', name: 'Engagement Letter v9' },
+          },
+        ],
+      } as any,
+      intakeForms: [],
+      templates: [],
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
+      if (url.endsWith('/portal/esign/env-9/refresh') && method === 'POST') {
+        state.snapshot = {
+          ...state.snapshot,
           eSignEnvelopes: [
             {
               id: 'env-9',
@@ -188,8 +220,11 @@ describe('PortalPage', () => {
               engagementLetterTemplate: { id: 'tpl-9', name: 'Engagement Letter v9' },
             },
           ],
-        }),
-      );
+        };
+        return jsonResponse({ id: 'env-9', status: 'SIGNED', provider: 'sandbox' });
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
 
     vi.stubGlobal('fetch', fetchMock);
     render(<PortalPage />);
@@ -212,29 +247,34 @@ describe('PortalPage', () => {
 
   it('uploads a portal attachment, links it to message, and downloads securely', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'matter-1' }],
-          keyDates: [],
-          invoices: [],
-          messages: [],
-          documents: [],
-        }),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
+    const state = {
+      snapshot: {
+        matters: [{ id: 'matter-1', matterNumber: 'M-001', name: 'Portal Matter' }],
+        keyDates: [],
+        invoices: [],
+        messages: [],
+        documents: [],
+        eSignEnvelopes: [],
+      } as any,
+      intakeForms: [],
+      templates: [],
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
+      if (url.endsWith('/portal/attachments/upload') && method === 'POST') {
+        return jsonResponse({
           document: { id: 'doc-uploaded' },
           version: { id: 'ver-up' },
-        }),
-      )
-      .mockResolvedValueOnce(jsonResponse({ id: 'msg-uploaded' }))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          matters: [{ id: 'matter-1' }],
-          keyDates: [],
-          invoices: [],
+        });
+      }
+      if (url.endsWith('/portal/messages') && method === 'POST') {
+        state.snapshot = {
+          ...state.snapshot,
           documents: [
             {
               id: 'doc-uploaded',
@@ -255,9 +295,14 @@ describe('PortalPage', () => {
               ],
             },
           ],
-        }),
-      )
-      .mockResolvedValueOnce(jsonResponse({ url: 'https://download.local/ver-up' }));
+        };
+        return jsonResponse({ id: 'msg-uploaded' });
+      }
+      if (url.endsWith('/portal/attachments/ver-up/download-url') && method === 'GET') {
+        return jsonResponse({ url: 'https://download.local/ver-up' });
+      }
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
 
     vi.stubGlobal('fetch', fetchMock);
 
@@ -270,7 +315,7 @@ describe('PortalPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Matter ID'), { target: { value: 'matter-1' } });
+    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
     fireEvent.change(screen.getByPlaceholderText('Message'), { target: { value: 'See attached defect photo' } });
     fireEvent.change(screen.getByPlaceholderText('Attachment Title (optional)'), {
       target: { value: 'Uploaded Portal Photo' },

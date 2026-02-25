@@ -16,6 +16,7 @@ describe('Operations runbook verification', () => {
       '## 5) Rollback Procedure',
       '## 6) Incident Response',
       '## 7) Baseline SLOs and Metrics',
+      '## 10) Evidence Automation',
     ];
 
     for (const section of requiredSections) {
@@ -49,5 +50,15 @@ describe('Operations runbook verification', () => {
     expect(parityArtifact).toContain('`docs/DEPLOYMENT_RUNBOOK.md`');
     expect(readme).toContain('`docs/DEPLOYMENT_RUNBOOK.md`');
     expect(readme).toContain('`docs/parity/ops-runbook-slos.md`');
+    expect(readme).toContain('ops:drill:backup-restore');
+    expect(readme).toContain('ops:evidence:capture');
+  });
+
+  it('documents drill and provider evidence commands in runbook', () => {
+    const runbook = readFileSync(runbookPath, 'utf8');
+
+    expect(runbook).toContain('pnpm ops:drill:backup-restore');
+    expect(runbook).toContain('pnpm ops:evidence:capture');
+    expect(runbook).toContain('.github/workflows/ops-readiness-evidence.yml');
   });
 });

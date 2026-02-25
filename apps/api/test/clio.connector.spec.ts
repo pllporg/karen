@@ -144,6 +144,21 @@ describe('ClioConnector', () => {
     );
   });
 
+  it('requires webhook registration url in live sync mode', async () => {
+    process.env.INTEGRATION_SYNC_ENABLE_LIVE = 'true';
+    delete process.env.CLIO_WEBHOOK_REGISTER_URL;
+
+    const connector = new ClioConnector();
+    await expect(
+      connector.subscribeWebhooks({
+        connectionId: 'conn-clio',
+        event: 'matter.updated',
+        targetUrl: 'https://firm.example/webhooks/clio',
+        accessToken: 'clio-token',
+      }),
+    ).rejects.toThrow('CLIO_WEBHOOK_REGISTER_URL');
+  });
+
   it('refreshes token in scaffold mode without network calls', async () => {
     const connector = new ClioConnector();
     const result = await connector.refreshAccessToken({
@@ -202,6 +217,8 @@ describe('ClioConnector', () => {
   it('throws when live oauth refresh response omits access token', async () => {
     process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
     process.env.CLIO_TOKEN_URL = 'https://clio.example/oauth/token';
+    process.env.CLIO_CLIENT_ID = 'clio-client';
+    process.env.CLIO_CLIENT_SECRET = 'clio-secret';
     (global.fetch as jest.Mock).mockResolvedValueOnce(
       mockResponse(200, {
         refresh_token: 'live-refresh-token',
@@ -215,5 +232,25 @@ describe('ClioConnector', () => {
         refreshToken: 'existing-refresh-token',
       }),
     ).rejects.toThrow('Clio token refresh did not return access_token');
+  });
+
+  it('requires non-stub oauth credentials when live oauth is enabled', async () => {
+    process.env.INTEGRATION_OAUTH_ENABLE_LIVE = 'true';
+    process.env.CLIO_CLIENT_ID = 'stub-clio-client-id';
+    process.env.CLIO_CLIENT_SECRET = 'stub-clio-client-secret';
+
+    const connector = new ClioConnector();
+    expect(() =>
+      connector.getAuthorizationUrl({
+        redirectUri: 'https://firm.example/callback',
+        state: 'state-123',
+      }),
+    ).toThrow('CLIO_CLIENT_ID');
+
+    await expect(
+      connector.refreshAccessToken({
+        refreshToken: 'existing-refresh-token',
+      }),
+    ).rejects.toThrow('CLIO_CLIENT_ID');
   });
 });
