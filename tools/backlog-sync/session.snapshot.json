@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-24T17:22:16.809Z",
+  "generatedAt": "2026-02-25T17:37:18.796Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -13,100 +13,209 @@
     "githubIssues": "mirror-only"
   },
   "matrixSummary": {
-    "totalRequirements": 52,
-    "unresolvedRequirements": 0,
+    "totalRequirements": 63,
+    "unresolvedRequirements": 11,
     "totalCountsByPhase": {
-      "phase-1": 47,
+      "phase-1": 58,
       "phase-2": 5
     },
-    "unresolvedCountsByPhase": {},
-    "unresolvedCountsByStatus": {},
-    "unresolvedCountsByRisk": {},
-    "unresolvedCountsByStatusAndRisk": {}
+    "unresolvedCountsByPhase": {
+      "phase-1": 11
+    },
+    "unresolvedCountsByStatus": {
+      "Missing": 11
+    },
+    "unresolvedCountsByRisk": {
+      "High": 7,
+      "Medium": 4
+    },
+    "unresolvedCountsByStatusAndRisk": {
+      "Missing:High": 7,
+      "Missing:Medium": 4
+    }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
-    "topRequirements": []
+    "topRequirements": [
+      {
+        "requirementId": "REQ-RC-001",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Stabilize flaky web/api suites and CI determinism",
+        "component": "Infra",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-002",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Replace raw-ID UX with selector-driven workflow primitives",
+        "component": "Web",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-003",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Session/auth bootstrap hardening and protected-route behavior",
+        "component": "API",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-004",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
+        "component": "Web",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-005",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Critical provider cutover readiness checks and health telemetry",
+        "component": "API",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-006",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Stripe/email/SMS/malware/e-sign live validation suite",
+        "component": "Integrations",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-009",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Backup/restore + migration rollback drill automation",
+        "component": "Infra",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-007",
+        "parityStatus": "Missing",
+        "risk": "Medium",
+        "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
+        "component": "Integrations",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-008",
+        "parityStatus": "Missing",
+        "risk": "Medium",
+        "title": "API lint gate + static quality enforcement",
+        "component": "API",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-RC-010",
+        "parityStatus": "Missing",
+        "risk": "Medium",
+        "title": "Production observability/alerting baseline",
+        "component": "Infra",
+        "epicCode": "RC-1",
+        "phase": "phase-1"
+      }
+    ]
   },
   "linearSummary": {
     "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 70,
+    "scopedIssueCount": 82,
     "stateCounts": {
+      "Backlog": 7,
+      "In Progress": 5,
       "Done": 70
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-94",
+      "KAR-90",
+      "KAR-89",
+      "KAR-88",
+      "KAR-87"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-76",
-        "title": "Migrate product branding from Karen to LIC (name + logo asset integration)",
-        "state": "Done",
-        "updatedAt": "2026-02-24T17:22:07.890Z",
-        "requirementId": "REQ-UI-014"
+        "key": "KAR-88",
+        "title": "Replace raw-ID UX with selector-driven workflow primitives",
+        "state": "In Progress",
+        "updatedAt": "2026-02-25T17:37:11.279Z",
+        "requirementId": "REQ-RC-002"
       },
       {
-        "key": "KAR-84",
-        "title": "Fix backlog mirror discovery to prevent duplicate GitHub issues",
-        "state": "Done",
-        "updatedAt": "2026-02-23T21:13:26.629Z",
-        "requirementId": "REQ-OPS-003"
+        "key": "KAR-89",
+        "title": "Session/auth bootstrap hardening and protected-route behavior",
+        "state": "In Progress",
+        "updatedAt": "2026-02-25T17:37:11.085Z",
+        "requirementId": "REQ-RC-003"
       },
       {
-        "key": "KAR-83",
-        "title": "Finalize REQ-UI-008 canonical precedence verification",
-        "state": "Done",
-        "updatedAt": "2026-02-23T21:05:08.702Z",
-        "requirementId": "REQ-UI-008"
+        "key": "KAR-90",
+        "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
+        "state": "In Progress",
+        "updatedAt": "2026-02-25T17:37:10.792Z",
+        "requirementId": "REQ-RC-004"
       },
       {
-        "key": "KAR-82",
-        "title": "Finalize REQ-UI-007 UI regression gate verification",
-        "state": "Done",
-        "updatedAt": "2026-02-23T20:58:08.634Z",
-        "requirementId": "REQ-UI-007"
+        "key": "KAR-94",
+        "title": "API lint gate + static quality enforcement",
+        "state": "In Progress",
+        "updatedAt": "2026-02-25T17:24:03.737Z",
+        "requirementId": "REQ-RC-008"
       },
       {
-        "key": "KAR-81",
-        "title": "Finalize REQ-UI-005 accessibility verification closeout",
-        "state": "Done",
-        "updatedAt": "2026-02-23T20:51:31.533Z",
-        "requirementId": "REQ-UI-005"
+        "key": "KAR-87",
+        "title": "Stabilize flaky web/api suites and CI determinism",
+        "state": "In Progress",
+        "updatedAt": "2026-02-24T19:26:00.523Z",
+        "requirementId": "REQ-RC-001"
       },
       {
-        "key": "KAR-80",
-        "title": "Close REQ-PMS-CORE-007 parity status drift",
-        "state": "Done",
-        "updatedAt": "2026-02-23T20:31:18.467Z",
-        "requirementId": "REQ-PMS-CORE-007"
+        "key": "KAR-97",
+        "title": "Launch candidate UAT and go-live signoff",
+        "state": "Backlog",
+        "updatedAt": "2026-02-24T19:23:00.104Z",
+        "requirementId": "REQ-RC-011"
       },
       {
-        "key": "KAR-79",
-        "title": "Matter dashboard billing operations hardening",
-        "state": "Done",
-        "updatedAt": "2026-02-23T20:24:16.972Z",
-        "requirementId": "REQ-PMS-CORE-005"
+        "key": "KAR-96",
+        "title": "Production observability/alerting baseline",
+        "state": "Backlog",
+        "updatedAt": "2026-02-24T19:22:59.602Z",
+        "requirementId": "REQ-RC-010"
       },
       {
-        "key": "KAR-78",
-        "title": "Harden matter participant relationship mapping and lifecycle editing",
-        "state": "Done",
-        "updatedAt": "2026-02-23T19:59:38.680Z",
-        "requirementId": "REQ-PMS-CORE-007"
+        "key": "KAR-95",
+        "title": "Backup/restore + migration rollback drill automation",
+        "state": "Backlog",
+        "updatedAt": "2026-02-24T19:22:59.295Z",
+        "requirementId": "REQ-RC-009"
       },
       {
-        "key": "KAR-18",
-        "title": "PARITY-04 Contacts + Matters + Participants",
-        "state": "Done",
-        "updatedAt": "2026-02-23T19:31:17.850Z",
-        "requirementId": "PARITY-04"
+        "key": "KAR-93",
+        "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
+        "state": "Backlog",
+        "updatedAt": "2026-02-24T19:22:58.772Z",
+        "requirementId": "REQ-RC-007"
       },
       {
-        "key": "KAR-40",
-        "title": "PARITY-10 Testing + Reliability + Ops",
-        "state": "Done",
-        "updatedAt": "2026-02-23T18:27:46.400Z",
-        "requirementId": "PARITY-10"
+        "key": "KAR-92",
+        "title": "Stripe/email/SMS/malware/e-sign live validation suite",
+        "state": "Backlog",
+        "updatedAt": "2026-02-24T19:22:58.398Z",
+        "requirementId": "REQ-RC-006"
       }
     ]
   },
@@ -121,15 +230,18 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-24T17:22:13.562Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-25T17:33:56.353Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "b4e769fc1015c5c50fc19fe45dfbf84d0ab66049",
+    "gitHead": "86ac64252f3904b6f1fb0ce0bbb4dd44d9cf8435",
     "gitStatusShort": [
-      "## lin/KAR-84-main-linear-policy-fallback",
-      "?? .github/workflows/main-linear-policy-fallback.yml"
+      "## lin/KAR-87-rc-matrix-handoff-alignment",
+      "M  docs/SESSION_HANDOFF.md",
+      "M  tools/backlog-sync/requirements.matrix.json",
+      "M  tools/backlog-sync/seed_parity_backlog.mjs",
+      "MM tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 1
+    "dirtyFileCount": 4
   }
 }

@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "version": "1.2.0",
+    "version": "1.3.0",
     "generatedFrom": "Prompt-Context",
     "assessmentDate": "2026-02-16",
-    "notes": "Parity matrix with LIC UI canonical-precedence lane and PRD/screen coverage backlog.",
+    "notes": "Parity matrix with LIC UI canonical-precedence lane, PRD/screen coverage backlog, and RC-1 production-readiness lane.",
     "uiCompliance": {
       "canonicalSource": "docs/UI_CANONICAL_PRECEDENCE.md",
       "componentMatrixSource": "lic-design-system/references/ui-kit.md",
@@ -1507,6 +1507,333 @@
             "Compliance review report is complete.",
             "All findings are mapped to actionable backlog items.",
             "KAR-77 includes verification evidence linking tests/guardrails to resolved findings."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "RC-1",
+      "title": "Usability + Production Hardening",
+      "description": "Drive launch-readiness for daily firm usage by eliminating workflow friction, stabilizing CI/runtime behavior, and enforcing live-provider operational hardening.",
+      "labels": [
+        "parity",
+        "rc-1",
+        "production-readiness"
+      ],
+      "tasks": [
+        {
+          "title": "Stabilize flaky web/api suites and CI determinism",
+          "requirementId": "REQ-RC-001",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 0",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "quality"
+          ],
+          "problemStatement": "Critical test suites intermittently fail under load due short timeouts and mixed CI stages, reducing deployment confidence.",
+          "requirementExcerpt": "Fix flaky suites, remove timing-sensitive failures, split CI into deterministic stages, and enforce API linting.",
+          "acceptanceCriteria": [
+            "matter-dashboard and core-workflow suites run deterministically under repeated load.",
+            "CI pipeline exposes separate api-test, web-test, and build checks.",
+            "API lint runs as a required gate in CI."
+          ],
+          "apiImpact": "No public API shape change.",
+          "securityImpact": "Improves release safety by reducing false negatives in quality gates.",
+          "definitionOfDone": [
+            "Repeated local runs show stable pass behavior for target suites.",
+            "CI workflow updates merged and passing on PRs.",
+            "No placeholder lint command remains in API package scripts."
+          ]
+        },
+        {
+          "title": "Replace raw-ID UX with selector-driven workflow primitives",
+          "requirementId": "REQ-RC-002",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "ux"
+          ],
+          "problemStatement": "Core workflow forms still require manual record IDs, causing avoidable user error and workflow friction.",
+          "requirementExcerpt": "No raw-ID entry required for day-to-day attorney/paralegal/billing tasks.",
+          "acceptanceCriteria": [
+            "Billing, documents, and AI workflows replace raw-ID inputs with searchable selectors.",
+            "Shared lookup adapters standardize matter/contact/trust/invoice/template pickers.",
+            "Keyboard and focus-visible behavior remains compliant with LIC rules."
+          ],
+          "apiImpact": "Adds/expands lookup endpoints consumed by web selectors.",
+          "securityImpact": "Reduces accidental cross-record operations caused by incorrect IDs.",
+          "definitionOfDone": [
+            "Primary user workflows complete without copying IDs.",
+            "Route tests cover selector-driven flow.",
+            "UX verification evidence attached."
+          ]
+        },
+        {
+          "title": "Session/auth bootstrap hardening and protected-route behavior",
+          "requirementId": "REQ-RC-003",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "security"
+          ],
+          "problemStatement": "Session restoration and protected-route transitions are not fully deterministic across reloads and stale-token states.",
+          "requirementExcerpt": "Authenticated users restore context cleanly; unauthenticated users are redirected without token confusion.",
+          "acceptanceCriteria": [
+            "Add explicit session bootstrap endpoint and web hydration path.",
+            "Protected routes handle expired/invalid sessions predictably.",
+            "Regression tests cover reload and logout edge cases."
+          ],
+          "apiImpact": "Introduces session bootstrap/read endpoint and tighter auth guard semantics.",
+          "securityImpact": "Prevents stale session misuse and accidental unauthorized views.",
+          "definitionOfDone": [
+            "Session bootstrap contract documented and tested.",
+            "Protected-route smoke scripts pass across roles.",
+            "No manual token steps required for normal use."
+          ]
+        },
+        {
+          "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
+          "requirementId": "REQ-RC-004",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "billing",
+            "documents",
+            "ai-governance"
+          ],
+          "problemStatement": "High-frequency workflows remain operationally dense and error-prone for non-technical legal staff.",
+          "requirementExcerpt": "Complete intake -> matter ops -> docs -> billing -> portal messaging without raw IDs or brittle transitions.",
+          "acceptanceCriteria": [
+            "Workflow forms include actionable empty states and inline validation.",
+            "Success/failure messages are explicit and timestamped where appropriate.",
+            "Role-based smoke scripts pass for Admin, Attorney, Paralegal, Billing, and Client."
+          ],
+          "apiImpact": "No breaking API changes; may add optional lookup filters.",
+          "securityImpact": "Improves operational correctness and reduces accidental misfiling.",
+          "definitionOfDone": [
+            "Manual UAT script passes end-to-end for each core role.",
+            "No-ID operation verified in workflow evidence.",
+            "Existing route tests continue to pass."
+          ]
+        },
+        {
+          "title": "Critical provider cutover readiness checks and health telemetry",
+          "requirementId": "REQ-RC-005",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 2",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "integrations",
+            "security"
+          ],
+          "problemStatement": "Provider runtime modes are not centrally visible and production profile constraints are not strict enough.",
+          "requirementExcerpt": "Fail startup when critical providers are stubbed in production profile and provide provider diagnostics.",
+          "acceptanceCriteria": [
+            "Add provider readiness/status endpoint for operational checks.",
+            "Enforce production profile validation for non-stub critical providers.",
+            "Expose diagnostics in admin-visible operational panel."
+          ],
+          "apiImpact": "Adds ops/provider-status style diagnostics endpoint.",
+          "securityImpact": "Reduces risk of running production with unsafe fallback behavior.",
+          "definitionOfDone": [
+            "Production profile rejects stub critical providers at boot.",
+            "Provider status endpoint verified in tests.",
+            "Operational runbook updated with diagnostics checks."
+          ]
+        },
+        {
+          "title": "Stripe/email/SMS/malware/e-sign live validation suite",
+          "requirementId": "REQ-RC-006",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 2",
+          "parityStatus": "Missing",
+          "component": "Integrations",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "integrations",
+            "billing",
+            "portal"
+          ],
+          "problemStatement": "Critical provider paths have partial test coverage but lack coordinated live validation evidence in staging.",
+          "requirementExcerpt": "Run live validation for Stripe, email, SMS, malware scan, and e-sign callbacks in staging.",
+          "acceptanceCriteria": [
+            "Validation suite executes provider-specific contract checks.",
+            "Webhook signature and replay behavior verified for relevant providers.",
+            "Evidence captured for each provider with timestamps."
+          ],
+          "apiImpact": "No breaking change; may add internal verification endpoints/scripts.",
+          "securityImpact": "Improves trust in external integration correctness and abuse handling.",
+          "definitionOfDone": [
+            "Live staging validations pass for all critical providers.",
+            "Replay/idempotency checks documented.",
+            "Verification evidence linked in Linear."
+          ]
+        },
+        {
+          "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
+          "requirementId": "REQ-RC-007",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 2",
+          "parityStatus": "Missing",
+          "component": "Integrations",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "integrations",
+            "imports"
+          ],
+          "problemStatement": "Connector scaffolding exists but live OAuth/sync/webhook workflows are not fully validated end-to-end in staging.",
+          "requirementExcerpt": "Validate at least Clio and MyCase live OAuth, incremental sync, and webhook subscription behavior.",
+          "acceptanceCriteria": [
+            "OAuth token exchange and refresh flows verified with live apps.",
+            "Incremental sync windows and idempotency checks validated.",
+            "Webhook delivery/retry behavior verified in staging."
+          ],
+          "apiImpact": "No breaking public API change; connector validation hardening only.",
+          "securityImpact": "Reduces integration token misuse and sync inconsistency risk.",
+          "definitionOfDone": [
+            "Staging validation evidence exists for Clio and MyCase.",
+            "Connector runbook updated with rollback/failure handling.",
+            "Known limitations documented explicitly."
+          ]
+        },
+        {
+          "title": "API lint gate + static quality enforcement",
+          "requirementId": "REQ-RC-008",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 0",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "quality"
+          ],
+          "problemStatement": "API quality gate previously used a placeholder lint command, allowing style/quality regressions through CI.",
+          "requirementExcerpt": "Replace placeholder API lint command and enforce static quality in CI.",
+          "acceptanceCriteria": [
+            "API lint command runs real static analysis.",
+            "CI fails on API lint violations.",
+            "Local dev workflow documents lint command expectations."
+          ],
+          "apiImpact": "No runtime API changes.",
+          "securityImpact": "Improves code quality and reduces regression risk.",
+          "definitionOfDone": [
+            "API lint script and config committed.",
+            "CI job includes API lint step.",
+            "Lint gate passes on main branch."
+          ]
+        },
+        {
+          "title": "Backup/restore + migration rollback drill automation",
+          "requirementId": "REQ-RC-009",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 3",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "ops",
+            "data-model"
+          ],
+          "problemStatement": "Release readiness currently lacks automated evidence for backup restore and migration rollback procedures.",
+          "requirementExcerpt": "Automate backup/restore and migration rollback drills with evidence capture.",
+          "acceptanceCriteria": [
+            "Add scripted backup/restore drill for database and critical object storage metadata.",
+            "Add rollback rehearsal for failed migration scenario.",
+            "Capture and store drill artifacts with timestamped outcome."
+          ],
+          "apiImpact": "No public API changes; operational tooling only.",
+          "securityImpact": "Improves disaster recovery confidence and data durability posture.",
+          "definitionOfDone": [
+            "Backup/restore drill passes with documented RPO/RTO.",
+            "Migration rollback drill verified in staging.",
+            "Runbook includes exact execution commands."
+          ]
+        },
+        {
+          "title": "Production observability/alerting baseline",
+          "requirementId": "REQ-RC-010",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 3",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "ops"
+          ],
+          "problemStatement": "Operational visibility into provider failures, queue retry loops, and request-level failures is incomplete.",
+          "requirementExcerpt": "Add request IDs, alerting baselines, and failure-mode monitoring for production operations.",
+          "acceptanceCriteria": [
+            "Structured logs include request and audit correlation identifiers.",
+            "Baseline alerts cover API errors, queue failures, webhook retries, provider outages.",
+            "Alert simulation validates detection and escalation."
+          ],
+          "apiImpact": "No public API contract changes; observability middleware additions.",
+          "securityImpact": "Improves incident detection and response speed.",
+          "definitionOfDone": [
+            "Alerting baseline active in staging/production profile.",
+            "Failure injection tests trigger expected alerts.",
+            "SLO reporting loop documented."
+          ]
+        },
+        {
+          "title": "Launch candidate UAT and go-live signoff",
+          "requirementId": "REQ-RC-011",
+          "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 4",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "rc-1",
+            "production-readiness",
+            "uat"
+          ],
+          "problemStatement": "Parity completion does not yet include an explicit launch-candidate UAT matrix and go-live signoff package.",
+          "requirementExcerpt": "Execute full UAT + migration rehearsal + security final sweep before release candidate signoff.",
+          "acceptanceCriteria": [
+            "Role-based UAT matrix executed with pass/fail evidence.",
+            "Migration in/out rehearsal completed with fixture and anonymized sample.",
+            "Go-live and rollback criteria signed by engineering and operations owners."
+          ],
+          "apiImpact": "No runtime API changes.",
+          "securityImpact": "Ensures final release gating includes security and tenancy verification.",
+          "definitionOfDone": [
+            "UAT evidence package committed to runbook artifacts.",
+            "Release candidate checklist completed.",
+            "Linear issue includes final signoff evidence links."
           ]
         }
       ]
