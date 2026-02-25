@@ -26,7 +26,10 @@ export default function LoginPage() {
         ),
       });
       setSessionToken(result.token);
-      router.push('/dashboard');
+      const query = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const nextPath = query?.get('next') || '/dashboard';
+      const safePath = nextPath.startsWith('/') ? nextPath : '/dashboard';
+      router.push(safePath);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Authentication failed');
     } finally {

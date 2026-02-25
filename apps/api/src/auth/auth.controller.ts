@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { RegisterDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
@@ -62,6 +62,17 @@ export class AuthController {
   async disableMfa(@CurrentUser() user: AuthenticatedUser) {
     await this.authService.disableMfa(user.id);
     return { ok: true };
+  }
+
+  @Get('session')
+  @UseGuards(SessionAuthGuard)
+  session(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request & { headers: Record<string, string | string[] | undefined>; cookies?: Record<string, string> },
+  ) {
+    const headerToken = req.headers['x-session-token'];
+    const token = (Array.isArray(headerToken) ? headerToken[0] : headerToken) || req.cookies?.session_token || null;
+    return { user, token };
   }
 
   private setSessionCookie(res: Response, token: string, expiresAt: Date): void {
