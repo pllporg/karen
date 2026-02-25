@@ -14,12 +14,15 @@ type JsonRecord = Record<string, unknown>;
 
 @Injectable()
 export class ClioConnector implements IncrementalSyncConnector {
-  provider: 'CLIO' = 'CLIO';
+  provider = 'CLIO' as const;
   supportsOAuth = true;
 
   getAuthorizationUrl(params: ConnectorAuthorizationParams): string {
     const authUrl = process.env.CLIO_AUTH_URL || 'https://app.clio.com/oauth/authorize';
-    const clientId = process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
+    const liveOauth = this.isLiveOauthEnabled();
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('CLIO_CLIENT_ID', process.env.CLIO_CLIENT_ID)
+      : process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
 
     const query = new URLSearchParams({
       response_type: 'code',
@@ -35,8 +38,12 @@ export class ClioConnector implements IncrementalSyncConnector {
   async exchangeAuthorizationCode(params: ConnectorTokenExchangeParams): Promise<ConnectorTokenExchangeResult> {
     const liveOauth = this.isLiveOauthEnabled();
     const tokenUrl = process.env.CLIO_TOKEN_URL || 'https://app.clio.com/oauth/token';
-    const clientId = process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
-    const clientSecret = process.env.CLIO_CLIENT_SECRET || 'stub-clio-client-secret';
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('CLIO_CLIENT_ID', process.env.CLIO_CLIENT_ID)
+      : process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
+    const clientSecret = liveOauth
+      ? this.requireLiveOauthCredential('CLIO_CLIENT_SECRET', process.env.CLIO_CLIENT_SECRET)
+      : process.env.CLIO_CLIENT_SECRET || 'stub-clio-client-secret';
 
     if (!liveOauth) {
       return {
@@ -99,8 +106,12 @@ export class ClioConnector implements IncrementalSyncConnector {
   async refreshAccessToken(params: ConnectorRefreshParams): Promise<ConnectorTokenExchangeResult> {
     const liveOauth = this.isLiveOauthEnabled();
     const tokenUrl = process.env.CLIO_TOKEN_URL || 'https://app.clio.com/oauth/token';
-    const clientId = process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
-    const clientSecret = process.env.CLIO_CLIENT_SECRET || 'stub-clio-client-secret';
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('CLIO_CLIENT_ID', process.env.CLIO_CLIENT_ID)
+      : process.env.CLIO_CLIENT_ID || 'stub-clio-client-id';
+    const clientSecret = liveOauth
+      ? this.requireLiveOauthCredential('CLIO_CLIENT_SECRET', process.env.CLIO_CLIENT_SECRET)
+      : process.env.CLIO_CLIENT_SECRET || 'stub-clio-client-secret';
 
     if (!liveOauth) {
       const suffix = params.refreshToken.slice(0, 12);
@@ -229,9 +240,9 @@ export class ClioConnector implements IncrementalSyncConnector {
     const registrationUrl =
       this.readConfigString(config, 'webhookRegistrationUrl') || process.env.CLIO_WEBHOOK_REGISTER_URL || '';
     if (!registrationUrl) {
-      return {
-        subscriptionId: `clio-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
-      };
+      throw new Error(
+        'Clio live webhook subscription requires CLIO_WEBHOOK_REGISTER_URL or config.webhookRegistrationUrl',
+      );
     }
 
     const response = await fetch(registrationUrl, {
@@ -263,6 +274,11 @@ export class ClioConnector implements IncrementalSyncConnector {
   }
 
   private isLiveOauthEnabled(): boolean {
+    const providerSpecific = String(process.env.CLIO_LIVE_OAUTH || '').trim().toLowerCase();
+    if (providerSpecific) {
+      return providerSpecific === '1' || providerSpecific === 'true' || providerSpecific === 'yes' || providerSpecific === 'on';
+    }
+
     const value = String(process.env.INTEGRATION_OAUTH_ENABLE_LIVE || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes' || value === 'on';
   }
@@ -270,6 +286,14 @@ export class ClioConnector implements IncrementalSyncConnector {
   private isLiveSyncEnabled(): boolean {
     const value = String(process.env.INTEGRATION_SYNC_ENABLE_LIVE || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+  }
+
+  private requireLiveOauthCredential(name: string, rawValue: string | undefined): string {
+    const value = String(rawValue || '').trim();
+    if (!value || value.toLowerCase().startsWith('stub-')) {
+      throw new Error(`${name} must be configured with a non-stub value when Clio live OAuth is enabled`);
+    }
+    return value;
   }
 
   private async pullEntityRecords(input: {

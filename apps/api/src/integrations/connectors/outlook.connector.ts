@@ -3,7 +3,7 @@ import { ConnectorSyncParams, ConnectorSyncResult, ConnectorWebhookParams, Incre
 
 @Injectable()
 export class OutlookConnector implements IncrementalSyncConnector {
-  provider: 'OUTLOOK' = 'OUTLOOK';
+  provider = 'OUTLOOK' as const;
   supportsOAuth = false;
 
   async sync(params: ConnectorSyncParams): Promise<ConnectorSyncResult> {

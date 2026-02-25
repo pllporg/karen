@@ -14,12 +14,15 @@ type JsonRecord = Record<string, unknown>;
 
 @Injectable()
 export class MyCaseConnector implements IncrementalSyncConnector {
-  provider: 'MYCASE' = 'MYCASE';
+  provider = 'MYCASE' as const;
   supportsOAuth = true;
 
   getAuthorizationUrl(params: ConnectorAuthorizationParams): string {
     const authUrl = process.env.MYCASE_AUTH_URL || 'https://auth.mycase.com/oauth/authorize';
-    const clientId = process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
+    const liveOauth = this.isLiveOauthEnabled();
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('MYCASE_CLIENT_ID', process.env.MYCASE_CLIENT_ID)
+      : process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
 
     const query = new URLSearchParams({
       response_type: 'code',
@@ -35,8 +38,12 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   async exchangeAuthorizationCode(params: ConnectorTokenExchangeParams): Promise<ConnectorTokenExchangeResult> {
     const liveOauth = this.isLiveOauthEnabled();
     const tokenUrl = process.env.MYCASE_TOKEN_URL || 'https://auth.mycase.com/oauth/token';
-    const clientId = process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
-    const clientSecret = process.env.MYCASE_CLIENT_SECRET || 'stub-mycase-client-secret';
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('MYCASE_CLIENT_ID', process.env.MYCASE_CLIENT_ID)
+      : process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
+    const clientSecret = liveOauth
+      ? this.requireLiveOauthCredential('MYCASE_CLIENT_SECRET', process.env.MYCASE_CLIENT_SECRET)
+      : process.env.MYCASE_CLIENT_SECRET || 'stub-mycase-client-secret';
 
     if (!liveOauth) {
       return {
@@ -99,8 +106,12 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   async refreshAccessToken(params: ConnectorRefreshParams): Promise<ConnectorTokenExchangeResult> {
     const liveOauth = this.isLiveOauthEnabled();
     const tokenUrl = process.env.MYCASE_TOKEN_URL || 'https://auth.mycase.com/oauth/token';
-    const clientId = process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
-    const clientSecret = process.env.MYCASE_CLIENT_SECRET || 'stub-mycase-client-secret';
+    const clientId = liveOauth
+      ? this.requireLiveOauthCredential('MYCASE_CLIENT_ID', process.env.MYCASE_CLIENT_ID)
+      : process.env.MYCASE_CLIENT_ID || 'stub-mycase-client-id';
+    const clientSecret = liveOauth
+      ? this.requireLiveOauthCredential('MYCASE_CLIENT_SECRET', process.env.MYCASE_CLIENT_SECRET)
+      : process.env.MYCASE_CLIENT_SECRET || 'stub-mycase-client-secret';
 
     if (!liveOauth) {
       const suffix = params.refreshToken.slice(0, 12);
@@ -231,9 +242,9 @@ export class MyCaseConnector implements IncrementalSyncConnector {
     const registrationUrl =
       this.readConfigString(config, 'webhookRegistrationUrl') || process.env.MYCASE_WEBHOOK_REGISTER_URL || '';
     if (!registrationUrl) {
-      return {
-        subscriptionId: `mycase-${params.connectionId}-${this.slug(params.event)}-${Date.now()}`,
-      };
+      throw new Error(
+        'MyCase live webhook subscription requires MYCASE_WEBHOOK_REGISTER_URL or config.webhookRegistrationUrl',
+      );
     }
 
     const response = await fetch(registrationUrl, {
@@ -265,6 +276,11 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   }
 
   private isLiveOauthEnabled(): boolean {
+    const providerSpecific = String(process.env.MYCASE_LIVE_OAUTH || '').trim().toLowerCase();
+    if (providerSpecific) {
+      return providerSpecific === '1' || providerSpecific === 'true' || providerSpecific === 'yes' || providerSpecific === 'on';
+    }
+
     const value = String(process.env.INTEGRATION_OAUTH_ENABLE_LIVE || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes' || value === 'on';
   }
@@ -272,6 +288,14 @@ export class MyCaseConnector implements IncrementalSyncConnector {
   private isLiveSyncEnabled(): boolean {
     const value = String(process.env.INTEGRATION_SYNC_ENABLE_LIVE || '').trim().toLowerCase();
     return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+  }
+
+  private requireLiveOauthCredential(name: string, rawValue: string | undefined): string {
+    const value = String(rawValue || '').trim();
+    if (!value || value.toLowerCase().startsWith('stub-')) {
+      throw new Error(`${name} must be configured with a non-stub value when MyCase live OAuth is enabled`);
+    }
+    return value;
   }
 
   private async pullEntityRecords(input: {

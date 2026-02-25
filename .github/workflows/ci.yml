@@ -6,15 +6,13 @@ on:
   pull_request:
 
 jobs:
-  test:
+  api-test:
+    name: api-test
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
       REDIS_URL: redis://localhost:6379
       SESSION_SECRET: ci-session-secret
-      WEB_BASE_URL: http://localhost:3000
-      API_BASE_URL: http://localhost:4000
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
 
     services:
       postgres:
@@ -48,8 +46,52 @@ jobs:
       - run: pnpm --filter api prisma:generate
       - run: pnpm --filter api prisma:deploy
       - run: pnpm --filter api prisma:seed
+      - run: pnpm --filter api lint
       - run: pnpm --filter api test:core-workflow
+      - run: pnpm --filter api test:provider-live
       - run: pnpm --filter api test
+
+  web-test:
+    name: web-test
+    runs-on: ubuntu-latest
+    env:
+      WEB_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
       - run: pnpm --filter web test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: [api-test, web-test]
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
+      REDIS_URL: redis://localhost:6379
+      SESSION_SECRET: ci-session-secret
+      WEB_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - run: cp .env.example .env
+      - run: pnpm --filter api prisma:generate
       - run: pnpm --filter api build
       - run: pnpm --filter web build
