@@ -4,6 +4,14 @@ import { render, screen } from '@testing-library/react';
 import { AppShell } from '../components/app-shell';
 
 describe('AppShell', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('session_token', 'test-session-token');
+  });
+
+  afterEach(() => {
+    window.localStorage.removeItem('session_token');
+  });
+
   it('renders standardized sidebar navigation with active route semantics', () => {
     render(
       <AppShell>
