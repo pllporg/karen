@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-25T17:37:18.796Z",
+  "generatedAt": "2026-02-25T23:00:42.969Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -135,14 +135,13 @@
     "scopedIssueCount": 82,
     "stateCounts": {
       "Backlog": 7,
-      "In Progress": 5,
-      "Done": 70
+      "In Progress": 4,
+      "Done": 71
     },
     "inProgressIssueKeys": [
       "KAR-94",
       "KAR-90",
       "KAR-89",
-      "KAR-88",
       "KAR-87"
     ],
     "inProgressWithoutVerificationEvidence": [],
@@ -150,36 +149,36 @@
       {
         "key": "KAR-88",
         "title": "Replace raw-ID UX with selector-driven workflow primitives",
-        "state": "In Progress",
-        "updatedAt": "2026-02-25T17:37:11.279Z",
+        "state": "Done",
+        "updatedAt": "2026-02-25T18:02:48.393Z",
         "requirementId": "REQ-RC-002"
       },
       {
         "key": "KAR-89",
         "title": "Session/auth bootstrap hardening and protected-route behavior",
         "state": "In Progress",
-        "updatedAt": "2026-02-25T17:37:11.085Z",
+        "updatedAt": "2026-02-25T17:53:09.369Z",
         "requirementId": "REQ-RC-003"
       },
       {
         "key": "KAR-90",
         "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
         "state": "In Progress",
-        "updatedAt": "2026-02-25T17:37:10.792Z",
+        "updatedAt": "2026-02-25T17:53:09.126Z",
         "requirementId": "REQ-RC-004"
       },
       {
         "key": "KAR-94",
         "title": "API lint gate + static quality enforcement",
         "state": "In Progress",
-        "updatedAt": "2026-02-25T17:24:03.737Z",
+        "updatedAt": "2026-02-25T17:53:08.783Z",
         "requirementId": "REQ-RC-008"
       },
       {
         "key": "KAR-87",
         "title": "Stabilize flaky web/api suites and CI determinism",
         "state": "In Progress",
-        "updatedAt": "2026-02-24T19:26:00.523Z",
+        "updatedAt": "2026-02-25T17:44:16.488Z",
         "requirementId": "REQ-RC-001"
       },
       {
@@ -230,18 +229,22 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-25T17:33:56.353Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-25T23:00:41.326Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "86ac64252f3904b6f1fb0ce0bbb4dd44d9cf8435",
+    "gitHead": "2a13f77eed2d54297ae6eed4ce474c5dcdeb1be8",
     "gitStatusShort": [
-      "## lin/KAR-87-rc-matrix-handoff-alignment",
-      "M  docs/SESSION_HANDOFF.md",
-      "M  tools/backlog-sync/requirements.matrix.json",
-      "M  tools/backlog-sync/seed_parity_backlog.mjs",
-      "MM tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main",
+      " M README.md",
+      " M docs/SESSION_HANDOFF.md",
+      " M docs/WORKING_CONTRACT.md",
+      " M package.json",
+      " M tools/backlog-sync/README.md",
+      "?? docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md",
+      "?? docs/codex-cloud/",
+      "?? tools/backlog-sync/refresh_handoff_from_snapshot.mjs"
     ],
-    "dirtyFileCount": 4
+    "dirtyFileCount": 8
   }
 }
