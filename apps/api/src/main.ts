@@ -5,6 +5,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
+import { OpsService } from './ops/ops.service';
+import { assertProviderReadiness } from './ops/provider-readiness.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -41,6 +43,9 @@ async function bootstrap() {
 
   const prisma = app.get(PrismaService);
   await prisma.enableShutdownHooks(app);
+
+  const providerStatus = app.get(OpsService).providerStatus();
+  assertProviderReadiness(providerStatus.profile, providerStatus.providers);
 
   const port = Number(process.env.API_PORT || 4000);
   await app.listen(port);

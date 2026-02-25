@@ -24,6 +24,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { PortalModule } from './portal/portal.module';
+import { LookupsModule } from './lookups/lookups.module';
+import { OpsModule } from './ops/ops.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { GuardsModule } from './common/guards/guards.module';
 
@@ -56,6 +58,8 @@ import { GuardsModule } from './common/guards/guards.module';
     WebhooksModule,
     ReportingModule,
     PortalModule,
+    LookupsModule,
+    OpsModule,
   ],
   providers: [
     {

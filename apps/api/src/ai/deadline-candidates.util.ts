@@ -63,7 +63,7 @@ function parseStructuredRows(content: string): Array<Omit<DeadlineCandidate, 'id
   }
 
   const bulletRegex =
-    /(?:^|\n)\s*[-*]\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},\s+\d{4})\s*[:\-]\s*([^\n]+)/gi;
+    /(?:^|\n)\s*[-*]\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},\s+\d{4})\s*[:-]\s*([^\n]+)/gi;
   let match = bulletRegex.exec(content);
   while (match) {
     const normalizedDate = normalizeDate(match[1]);
