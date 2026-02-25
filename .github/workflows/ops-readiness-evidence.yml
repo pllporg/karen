@@ -1,0 +1,104 @@
+name: Ops Readiness Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "master"]
+
+jobs:
+  ops-readiness-evidence:
+    name: ops-readiness-evidence
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
+      REDIS_URL: redis://localhost:6379
+      SESSION_SECRET: ci-session-secret
+      API_PORT: 4000
+      RUNTIME_PROFILE: staging
+      WEB_BASE_URL: http://127.0.0.1:3000
+      API_BASE_URL: http://127.0.0.1:4000
+      STRIPE_SECRET_KEY: sk_test_ci_stub
+      STRIPE_WEBHOOK_SECRET: whsec_ci_stub
+      MESSAGE_EMAIL_PROVIDER: resend
+      RESEND_API_KEY: re_ci_stub
+      RESEND_FROM_EMAIL: noreply@lic-ci.local
+      MESSAGE_SMS_PROVIDER: twilio
+      TWILIO_ACCOUNT_SID: ACci123
+      TWILIO_AUTH_TOKEN: tokenci123
+      TWILIO_FROM_PHONE: "+15555550001"
+      MALWARE_SCANNER_PROVIDER: clamav
+      MALWARE_SCANNER_FAIL_OPEN: "false"
+      CLAMAV_HOST: 127.0.0.1
+      CLAMAV_PORT: "3310"
+      ESIGN_PROVIDER: sandbox
+      ESIGN_SANDBOX_WEBHOOK_SECRET: esign_ci_secret
+      INTEGRATION_OAUTH_ENABLE_LIVE: "true"
+      CLIO_CLIENT_ID: clio_ci_client
+      CLIO_CLIENT_SECRET: clio_ci_secret
+      MYCASE_CLIENT_ID: mycase_ci_client
+      MYCASE_CLIENT_SECRET: mycase_ci_secret
+      INTEGRATION_SYNC_ENABLE_LIVE: "true"
+      CLIO_WEBHOOK_REGISTER_URL: https://clio.example/webhooks
+      MYCASE_WEBHOOK_REGISTER_URL: https://mycase.example/webhooks
+      OPS_EVIDENCE_USER_EMAIL: admin@lic-demo.local
+      OPS_EVIDENCE_USER_PASSWORD: ChangeMe123!
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        ports: ["5432:5432"]
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: karen
+        options: >-
+          --health-cmd="pg_isready -U postgres -d karen"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install PostgreSQL client tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - run: pnpm install
+      - run: cp .env.example .env
+      - run: mkdir -p artifacts/ops
+      - run: pnpm --filter api prisma:generate
+      - run: pnpm --filter api prisma:deploy
+      - run: pnpm --filter api prisma:seed
+      - name: Backup/restore rollback drill
+        run: pnpm ops:drill:backup-restore -- --out-dir artifacts/ops
+      - name: Start API for provider-status evidence
+        run: |
+          pnpm --filter api dev > artifacts/ops/api.log 2>&1 &
+          echo $! > artifacts/ops/api.pid
+      - name: Capture provider-status evidence
+        run: |
+          pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
+      - name: Stop API process
+        if: always()
+        run: |
+          if [ -f artifacts/ops/api.pid ]; then
+            kill "$(cat artifacts/ops/api.pid)" || true
+          fi
+      - name: Upload ops readiness artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-readiness-evidence
+          path: artifacts/ops
+          if-no-files-found: error
