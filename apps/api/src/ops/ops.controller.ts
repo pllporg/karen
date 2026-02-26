@@ -20,4 +20,10 @@ export class OpsController {
   alertBaseline() {
     return this.opsService.alertBaseline();
   }
+
+  @Get('launch-blockers')
+  @RequirePermissions('organizations:read')
+  launchBlockers() {
+    return this.opsService.launchBlockers();
+  }
 }

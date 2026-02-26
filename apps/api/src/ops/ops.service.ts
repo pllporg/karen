@@ -18,6 +18,18 @@ type ProviderStatusRow = {
   missingEnv?: string[];
 };
 
+type LaunchBlockerSeverity = 'critical' | 'warning';
+
+type LaunchBlocker = {
+  key: 'provider_readiness' | 'webhook_retries' | 'queue_backlog' | 'backup_restore_freshness';
+  title: string;
+  severity: LaunchBlockerSeverity;
+  status: 'blocked' | 'warning';
+  observedAt: string;
+  summary: string;
+  runbookUrl: string;
+};
+
 @Injectable()
 export class OpsService {
   constructor(
@@ -61,6 +73,91 @@ export class OpsService {
           providerUnhealthyCount,
         },
       }),
+    };
+  }
+
+  async launchBlockers() {
+    const now = new Date();
+    const providerStatus = this.providerStatus();
+    const blockers: LaunchBlocker[] = [];
+
+    const criticalProviderFailures = providerStatus.providers.filter((provider) => provider.critical && !provider.healthy);
+    if (criticalProviderFailures.length > 0) {
+      blockers.push({
+        key: 'provider_readiness',
+        title: 'Provider readiness',
+        severity: 'critical',
+        status: 'blocked',
+        observedAt: providerStatus.evaluatedAt,
+        summary: `${criticalProviderFailures.length} critical provider checks failing (${criticalProviderFailures
+          .map((provider) => provider.key)
+          .join(', ')})`,
+        runbookUrl: '/docs/DEPLOYMENT_RUNBOOK.md#4-startup-readiness-checks',
+      });
+    }
+
+    const webhookRetryThreshold = this.readInt('OPS_LAUNCH_BLOCKER_WEBHOOK_RETRY_THRESHOLD', 5, 1, 10_000);
+    const queueBacklogThreshold = this.readInt('OPS_LAUNCH_BLOCKER_QUEUE_BACKLOG_THRESHOLD', 20, 1, 100_000);
+    const backupFreshnessHours = this.readInt('OPS_LAUNCH_BLOCKER_BACKUP_FRESHNESS_HOURS', 24, 1, 24 * 30);
+
+    const [retryingDeliveries, queuedJobs, oldestQueuedJob, latestBackupJob] = await Promise.all([
+      this.prisma?.webhookDelivery.count({ where: { status: 'RETRYING' } }) || Promise.resolve(0),
+      this.prisma?.aiJob.count({ where: { status: 'QUEUED' } }) || Promise.resolve(0),
+      this.prisma?.aiJob.findFirst({ where: { status: 'QUEUED' }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }) ||
+        Promise.resolve(null),
+      this.prisma?.exportJob.findFirst({
+        where: { exportType: 'full_backup', status: 'COMPLETED' },
+        orderBy: { finishedAt: 'desc' },
+        select: { finishedAt: true, createdAt: true },
+      }) || Promise.resolve(null),
+    ]);
+
+    if (retryingDeliveries >= webhookRetryThreshold) {
+      blockers.push({
+        key: 'webhook_retries',
+        title: 'Webhook retries',
+        severity: 'warning',
+        status: 'warning',
+        observedAt: now.toISOString(),
+        summary: `${retryingDeliveries} deliveries currently retrying (threshold ${webhookRetryThreshold})`,
+        runbookUrl: '/docs/DEPLOYMENT_RUNBOOK.md#6-incident-response',
+      });
+    }
+
+    if (queuedJobs >= queueBacklogThreshold) {
+      blockers.push({
+        key: 'queue_backlog',
+        title: 'Queue backlog',
+        severity: 'warning',
+        status: 'warning',
+        observedAt: oldestQueuedJob?.createdAt?.toISOString() || now.toISOString(),
+        summary: `${queuedJobs} queued AI jobs (threshold ${queueBacklogThreshold})`,
+        runbookUrl: '/docs/DEPLOYMENT_RUNBOOK.md#7-baseline-slos-and-metrics',
+      });
+    }
+
+    const latestBackupAt = latestBackupJob?.finishedAt || latestBackupJob?.createdAt;
+    const backupAgeMs = latestBackupAt ? now.getTime() - latestBackupAt.getTime() : Number.POSITIVE_INFINITY;
+    const backupAgeHours = backupAgeMs / 3_600_000;
+
+    if (!Number.isFinite(backupAgeHours) || backupAgeHours > backupFreshnessHours) {
+      blockers.push({
+        key: 'backup_restore_freshness',
+        title: 'Backup/restore freshness',
+        severity: 'critical',
+        status: 'blocked',
+        observedAt: latestBackupAt?.toISOString() || now.toISOString(),
+        summary: latestBackupAt
+          ? `Most recent completed full backup is ${backupAgeHours.toFixed(1)}h old (max ${backupFreshnessHours}h)`
+          : 'No completed full backup found for backup/restore verification',
+        runbookUrl: '/docs/DEPLOYMENT_RUNBOOK.md#5-rollback-procedure',
+      });
+    }
+
+    return {
+      evaluatedAt: now.toISOString(),
+      healthy: blockers.length === 0,
+      blockers,
     };
   }
 

@@ -46,6 +46,23 @@ type ProviderStatusSnapshot = {
   providers: ProviderStatusRow[];
 };
 
+
+type LaunchBlocker = {
+  key: string;
+  title: string;
+  severity: 'critical' | 'warning';
+  status: 'blocked' | 'warning';
+  observedAt: string;
+  summary: string;
+  runbookUrl: string;
+};
+
+type LaunchBlockersSnapshot = {
+  evaluatedAt: string;
+  healthy: boolean;
+  blockers: LaunchBlocker[];
+};
+
 export default function AdminPage() {
   const [org, setOrg] = useState<{ name: string; slug: string } | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; user: { email: string }; role?: { name: string } }>>([]);
@@ -92,6 +109,8 @@ export default function AdminPage() {
   const [retryingDeliveryId, setRetryingDeliveryId] = useState<string | null>(null);
   const [providerStatus, setProviderStatus] = useState<ProviderStatusSnapshot | null>(null);
   const [providerStatusError, setProviderStatusError] = useState<string | null>(null);
+  const [launchBlockers, setLaunchBlockers] = useState<LaunchBlockersSnapshot | null>(null);
+  const [launchBlockersError, setLaunchBlockersError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -149,6 +168,15 @@ export default function AdminPage() {
       })
       .catch(() => {
         setProviderStatusError('Provider diagnostics unavailable.');
+      });
+
+    apiFetch<LaunchBlockersSnapshot>('/ops/launch-blockers')
+      .then((snapshot) => {
+        setLaunchBlockers(snapshot);
+        setLaunchBlockersError(null);
+      })
+      .catch(() => {
+        setLaunchBlockersError('Launch blocker diagnostics unavailable.');
       });
   }, []);
 
@@ -607,6 +635,58 @@ export default function AdminPage() {
             <p style={{ color: 'var(--lic-text-muted)', marginTop: 0 }}>{providerStatusError || 'Loading provider diagnostics...'}</p>
           )}
         </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Production Launch Blockers</h3>
+          {launchBlockers ? (
+            <>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+                <span className="badge">{launchBlockers.healthy ? 'CLEAR' : 'ACTION REQUIRED'}</span>
+                <span style={{ color: 'var(--lic-text-muted)' }}>
+                  Evaluated: {new Date(launchBlockers.evaluatedAt).toLocaleString()}
+                </span>
+              </div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Blocker</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Observed</th>
+                    <th>Summary</th>
+                    <th>Runbook</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {launchBlockers.blockers.map((blocker) => (
+                    <tr key={blocker.key}>
+                      <td>{blocker.title}</td>
+                      <td>{blocker.severity.toUpperCase()}</td>
+                      <td>{blocker.status.toUpperCase()}</td>
+                      <td>{new Date(blocker.observedAt).toLocaleString()}</td>
+                      <td>{blocker.summary}</td>
+                      <td>
+                        <a href={blocker.runbookUrl} target="_blank" rel="noreferrer">
+                          Open runbook
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                  {launchBlockers.blockers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ color: 'var(--lic-text-muted)' }}>
+                        No unresolved launch blockers.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p style={{ color: 'var(--lic-text-muted)', marginTop: 0 }}>{launchBlockersError || 'Loading launch blockers...'}</p>
+          )}
+        </div>
+
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Webhook Delivery Monitor</h3>
