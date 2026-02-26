@@ -62,7 +62,7 @@ describe('provider live validation matrix', () => {
     expect(status.healthy).toBe(false);
 
     const email = status.providers.find((row) => row.key === 'email');
-    const clio = status.providers.find((row) => row.key === 'clio_oauth');
+    const clio = status.providers.find((row) => row.key === 'clio');
     expect(email?.missingEnv).toContain('RESEND_API_KEY');
     expect(clio?.missingEnv).toContain('CLIO_CLIENT_SECRET');
     expect(() => assertProviderReadiness(status.profile, status.providers)).toThrow('RESEND_API_KEY');
@@ -87,7 +87,7 @@ describe('provider live validation matrix', () => {
     process.env.MALWARE_SCANNER_FAIL_OPEN = 'true';
 
     const status = new OpsService().providerStatus();
-    const malware = status.providers.find((row) => row.key === 'malware_scan');
+    const malware = status.providers.find((row) => row.key === 'malware_scanner');
 
     expect(status.healthy).toBe(false);
     expect(malware?.missingEnv).toContain('MALWARE_SCANNER_FAIL_OPEN=false');
@@ -102,7 +102,7 @@ describe('provider live validation matrix', () => {
     process.env.CLIO_CLIENT_SECRET = 'stub-clio-client-secret';
 
     const status = new OpsService().providerStatus();
-    const clio = status.providers.find((row) => row.key === 'clio_oauth');
+    const clio = status.providers.find((row) => row.key === 'clio');
 
     expect(status.healthy).toBe(false);
     expect(clio?.missingEnv).toContain('CLIO_CLIENT_ID');
@@ -115,8 +115,8 @@ describe('provider live validation matrix', () => {
     delete process.env.MYCASE_WEBHOOK_REGISTER_URL;
 
     const status = new OpsService().providerStatus();
-    const clioWebhook = status.providers.find((row) => row.key === 'clio_webhooks');
-    const mycaseWebhook = status.providers.find((row) => row.key === 'mycase_webhooks');
+    const clioWebhook = status.providers.find((row) => row.key === 'connectors_clio_webhooks');
+    const mycaseWebhook = status.providers.find((row) => row.key === 'connectors_mycase_webhooks');
 
     expect(status.healthy).toBe(false);
     expect(clioWebhook?.missingEnv).toContain('CLIO_WEBHOOK_REGISTER_URL');

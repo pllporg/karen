@@ -35,6 +35,9 @@ describe('PortalPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/auth/session') && method === 'GET') {
+        return jsonResponse({ user: { id: 'user-portal' }, token: 'test-session-token' });
+      }
       if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
       if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
       if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
@@ -123,6 +126,9 @@ describe('PortalPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/auth/session') && method === 'GET') {
+        return jsonResponse({ user: { id: 'user-portal' }, token: 'test-session-token' });
+      }
       if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
       if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
       if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
@@ -228,6 +234,9 @@ describe('PortalPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/auth/session') && method === 'GET') {
+        return jsonResponse({ user: { id: 'user-portal' }, token: 'test-session-token' });
+      }
       if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
       if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
       if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
@@ -285,6 +294,9 @@ describe('PortalPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/auth/session') && method === 'GET') {
+        return jsonResponse({ user: { id: 'user-portal' }, token: 'test-session-token' });
+      }
       if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
       if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
       if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
@@ -420,6 +432,9 @@ describe('PortalPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/auth/session') && method === 'GET') {
+        return jsonResponse({ user: { id: 'user-portal' }, token: 'test-session-token' });
+      }
       if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
       if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
       if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);

@@ -21,7 +21,9 @@ describe('OpsService provider status', () => {
     const status = service.providerStatus();
 
     expect(status.healthy).toBe(false);
+    expect(status.providers.every((row) => typeof row.checkedAt === 'string')).toBe(true);
     expect(status.providers.some((row) => row.key === 'stripe' && row.healthy === false)).toBe(true);
+    expect(status.providers.some((row) => row.key === 'email' && (row.issues || []).length > 0)).toBe(true);
   });
 
   it('marks providers healthy when live mode is configured', () => {
@@ -81,8 +83,8 @@ describe('OpsService provider status', () => {
 
     const service = new OpsService();
     const status = service.providerStatus();
-    const clio = status.providers.find((row) => row.key === 'clio_oauth');
-    const mycase = status.providers.find((row) => row.key === 'mycase_oauth');
+    const clio = status.providers.find((row) => row.key === 'clio');
+    const mycase = status.providers.find((row) => row.key === 'mycase');
 
     expect(clio?.mode).toBe('live');
     expect(mycase?.mode).toBe('live');

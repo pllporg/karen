@@ -80,13 +80,15 @@ describe('AppShell auth bootstrap', () => {
     );
 
     await screen.findByText('Verifying Session');
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:4000/auth/session',
-      expect.objectContaining({
-        method: 'GET',
-        credentials: 'include',
-      }),
-    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/auth/session',
+        expect.objectContaining({
+          method: 'GET',
+          credentials: 'include',
+        }),
+      );
+    });
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith('/login?next=%2Fdocuments');
     });

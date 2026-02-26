@@ -4,8 +4,11 @@ import { isProductionLikeProfile } from './provider-readiness.util';
 type ProviderStatusRow = {
   key: string;
   mode: string;
+  provider: string;
   critical: boolean;
   healthy: boolean;
+  issues: string[];
+  checkedAt: string;
   detail: string;
   missingEnv?: string[];
 };
@@ -13,6 +16,7 @@ type ProviderStatusRow = {
 @Injectable()
 export class OpsService {
   providerStatus() {
+    const checkedAt = new Date().toISOString();
     const profile = (process.env.RUNTIME_PROFILE || process.env.NODE_ENV || 'development').toLowerCase();
     const productionLike = isProductionLikeProfile(profile);
     const syncLiveEnabled = this.isEnabled(process.env.INTEGRATION_SYNC_ENABLE_LIVE);
@@ -24,6 +28,7 @@ export class OpsService {
         mode: this.hasEnv('STRIPE_SECRET_KEY') ? 'live' : 'stub',
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['live', 'stub'],
         missingEnv: this.collectMissing([
           {
@@ -48,6 +53,7 @@ export class OpsService {
         mode: emailMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'resend'],
         missingEnv: this.collectMissing(
           [
@@ -75,6 +81,7 @@ export class OpsService {
         mode: smsMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'twilio'],
         missingEnv: this.collectMissing(
           [
@@ -102,10 +109,11 @@ export class OpsService {
     const malwareMode = this.normalizeMode(process.env.MALWARE_SCANNER_PROVIDER, 'stub');
     providers.push(
       this.row({
-        key: 'malware_scan',
+        key: 'malware_scanner',
         mode: malwareMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'clamav'],
         missingEnv: this.collectMissing(
           [
@@ -133,6 +141,7 @@ export class OpsService {
         mode: esignMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'sandbox'],
         missingEnv: this.collectMissing(
           [
@@ -150,10 +159,11 @@ export class OpsService {
     const clioMode = this.resolveOauthMode('CLIO_LIVE_OAUTH');
     providers.push(
       this.row({
-        key: 'clio_oauth',
+        key: 'clio',
         mode: clioMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'live'],
         missingEnv: this.collectMissing(
           [
@@ -175,10 +185,11 @@ export class OpsService {
     const mycaseMode = this.resolveOauthMode('MYCASE_LIVE_OAUTH');
     providers.push(
       this.row({
-        key: 'mycase_oauth',
+        key: 'mycase',
         mode: mycaseMode,
         critical: true,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'live'],
         missingEnv: this.collectMissing(
           [
@@ -199,10 +210,11 @@ export class OpsService {
 
     providers.push(
       this.row({
-        key: 'clio_webhooks',
+        key: 'connectors_clio_webhooks',
         mode: syncLiveEnabled ? 'live' : 'stub',
         critical: syncLiveEnabled,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'live'],
         missingEnv: this.collectMissing(
           [
@@ -221,10 +233,11 @@ export class OpsService {
 
     providers.push(
       this.row({
-        key: 'mycase_webhooks',
+        key: 'connectors_mycase_webhooks',
         mode: syncLiveEnabled ? 'live' : 'stub',
         critical: syncLiveEnabled,
         productionLike,
+        checkedAt,
         supportedModes: ['stub', 'live'],
         missingEnv: this.collectMissing(
           [
@@ -246,7 +259,7 @@ export class OpsService {
     return {
       profile,
       healthy,
-      evaluatedAt: new Date().toISOString(),
+      evaluatedAt: checkedAt,
       providers,
     };
   }
@@ -256,6 +269,7 @@ export class OpsService {
     mode: string;
     critical: boolean;
     productionLike: boolean;
+    checkedAt: string;
     detail: string;
     supportedModes: string[];
     missingEnv?: string[];
@@ -265,30 +279,32 @@ export class OpsService {
     const unsupportedMode = !supportedModes.includes(mode);
     const missingEnv = [...new Set((input.missingEnv || []).map((item) => String(item || '').trim()).filter(Boolean))];
 
-    let healthy = true;
+    const issues: string[] = [];
     if (unsupportedMode) {
-      healthy = false;
+      issues.push(`Unsupported mode "${mode}" (supported: ${supportedModes.join(', ')})`);
     }
     if (input.critical && missingEnv.length > 0) {
-      healthy = false;
+      issues.push(`Missing required configuration: ${missingEnv.join(', ')}`);
     }
     if (input.critical && input.productionLike && (mode === 'stub' || mode === 'false' || mode === 'off')) {
-      healthy = false;
+      issues.push('Critical provider cannot run in stub mode for production-like profiles');
     }
 
+    const healthy = issues.length === 0;
+
     const detailParts = [input.detail];
-    if (unsupportedMode) {
-      detailParts.push(`Unsupported mode "${mode}" (supported: ${supportedModes.join(', ')})`);
-    }
-    if (missingEnv.length > 0) {
-      detailParts.push(`Missing: ${missingEnv.join(', ')}`);
+    if (issues.length > 0) {
+      detailParts.push(issues.join('. '));
     }
 
     return {
       key: input.key,
       mode,
+      provider: mode,
       critical: input.critical,
       healthy,
+      issues,
+      checkedAt: input.checkedAt,
       detail: detailParts.join('. '),
       missingEnv,
     };

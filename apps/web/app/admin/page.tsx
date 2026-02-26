@@ -30,8 +30,11 @@ type WebhookDeliverySummary = {
 type ProviderStatusRow = {
   key: string;
   mode: string;
+  provider?: string;
   critical: boolean;
   healthy: boolean;
+  issues?: string[];
+  checkedAt?: string;
   detail: string;
   missingEnv?: string[];
 };
@@ -582,17 +585,19 @@ export default function AdminPage() {
                     <th>Mode</th>
                     <th>Critical</th>
                     <th>Status</th>
-                    <th>Missing Env</th>
+                    <th>Issues</th>
+                    <th>Checked</th>
                   </tr>
                 </thead>
                 <tbody>
                   {providerStatus.providers.map((provider) => (
                     <tr key={provider.key}>
                       <td>{provider.key}</td>
-                      <td>{provider.mode}</td>
+                      <td>{provider.provider || provider.mode}</td>
                       <td>{provider.critical ? 'Yes' : 'No'}</td>
                       <td>{provider.healthy ? 'HEALTHY' : 'UNHEALTHY'}</td>
-                      <td>{provider.missingEnv && provider.missingEnv.length > 0 ? provider.missingEnv.join(', ') : '-'}</td>
+                      <td>{provider.issues && provider.issues.length > 0 ? provider.issues.join('; ') : '-'}</td>
+                      <td>{provider.checkedAt ? new Date(provider.checkedAt).toLocaleString() : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
