@@ -383,6 +383,15 @@ export default function AiPage() {
     }));
   }
 
+  function resolveMatterLabel(matterId: string | null | undefined): string {
+    if (!matterId) return 'Matter not specified';
+    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
+  }
+
+  function renderSourceDocLabel(sourceDoc: StylePackSourceDoc): string {
+    return `${sourceDoc.documentVersion.document.title} | Uploaded ${formatUtcTimestamp(sourceDoc.documentVersion.uploadedAt)}`;
+  }
+
   return (
     <AppShell>
       <PageHeader title="AI Workspace" subtitle="Draft-only legal AI workflows with provenance, citations, and review status." />
@@ -449,14 +458,14 @@ export default function AiPage() {
               <div style={{ marginTop: 8, display: 'grid', gap: 8, gridTemplateColumns: '1fr auto' }}>
                 <select
                   className="input"
-                  aria-label={`Style Pack Source Document ${stylePack.id}`}
+                  aria-label={`Style Pack Source Document ${stylePack.name}`}
                   value={draft.documentVersionId}
                   onChange={(event) => updateStylePackDraft(stylePack.id, 'documentVersionId', event.target.value)}
                 >
                   <option value="">Select source document version</option>
                   {documentVersionOptions.map((version) => (
                     <option key={version.id} value={version.id}>
-                      {version.label}
+                      {`${version.document.title} | ${resolveMatterLabel(version.document.matterId)}`}
                     </option>
                   ))}
                 </select>
@@ -490,7 +499,7 @@ export default function AiPage() {
                       }}
                     >
                       <span>
-                        {sourceDoc.documentVersion.document.title} ({sourceDoc.documentVersionId})
+                        {renderSourceDocLabel(sourceDoc)}
                       </span>
                       <button
                         className="button ghost"
@@ -561,7 +570,7 @@ export default function AiPage() {
               <Fragment key={job.id}>
                 <tr>
                   <td>{job.toolName}</td>
-                  <td>{job.matterId}</td>
+                  <td>{resolveMatterLabel(job.matterId)}</td>
                   <td>{job.status}</td>
                   <td>{job.artifacts?.length || 0}</td>
                 </tr>

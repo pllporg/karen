@@ -70,7 +70,7 @@ describe('DocumentsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('cell', { name: 'Inspection Report' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'matter-1' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'M-1 - Doe v Builder' })).toBeInTheDocument();
     });
   });
 
@@ -131,7 +131,7 @@ describe('DocumentsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('cell', { name: 'Generated Client Letter' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'matter-9' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'M-9 - Client Letter Matter' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'Yes' })).toBeInTheDocument();
     });
   });
