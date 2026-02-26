@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { bootstrapSession, getSessionToken, logoutSession } from '../lib/api';
+import { bootstrapSession, clearSessionToken, getSessionToken, logoutSession } from '../lib/api';
 import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname() || '';
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [authReady, setAuthReady] = useState(() => Boolean(getSessionToken()));
+  const [authReady, setAuthReady] = useState(() => path.startsWith('/login') || Boolean(getSessionToken()));
   const [shellMode, setShellMode] = useState<ShellViewportMode>(() => {
     if (typeof window === 'undefined') {
       return 'desktop';
@@ -79,6 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       .then((ok) => {
         if (cancelled) return;
         if (!ok) {
+          clearSessionToken();
           const nextPath = path && path !== '/' ? path : '/dashboard';
           router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
           return;
@@ -87,6 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (cancelled) return;
+        clearSessionToken();
         const nextPath = path && path !== '/' ? path : '/dashboard';
         router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
       });

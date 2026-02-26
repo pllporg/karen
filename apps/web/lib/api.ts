@@ -32,24 +32,27 @@ function buildHeaders(init: RequestInit | undefined, token: string | null): Reco
 
 export async function bootstrapSession(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
-  if (getSessionToken()) return true;
   if (sessionBootstrapInFlight) return sessionBootstrapInFlight;
 
   sessionBootstrapInFlight = (async () => {
+    const token = getSessionToken();
     const response = await fetch(`${API_BASE}/auth/session`, {
       method: 'GET',
       headers: {
         'content-type': 'application/json',
+        ...(token ? { 'x-session-token': token } : {}),
       },
       credentials: 'include',
     }).catch(() => null);
 
     if (!response || !response.ok) {
+      clearSessionToken();
       return false;
     }
 
     const payload = (await response.json().catch(() => null)) as { token?: string | null; user?: unknown } | null;
     if (!payload?.user) {
+      clearSessionToken();
       return false;
     }
 
@@ -89,6 +92,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   let response = await execute(token);
 
   if (response.status === 401 && !shouldSkipSessionBootstrap(path)) {
+    clearSessionToken();
     const recovered = await bootstrapSession();
     if (recovered) {
       token = getSessionToken();
