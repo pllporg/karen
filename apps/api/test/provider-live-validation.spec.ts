@@ -50,6 +50,15 @@ describe('provider live validation matrix', () => {
     const status = new OpsService().providerStatus();
     expect(status.profile).toBe('staging');
     expect(status.healthy).toBe(true);
+    expect(status.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'stripe', status: 'pass' }),
+        expect.objectContaining({ key: 'email', status: 'pass' }),
+        expect.objectContaining({ key: 'sms', status: 'pass' }),
+        expect.objectContaining({ key: 'malware_scanner', status: 'pass' }),
+        expect.objectContaining({ key: 'esign', status: 'pass' }),
+      ]),
+    );
     expect(() => assertProviderReadiness(status.profile, status.providers)).not.toThrow();
   });
 
@@ -61,8 +70,10 @@ describe('provider live validation matrix', () => {
     const status = new OpsService().providerStatus();
     expect(status.healthy).toBe(false);
 
+    const emailDiagnostic = status.diagnostics.find((row) => row.key === 'email');
     const email = status.providers.find((row) => row.key === 'email');
     const clio = status.providers.find((row) => row.key === 'clio');
+    expect(emailDiagnostic?.status).toBe('fail');
     expect(email?.missingEnv).toContain('RESEND_API_KEY');
     expect(clio?.missingEnv).toContain('CLIO_CLIENT_SECRET');
     expect(() => assertProviderReadiness(status.profile, status.providers)).toThrow('RESEND_API_KEY');
