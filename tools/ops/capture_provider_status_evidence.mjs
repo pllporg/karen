@@ -8,7 +8,9 @@ const args = parseArgs({
   allowPositionals: true,
   options: {
     'api-base': { type: 'string', default: process.env.API_BASE_URL || 'http://127.0.0.1:4000' },
-    out: { type: 'string', default: 'artifacts/ops/provider-status-evidence.json' },
+    out: { type: 'string', default: 'artifacts/ops/provider-readiness-evidence.json' },
+    'json-out': { type: 'string' },
+    'md-out': { type: 'string' },
     email: { type: 'string', default: process.env.OPS_EVIDENCE_USER_EMAIL || 'admin@lic-demo.local' },
     password: { type: 'string', default: process.env.OPS_EVIDENCE_USER_PASSWORD || 'ChangeMe123!' },
     token: { type: 'string', default: process.env.OPS_EVIDENCE_SESSION_TOKEN || '' },
@@ -17,7 +19,8 @@ const args = parseArgs({
 });
 
 const apiBase = String(args.values['api-base']).replace(/\/+$/, '');
-const outPath = resolve(String(args.values.out));
+const jsonOutPath = resolve(String(args.values['json-out'] || args.values.out));
+const mdOutPath = resolve(String(args.values['md-out'] || jsonOutPath.replace(/\.json$/i, '.md')));
 const email = String(args.values.email || '').trim();
 const password = String(args.values.password || '').trim();
 let sessionToken = String(args.values.token || '').trim();
@@ -44,7 +47,7 @@ if (!sessionToken) {
 
   const loginText = await login.text();
   if (!login.ok) {
-    throw new Error(`Login failed (${login.status}) while capturing provider status evidence: ${clip(loginText)}`);
+    throw new Error(`Login failed (${login.status}) while exporting provider readiness evidence: ${clip(loginText)}`);
   }
 
   let loginPayload = {};
@@ -78,21 +81,64 @@ try {
   throw new Error(`Provider status response was not valid JSON: ${clip(providerText)}`);
 }
 
+const providers = Array.isArray(payload.providers) ? payload.providers : [];
+const blockingIssues = providers.flatMap((provider) => {
+  const issues = Array.isArray(provider.issues) ? provider.issues : [];
+  return issues.map((issue) => ({
+    provider: provider.key || 'unknown',
+    critical: Boolean(provider.critical),
+    healthy: Boolean(provider.healthy),
+    issue,
+    missingEnv: Array.isArray(provider.missingEnv) ? provider.missingEnv : [],
+  }));
+}).filter((issue) => issue.critical && !issue.healthy);
+
 const evidence = {
+  requirement: 'REQ-RC-013',
   capturedAt: new Date().toISOString(),
   source: `${apiBase}/ops/provider-status`,
-  profile: payload.profile || null,
+  environmentProfile: payload.profile || null,
   healthy: Boolean(payload.healthy),
   evaluatedAt: payload.evaluatedAt || null,
-  providerCount: Array.isArray(payload.providers) ? payload.providers.length : 0,
-  providers: Array.isArray(payload.providers) ? payload.providers : [],
+  providerCount: providers.length,
+  providers,
+  blockingIssues,
   authUser,
 };
 
-mkdirSync(dirname(outPath), { recursive: true });
-writeFileSync(outPath, JSON.stringify(evidence, null, 2));
+mkdirSync(dirname(jsonOutPath), { recursive: true });
+writeFileSync(jsonOutPath, JSON.stringify(evidence, null, 2));
 
-console.log(`Captured provider status evidence -> ${outPath}`);
+mkdirSync(dirname(mdOutPath), { recursive: true });
+writeFileSync(mdOutPath, renderMarkdown(evidence));
+
+console.log(`Exported provider readiness evidence -> ${jsonOutPath}`);
+console.log(`Exported provider readiness report -> ${mdOutPath}`);
+
+function renderMarkdown(evidencePayload) {
+  const rows = evidencePayload.providers.length
+    ? evidencePayload.providers
+        .map((provider) => {
+          const issues = Array.isArray(provider.issues) && provider.issues.length
+            ? provider.issues.join('; ')
+            : 'None';
+          return `| ${escapeCell(provider.key)} | ${escapeCell(provider.mode)} | ${provider.critical ? 'yes' : 'no'} | ${provider.healthy ? 'yes' : 'no'} | ${escapeCell(issues)} |`;
+        })
+        .join('\n')
+    : '| _none_ | _n/a_ | _n/a_ | _n/a_ | _n/a_ |';
+
+  const blocking = evidencePayload.blockingIssues.length
+    ? evidencePayload.blockingIssues
+        .map((issue) => `- [ ] ${issue.provider}: ${issue.issue}${issue.missingEnv.length ? ` (missing env: ${issue.missingEnv.join(', ')})` : ''}`)
+        .join('\n')
+    : '- None';
+
+  return `# Provider Readiness Evidence\n\n- Requirement: ${evidencePayload.requirement}\n- Captured at (UTC): ${evidencePayload.capturedAt}\n- Environment profile: ${evidencePayload.environmentProfile ?? 'unknown'}\n- Overall healthy: ${evidencePayload.healthy ? 'yes' : 'no'}\n- Evaluated at (UTC): ${evidencePayload.evaluatedAt ?? 'unknown'}\n- Source: \`${evidencePayload.source}\`\n\n## Provider rows\n\n| Provider | Mode | Critical | Healthy | Issues |\n| --- | --- | --- | --- | --- |\n${rows}\n\n## Blocking issues\n\n${blocking}\n`;
+}
+
+function escapeCell(value) {
+  return String(value ?? '').replace(/\|/g, '\\|');
+}
 
 async function waitForHealth(url, timeoutMs) {
   const started = Date.now();
