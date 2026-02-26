@@ -4,6 +4,8 @@ type ProviderStatusRow = {
   provider?: string;
   critical: boolean;
   healthy: boolean;
+  diagnosticStatus?: 'pass' | 'fail';
+  diagnostics?: string[];
   issues?: string[];
   checkedAt?: string;
   detail: string;
@@ -28,7 +30,9 @@ export function assertProviderReadiness(profile: string, providers: ProviderStat
     .map((provider) => {
       const missing = provider.missingEnv && provider.missingEnv.length > 0 ? ` missing=${provider.missingEnv.join('|')}` : '';
       const issues = provider.issues && provider.issues.length > 0 ? ` issues=${provider.issues.join('|')}` : '';
-      return `${provider.key} (mode=${provider.mode}${missing}${issues})`;
+      const diagnostics =
+        provider.diagnostics && provider.diagnostics.length > 0 ? ` diagnostics=${provider.diagnostics.join('|')}` : '';
+      return `${provider.key} (mode=${provider.mode}${missing}${issues}${diagnostics})`;
     })
     .join('; ');
   throw new Error(

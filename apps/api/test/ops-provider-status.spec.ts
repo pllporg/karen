@@ -24,6 +24,9 @@ describe('OpsService provider status', () => {
     expect(status.providers.every((row) => typeof row.checkedAt === 'string')).toBe(true);
     expect(status.providers.some((row) => row.key === 'stripe' && row.healthy === false)).toBe(true);
     expect(status.providers.some((row) => row.key === 'email' && (row.issues || []).length > 0)).toBe(true);
+    expect(status.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'stripe', status: 'fail' })]),
+    );
   });
 
   it('marks providers healthy when live mode is configured', () => {
@@ -57,6 +60,15 @@ describe('OpsService provider status', () => {
 
     expect(status.healthy).toBe(true);
     expect(status.providers.every((row) => row.healthy)).toBe(true);
+    expect(status.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'stripe', status: 'pass' }),
+        expect.objectContaining({ key: 'email', status: 'pass' }),
+        expect.objectContaining({ key: 'sms', status: 'pass' }),
+        expect.objectContaining({ key: 'malware_scanner', status: 'pass' }),
+        expect.objectContaining({ key: 'esign', status: 'pass' }),
+      ]),
+    );
   });
 
   it('uses global oauth live toggle when provider-specific flags are not set', () => {
@@ -88,5 +100,21 @@ describe('OpsService provider status', () => {
 
     expect(clio?.mode).toBe('live');
     expect(mycase?.mode).toBe('live');
+  });
+
+  it('keeps development fallback behavior for stub providers', () => {
+    process.env.NODE_ENV = 'development';
+    process.env.MESSAGE_EMAIL_PROVIDER = 'stub';
+    process.env.MESSAGE_SMS_PROVIDER = 'stub';
+    process.env.MALWARE_SCANNER_PROVIDER = 'stub';
+    process.env.ESIGN_PROVIDER = 'stub';
+    delete process.env.STRIPE_SECRET_KEY;
+
+    const service = new OpsService();
+    const status = service.providerStatus();
+
+    expect(status.profile).toBe('development');
+    expect(status.healthy).toBe(true);
+    expect(status.providers.some((row) => row.key === 'email' && row.healthy === true)).toBe(true);
   });
 });

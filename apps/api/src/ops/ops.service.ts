@@ -10,6 +10,8 @@ type ProviderStatusRow = {
   provider: string;
   critical: boolean;
   healthy: boolean;
+  diagnosticStatus: 'pass' | 'fail';
+  diagnostics: string[];
   issues: string[];
   checkedAt: string;
   detail: string;
@@ -339,11 +341,20 @@ export class OpsService {
     );
 
     const healthy = providers.every((provider) => !provider.critical || provider.healthy);
+    const diagnostics = providers
+      .filter((provider) => provider.critical)
+      .map((provider) => ({
+        key: provider.key,
+        mode: provider.mode,
+        status: provider.diagnosticStatus,
+        detail: provider.diagnostics.join('; '),
+      }));
 
     return {
       profile,
       healthy,
       evaluatedAt: checkedAt,
+      diagnostics,
       providers,
     };
   }
@@ -428,6 +439,9 @@ export class OpsService {
     }
 
     const healthy = issues.length === 0;
+    const diagnostics = healthy
+      ? [`PASS: ${input.key} configured for mode=${mode}`]
+      : [`FAIL: ${input.key} configured for mode=${mode}`, ...issues];
 
     const detailParts = [input.detail];
     if (issues.length > 0) {
@@ -440,6 +454,8 @@ export class OpsService {
       provider: mode,
       critical: input.critical,
       healthy,
+      diagnosticStatus: healthy ? 'pass' : 'fail',
+      diagnostics,
       issues,
       checkedAt: input.checkedAt,
       detail: detailParts.join('. '),
