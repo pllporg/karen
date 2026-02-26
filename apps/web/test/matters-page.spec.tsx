@@ -233,7 +233,12 @@ describe('MattersPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('Intake draft selector'), { target: { value: 'draft-1' } });
+    const draftSelector = screen.getByLabelText('Intake draft selector') as HTMLSelectElement;
+    fireEvent.change(draftSelector, { target: { value: 'draft-1' } });
+    await waitFor(() => {
+      expect(draftSelector.value).toBe('draft-1');
+      expect(screen.getByRole('button', { name: 'Resume Draft' })).toBeEnabled();
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Resume Draft' }));
 
     await waitFor(() => {
