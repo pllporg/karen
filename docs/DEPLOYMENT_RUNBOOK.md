@@ -183,7 +183,7 @@ Operational evidence commands:
 
 ```bash
 pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc009-drill-evidence.json
-pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
+pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --json-out artifacts/ops/provider-readiness-evidence.json --md-out artifacts/ops/provider-readiness-evidence.md
 ```
 
 Prerequisites for backup drill command:
@@ -201,7 +201,8 @@ Generated artifacts:
 - `artifacts/ops/backup-restore-drill-*.json`
 - `artifacts/ops/migration-rollback-drill-*.json`
 - `artifacts/ops/rc009-drill-evidence*.json`
-- `artifacts/ops/provider-status-evidence.json`
+- `artifacts/ops/provider-readiness-evidence.json`
+- `artifacts/ops/provider-readiness-evidence.md`
 
 CI evidence workflow:
 
@@ -222,7 +223,7 @@ pnpm build
 pnpm test:provider-live
 pnpm test:integrations-live
 pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc011-drill-evidence.json
-pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
+pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --json-out artifacts/ops/provider-readiness-evidence.json --md-out artifacts/ops/provider-readiness-evidence.md
 node tools/ops/generate_launch_candidate_signoff.mjs --out artifacts/ops/launch-candidate-signoff.md
 ```
 
@@ -236,7 +237,7 @@ The final command writes a prefilled signoff package with checklist placeholders
 | On-call engineer | Incident drill and rollback rehearsal | Backup/restore drill evidence captured, rollback path validated | `artifacts/ops/rc011-drill-evidence.json` |
 | Security reviewer | Tenancy and access verification sweep | No cross-tenant data exposure and ABAC/ethical-wall checks pass | Test output + security checklist results |
 | Product/UAT approver | Core workflow acceptance pass | Login, matter creation, doc upload/download, portal message pass with no blocker defects | UAT notes + screenshots + issue links |
-| Ops owner | Provider readiness + alert baseline review | `/ops/provider-status` healthy and alerting baseline reviewed | `artifacts/ops/provider-status-evidence.json` + alert screenshot/export |
+| Ops owner | Provider readiness + alert baseline review | `/ops/provider-status` healthy and alerting baseline reviewed | `artifacts/ops/provider-readiness-evidence.json` + `artifacts/ops/provider-readiness-evidence.md` + alert screenshot/export |
 
 Rules:
 
@@ -253,7 +254,7 @@ Attach links/artifacts for each item:
 3. Provider live/integration live test output (or approved exception in incident ticket).
 4. Migration rehearsal evidence (forward and rollback-safe validation).
 5. Backup/restore rollback drill artifact (`rc011-drill-evidence.json`).
-6. Provider readiness artifact (`provider-status-evidence.json`).
+6. Provider readiness artifacts (`provider-readiness-evidence.json` and `provider-readiness-evidence.md`).
 7. Security final sweep notes (tenant isolation, access control, secrets/config sanity).
 8. UAT execution matrix with owner signoff timestamps.
 9. Go-live approval statement by engineering owner and operations/on-call owner.
