@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { bootstrapSession, clearSessionToken, getSessionToken, logoutSession } from '../lib/api';
+import { bootstrapSession, clearSessionToken, logoutSession } from '../lib/api';
 import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = usePathname() || '';
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [authReady, setAuthReady] = useState(() => path.startsWith('/login') || Boolean(getSessionToken()));
+  const [authReady, setAuthReady] = useState(() => path.startsWith('/login'));
   const [shellMode, setShellMode] = useState<ShellViewportMode>(() => {
     if (typeof window === 'undefined') {
       return 'desktop';
@@ -66,10 +66,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     if (path.startsWith('/login')) {
-      setAuthReady(true);
-      return undefined;
-    }
-    if (getSessionToken()) {
       setAuthReady(true);
       return undefined;
     }

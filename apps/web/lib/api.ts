@@ -91,12 +91,15 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   let token = getSessionToken();
   let response = await execute(token);
 
-  if (response.status === 401 && !shouldSkipSessionBootstrap(path)) {
+  if (response.status === 401) {
     clearSessionToken();
-    const recovered = await bootstrapSession();
-    if (recovered) {
-      token = getSessionToken();
-      response = await execute(token);
+
+    if (!shouldSkipSessionBootstrap(path)) {
+      const recovered = await bootstrapSession();
+      if (recovered) {
+        token = getSessionToken();
+        response = await execute(token);
+      }
     }
   }
 
