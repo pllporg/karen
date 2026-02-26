@@ -11,6 +11,8 @@
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
   - lic-design-system/references/ui-kit.md
 
+- Backlog Reference: `REQ-UI-PRD-009` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 AI workspace is a command surface for job execution, style-pack governance, and deadline confirmation. It requires explicit review-gate and provenance presentation standards at route level.
@@ -36,6 +38,12 @@ AI workspace is a command surface for job execution, style-pack governance, and 
 - Empty
 - Error
 - Success
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate and Approval Behavior
 

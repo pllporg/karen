@@ -10,6 +10,8 @@
   - `lic-design-system/references/ui-kit.md`
   - `lic-design-system/references/gp01-flow.md`
 
+- Backlog Reference: `REQ-UI-PRD-002` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 The matters list is a central operations queue. It needs explicit PRD definition for filtering, state handling, and auditable progression from matter creation/intake to active management.
@@ -39,6 +41,12 @@ The matters list is a central operations queue. It needs explicit PRD definition
 - Empty: no-matters state with create action.
 - Error: inline error block with corrective action.
 - Success: create/update feedback with timestamp.
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate Behavior
 

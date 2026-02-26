@@ -7,6 +7,8 @@
 - Route(s): /login and /shared-doc/[token]
 - Linked PRD: docs/prd/REQ-UI-009-auth-shared-doc.prd.md
 
+- Backlog Reference: `REQ-UI-PRD-012` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Layout Structure
 
 - Top bar with route identity and procedural subtitle
@@ -54,3 +56,38 @@
 - Preserve section order and action discoverability across breakpoints
 - Maintain table readability with controlled overflow where needed
 - Respect unsupported mode behavior under <768px
+
+## Interaction Model
+
+- Primary path: view route summary -> select scoped action -> confirm resulting state feedback.
+- Non-destructive interactions (filters, tabs, sorting, search) update visible context without hidden side effects.
+- Mutating actions require explicit user intent and inline confirmation/error messaging.
+
+
+## Role Visibility
+
+- Route visibility follows LIC role policy defined in the linked PRD.
+- Role-restricted controls are hidden or disabled with explicit rationale where disclosure is permitted.
+- Client portal visibility remains scoped to portal-authorized route behavior only.
+
+
+## Review-Gate Expectations
+
+- Review-gated actions surface current status labels and required next-step actions.
+- No implied approval: status changes require explicit user action.
+- Route surfaces expose review-state context needed by downstream audit trails.
+
+
+## Accessibility Checks
+
+- Verify keyboard-only completion for all primary actions.
+- Verify focus-visible treatment on every actionable element.
+- Verify status/error messaging is announced with semantic text, not color-only cues.
+
+
+## Traceability
+
+- Requirement: `REQ-UI-009`.
+- Linear issue: `KAR-71`.
+- Backlog row: `REQ-UI-PRD-012` in `docs/UI_PRD_SCREEN_BACKLOG.md`.
+

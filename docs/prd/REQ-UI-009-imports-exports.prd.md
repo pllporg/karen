@@ -11,6 +11,8 @@
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
   - lic-design-system/references/ui-kit.md
 
+- Backlog Reference: `REQ-UI-PRD-010` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 Portability workflows must remain deterministic and transparent. Import and export routes need explicit behavior specs for batch status, file input constraints, and artifact generation feedback.
@@ -35,6 +37,12 @@ Portability workflows must remain deterministic and transparent. Import and expo
 - Empty
 - Error
 - Success
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate and Approval Behavior
 
