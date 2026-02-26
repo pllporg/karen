@@ -11,6 +11,8 @@
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
   - lic-design-system/references/ui-kit.md
 
+- Backlog Reference: `REQ-UI-PRD-004` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 Contacts is a high-frequency operational surface for relationship graphing, tag filtering, and dedupe merges. A route-level PRD is required to keep merge and graph interactions procedurally consistent and auditable.
@@ -35,6 +37,12 @@ Contacts is a high-frequency operational surface for relationship graphing, tag 
 - Empty
 - Error
 - Success
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate and Approval Behavior
 

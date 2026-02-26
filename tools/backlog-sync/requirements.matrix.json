@@ -115,7 +115,7 @@
         {
           "title": "Validate all required entities and relation semantics against prompt",
           "requirementId": "REQ-DATA-001",
-          "promptSection": "DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities",
+          "promptSection": "DATA MODEL REQUIREMENTS (Prisma) \u2014 Minimum Entities",
           "parityStatus": "Verified",
           "component": "Data",
           "risk": "High",
@@ -1142,7 +1142,7 @@
           "title": "Create PRD + screen specifications for existing product routes",
           "requirementId": "REQ-UI-009",
           "promptSection": "UI Refactor / Existing functionality PRDs and screens",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1151,7 +1151,7 @@
             "prd",
             "screen-spec"
           ],
-          "problemStatement": "Existing product routes now have drafted LIC-aligned PRD and screen specifications; the route coverage matrix needs review/approval and implementation linkage before full verification.",
+          "problemStatement": "Existing product routes now have finalized LIC-aligned PRD and screen specifications with complete route coverage matrix linkage and backlog traceability.",
           "requirementExcerpt": "UI refactor must include PRDs/screens for existing functionality with enforceable interaction and review-gate requirements.",
           "acceptanceCriteria": [
             "Each existing route has a PRD and screen spec artifact with state model, accessibility checks, and audit evidence expectations.",

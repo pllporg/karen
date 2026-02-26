@@ -10,6 +10,8 @@
   - `lic-design-system/references/ui-kit.md`
   - `lic-design-system/references/interaction-and-ai.md`
 
+- Backlog Reference: `REQ-UI-PRD-001` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 The dashboard currently renders summary metrics and recent-activity blocks, but route-level behavior is not yet formalized in a PRD for consistent LIC interaction, audit visibility, and accessibility verification.
@@ -38,6 +40,12 @@ The dashboard currently renders summary metrics and recent-activity blocks, but 
 - Empty: clear "no activity" messaging when data sets are empty.
 - Error: inline error block with actionable retry instruction.
 - Success: timestamped data snapshot with stable status labels.
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate Behavior
 

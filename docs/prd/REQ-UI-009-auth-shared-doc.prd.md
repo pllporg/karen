@@ -11,6 +11,8 @@
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
   - lic-design-system/references/ui-kit.md
 
+- Backlog Reference: `REQ-UI-PRD-012` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 Authentication and tokenized shared-document entry points require explicit access-state behavior, error handling, and secure redirect expectations.
@@ -34,6 +36,12 @@ Authentication and tokenized shared-document entry points require explicit acces
 - Empty
 - Error
 - Success
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate and Approval Behavior
 

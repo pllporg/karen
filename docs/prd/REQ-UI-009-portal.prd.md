@@ -11,6 +11,8 @@
   - docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md
   - lic-design-system/references/ui-kit.md
 
+- Backlog Reference: `REQ-UI-PRD-008` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 Portal route contains client-facing messaging, attachments, intake submission, and e-sign actions. A formal spec is required to enforce explicit approval and secure artifact access behavior.
@@ -36,6 +38,12 @@ Portal route contains client-facing messaging, attachments, intake submission, a
 - Empty
 - Error
 - Success
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate and Approval Behavior
 
