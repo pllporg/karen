@@ -64,11 +64,16 @@ describe('PortalPage', () => {
 
     await screen.findByText('1 visible matters');
     await screen.findByText('2 shared docs');
+    await screen.findByRole('option', { name: 'M-001 - Portal Matter' });
     await waitFor(() => {
       expect((screen.getByLabelText('Portal Matter') as HTMLSelectElement).value).toBe('matter-1');
     });
 
-    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
+    const messageMatterSelect = screen.getByLabelText('Portal Matter') as HTMLSelectElement;
+    fireEvent.change(messageMatterSelect, { target: { value: 'matter-1' } });
+    await waitFor(() => {
+      expect(messageMatterSelect.value).toBe('matter-1');
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     const confirmDialog = await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
     expect(
@@ -143,8 +148,13 @@ describe('PortalPage', () => {
         }),
       );
     });
+    await screen.findByRole('option', { name: 'M-022 - Client Matter 22' });
 
-    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-22' } });
+    const intakeMatterSelect = screen.getByLabelText('Portal Matter') as HTMLSelectElement;
+    fireEvent.change(intakeMatterSelect, { target: { value: 'matter-22' } });
+    await waitFor(() => {
+      expect(intakeMatterSelect.value).toBe('matter-22');
+    });
     fireEvent.change(screen.getByLabelText('Portal Intake Form'), { target: { value: 'intake-def-1' } });
     fireEvent.change(screen.getByLabelText('Portal Engagement Template'), {
       target: { value: 'letter-template-5' },
