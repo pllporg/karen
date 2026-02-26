@@ -205,3 +205,74 @@ CI evidence workflow:
 
 - `.github/workflows/ops-readiness-evidence.yml`
 - uploads artifact bundle `ops-readiness-evidence` for release records.
+
+## 11) Launch-Candidate UAT Matrix + Go-Live Signoff (REQ-RC-011 / KAR-97)
+
+Use this section for the final launch-candidate pass/fail gate. The release owner and on-call partner must be able to run this package start-to-finish using only this runbook.
+
+### 11.1 Execution order (release owner / on-call)
+
+Run from the release-candidate commit:
+
+```bash
+pnpm test
+pnpm build
+pnpm test:provider-live
+pnpm test:integrations-live
+pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc011-drill-evidence.json
+pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
+node tools/ops/generate_launch_candidate_signoff.mjs --out artifacts/ops/launch-candidate-signoff.md
+```
+
+The final command writes a prefilled signoff package with checklist placeholders and rollback criteria so evidence can be attached without editing this runbook.
+
+### 11.2 Role-based UAT matrix (must be executed with evidence)
+
+| Role | Scenario | Pass criteria | Evidence attachment |
+| --- | --- | --- | --- |
+| Release owner (engineering) | Smoke deploy in staging + readiness checks | `/health` and `/login` healthy, migrations current, queue/storage checks green | Deploy logs + health output + migration output |
+| On-call engineer | Incident drill and rollback rehearsal | Backup/restore drill evidence captured, rollback path validated | `artifacts/ops/rc011-drill-evidence.json` |
+| Security reviewer | Tenancy and access verification sweep | No cross-tenant data exposure and ABAC/ethical-wall checks pass | Test output + security checklist results |
+| Product/UAT approver | Core workflow acceptance pass | Login, matter creation, doc upload/download, portal message pass with no blocker defects | UAT notes + screenshots + issue links |
+| Ops owner | Provider readiness + alert baseline review | `/ops/provider-status` healthy and alerting baseline reviewed | `artifacts/ops/provider-status-evidence.json` + alert screenshot/export |
+
+Rules:
+
+- Every row must be marked `PASS`, `PASS WITH WAIVER`, or `FAIL` in the generated signoff package.
+- `PASS WITH WAIVER` requires owner, mitigation, and due date before go-live.
+- Any `FAIL` blocks release until resolved or explicitly waived by engineering + operations owners.
+
+### 11.3 Explicit acceptance evidence checklist
+
+Attach links/artifacts for each item:
+
+1. Commit hash and release tag candidate.
+2. `pnpm test` and `pnpm build` output.
+3. Provider live/integration live test output (or approved exception in incident ticket).
+4. Migration rehearsal evidence (forward and rollback-safe validation).
+5. Backup/restore rollback drill artifact (`rc011-drill-evidence.json`).
+6. Provider readiness artifact (`provider-status-evidence.json`).
+7. Security final sweep notes (tenant isolation, access control, secrets/config sanity).
+8. UAT execution matrix with owner signoff timestamps.
+9. Go-live approval statement by engineering owner and operations/on-call owner.
+10. Linear issue evidence links (`KAR-97`) and parity artifact update.
+
+### 11.4 Go-live rollback criteria (objective release gates)
+
+Rollback to the previous stable release if any of the following is true during launch window:
+
+- Critical (`SEV-1`) incident occurs and mitigation is not complete within 15 minutes.
+- API `5xx` error rate remains `>= 5%` for 10+ minutes.
+- Provider health indicates critical dependency unhealthy at cutover.
+- Cross-tenant isolation concern or security regression is detected.
+- Migration integrity checks fail or data-loss risk is present.
+
+Rollback execution must follow Section 5 and conclude with readiness + smoke checks on the restored revision before reopening traffic.
+
+### 11.5 Signoff ownership and completion criteria
+
+- Engineering release owner: confirms technical gate completion + migration safety.
+- On-call / operations owner: confirms operational readiness + rollback readiness.
+- Security reviewer: confirms final security sweep completion.
+
+Go-live is approved only when all required evidence items are present and both engineering + operations owners mark `APPROVED` in the generated signoff file.
