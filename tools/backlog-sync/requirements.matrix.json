@@ -1727,7 +1727,7 @@
           "title": "API lint gate + static quality enforcement",
           "requirementId": "REQ-RC-008",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 0",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": [
