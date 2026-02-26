@@ -152,7 +152,7 @@ Key metrics to track:
 Operational evidence commands:
 
 ```bash
-pnpm ops:drill:backup-restore -- --out-dir artifacts/ops
+pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc009-drill-evidence.json
 pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json
 ```
 
@@ -161,9 +161,16 @@ Prerequisites for backup drill command:
 - local `pg_dump` / `pg_restore` / `psql` available in `PATH`, or
 - running `docker compose` postgres service (the script can use container fallback).
 
+Safety controls:
+
+- Drill command refuses non-local database hosts unless `--allow-nonlocal-db` is explicitly provided.
+- Use `--dry-run` to generate deterministic rehearsal artifacts without touching database services.
+
 Generated artifacts:
 
 - `artifacts/ops/backup-restore-drill-*.json`
+- `artifacts/ops/migration-rollback-drill-*.json`
+- `artifacts/ops/rc009-drill-evidence*.json`
 - `artifacts/ops/provider-status-evidence.json`
 
 CI evidence workflow:

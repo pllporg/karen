@@ -1,6 +1,6 @@
 # Ops Runbook + SLO Coverage
 
-Requirement: `REQ-OPS-002`  
+Requirement: `REQ-OPS-002`, `REQ-RC-009`  
 Scope: deployment runbook, rollback + incident procedures, startup readiness guidance, and baseline SLO targets.
 
 ## Artifact
@@ -26,7 +26,7 @@ Scope: deployment runbook, rollback + incident procedures, startup readiness gui
   - RPO/RTO targets
   - key monitoring metrics
 - Evidence automation:
-  - backup/restore + rollback drill command (`pnpm ops:drill:backup-restore`)
+  - backup/restore + rollback drill command (`pnpm ops:drill:backup-restore`) with evidence index (`artifacts/ops/rc009-drill-evidence*.json`)
   - provider status evidence capture command (`pnpm ops:evidence:capture`)
   - CI artifact workflow (`.github/workflows/ops-readiness-evidence.yml`)
 
