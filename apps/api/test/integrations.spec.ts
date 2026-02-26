@@ -543,4 +543,46 @@ describe('IntegrationsService', () => {
       }),
     );
   });
+
+  it('returns existing webhook subscription for duplicate event and target', async () => {
+    const connector = connectorStub(IntegrationProvider.CLIO);
+    const prisma = {
+      integrationConnection: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'conn-1',
+          organizationId: 'org1',
+          provider: IntegrationProvider.CLIO,
+          encryptedAccessToken: null,
+          encryptedRefreshToken: null,
+          configJson: {},
+        }),
+      },
+      integrationWebhookSubscription: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'hook-existing',
+          connectionId: 'conn-1',
+          event: 'matter.updated',
+          targetUrl: 'https://firm.example/webhooks/clio',
+          externalId: 'clio-sub-existing',
+        }),
+      },
+    } as any;
+
+    const service = new IntegrationsService(
+      prisma,
+      { appendEvent: jest.fn().mockResolvedValue(undefined) } as any,
+      new IntegrationTokenCryptoService(),
+      [connector],
+    );
+
+    const result = await service.subscribeWebhook({
+      user: { id: 'u1', organizationId: 'org1' } as any,
+      connectionId: 'conn-1',
+      event: 'matter.updated',
+      targetUrl: 'https://firm.example/webhooks/clio',
+    });
+
+    expect(result).toEqual(expect.objectContaining({ id: 'hook-existing', externalId: 'clio-sub-existing' }));
+    expect((connector.subscribeWebhooks as jest.Mock).mock.calls.length).toBe(0);
+  });
 });
