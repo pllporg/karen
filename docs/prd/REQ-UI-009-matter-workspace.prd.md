@@ -10,6 +10,8 @@
   - `lic-design-system/references/interaction-and-ai.md`
   - `lic-design-system/references/ui-kit.md`
 
+- Backlog Reference: `REQ-UI-PRD-003` (`docs/UI_PRD_SCREEN_BACKLOG.md`), `KAR-71`
+
 ## Problem Statement
 
 The matter workspace is the highest-risk operational route (participants, tasks, deadlines, communications, documents, billing). It needs explicit interaction and audit behavior definitions to prevent unsafe or ambiguous actions.
@@ -42,6 +44,12 @@ The matter workspace is the highest-risk operational route (participants, tasks,
 - Empty: section-specific no-data states (participants/tasks/docs/comms).
 - Error: section-scoped actionable error blocks.
 - Success: timestamped confirmation messages for state-changing actions.
+
+## Interaction Model
+
+- Primary interactions follow explicit user actions (no silent state mutation).
+- Mutating actions require deterministic feedback with success/error outcomes.
+- Navigation handoffs preserve route context for downstream audit surfaces.
 
 ## Review-Gate Behavior
 
