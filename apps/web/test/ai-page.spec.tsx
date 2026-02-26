@@ -96,6 +96,7 @@ describe('AiPage', () => {
         expect.objectContaining({ credentials: 'include' }),
       );
     });
+    expect(screen.getByRole('cell', { name: 'M-1 - Builder Dispute' })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Confirm Selected Deadlines' })).toBeDisabled();
     expect(screen.getByText('Within 14 days after Rule 26(f) conference.')).toBeInTheDocument();
@@ -500,7 +501,7 @@ describe('AiPage', () => {
       );
     });
 
-    fireEvent.change(screen.getByLabelText('Style Pack Source Document style-pack-9'), {
+    fireEvent.change(screen.getByLabelText(/Style Pack Source Document Builder Defense/), {
       target: { value: 'ver-1' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Attach Source Doc' }));
@@ -516,7 +517,7 @@ describe('AiPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Sample Demand (ver-1)', { selector: 'span' })).toBeInTheDocument();
+      expect(screen.getByText('Sample Demand | Uploaded 2026-02-17T00:00:00.000Z', { selector: 'span' })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));

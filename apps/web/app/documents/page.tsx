@@ -30,6 +30,11 @@ export default function DocumentsPage() {
   const [retentionStatus, setRetentionStatus] = useState<string | null>(null);
   const [selectedPolicyId, setSelectedPolicyId] = useState('');
 
+  function resolveMatterLabel(matterId: string | null | undefined): string {
+    if (!matterId) return '-';
+    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
+  }
+
   async function loadDocuments() {
     const token = getSessionToken();
     const response = await fetch(`${API_BASE}/documents`, {
@@ -165,7 +170,7 @@ export default function DocumentsPage() {
       body: JSON.stringify({ policyId: selectedPolicyId }),
       credentials: 'include',
     });
-    setRetentionStatus(`Assigned retention policy to ${documentId}.`);
+    setRetentionStatus('Assigned retention policy to document.');
     await loadDocuments();
   }
 
@@ -182,7 +187,7 @@ export default function DocumentsPage() {
       }),
       credentials: 'include',
     });
-    setRetentionStatus(`Placed legal hold on ${documentId}.`);
+    setRetentionStatus('Placed legal hold on document.');
     await loadDocuments();
   }
 
@@ -199,7 +204,7 @@ export default function DocumentsPage() {
       }),
       credentials: 'include',
     });
-    setRetentionStatus(`Released legal hold on ${documentId}.`);
+    setRetentionStatus('Released legal hold on document.');
     await loadDocuments();
   }
 
@@ -233,7 +238,7 @@ export default function DocumentsPage() {
       }),
       credentials: 'include',
     });
-    setRetentionStatus(`Approved disposition run ${runId}.`);
+    setRetentionStatus('Approved disposition run.');
     await loadRetentionData();
   }
 
@@ -250,7 +255,7 @@ export default function DocumentsPage() {
       }),
       credentials: 'include',
     });
-    setRetentionStatus(`Executed disposition run ${runId}.`);
+    setRetentionStatus('Executed disposition run.');
     await loadRetentionData();
     await loadDocuments();
   }
@@ -360,7 +365,7 @@ export default function DocumentsPage() {
             {documents.map((doc) => (
               <tr key={doc.id}>
                 <td>{doc.title}</td>
-                <td>{doc.matterId}</td>
+                <td>{doc.matter?.name || resolveMatterLabel(doc.matterId)}</td>
                 <td>{doc.versions?.length || 0}</td>
                 <td>{doc.sharedWithClient ? 'Yes' : 'No'}</td>
                 <td>{doc.retentionPolicy?.name || 'Unassigned'}</td>
@@ -400,9 +405,9 @@ export default function DocumentsPage() {
             </tr>
           </thead>
           <tbody>
-            {dispositionRuns.map((run) => (
+            {dispositionRuns.map((run, index) => (
               <tr key={run.id}>
-                <td>{run.id}</td>
+                <td>{`Run ${index + 1}`}</td>
                 <td>{run.status}</td>
                 <td>{new Date(run.cutoffAt).toLocaleString()}</td>
                 <td>{run.items?.length || 0}</td>
