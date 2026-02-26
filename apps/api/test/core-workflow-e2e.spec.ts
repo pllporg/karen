@@ -22,13 +22,23 @@ type Store = {
 };
 
 describe('Core workflow e2e hardening', () => {
+  const fixedNow = new Date('2026-02-24T12:00:00.000Z').getTime();
+
+  beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(fixedNow);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('executes login -> matter lifecycle -> document upload -> billing workflow', async () => {
     const organizationId = 'org-1';
     const userId = 'user-1';
     const roleId = 'role-1';
     const membershipId = 'membership-1';
     const password = 'ChangeMe123!';
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 8);
 
     const counters: Record<string, number> = {
       matter: 0,

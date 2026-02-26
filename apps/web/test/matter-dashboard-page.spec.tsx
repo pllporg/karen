@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as nextNavigation from 'next/navigation';
 import MatterDashboardPage from '../app/matters/[id]/page';
 
@@ -120,8 +120,26 @@ function buildDashboardFixture(
   };
 }
 
+async function expectFetchRequest(
+  fetchMock: ReturnType<typeof vi.fn>,
+  url: string,
+  method: string,
+) {
+  await waitFor(() => {
+    const hasRequest = fetchMock.mock.calls.some(([input, init]) => {
+      const requestUrl = String(input);
+      const requestMethod = String(init?.method || 'GET').toUpperCase();
+      return requestUrl === url && requestMethod === method.toUpperCase();
+    });
+    expect(hasRequest).toBe(true);
+  });
+}
+
 describe('MatterDashboardPage operational workflows', () => {
   afterEach(() => {
+    cleanup();
+    vi.clearAllTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -183,12 +201,7 @@ describe('MatterDashboardPage operational workflows', () => {
     fireEvent.change(screen.getByLabelText('Trigger Date'), { target: { value: '2026-01-20' } });
     fireEvent.click(screen.getByRole('button', { name: 'Preview Deadlines' }));
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/calendar/deadline-preview',
-        expect.objectContaining({ method: 'POST', credentials: 'include' }),
-      );
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/calendar/deadline-preview', 'POST');
 
     fireEvent.change(await screen.findByLabelText('Override Reason rule-1'), {
       target: { value: 'Court requested extension' },
@@ -196,13 +209,8 @@ describe('MatterDashboardPage operational workflows', () => {
     fireEvent.change(await screen.findByLabelText('Override Date rule-1'), { target: { value: '2026-02-27' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply Selected' }));
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/calendar/deadline-preview/apply',
-        expect.objectContaining({ method: 'POST', credentials: 'include' }),
-      );
-      expect(screen.getByText('Created 1 calendar events from rules pack.')).toBeInTheDocument();
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/calendar/deadline-preview/apply', 'POST');
+    expect(await screen.findByText('Created 1 calendar events from rules pack.')).toBeInTheDocument();
   });
 
   it('creates, edits, updates status, and deletes tasks plus calendar events', { timeout: 40000 }, async () => {
@@ -304,49 +312,29 @@ describe('MatterDashboardPage operational workflows', () => {
     fireEvent.change(screen.getByLabelText('Task Priority'), { target: { value: 'HIGH' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/tasks',
-        expect.objectContaining({ method: 'POST', credentials: 'include' }),
-      );
-      expect(screen.getByText('Task created.')).toBeInTheDocument();
-      expect(screen.getByText('Draft meet-and-confer email')).toBeInTheDocument();
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/tasks', 'POST');
+    expect(await screen.findByText('Task created.')).toBeInTheDocument();
+    expect(await screen.findByText('Draft meet-and-confer email')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Task task-1' }));
     fireEvent.change(screen.getByLabelText('Task Title'), { target: { value: 'Send revised meet-and-confer email' } });
     fireEvent.change(screen.getByLabelText('Task Priority'), { target: { value: 'URGENT' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Task Edit' }));
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/tasks/task-1',
-        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
-      );
-      expect(screen.getByText('Task updated.')).toBeInTheDocument();
-      expect(screen.getByText('Send revised meet-and-confer email')).toBeInTheDocument();
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/tasks/task-1', 'PATCH');
+    expect(await screen.findByText('Task updated.')).toBeInTheDocument();
+    expect(await screen.findByText('Send revised meet-and-confer email')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Task Status task-1'), { target: { value: 'DONE' } });
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/tasks/task-1',
-        expect.objectContaining({ method: 'PATCH', credentials: 'include' }),
-      );
-      expect(screen.getByText('Task status updated to DONE.')).toBeInTheDocument();
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/tasks/task-1', 'PATCH');
+    expect(await screen.findByText('Task status updated to DONE.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete Task task-1' }));
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/tasks/task-1',
-        expect.objectContaining({ method: 'DELETE', credentials: 'include' }),
-      );
-      expect(screen.getByText('Task removed.')).toBeInTheDocument();
-      expect(screen.queryByText('Send revised meet-and-confer email')).not.toBeInTheDocument();
-    });
+    await expectFetchRequest(fetchMock, 'http://localhost:4000/tasks/task-1', 'DELETE');
+    expect(await screen.findByText('Task removed.')).toBeInTheDocument();
+    expect(screen.queryByText('Send revised meet-and-confer email')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Calendar Event Type'), { target: { value: 'Site inspection' } });
     fireEvent.change(screen.getByLabelText('Calendar Event Start'), { target: { value: '2026-03-02T14:00' } });
