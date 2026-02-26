@@ -81,7 +81,7 @@ jobs:
       - run: pnpm --filter api prisma:deploy
       - run: pnpm --filter api prisma:seed
       - name: Backup/restore rollback drill
-        run: pnpm ops:drill:backup-restore -- --out-dir artifacts/ops
+        run: pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc009-drill-evidence.json
       - name: Start API for provider-status evidence
         run: |
           pnpm --filter api dev > artifacts/ops/api.log 2>&1 &

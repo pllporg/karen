@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 const DOCKER_POSTGRES_SERVICE = 'postgres';
+const SAFE_NON_PROD_HOSTS = new Set(['localhost', '127.0.0.1']);
 
 const args = parseArgs({
   allowPositionals: true,
@@ -14,10 +15,30 @@ const args = parseArgs({
     'admin-database': { type: 'string', default: 'postgres' },
     'out-dir': { type: 'string', default: 'artifacts/ops' },
     'backup-file': { type: 'string' },
-    'summary-file': { type: 'string' },
+    'backup-summary-file': { type: 'string' },
+    'rollback-summary-file': { type: 'string' },
+    'evidence-index-file': { type: 'string' },
     'keep-temp-db': { type: 'boolean', default: false },
+    'allow-nonlocal-db': { type: 'boolean', default: false },
+    'dry-run': { type: 'boolean', default: false },
   },
 });
+
+const startedMs = Date.now();
+const startedAtIso = new Date(startedMs).toISOString();
+const timestamp = new Date(startedMs).toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+const outDir = resolve(String(args.values['out-dir']));
+mkdirSync(outDir, { recursive: true });
+
+const backupSummaryFile = resolve(String(args.values['backup-summary-file'] || `${outDir}/backup-restore-drill-${timestamp}.json`));
+const rollbackSummaryFile = resolve(
+  String(args.values['rollback-summary-file'] || `${outDir}/migration-rollback-drill-${timestamp}.json`),
+);
+const evidenceIndexFile = resolve(String(args.values['evidence-index-file'] || `${outDir}/rc009-drill-evidence-${timestamp}.json`));
+
+mkdirSync(dirname(backupSummaryFile), { recursive: true });
+mkdirSync(dirname(rollbackSummaryFile), { recursive: true });
+mkdirSync(dirname(evidenceIndexFile), { recursive: true });
 
 const databaseUrl = String(args.values['database-url'] || process.env.DATABASE_URL || '').trim();
 if (!databaseUrl) {
@@ -32,20 +53,22 @@ if (!sourceDbName) {
   process.exit(1);
 }
 
+const allowNonLocalDb = Boolean(args.values['allow-nonlocal-db']);
+if (!allowNonLocalDb && !SAFE_NON_PROD_HOSTS.has(sourceUrl.hostname)) {
+  console.error(
+    `Refusing to run drill against non-local database host "${sourceUrl.hostname}" without --allow-nonlocal-db.`,
+  );
+  process.exit(1);
+}
+
 const toolDbUrl = normalizeToolDatabaseUrl(databaseUrl);
 const adminDbName = String(args.values['admin-database'] || 'postgres').replace(/^\/+/, '');
 const adminUrl = new URL(toolDbUrl);
 adminUrl.pathname = `/${adminDbName}`;
 adminUrl.searchParams.delete('schema');
 
-const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-const outDir = resolve(String(args.values['out-dir']));
-mkdirSync(outDir, { recursive: true });
-
 const backupFile = resolve(String(args.values['backup-file'] || `${outDir}/db-backup-${timestamp}.dump`));
-const summaryFile = resolve(String(args.values['summary-file'] || `${outDir}/backup-restore-drill-${timestamp}.json`));
 mkdirSync(dirname(backupFile), { recursive: true });
-mkdirSync(dirname(summaryFile), { recursive: true });
 
 const tempDbName = buildTempDatabaseName(sourceDbName, timestamp);
 const tempToolUrl = new URL(toolDbUrl);
@@ -55,109 +78,283 @@ tempToolUrl.searchParams.delete('schema');
 const prismaTempUrl = new URL(databaseUrl);
 prismaTempUrl.pathname = `/${tempDbName}`;
 
-const startedAt = new Date().toISOString();
 const commandLog = [];
 const keepTempDb = Boolean(args.values['keep-temp-db']);
+const dryRun = Boolean(args.values['dry-run']);
 
-const evidence = {
-  generatedAt: startedAt,
+const backupEvidence = {
+  drillType: 'backup_restore',
+  requirementId: 'REQ-RC-009',
+  linearIssue: 'KAR-95',
+  generatedAt: startedAtIso,
   status: 'in_progress',
-  executionMode: null,
+  executionMode: dryRun ? 'dry-run' : null,
   sourceDatabase: redactDatabaseUrl(databaseUrl),
   tempDatabaseName: tempDbName,
   backupFile,
+  durationMs: 0,
+  checkpoints: [],
   steps: {
     backupCreated: false,
     restoreApplied: false,
-    rollbackRestoreApplied: false,
-    prismaDeployValidated: false,
   },
   metrics: {
     migrationRowsSource: null,
     migrationRowsRestored: null,
+  },
+  commandLog,
+};
+
+const rollbackEvidence = {
+  drillType: 'migration_rollback',
+  requirementId: 'REQ-RC-009',
+  linearIssue: 'KAR-95',
+  generatedAt: startedAtIso,
+  status: 'in_progress',
+  executionMode: dryRun ? 'dry-run' : null,
+  sourceDatabase: redactDatabaseUrl(databaseUrl),
+  tempDatabaseName: tempDbName,
+  durationMs: 0,
+  checkpoints: [],
+  steps: {
+    faultInjected: false,
+    rollbackRestoreApplied: false,
+    prismaDeployValidated: false,
+    schemaConsistencyVerified: false,
+  },
+  metrics: {
+    migrationRowsBeforeFault: null,
     migrationRowsAfterRollbackRestore: null,
   },
   commandLog,
 };
 
+const indexEvidence = {
+  requirementId: 'REQ-RC-009',
+  linearIssue: 'KAR-95',
+  generatedAt: startedAtIso,
+  status: 'in_progress',
+  durationMs: 0,
+  drillArtifacts: {
+    backupRestore: backupSummaryFile,
+    migrationRollback: rollbackSummaryFile,
+  },
+  machineReadableEvidence: {
+    backupDump: backupFile,
+    backupRestoreSummary: backupSummaryFile,
+    migrationRollbackSummary: rollbackSummaryFile,
+    providerStatus: resolve(`${outDir}/provider-status-evidence.json`),
+  },
+};
+
 let runner = null;
 
 try {
-  runner = createRunner({
-    sourceUrl,
-    sourceDbName,
-    adminDbName,
-    backupFile,
-    tempDbName,
-    toolDbUrl,
-    tempToolUrl: tempToolUrl.toString(),
-    adminUrl: adminUrl.toString(),
-    commandLog,
+  runner = dryRun
+    ? createDryRunRunner({ commandLog, sourceDbName, backupFile })
+    : createRunner({
+        sourceUrl,
+        sourceDbName,
+        adminDbName,
+        backupFile,
+        tempDbName,
+        toolDbUrl,
+        tempToolUrl: tempToolUrl.toString(),
+        adminUrl: adminUrl.toString(),
+        commandLog,
+      });
+
+  backupEvidence.executionMode = runner.mode;
+  rollbackEvidence.executionMode = runner.mode;
+
+  ensureCheckpoint(backupEvidence, 'collect-source-migration-count', () => {
+    backupEvidence.metrics.migrationRowsSource = runner.queryScalarInt(sourceDbName, 'SELECT count(*) FROM "_prisma_migrations";');
   });
-  evidence.executionMode = runner.mode;
 
-  ensureBinary('pnpm');
+  ensureCheckpoint(backupEvidence, 'create-backup', () => {
+    runner.dumpBackup();
+    backupEvidence.steps.backupCreated = true;
+  });
 
-  evidence.metrics.migrationRowsSource = runner.queryScalarInt(sourceDbName, 'SELECT count(*) FROM "_prisma_migrations";');
+  ensureCheckpoint(backupEvidence, 'create-temp-db', () => {
+    runner.createDatabase(tempDbName);
+  });
 
-  runner.dumpBackup();
-  evidence.steps.backupCreated = true;
+  ensureCheckpoint(backupEvidence, 'restore-backup', () => {
+    runner.restoreBackup(tempDbName);
+    backupEvidence.steps.restoreApplied = true;
+  });
 
-  runner.createDatabase(tempDbName);
-  runner.restoreBackup(tempDbName);
-  evidence.steps.restoreApplied = true;
+  ensureCheckpoint(backupEvidence, 'verify-restored-migration-count', () => {
+    backupEvidence.metrics.migrationRowsRestored = runner.queryScalarInt(tempDbName, 'SELECT count(*) FROM "_prisma_migrations";');
+    if (backupEvidence.metrics.migrationRowsRestored !== backupEvidence.metrics.migrationRowsSource) {
+      throw new Error('Restored migration row count does not match source migration row count.');
+    }
+  });
 
-  evidence.metrics.migrationRowsRestored = runner.queryScalarInt(
-    tempDbName,
-    'SELECT count(*) FROM "_prisma_migrations";',
-  );
+  ensureCheckpoint(rollbackEvidence, 'capture-pre-fault-migration-count', () => {
+    rollbackEvidence.metrics.migrationRowsBeforeFault = runner.queryScalarInt(tempDbName, 'SELECT count(*) FROM "_prisma_migrations";');
+  });
 
-  runner.runSql(tempDbName, 'DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;');
-  runner.restoreBackup(tempDbName);
-  evidence.steps.rollbackRestoreApplied = true;
+  ensureCheckpoint(rollbackEvidence, 'inject-failed-migration-fault', () => {
+    runner.runSql(tempDbName, 'DROP TABLE IF EXISTS "_prisma_migrations" CASCADE;');
+    rollbackEvidence.steps.faultInjected = true;
+  });
 
-  evidence.metrics.migrationRowsAfterRollbackRestore = runner.queryScalarInt(
-    tempDbName,
-    'SELECT count(*) FROM "_prisma_migrations";',
-  );
+  ensureCheckpoint(rollbackEvidence, 'restore-backup-after-fault', () => {
+    runner.restoreBackup(tempDbName);
+    rollbackEvidence.steps.rollbackRestoreApplied = true;
+  });
 
-  run(
-    'pnpm',
-    ['--filter', 'api', 'prisma:deploy'],
-    commandLog,
-    {
-      env: {
-        ...process.env,
-        DATABASE_URL: prismaTempUrl.toString(),
-      },
-    },
-  );
-  evidence.steps.prismaDeployValidated = true;
+  ensureCheckpoint(rollbackEvidence, 'verify-schema-consistency-after-rollback', () => {
+    rollbackEvidence.metrics.migrationRowsAfterRollbackRestore = runner.queryScalarInt(
+      tempDbName,
+      'SELECT count(*) FROM "_prisma_migrations";',
+    );
+    if (rollbackEvidence.metrics.migrationRowsAfterRollbackRestore !== rollbackEvidence.metrics.migrationRowsBeforeFault) {
+      throw new Error('Rollback restore did not recover expected migration metadata row count.');
+    }
+    rollbackEvidence.steps.schemaConsistencyVerified = true;
+  });
 
-  evidence.status = 'passed';
-  evidence.completedAt = new Date().toISOString();
+  ensureCheckpoint(rollbackEvidence, 'validate-app-deploy-path', () => {
+    if (dryRun) {
+      commandLog.push({
+        command: 'dry-run pnpm --filter api prisma:deploy',
+        startedAt: new Date().toISOString(),
+        durationMs: 1,
+        exitCode: 0,
+        stdout: 'dry-run skipped prisma deploy',
+        stderr: '',
+      });
+    } else {
+      run(
+        'pnpm',
+        ['--filter', 'api', 'prisma:deploy'],
+        commandLog,
+        {
+          env: {
+            ...process.env,
+            DATABASE_URL: prismaTempUrl.toString(),
+          },
+        },
+      );
+    }
+    rollbackEvidence.steps.prismaDeployValidated = true;
+  });
+
+  backupEvidence.status = 'passed';
+  rollbackEvidence.status = 'passed';
+  indexEvidence.status = 'passed';
 } catch (error) {
-  evidence.status = 'failed';
-  evidence.completedAt = new Date().toISOString();
-  evidence.error = error instanceof Error ? error.message : String(error);
-  console.error(`Backup/restore drill failed. Evidence written to ${summaryFile}`);
+  backupEvidence.status = backupEvidence.status === 'passed' ? 'passed' : 'failed';
+  rollbackEvidence.status = rollbackEvidence.status === 'passed' ? 'passed' : 'failed';
+  indexEvidence.status = 'failed';
+  const message = error instanceof Error ? error.message : String(error);
+  backupEvidence.error = message;
+  rollbackEvidence.error = message;
+  indexEvidence.error = message;
+  console.error(`Backup/restore + rollback drill failed. Evidence written to ${evidenceIndexFile}`);
   process.exitCode = 1;
 } finally {
   if (!keepTempDb && runner) {
     try {
       runner.dropDatabase(tempDbName);
     } catch (error) {
-      if (!evidence.cleanupWarning) {
-        evidence.cleanupWarning = error instanceof Error ? error.message : String(error);
-      }
+      const warning = error instanceof Error ? error.message : String(error);
+      backupEvidence.cleanupWarning = warning;
+      rollbackEvidence.cleanupWarning = warning;
+      indexEvidence.cleanupWarning = warning;
     }
   }
 
-  writeJson(summaryFile, evidence);
+  const completedAtIso = new Date().toISOString();
+  backupEvidence.completedAt = completedAtIso;
+  rollbackEvidence.completedAt = completedAtIso;
+  indexEvidence.completedAt = completedAtIso;
+
+  backupEvidence.durationMs = Math.max(0, Date.now() - startedMs);
+  rollbackEvidence.durationMs = backupEvidence.durationMs;
+  indexEvidence.durationMs = backupEvidence.durationMs;
+
+  writeJson(backupSummaryFile, backupEvidence);
+  writeJson(rollbackSummaryFile, rollbackEvidence);
+  writeJson(evidenceIndexFile, indexEvidence);
 }
 
-if (evidence.status === 'passed') {
-  console.log(`Backup/restore rollback drill passed (${runner.mode} mode). Evidence: ${summaryFile}`);
+if (indexEvidence.status === 'passed') {
+  console.log(`Backup/restore + rollback drills passed (${runner.mode} mode). Evidence index: ${evidenceIndexFile}`);
+}
+
+function ensureCheckpoint(evidence, checkpointName, fn) {
+  const started = Date.now();
+  try {
+    fn();
+    evidence.checkpoints.push({
+      checkpoint: checkpointName,
+      status: 'passed',
+      durationMs: Date.now() - started,
+      completedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    evidence.checkpoints.push({
+      checkpoint: checkpointName,
+      status: 'failed',
+      durationMs: Date.now() - started,
+      completedAt: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+function createDryRunRunner(input) {
+  const { commandLog, sourceDbName, backupFile } = input;
+  const counters = new Map([
+    [sourceDbName, 7],
+  ]);
+
+  const pushLog = (command, stdout = 'ok') => {
+    commandLog.push({
+      command,
+      startedAt: new Date().toISOString(),
+      durationMs: 1,
+      exitCode: 0,
+      stdout,
+      stderr: '',
+    });
+  };
+
+  return {
+    mode: 'dry-run',
+    dumpBackup() {
+      writeFileSync(backupFile, 'dry-run-backup');
+      pushLog('dry-run pg_dump --format=custom');
+    },
+    restoreBackup(dbName) {
+      const sourceRows = counters.get(sourceDbName) ?? 0;
+      counters.set(dbName, sourceRows);
+      pushLog(`dry-run pg_restore --dbname ${dbName}`);
+    },
+    createDatabase(dbName) {
+      counters.set(dbName, 0);
+      pushLog(`dry-run create database ${dbName}`);
+    },
+    dropDatabase(dbName) {
+      counters.delete(dbName);
+      pushLog(`dry-run drop database ${dbName}`);
+    },
+    runSql(dbName, sql) {
+      if (sql.includes('DROP TABLE IF EXISTS "_prisma_migrations"')) {
+        counters.set(dbName, 0);
+      }
+      pushLog(`dry-run sql ${dbName} ${sql}`);
+    },
+    queryScalarInt(dbName) {
+      pushLog(`dry-run query migrations ${dbName}`);
+      return counters.get(dbName) ?? 0;
+    },
+  };
 }
 
 function createRunner(input) {
@@ -183,12 +380,10 @@ function createLocalRunner(input) {
     dumpBackup() {
       run('pg_dump', ['--format=custom', '--file', backupFile, toolDbUrl], commandLog);
     },
-    restoreBackup() {
-      run(
-        'pg_restore',
-        ['--clean', '--if-exists', '--no-owner', '--no-privileges', '--dbname', tempToolUrl, backupFile],
-        commandLog,
-      );
+    restoreBackup(dbName) {
+      const dbUrl = new URL(tempToolUrl);
+      dbUrl.pathname = `/${dbName}`;
+      run('pg_restore', ['--clean', '--if-exists', '--no-owner', '--no-privileges', '--dbname', dbUrl.toString(), backupFile], commandLog);
     },
     createDatabase(dbName) {
       run('psql', [adminUrl, '-v', 'ON_ERROR_STOP=1', '-c', `CREATE DATABASE "${dbName}";`], commandLog);
@@ -231,12 +426,12 @@ function createDockerRunner(input) {
   const pgPassword = decodeURIComponent(sourceUrl.password || '');
   const containerBackupPath = `/tmp/${buildContainerBackupName(sourceDbName)}.dump`;
 
-  const dockerRun = (tool, args) => {
+  const dockerRun = (tool, toolArgs) => {
     const dockerArgs = ['compose', 'exec', '-T', DOCKER_POSTGRES_SERVICE];
     if (pgPassword) {
       dockerArgs.push('env', `PGPASSWORD=${pgPassword}`);
     }
-    dockerArgs.push(tool, ...args);
+    dockerArgs.push(tool, ...toolArgs);
     return run('docker', dockerArgs, commandLog);
   };
 
@@ -290,16 +485,16 @@ function createDockerRunner(input) {
   };
 }
 
-function run(cmd, args, log, options = {}) {
+function run(cmd, cmdArgs, log, options = {}) {
   const started = Date.now();
-  const result = spawnSync(cmd, args, {
+  const result = spawnSync(cmd, cmdArgs, {
     encoding: 'utf8',
     env: options.env || process.env,
     cwd: process.cwd(),
   });
 
   log.push({
-    command: `${cmd} ${args.join(' ')}`,
+    command: `${cmd} ${cmdArgs.join(' ')}`,
     startedAt: new Date(started).toISOString(),
     durationMs: Date.now() - started,
     exitCode: result.status,
@@ -359,21 +554,24 @@ function redactDatabaseUrl(input) {
 }
 
 function buildTempDatabaseName(baseName, timestampRaw) {
-  const safeBase = String(baseName || 'db')
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 24) || 'db';
+  const safeBase =
+    String(baseName || 'db')
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 24) || 'db';
   const suffix = timestampRaw.replace(/[^0-9A-Za-z]/g, '').slice(-10);
   return `${safeBase}_drill_${suffix}`.slice(0, 63);
 }
 
 function buildContainerBackupName(baseName) {
-  return String(baseName || 'database')
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 24) || 'database';
+  return (
+    String(baseName || 'database')
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 24) || 'database'
+  );
 }
 
 function trimOutput(output) {
