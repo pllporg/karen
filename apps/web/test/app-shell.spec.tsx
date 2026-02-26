@@ -2,37 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { AppShell } from '../components/app-shell';
+import { useStrictAuthBootstrapMode } from './setup';
 
 describe('AppShell', () => {
   beforeEach(() => {
-    window.localStorage.setItem('session_token', 'test-session-token');
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.endsWith('/auth/session')) {
-        return {
-          ok: true,
-          status: 200,
-          statusText: 'OK',
-          json: async () => ({
-            user: { id: 'user-1' },
-            token: 'test-session-token',
-          }),
-          text: async () => '',
-        } as Response;
-      }
-      return {
-        ok: false,
-        status: 500,
-        statusText: 'Unexpected',
-        json: async () => ({}),
-        text: async () => 'Unexpected request',
-      } as Response;
-    });
-    vi.stubGlobal('fetch', fetchMock);
-  });
-
-  afterEach(() => {
-    window.localStorage.removeItem('session_token');
+    useStrictAuthBootstrapMode();
   });
 
   it('renders standardized sidebar navigation with active route semantics', async () => {
