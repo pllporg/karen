@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import expressionParser from 'docxtemplater/expressions.js';
 import {
   ContactKind,
   DocumentConfidentiality,
@@ -23,8 +24,6 @@ import { AuditService } from '../audit/audit.service';
 
 // Docxtemplater nested expressions (matter.name, customFields.matter.key, etc.)
 // are enabled via the angular expression parser.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const expressionParser = require('docxtemplater/expressions.js');
 
 type MergeContact = {
   id: string;
