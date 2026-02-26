@@ -34,6 +34,7 @@ export default function BillingPage() {
   const [trustAccountOptions, setTrustAccountOptions] = useState<TrustAccountLookup[]>([]);
   const [invoiceOptions, setInvoiceOptions] = useState<InvoiceLookup[]>([]);
   const [selectedMatterId, setSelectedMatterId] = useState('');
+  const [invoiceStatus, setInvoiceStatus] = useState<string | null>(null);
   const [reconciliationTrustAccountId, setReconciliationTrustAccountId] = useState('');
   const [statementStartAt, setStatementStartAt] = useState('');
   const [statementEndAt, setStatementEndAt] = useState('');
@@ -79,7 +80,10 @@ export default function BillingPage() {
 
   async function createInvoice(e: FormEvent) {
     e.preventDefault();
-    if (!selectedMatterId) return;
+    if (!selectedMatterId) {
+      setInvoiceStatus('Select a matter before creating an invoice.');
+      return;
+    }
 
     await apiFetch('/billing/invoices', {
       method: 'POST',
@@ -88,6 +92,7 @@ export default function BillingPage() {
         lineItems: [{ description: 'Legal Services', quantity: 2, unitPrice: 425 }],
       }),
     });
+    setInvoiceStatus('Created invoice draft for selected matter.');
     await load();
   }
 
@@ -109,7 +114,7 @@ export default function BillingPage() {
       method: 'POST',
       body: JSON.stringify({ notes: 'Submitted for attorney review.' }),
     });
-    setReconciliationStatus(`Submitted run ${runId} for review.`);
+    setReconciliationStatus('Submitted reconciliation run for review.');
     await load();
   }
 
@@ -121,7 +126,7 @@ export default function BillingPage() {
         resolutionNote: 'Reconciled against source statement and ledger adjustment record.',
       }),
     });
-    setReconciliationStatus(`Resolved discrepancy ${discrepancyId}.`);
+    setReconciliationStatus('Resolved reconciliation discrepancy.');
     await load();
   }
 
@@ -130,7 +135,7 @@ export default function BillingPage() {
       method: 'POST',
       body: JSON.stringify({ notes: 'Signed off by attorney.' }),
     });
-    setReconciliationStatus(`Completed reconciliation run ${runId}.`);
+    setReconciliationStatus('Completed reconciliation run.');
     await load();
   }
 
@@ -197,7 +202,12 @@ export default function BillingPage() {
     if (typeof window !== 'undefined') {
       window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
     }
-    setLedesStatus(`Generated download URL for LEDES job ${jobId}.`);
+    setLedesStatus('Generated LEDES export download URL.');
+  }
+
+  function resolveMatterLabel(matterId: string | null | undefined): string {
+    if (!matterId) return '-';
+    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
   }
 
   return (
@@ -223,6 +233,7 @@ export default function BillingPage() {
           </select>
           <button className="button" type="submit">Create Invoice</button>
         </form>
+        {invoiceStatus ? <p style={{ color: 'var(--lic-text-muted)', marginTop: 8 }}>{invoiceStatus}</p> : null}
       </div>
       <div className="card">
         <table className="table">
@@ -239,7 +250,7 @@ export default function BillingPage() {
             {invoices.map((invoice) => (
               <tr key={invoice.id}>
                 <td>{invoice.invoiceNumber}</td>
-                <td>{invoice.matterId}</td>
+                <td>{invoice.matter?.name || resolveMatterLabel(invoice.matterId)}</td>
                 <td>{invoice.status}</td>
                 <td>${invoice.total}</td>
                 <td>${invoice.balanceDue}</td>

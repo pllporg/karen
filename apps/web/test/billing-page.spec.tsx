@@ -96,7 +96,7 @@ describe('BillingPage trust reconciliation workflow', () => {
         'http://localhost:4000/billing/trust/reconciliation/discrepancies/disc-1/resolve',
         expect.objectContaining({ method: 'POST', credentials: 'include' }),
       );
-      expect(screen.getByText('Resolved discrepancy disc-1.')).toBeInTheDocument();
+      expect(screen.getByText('Resolved reconciliation discrepancy.')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Complete' }));
@@ -105,8 +105,33 @@ describe('BillingPage trust reconciliation workflow', () => {
         'http://localhost:4000/billing/trust/reconciliation/runs/run-1/complete',
         expect.objectContaining({ method: 'POST', credentials: 'include' }),
       );
-      expect(screen.getByText('Completed reconciliation run run-1.')).toBeInTheDocument();
+      expect(screen.getByText('Completed reconciliation run.')).toBeInTheDocument();
     });
+  });
+});
+
+describe('BillingPage invoice workflow', () => {
+  it('shows in-form validation when creating invoice without matter selection', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse([]);
+      if (url.endsWith('/lookups/trust-accounts?limit=200')) return jsonResponse([]);
+      if (url.endsWith('/lookups/invoices?limit=200')) return jsonResponse([]);
+      if (url.endsWith('/billing/invoices')) return jsonResponse([]);
+      if (url.endsWith('/billing/trust/report')) return jsonResponse([]);
+      if (url.endsWith('/billing/trust/reconciliation/runs')) return jsonResponse([]);
+      if (url.endsWith('/billing/ledes/profiles')) return jsonResponse([]);
+      if (url.endsWith('/billing/ledes/jobs')) return jsonResponse([]);
+      return jsonResponse({ error: `Unexpected GET ${url}` }, 500);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+    render(<BillingPage />);
+
+    await screen.findByRole('button', { name: 'Create Invoice' });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Invoice' }));
+
+    expect(screen.getByText('Select a matter before creating an invoice.')).toBeInTheDocument();
   });
 });
 
