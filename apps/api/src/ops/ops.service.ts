@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { ObservabilityService } from '../observability/observability.service';
+import { evaluateAlertBaseline } from './alert-baseline.util';
 import { isProductionLikeProfile } from './provider-readiness.util';
 
 type ProviderStatusRow = {
@@ -12,6 +15,50 @@ type ProviderStatusRow = {
 
 @Injectable()
 export class OpsService {
+  constructor(
+    private readonly prisma?: PrismaService,
+    private readonly observability?: ObservabilityService,
+  ) {}
+
+  async alertBaseline() {
+    const lookbackMinutes = this.readInt('OPS_ALERT_LOOKBACK_MINUTES', 15, 1, 120);
+    const apiErrorRate = this.readFloat('OPS_ALERT_API_ERROR_RATE', 0.05, 0.001, 1);
+    const queueFailureCount = this.readInt('OPS_ALERT_QUEUE_FAILURE_COUNT', 5, 1, 10_000);
+    const webhookFailureCount = this.readInt('OPS_ALERT_WEBHOOK_FAILURE_COUNT', 3, 1, 10_000);
+    const webhookRetryingCount = this.readInt('OPS_ALERT_WEBHOOK_RETRYING_COUNT', 5, 1, 10_000);
+    const providerUnhealthyCount = this.readInt('OPS_ALERT_PROVIDER_UNHEALTHY_COUNT', 1, 1, 100);
+
+    const since = new Date(Date.now() - lookbackMinutes * 60_000);
+    const [failedJobs, totalJobs, failedDeliveries, retryingDeliveries, totalDeliveries] = await Promise.all([
+      this.prisma?.aiJob.count({ where: { createdAt: { gte: since }, status: 'FAILED' } }) || Promise.resolve(0),
+      this.prisma?.aiJob.count({ where: { createdAt: { gte: since } } }) || Promise.resolve(0),
+      this.prisma?.webhookDelivery.count({ where: { createdAt: { gte: since }, status: 'FAILED' } }) || Promise.resolve(0),
+      this.prisma?.webhookDelivery.count({ where: { createdAt: { gte: since }, status: 'RETRYING' } }) || Promise.resolve(0),
+      this.prisma?.webhookDelivery.count({ where: { createdAt: { gte: since } } }) || Promise.resolve(0),
+    ]);
+
+    const providerStatus = this.providerStatus();
+    const criticalUnhealthyCount = providerStatus.providers.filter((provider) => provider.critical && !provider.healthy).length;
+
+    return {
+      lookbackMinutes,
+      evaluatedAt: new Date().toISOString(),
+      alerts: evaluateAlertBaseline({
+        api: this.observability?.getRequestSummary(lookbackMinutes) || { totalRequests: 0, errorRequests: 0 },
+        queue: { failedJobs, totalJobs },
+        webhooks: { failedDeliveries, retryingDeliveries, totalDeliveries },
+        providers: { criticalUnhealthyCount },
+        thresholds: {
+          apiErrorRate,
+          queueFailureCount,
+          webhookFailureCount,
+          webhookRetryingCount,
+          providerUnhealthyCount,
+        },
+      }),
+    };
+  }
+
   providerStatus() {
     const profile = (process.env.RUNTIME_PROFILE || process.env.NODE_ENV || 'development').toLowerCase();
     const productionLike = isProductionLikeProfile(profile);
@@ -25,16 +72,19 @@ export class OpsService {
         critical: true,
         productionLike,
         supportedModes: ['live', 'stub'],
-        missingEnv: this.collectMissing([
-          {
-            when: !this.hasEnv('STRIPE_SECRET_KEY'),
-            name: 'STRIPE_SECRET_KEY',
-          },
-          {
-            when: !this.hasEnv('STRIPE_WEBHOOK_SECRET'),
-            name: 'STRIPE_WEBHOOK_SECRET',
-          },
-        ], productionLike || this.hasEnv('STRIPE_SECRET_KEY')),
+        missingEnv: this.collectMissing(
+          [
+            {
+              when: !this.hasEnv('STRIPE_SECRET_KEY'),
+              name: 'STRIPE_SECRET_KEY',
+            },
+            {
+              when: !this.hasEnv('STRIPE_WEBHOOK_SECRET'),
+              name: 'STRIPE_WEBHOOK_SECRET',
+            },
+          ],
+          productionLike || this.hasEnv('STRIPE_SECRET_KEY'),
+        ),
         detail: `STRIPE_SECRET_KEY=${this.hasEnv('STRIPE_SECRET_KEY') ? 'set' : 'missing'}; STRIPE_WEBHOOK_SECRET=${
           this.hasEnv('STRIPE_WEBHOOK_SECRET') ? 'set' : 'missing'
         }`,
@@ -342,5 +392,17 @@ export class OpsService {
       return [];
     }
     return checks.filter((item) => item.when).map((item) => item.name);
+  }
+
+  private readInt(name: string, fallback: number, min: number, max: number): number {
+    const parsed = Number.parseInt(String(process.env[name] || ''), 10);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
+  }
+
+  private readFloat(name: string, fallback: number, min: number, max: number): number {
+    const parsed = Number.parseFloat(String(process.env[name] || ''));
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
   }
 }

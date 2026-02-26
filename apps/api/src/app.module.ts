@@ -28,6 +28,8 @@ import { LookupsModule } from './lookups/lookups.module';
 import { OpsModule } from './ops/ops.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { GuardsModule } from './common/guards/guards.module';
+import { RequestObservabilityInterceptor } from './observability/request-observability.interceptor';
+import { ObservabilityModule } from './observability/observability.module';
 
 @Module({
   imports: [
@@ -60,8 +62,13 @@ import { GuardsModule } from './common/guards/guards.module';
     PortalModule,
     LookupsModule,
     OpsModule,
+    ObservabilityModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestObservabilityInterceptor,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,
