@@ -233,8 +233,14 @@ describe('MattersPage', () => {
       );
     });
 
+    await waitFor(() => {
+      expect(
+        screen.getByRole('option', {
+          name: 'M-2026-001-INTAKE - Kitchen Remodel Defect - Ortega (Intake)',
+        }),
+      ).toBeInTheDocument();
+    });
     const draftSelector = screen.getByLabelText('Intake draft selector') as HTMLSelectElement;
-    fireEvent.change(draftSelector, { target: { value: 'draft-1' } });
     await waitFor(() => {
       expect(draftSelector.value).toBe('draft-1');
       expect(screen.getByRole('button', { name: 'Resume Draft' })).toBeEnabled();
