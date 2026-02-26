@@ -1553,7 +1553,7 @@
           "title": "Replace raw-ID UX with selector-driven workflow primitives",
           "requirementId": "REQ-RC-002",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
