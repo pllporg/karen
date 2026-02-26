@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-26T00:51:56.594Z",
+  "generatedAt": "2026-02-26T23:55:53.156Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,244 +14,121 @@
   },
   "matrixSummary": {
     "totalRequirements": 63,
-    "unresolvedRequirements": 11,
+    "unresolvedRequirements": 0,
     "totalCountsByPhase": {
       "phase-1": 58,
       "phase-2": 5
     },
-    "unresolvedCountsByPhase": {
-      "phase-1": 11
-    },
-    "unresolvedCountsByStatus": {
-      "Missing": 11
-    },
-    "unresolvedCountsByRisk": {
-      "High": 7,
-      "Medium": 4
-    },
-    "unresolvedCountsByStatusAndRisk": {
-      "Missing:High": 7,
-      "Missing:Medium": 4
-    }
+    "unresolvedCountsByPhase": {},
+    "unresolvedCountsByStatus": {},
+    "unresolvedCountsByRisk": {},
+    "unresolvedCountsByStatusAndRisk": {}
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
-    "topRequirements": [
-      {
-        "requirementId": "REQ-RC-001",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Stabilize flaky web/api suites and CI determinism",
-        "component": "Infra",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-002",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Replace raw-ID UX with selector-driven workflow primitives",
-        "component": "Web",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-003",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Session/auth bootstrap hardening and protected-route behavior",
-        "component": "API",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-005",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Critical provider cutover readiness checks and health telemetry",
-        "component": "API",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-006",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Stripe/email/SMS/malware/e-sign live validation suite",
-        "component": "Integrations",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-009",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Backup/restore + migration rollback drill automation",
-        "component": "Infra",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-UI-009",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "component": "Web",
-        "epicCode": "PARITY-11",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-007",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
-        "component": "Integrations",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-008",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "API lint gate + static quality enforcement",
-        "component": "API",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-RC-010",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "Production observability/alerting baseline",
-        "component": "Infra",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      }
-    ]
+    "topRequirements": []
   },
   "linearSummary": {
     "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 82,
+    "scopedIssueCount": 86,
     "stateCounts": {
-      "Backlog": 7,
-      "In Progress": 5,
-      "Done": 70
+      "Done": 86
     },
-    "inProgressIssueKeys": [
-      "KAR-94",
-      "KAR-91",
-      "KAR-89",
-      "KAR-88",
-      "KAR-87"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-91",
-        "title": "Critical provider cutover readiness checks and health telemetry",
-        "state": "In Progress",
-        "updatedAt": "2026-02-26T00:51:51.127Z",
-        "requirementId": "REQ-RC-005"
-      },
-      {
-        "key": "KAR-71",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "state": "Backlog",
-        "updatedAt": "2026-02-26T00:50:34.996Z",
-        "requirementId": "REQ-UI-009"
-      },
-      {
-        "key": "KAR-88",
-        "title": "Replace raw-ID UX with selector-driven workflow primitives",
-        "state": "In Progress",
-        "updatedAt": "2026-02-26T00:32:57.476Z",
-        "requirementId": "REQ-RC-002"
-      },
-      {
-        "key": "KAR-90",
-        "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
+        "key": "KAR-101",
+        "title": "RC-2: Add production readiness dashboard card for unresolved launch blockers",
         "state": "Done",
-        "updatedAt": "2026-02-26T00:32:17.945Z",
-        "requirementId": "REQ-RC-004"
+        "updatedAt": "2026-02-26T23:53:57.825Z",
+        "requirementId": "REQ-RC-015"
       },
       {
-        "key": "KAR-87",
-        "title": "Stabilize flaky web/api suites and CI determinism",
-        "state": "In Progress",
-        "updatedAt": "2026-02-26T00:24:46.367Z",
-        "requirementId": "REQ-RC-001"
+        "key": "KAR-100",
+        "title": "RC-2: Build end-to-end release smoke script for core operator workflows",
+        "state": "Done",
+        "updatedAt": "2026-02-26T23:53:56.199Z",
+        "requirementId": "REQ-RC-014"
       },
       {
-        "key": "KAR-94",
-        "title": "API lint gate + static quality enforcement",
-        "state": "In Progress",
-        "updatedAt": "2026-02-26T00:18:15.424Z",
-        "requirementId": "REQ-RC-008"
+        "key": "KAR-99",
+        "title": "RC-2: Add provider readiness evidence export + signed run artifact",
+        "state": "Done",
+        "updatedAt": "2026-02-26T23:53:53.291Z",
+        "requirementId": "REQ-RC-013"
       },
       {
-        "key": "KAR-89",
-        "title": "Session/auth bootstrap hardening and protected-route behavior",
-        "state": "In Progress",
-        "updatedAt": "2026-02-26T00:18:15.081Z",
-        "requirementId": "REQ-RC-003"
+        "key": "KAR-98",
+        "title": "RC-2: Add deterministic auth bootstrap test harness for protected routes",
+        "state": "Done",
+        "updatedAt": "2026-02-26T23:53:50.792Z",
+        "requirementId": "REQ-RC-012"
+      },
+      {
+        "key": "KAR-86",
+        "title": "RC-1 Usability + Production Hardening",
+        "state": "Done",
+        "updatedAt": "2026-02-26T20:48:58.626Z",
+        "requirementId": "RC-1"
+      },
+      {
+        "key": "KAR-92",
+        "title": "Stripe/email/SMS/malware/e-sign live validation suite",
+        "state": "Done",
+        "updatedAt": "2026-02-26T20:47:18.779Z",
+        "requirementId": "REQ-RC-006"
       },
       {
         "key": "KAR-97",
         "title": "Launch candidate UAT and go-live signoff",
-        "state": "Backlog",
-        "updatedAt": "2026-02-24T19:23:00.104Z",
+        "state": "Done",
+        "updatedAt": "2026-02-26T20:47:17.176Z",
         "requirementId": "REQ-RC-011"
+      },
+      {
+        "key": "KAR-93",
+        "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
+        "state": "Done",
+        "updatedAt": "2026-02-26T20:47:14.674Z",
+        "requirementId": "REQ-RC-007"
+      },
+      {
+        "key": "KAR-89",
+        "title": "Session/auth bootstrap hardening and protected-route behavior",
+        "state": "Done",
+        "updatedAt": "2026-02-26T20:47:06.301Z",
+        "requirementId": "REQ-RC-003"
       },
       {
         "key": "KAR-96",
         "title": "Production observability/alerting baseline",
-        "state": "Backlog",
-        "updatedAt": "2026-02-24T19:22:59.602Z",
+        "state": "Done",
+        "updatedAt": "2026-02-26T19:31:44.891Z",
         "requirementId": "REQ-RC-010"
-      },
-      {
-        "key": "KAR-95",
-        "title": "Backup/restore + migration rollback drill automation",
-        "state": "Backlog",
-        "updatedAt": "2026-02-24T19:22:59.295Z",
-        "requirementId": "REQ-RC-009"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 17,
-    "openIssueCount": 1,
+    "openIssueCount": 0,
     "stateCounts": {
-      "Done": 16,
-      "Backlog": 1
+      "Done": 17
     },
-    "openIssueKeys": [
-      "KAR-71"
-    ],
-    "openIssues": [
-      {
-        "key": "KAR-71",
-        "title": "Create PRD + screen specifications for existing product routes",
-        "state": "Backlog",
-        "requirementId": "REQ-UI-009",
-        "updatedAt": "2026-02-26T00:50:34.996Z"
-      }
-    ]
+    "openIssueKeys": [],
+    "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-26T00:51:21.849Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-26T23:55:51.297Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "83fb3af4371023ddc8e6a8033b43edcc71a7d216",
+    "gitHead": "dba03322c85fd730c9ccd8681f51b7a76e11dc5f",
     "gitStatusShort": [
-      "## lin/KAR-91-provider-readiness-panel...origin/lin/KAR-91-provider-readiness-panel",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 3
+    "dirtyFileCount": 0
   }
 }
