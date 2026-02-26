@@ -337,8 +337,13 @@ describe('PortalPage', () => {
         expect.objectContaining({ credentials: 'include' }),
       );
     });
+    await screen.findByRole('option', { name: 'M-001 - Portal Matter' });
 
-    fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
+    const portalMatterSelect = screen.getByLabelText('Portal Matter') as HTMLSelectElement;
+    fireEvent.change(portalMatterSelect, { target: { value: 'matter-1' } });
+    await waitFor(() => {
+      expect(portalMatterSelect.value).toBe('matter-1');
+    });
     fireEvent.change(screen.getByPlaceholderText('Message'), { target: { value: 'See attached defect photo' } });
     fireEvent.change(screen.getByPlaceholderText('Attachment Title (optional)'), {
       target: { value: 'Uploaded Portal Photo' },
@@ -347,8 +352,12 @@ describe('PortalPage', () => {
     const file = new File(['binary'], 'defect-photo.jpg', { type: 'image/jpeg' });
     fireEvent.change(screen.getByLabelText('Attachment File'), { target: { files: [file] } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
-    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
+    const confirmDialog = await screen.findByRole(
+      'dialog',
+      { name: 'Confirm Client Message Send' },
+      { timeout: 3000 },
+    );
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

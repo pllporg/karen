@@ -50,14 +50,14 @@ describe('apiFetch', () => {
     );
   });
 
-  it('bootstraps session and retries request when token is missing', async () => {
+  it('clears stale token, bootstraps session, and retries request once', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
-        text: async () => 'missing session',
+        text: async () => 'stale session',
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -75,18 +75,30 @@ describe('apiFetch', () => {
         json: async () => ({ ok: true }),
       });
     vi.stubGlobal('fetch', fetchMock);
-    clearSessionToken();
+    setSessionToken('stale-session-token');
 
     const result = await apiFetch<{ ok: boolean }>('/matters');
 
     expect(result.ok).toBe(true);
     expect(window.localStorage.getItem('session_token')).toBe('session-token-recovered');
     expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:4000/matters',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-session-token': 'stale-session-token',
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       'http://localhost:4000/auth/session',
       expect.objectContaining({
         method: 'GET',
         credentials: 'include',
+        headers: expect.not.objectContaining({
+          'x-session-token': expect.any(String),
+        }),
       }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -96,6 +108,37 @@ describe('apiFetch', () => {
         headers: expect.objectContaining({
           'x-session-token': 'session-token-recovered',
         }),
+      }),
+    );
+  });
+
+  it('clears stale token and fails deterministically when bootstrap cannot recover', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        text: async () => 'expired session',
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        text: async () => 'invalid session',
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    setSessionToken('expired-session-token');
+
+    await expect(apiFetch('/documents')).rejects.toThrow('401 Unauthorized: expired session');
+    expect(window.localStorage.getItem('session_token')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:4000/auth/session',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'include',
       }),
     );
   });
