@@ -278,3 +278,56 @@ Rollback execution must follow Section 5 and conclude with readiness + smoke che
 - Security reviewer: confirms final security sweep completion.
 
 Go-live is approved only when all required evidence items are present and both engineering + operations owners mark `APPROVED` in the generated signoff file.
+
+## 12) Release Smoke Runner (REQ-RC-014 / KAR-100)
+
+Use a single command to execute the minimum release smoke path and generate a machine-readable artifact:
+
+```bash
+pnpm ops:release:smoke -- --api-base http://127.0.0.1:4000 --out artifacts/ops/release-smoke-summary.json
+```
+
+### 12.1 Workflow coverage
+
+The smoke runner executes this exact sequence:
+
+1. `login` (`POST /auth/login`) or validates a pre-supplied session token.
+2. `matter create` (`POST /matters`).
+3. `doc upload` (`POST /documents/upload`).
+4. `invoice create` (`POST /billing/time-entries`, then `POST /billing/invoices`).
+5. `portal message` (`POST /portal/messages`).
+6. `AI job create` (`POST /ai/jobs`).
+
+### 12.2 Prerequisites
+
+- API service is reachable and healthy at `--api-base` (defaults to `http://127.0.0.1:4000`).
+- A release smoke user exists with permissions for:
+  - `matters:write`
+  - `documents:write`
+  - `billing:write`
+  - `ai:write`
+- Credentials are provided by one of:
+  - `--email` and `--password`, or
+  - `--token` / `OPS_SMOKE_SESSION_TOKEN`.
+- The configured document storage, database, and queue dependencies are available so write flows can complete.
+
+### 12.3 Artifact and failure interpretation
+
+The command writes JSON to `artifacts/ops/release-smoke-summary.json` (or `--out`) with:
+
+- `steps[]`: per-step status (`passed`, `failed`, `skipped`), status code, and details.
+- `ids`: identifiers captured for created entities.
+- `summary`: passed/failed/skipped totals.
+- `healthy`: final release-smoke boolean.
+
+Interpretation guidance:
+
+- `healthy=true`: all required smoke actions completed.
+- `failed > 0`: release is blocked until the failing step is triaged and re-run.
+- `skipped > 0`: usually indicates an upstream failure (for example, matter creation failed so dependent steps were skipped).
+- Common root causes:
+  - `401/403`: session or permission misconfiguration.
+  - `422/400`: invalid request payload due to API contract drift.
+  - `5xx`: service dependency or deployment instability.
+
+For incident handling and rollback criteria, continue with Sections 5, 6, and 11.4.
