@@ -302,6 +302,7 @@ describe('PortalPage', () => {
               id: 'doc-uploaded',
               matterId: 'matter-1',
               title: 'Uploaded Portal Photo',
+              sharedAt: '2026-02-26T18:00:00.000Z',
               latestVersion: { id: 'ver-up' },
             },
           ],
@@ -370,6 +371,8 @@ describe('PortalPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Download Uploaded Portal Photo' })).toBeInTheDocument();
     });
+    expect(screen.getByText(/M-001 - Portal Matter \| Shared /i)).toBeInTheDocument();
+    expect(screen.queryByText(/matter-1/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Download Uploaded Portal Photo' }));
 
@@ -382,5 +385,43 @@ describe('PortalPage', () => {
     });
 
     openSpy.mockRestore();
+  });
+
+  it('renders a neutral matter fallback label instead of raw matter ids in shared document metadata', async () => {
+    const state = {
+      snapshot: {
+        matters: [{ id: 'matter-fallback' }],
+        keyDates: [],
+        invoices: [],
+        messages: [],
+        documents: [
+          {
+            id: 'doc-fallback',
+            matterId: 'matter-fallback',
+            title: 'Portal Intake Packet',
+            sharedAt: '2026-02-26T18:30:00.000Z',
+          },
+        ],
+        eSignEnvelopes: [],
+      } as any,
+      intakeForms: [],
+      templates: [],
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.endsWith('/portal/snapshot') && method === 'GET') return jsonResponse(state.snapshot);
+      if (url.endsWith('/portal/intake-form-definitions') && method === 'GET') return jsonResponse(state.intakeForms);
+      if (url.endsWith('/portal/engagement-letter-templates') && method === 'GET') return jsonResponse(state.templates);
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+    render(<PortalPage />);
+
+    await screen.findByText('Portal Intake Packet');
+    expect(screen.getByText(/Matter \| Shared /i)).toBeInTheDocument();
+    expect(screen.queryByText(/matter-fallback/i)).not.toBeInTheDocument();
   });
 });

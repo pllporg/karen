@@ -1142,7 +1142,7 @@
           "title": "Create PRD + screen specifications for existing product routes",
           "requirementId": "REQ-UI-009",
           "promptSection": "UI Refactor / Existing functionality PRDs and screens",
-          "parityStatus": "Missing",
+          "parityStatus": "Partial",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1525,7 +1525,7 @@
           "title": "Stabilize flaky web/api suites and CI determinism",
           "requirementId": "REQ-RC-001",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 0",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Infra",
           "risk": "High",
           "labels": [

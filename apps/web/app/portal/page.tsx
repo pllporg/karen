@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
@@ -10,6 +10,36 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
 type PortalConfirmAction = 'send-message' | 'create-esign' | null;
 type PortalMatterOption = { id: string; matterNumber?: string | null; name?: string | null };
 type PortalLookupOption = { id: string; name: string };
+type PortalSnapshotDocument = {
+  id: string;
+  matterId?: string | null;
+  title?: string | null;
+  sharedAt?: string | null;
+  updatedAt?: string | null;
+  latestVersion?: { id?: string | null } | null;
+};
+
+function formatPortalMatterLabel(matter: PortalMatterOption | null | undefined): string {
+  if (!matter) return 'Matter';
+  const matterNumber = matter.matterNumber?.trim();
+  const name = matter.name?.trim();
+  if (matterNumber && name) return `${matterNumber} - ${name}`;
+  if (name) return name;
+  if (matterNumber) return matterNumber;
+  return 'Matter';
+}
+
+function formatPortalDocumentMetadata(
+  document: PortalSnapshotDocument,
+  matterLabelById: Map<string, string>,
+): string {
+  const matterLabel = document.matterId ? matterLabelById.get(document.matterId) || 'Matter' : 'Matter';
+  const timestampValue = document.sharedAt || document.updatedAt;
+  if (!timestampValue) return matterLabel;
+  const sharedAt = new Date(timestampValue);
+  if (Number.isNaN(sharedAt.getTime())) return matterLabel;
+  return `${matterLabel} | Shared ${sharedAt.toLocaleString()}`;
+}
 
 export default function PortalPage() {
   const [snapshot, setSnapshot] = useState<any>(null);
@@ -26,6 +56,10 @@ export default function PortalPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<PortalConfirmAction>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const matterLabelById = useMemo(
+    () => new Map(matterOptions.map((matter) => [matter.id, formatPortalMatterLabel(matter)])),
+    [matterOptions],
+  );
 
   const loadPortalData = useCallback(async () => {
     const [nextSnapshot, nextIntakeForms, nextTemplates] = await Promise.all([
@@ -197,7 +231,7 @@ export default function PortalPage() {
               <option value="">Select matter</option>
               {matterOptions.map((matter) => (
                 <option key={matter.id} value={matter.id}>
-                  {matter.matterNumber ? `${matter.matterNumber} - ${matter.name || matter.id}` : matter.name || matter.id}
+                  {formatPortalMatterLabel(matter)}
                 </option>
               ))}
             </select>
@@ -230,7 +264,9 @@ export default function PortalPage() {
             <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <div>
                 <strong>{doc.title}</strong>
-                <div style={{ fontSize: 12, opacity: 0.75 }}>Matter {doc.matterId}</div>
+                <div style={{ fontSize: 12, opacity: 0.75 }}>
+                  {formatPortalDocumentMetadata(doc as PortalSnapshotDocument, matterLabelById)}
+                </div>
               </div>
               {doc.latestVersion?.id ? (
                 <button
