@@ -304,6 +304,40 @@ export class OpsService {
       }),
     );
 
+    providers.push(
+      this.connectorValidationRow({
+        key: 'connectors_clio_staging_validation',
+        providerName: 'clio',
+        oauthMode: clioMode,
+        syncLiveEnabled,
+        checkedAt,
+        productionLike,
+        hasClientId: this.hasLiveCredentialValue(process.env.CLIO_CLIENT_ID),
+        hasClientSecret: this.hasLiveCredentialValue(process.env.CLIO_CLIENT_SECRET),
+        hasWebhookRegistrationUrl: this.hasLiveCredentialValue(process.env.CLIO_WEBHOOK_REGISTER_URL),
+        clientIdEnv: 'CLIO_CLIENT_ID',
+        clientSecretEnv: 'CLIO_CLIENT_SECRET',
+        webhookEnv: 'CLIO_WEBHOOK_REGISTER_URL',
+      }),
+    );
+
+    providers.push(
+      this.connectorValidationRow({
+        key: 'connectors_mycase_staging_validation',
+        providerName: 'mycase',
+        oauthMode: mycaseMode,
+        syncLiveEnabled,
+        checkedAt,
+        productionLike,
+        hasClientId: this.hasLiveCredentialValue(process.env.MYCASE_CLIENT_ID),
+        hasClientSecret: this.hasLiveCredentialValue(process.env.MYCASE_CLIENT_SECRET),
+        hasWebhookRegistrationUrl: this.hasLiveCredentialValue(process.env.MYCASE_WEBHOOK_REGISTER_URL),
+        clientIdEnv: 'MYCASE_CLIENT_ID',
+        clientSecretEnv: 'MYCASE_CLIENT_SECRET',
+        webhookEnv: 'MYCASE_WEBHOOK_REGISTER_URL',
+      }),
+    );
+
     const healthy = providers.every((provider) => !provider.critical || provider.healthy);
 
     return {
@@ -312,6 +346,59 @@ export class OpsService {
       evaluatedAt: checkedAt,
       providers,
     };
+  }
+
+  private connectorValidationRow(input: {
+    key: string;
+    providerName: string;
+    oauthMode: string;
+    syncLiveEnabled: boolean;
+    productionLike: boolean;
+    checkedAt: string;
+    hasClientId: boolean;
+    hasClientSecret: boolean;
+    hasWebhookRegistrationUrl: boolean;
+    clientIdEnv: string;
+    clientSecretEnv: string;
+    webhookEnv: string;
+  }): ProviderStatusRow {
+    const validationMode = input.oauthMode === 'live' && input.syncLiveEnabled ? 'validated' : 'pending';
+    const missingEnv = this.collectMissing(
+      [
+        {
+          when: input.oauthMode !== 'live',
+          name: `${input.providerName.toUpperCase()}_LIVE_OAUTH|INTEGRATION_OAUTH_ENABLE_LIVE`,
+        },
+        {
+          when: !input.hasClientId,
+          name: input.clientIdEnv,
+        },
+        {
+          when: !input.hasClientSecret,
+          name: input.clientSecretEnv,
+        },
+        {
+          when: !input.syncLiveEnabled,
+          name: 'INTEGRATION_SYNC_ENABLE_LIVE',
+        },
+        {
+          when: !input.hasWebhookRegistrationUrl,
+          name: input.webhookEnv,
+        },
+      ],
+      input.productionLike,
+    );
+
+    return this.row({
+      key: input.key,
+      mode: validationMode,
+      critical: input.productionLike,
+      productionLike: input.productionLike,
+      checkedAt: input.checkedAt,
+      supportedModes: ['validated', 'pending'],
+      missingEnv,
+      detail: `${input.providerName} staging validation requires live OAuth, live incremental sync, and webhook registration`,
+    });
   }
 
   private row(input: {

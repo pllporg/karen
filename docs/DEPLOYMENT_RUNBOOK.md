@@ -78,6 +78,8 @@ Operational readiness checklist:
 - queue workers and Redis connectivity are healthy.
 - document storage read/write path works.
 - provider readiness reports healthy (`/ops/provider-status`) with no missing critical env.
+- connector staging validation rows (`connectors_clio_staging_validation`, `connectors_mycase_staging_validation`) show `mode=validated` before enabling traffic.
+- verify incremental sync + webhook idempotency in staging (`pnpm --filter api test -- integrations.spec.ts provider-readiness.spec.ts provider-live-validation.spec.ts`).
 
 Post-start smoke tests (minimum):
 

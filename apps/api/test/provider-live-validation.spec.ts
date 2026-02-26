@@ -109,6 +109,20 @@ describe('provider live validation matrix', () => {
     expect(clio?.missingEnv).toContain('CLIO_CLIENT_SECRET');
   });
 
+  it('requires complete staging validation path for clio/mycase oauth + sync + webhooks', () => {
+    configureLiveBaseline();
+    delete process.env.INTEGRATION_SYNC_ENABLE_LIVE;
+
+    const status = new OpsService().providerStatus();
+    const clioValidation = status.providers.find((row) => row.key === 'connectors_clio_staging_validation');
+    const mycaseValidation = status.providers.find((row) => row.key === 'connectors_mycase_staging_validation');
+
+    expect(status.healthy).toBe(false);
+    expect(clioValidation?.missingEnv).toContain('INTEGRATION_SYNC_ENABLE_LIVE');
+    expect(mycaseValidation?.missingEnv).toContain('INTEGRATION_SYNC_ENABLE_LIVE');
+    expect(() => assertProviderReadiness(status.profile, status.providers)).toThrow('INTEGRATION_SYNC_ENABLE_LIVE');
+  });
+
   it('fails readiness when live sync mode is enabled without webhook registration urls', () => {
     configureLiveBaseline();
     delete process.env.CLIO_WEBHOOK_REGISTER_URL;
