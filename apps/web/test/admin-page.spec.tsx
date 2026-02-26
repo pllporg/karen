@@ -65,18 +65,24 @@ describe('AdminPage webhook delivery monitor', () => {
         {
           key: 'stripe',
           mode: 'live',
+          provider: 'live',
           critical: true,
           healthy: true,
+          issues: [],
+          checkedAt: '2026-02-26T18:30:00.000Z',
           detail: 'configured',
           missingEnv: [],
         },
         {
           key: 'email',
           mode: 'stub',
+          provider: 'stub',
           critical: true,
           healthy: false,
+          issues: ['Critical provider cannot run in stub mode for production-like profiles'],
+          checkedAt: '2026-02-26T18:30:00.000Z',
           detail: 'stub provider',
-          missingEnv: ['RESEND_API_KEY'],
+          missingEnv: [],
         },
       ],
     };
@@ -124,7 +130,7 @@ describe('AdminPage webhook delivery monitor', () => {
     await screen.findByText('https://hooks.example/receiver');
     expect(await screen.findByText('Provider Readiness')).toBeInTheDocument();
     expect(screen.getByText('Profile: STAGING')).toBeInTheDocument();
-    expect(screen.getByText('RESEND_API_KEY')).toBeInTheDocument();
+    expect(screen.getByText('Critical provider cannot run in stub mode for production-like profiles')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 

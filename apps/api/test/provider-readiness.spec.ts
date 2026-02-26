@@ -15,6 +15,7 @@ describe('provider readiness util', () => {
           mode: 'stub',
           critical: true,
           healthy: false,
+          issues: ['Critical provider cannot run in stub mode for production-like profiles'],
           detail: 'stub provider',
         },
       ]),
@@ -29,11 +30,24 @@ describe('provider readiness util', () => {
           mode: 'resend',
           critical: true,
           healthy: false,
+          issues: ['Missing required configuration: RESEND_API_KEY, RESEND_FROM_EMAIL'],
           detail: 'missing resend credentials',
           missingEnv: ['RESEND_API_KEY', 'RESEND_FROM_EMAIL'],
         },
       ]),
     ).toThrow('RESEND_API_KEY');
+    expect(() =>
+      assertProviderReadiness('staging', [
+        {
+          key: 'email',
+          mode: 'resend',
+          critical: true,
+          healthy: false,
+          issues: ['Missing required configuration: RESEND_API_KEY'],
+          detail: 'missing resend credentials',
+        },
+      ]),
+    ).toThrow('issues=Missing required configuration: RESEND_API_KEY');
   });
 
   it('allows unhealthy providers in non-production profiles', () => {
