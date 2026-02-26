@@ -87,6 +87,23 @@ describe('AdminPage webhook delivery monitor', () => {
       ],
     };
 
+
+    const launchBlockers = {
+      evaluatedAt: '2026-02-26T18:30:00.000Z',
+      healthy: false,
+      blockers: [
+        {
+          key: 'provider_readiness',
+          title: 'Provider readiness',
+          severity: 'critical',
+          status: 'blocked',
+          observedAt: '2026-02-26T18:30:00.000Z',
+          summary: '1 critical provider checks failing (email)',
+          runbookUrl: '/docs/DEPLOYMENT_RUNBOOK.md#4-startup-readiness-checks',
+        },
+      ],
+    };
+
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method || 'GET';
@@ -102,6 +119,7 @@ describe('AdminPage webhook delivery monitor', () => {
       if (url.endsWith('/admin/conflict-rule-profiles')) return jsonResponse([]);
       if (url.endsWith('/admin/conflict-checks?limit=15')) return jsonResponse([]);
       if (url.endsWith('/ops/provider-status')) return jsonResponse(providerStatus);
+      if (url.endsWith('/ops/launch-blockers')) return jsonResponse(launchBlockers);
       if (url.endsWith('/webhooks/endpoints')) return jsonResponse(endpoints);
 
       if (url.includes('/webhooks/deliveries?') && method === 'GET') {
@@ -131,6 +149,13 @@ describe('AdminPage webhook delivery monitor', () => {
     expect(await screen.findByText('Provider Readiness')).toBeInTheDocument();
     expect(screen.getByText('Profile: STAGING')).toBeInTheDocument();
     expect(screen.getByText('Critical provider cannot run in stub mode for production-like profiles')).toBeInTheDocument();
+    expect(screen.getByText('Production Launch Blockers')).toBeInTheDocument();
+    expect(screen.getByText('Provider readiness')).toBeInTheDocument();
+    expect(screen.getByText('ACTION REQUIRED')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open runbook' })).toHaveAttribute(
+      'href',
+      '/docs/DEPLOYMENT_RUNBOOK.md#4-startup-readiness-checks',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
