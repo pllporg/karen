@@ -57,6 +57,30 @@ describe('AdminPage webhook delivery monitor', () => {
       },
     ];
 
+    const providerStatus = {
+      profile: 'staging',
+      healthy: false,
+      evaluatedAt: '2026-02-26T18:30:00.000Z',
+      providers: [
+        {
+          key: 'stripe',
+          mode: 'live',
+          critical: true,
+          healthy: true,
+          detail: 'configured',
+          missingEnv: [],
+        },
+        {
+          key: 'email',
+          mode: 'stub',
+          critical: true,
+          healthy: false,
+          detail: 'stub provider',
+          missingEnv: ['RESEND_API_KEY'],
+        },
+      ],
+    };
+
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method || 'GET';
@@ -71,6 +95,7 @@ describe('AdminPage webhook delivery monitor', () => {
       if (url.endsWith('/config/sections')) return jsonResponse([]);
       if (url.endsWith('/admin/conflict-rule-profiles')) return jsonResponse([]);
       if (url.endsWith('/admin/conflict-checks?limit=15')) return jsonResponse([]);
+      if (url.endsWith('/ops/provider-status')) return jsonResponse(providerStatus);
       if (url.endsWith('/webhooks/endpoints')) return jsonResponse(endpoints);
 
       if (url.includes('/webhooks/deliveries?') && method === 'GET') {
@@ -97,6 +122,9 @@ describe('AdminPage webhook delivery monitor', () => {
 
     await screen.findByText('Webhook Delivery Monitor');
     await screen.findByText('https://hooks.example/receiver');
+    expect(await screen.findByText('Provider Readiness')).toBeInTheDocument();
+    expect(screen.getByText('Profile: STAGING')).toBeInTheDocument();
+    expect(screen.getByText('RESEND_API_KEY')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-25T23:00:42.969Z",
+  "generatedAt": "2026-02-26T00:51:56.594Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -65,15 +65,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-RC-004",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
-        "component": "Web",
-        "epicCode": "RC-1",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-RC-005",
         "parityStatus": "Missing",
         "risk": "High",
@@ -98,6 +89,15 @@
         "title": "Backup/restore + migration rollback drill automation",
         "component": "Infra",
         "epicCode": "RC-1",
+        "phase": "phase-1"
+      },
+      {
+        "requirementId": "REQ-UI-009",
+        "parityStatus": "Missing",
+        "risk": "High",
+        "title": "Create PRD + screen specifications for existing product routes",
+        "component": "Web",
+        "epicCode": "PARITY-11",
         "phase": "phase-1"
       },
       {
@@ -135,51 +135,66 @@
     "scopedIssueCount": 82,
     "stateCounts": {
       "Backlog": 7,
-      "In Progress": 4,
-      "Done": 71
+      "In Progress": 5,
+      "Done": 70
     },
     "inProgressIssueKeys": [
       "KAR-94",
-      "KAR-90",
+      "KAR-91",
       "KAR-89",
+      "KAR-88",
       "KAR-87"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-88",
-        "title": "Replace raw-ID UX with selector-driven workflow primitives",
-        "state": "Done",
-        "updatedAt": "2026-02-25T18:02:48.393Z",
-        "requirementId": "REQ-RC-002"
+        "key": "KAR-91",
+        "title": "Critical provider cutover readiness checks and health telemetry",
+        "state": "In Progress",
+        "updatedAt": "2026-02-26T00:51:51.127Z",
+        "requirementId": "REQ-RC-005"
       },
       {
-        "key": "KAR-89",
-        "title": "Session/auth bootstrap hardening and protected-route behavior",
+        "key": "KAR-71",
+        "title": "Create PRD + screen specifications for existing product routes",
+        "state": "Backlog",
+        "updatedAt": "2026-02-26T00:50:34.996Z",
+        "requirementId": "REQ-UI-009"
+      },
+      {
+        "key": "KAR-88",
+        "title": "Replace raw-ID UX with selector-driven workflow primitives",
         "state": "In Progress",
-        "updatedAt": "2026-02-25T17:53:09.369Z",
-        "requirementId": "REQ-RC-003"
+        "updatedAt": "2026-02-26T00:32:57.476Z",
+        "requirementId": "REQ-RC-002"
       },
       {
         "key": "KAR-90",
         "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
-        "state": "In Progress",
-        "updatedAt": "2026-02-25T17:53:09.126Z",
+        "state": "Done",
+        "updatedAt": "2026-02-26T00:32:17.945Z",
         "requirementId": "REQ-RC-004"
-      },
-      {
-        "key": "KAR-94",
-        "title": "API lint gate + static quality enforcement",
-        "state": "In Progress",
-        "updatedAt": "2026-02-25T17:53:08.783Z",
-        "requirementId": "REQ-RC-008"
       },
       {
         "key": "KAR-87",
         "title": "Stabilize flaky web/api suites and CI determinism",
         "state": "In Progress",
-        "updatedAt": "2026-02-25T17:44:16.488Z",
+        "updatedAt": "2026-02-26T00:24:46.367Z",
         "requirementId": "REQ-RC-001"
+      },
+      {
+        "key": "KAR-94",
+        "title": "API lint gate + static quality enforcement",
+        "state": "In Progress",
+        "updatedAt": "2026-02-26T00:18:15.424Z",
+        "requirementId": "REQ-RC-008"
+      },
+      {
+        "key": "KAR-89",
+        "title": "Session/auth bootstrap hardening and protected-route behavior",
+        "state": "In Progress",
+        "updatedAt": "2026-02-26T00:18:15.081Z",
+        "requirementId": "REQ-RC-003"
       },
       {
         "key": "KAR-97",
@@ -201,50 +216,42 @@
         "state": "Backlog",
         "updatedAt": "2026-02-24T19:22:59.295Z",
         "requirementId": "REQ-RC-009"
-      },
-      {
-        "key": "KAR-93",
-        "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
-        "state": "Backlog",
-        "updatedAt": "2026-02-24T19:22:58.772Z",
-        "requirementId": "REQ-RC-007"
-      },
-      {
-        "key": "KAR-92",
-        "title": "Stripe/email/SMS/malware/e-sign live validation suite",
-        "state": "Backlog",
-        "updatedAt": "2026-02-24T19:22:58.398Z",
-        "requirementId": "REQ-RC-006"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 17,
-    "openIssueCount": 0,
+    "openIssueCount": 1,
     "stateCounts": {
-      "Done": 17
+      "Done": 16,
+      "Backlog": 1
     },
-    "openIssueKeys": [],
-    "openIssues": []
+    "openIssueKeys": [
+      "KAR-71"
+    ],
+    "openIssues": [
+      {
+        "key": "KAR-71",
+        "title": "Create PRD + screen specifications for existing product routes",
+        "state": "Backlog",
+        "requirementId": "REQ-UI-009",
+        "updatedAt": "2026-02-26T00:50:34.996Z"
+      }
+    ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-25T23:00:41.326Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-26T00:51:21.849Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2a13f77eed2d54297ae6eed4ce474c5dcdeb1be8",
+    "gitHead": "83fb3af4371023ddc8e6a8033b43edcc71a7d216",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M README.md",
+      "## lin/KAR-91-provider-readiness-panel...origin/lin/KAR-91-provider-readiness-panel",
       " M docs/SESSION_HANDOFF.md",
-      " M docs/WORKING_CONTRACT.md",
-      " M package.json",
-      " M tools/backlog-sync/README.md",
-      "?? docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md",
-      "?? docs/codex-cloud/",
-      "?? tools/backlog-sync/refresh_handoff_from_snapshot.mjs"
+      " M tools/backlog-sync/requirements.matrix.json",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 8
+    "dirtyFileCount": 3
   }
 }

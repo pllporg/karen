@@ -1142,7 +1142,7 @@
           "title": "Create PRD + screen specifications for existing product routes",
           "requirementId": "REQ-UI-009",
           "promptSection": "UI Refactor / Existing functionality PRDs and screens",
-          "parityStatus": "Complete",
+          "parityStatus": "Missing",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1609,7 +1609,7 @@
           "title": "Billing/documents/AI workflow usability pass (no-ID operation)",
           "requirementId": "REQ-RC-004",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
