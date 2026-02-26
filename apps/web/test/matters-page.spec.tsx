@@ -233,6 +233,7 @@ describe('MattersPage', () => {
       );
     });
 
+    // Wait for the refreshed draft list before asserting selected value to avoid race conditions.
     await waitFor(() => {
       expect(
         screen.getByRole('option', {
