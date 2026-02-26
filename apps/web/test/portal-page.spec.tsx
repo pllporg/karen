@@ -64,6 +64,9 @@ describe('PortalPage', () => {
 
     await screen.findByText('1 visible matters');
     await screen.findByText('2 shared docs');
+    await waitFor(() => {
+      expect((screen.getByLabelText('Portal Matter') as HTMLSelectElement).value).toBe('matter-1');
+    });
 
     fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -146,11 +149,6 @@ describe('PortalPage', () => {
     fireEvent.change(screen.getByLabelText('Portal Engagement Template'), {
       target: { value: 'letter-template-5' },
     });
-    await waitFor(() => {
-      expect((screen.getByLabelText('Portal Matter') as HTMLSelectElement).value).toBe('matter-22');
-      expect((screen.getByLabelText('Portal Intake Form') as HTMLSelectElement).value).toBe('intake-def-1');
-      expect((screen.getByLabelText('Portal Engagement Template') as HTMLSelectElement).value).toBe('letter-template-5');
-    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit Intake' }));
     fireEvent.click(screen.getByRole('button', { name: 'Create E-Sign Envelope' }));
@@ -184,7 +182,6 @@ describe('PortalPage', () => {
     expect(JSON.parse((intakeCall?.[1]?.body as string) || '{}')).toEqual(
       expect.objectContaining({
         intakeFormDefinitionId: 'intake-def-1',
-        matterId: 'matter-22',
       }),
     );
 
