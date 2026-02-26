@@ -1,6 +1,12 @@
-import { apiFetch, setSessionToken } from '../lib/api';
+import { apiFetch, clearSessionToken, setSessionToken } from '../lib/api';
 
 describe('apiFetch', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    clearSessionToken();
+  });
+
   it('throws a detailed error for non-2xx responses', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -69,7 +75,7 @@ describe('apiFetch', () => {
         json: async () => ({ ok: true }),
       });
     vi.stubGlobal('fetch', fetchMock);
-    window.localStorage.removeItem('session_token');
+    clearSessionToken();
 
     const result = await apiFetch<{ ok: boolean }>('/matters');
 

@@ -6,9 +6,25 @@ on:
   pull_request:
 
 jobs:
+  api-lint:
+    name: api-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm --filter api lint
+
   api-test:
     name: api-test
     runs-on: ubuntu-latest
+    needs: [api-lint]
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
       REDIS_URL: redis://localhost:6379
@@ -46,7 +62,6 @@ jobs:
       - run: pnpm --filter api prisma:generate
       - run: pnpm --filter api prisma:deploy
       - run: pnpm --filter api prisma:seed
-      - run: pnpm --filter api lint
       - run: pnpm --filter api test:core-workflow
       - run: pnpm --filter api test:provider-live
       - run: pnpm --filter api test
@@ -73,7 +88,7 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
-    needs: [api-test, web-test]
+    needs: [api-lint, api-test, web-test]
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/karen?schema=public
       REDIS_URL: redis://localhost:6379
