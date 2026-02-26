@@ -25,6 +25,25 @@ describe('apiFetch', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+
+  it('clears token on auth-route 401 without attempting bootstrap retry', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      text: async () => 'invalid credentials',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    setSessionToken('stale-session-token');
+
+    await expect(apiFetch('/auth/login', { method: 'POST', body: '{}' })).rejects.toThrow(
+      '401 Unauthorized: invalid credentials',
+    );
+
+    expect(window.localStorage.getItem('session_token')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('adds session token and default headers on successful requests', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
