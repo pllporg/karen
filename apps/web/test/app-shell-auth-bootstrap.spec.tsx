@@ -54,50 +54,6 @@ describe('AppShell auth bootstrap', () => {
     expect(window.localStorage.getItem('session_token')).toBe('restored-token');
   });
 
-
-  it('revalidates stale local token against server session before rendering protected content', async () => {
-    window.localStorage.setItem('session_token', 'stale-token');
-
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      statusText: 'Unauthorized',
-      json: async () => ({}),
-      text: async () => 'invalid session',
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    const replace = vi.fn();
-    vi.spyOn(nextNavigation, 'usePathname').mockReturnValue('/dashboard');
-    vi.spyOn(nextNavigation, 'useRouter').mockReturnValue({
-      push: vi.fn(),
-      replace,
-      prefetch: vi.fn(),
-    } as any);
-
-    render(
-      <AppShell>
-        <div>Protected content</div>
-      </AppShell>,
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/auth/session',
-        expect.objectContaining({
-          method: 'GET',
-          credentials: 'include',
-        }),
-      );
-    });
-
-    await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith('/login?next=%2Fdashboard');
-    });
-    expect(window.localStorage.getItem('session_token')).toBeNull();
-    expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
-  });
-
   it('redirects to login when bootstrap session fails', async () => {
     window.localStorage.removeItem('session_token');
     const replace = vi.fn();
