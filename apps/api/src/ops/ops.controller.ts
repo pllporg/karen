@@ -14,4 +14,10 @@ export class OpsController {
   providerStatus() {
     return this.opsService.providerStatus();
   }
+
+  @Get('alerts/baseline')
+  @RequirePermissions('organizations:read')
+  alertBaseline() {
+    return this.opsService.alertBaseline();
+  }
 }

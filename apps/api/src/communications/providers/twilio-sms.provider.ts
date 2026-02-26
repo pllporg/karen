@@ -66,7 +66,7 @@ export class TwilioSmsProvider implements SmsProvider {
     const status: SendMessageResult['status'] =
       providerStatus === 'failed' || providerStatus === 'undelivered' ? 'failed' : 'queued';
 
-    this.logger.log(`Twilio accepted SMS for ${input.to} (${providerMessageId})`);
+    this.logger.log(JSON.stringify({ event: 'provider.twilio.accepted', provider: 'twilio', recipient: input.to, providerMessageId, status }));
     return {
       id: `twilio-${providerMessageId}`,
       provider: 'twilio',

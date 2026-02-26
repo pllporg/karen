@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { createHash, createHmac } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,6 +6,7 @@ import { toJsonValue } from '../common/utils/json.util';
 
 @Injectable()
 export class WebhooksService {
+  private readonly logger = new Logger(WebhooksService.name);
   private readonly maxAttempts = this.parsePositiveInt(process.env.WEBHOOK_DELIVERY_MAX_ATTEMPTS, 3);
   private readonly retryBaseDelayMs = this.parseNonNegativeInt(process.env.WEBHOOK_DELIVERY_RETRY_BASE_DELAY_MS, 100);
 
@@ -241,6 +242,7 @@ export class WebhooksService {
               responseCode: response.status,
             },
           });
+          this.logger.log(JSON.stringify({ event: 'webhook.delivery.succeeded', deliveryId: input.deliveryId, endpointId: input.endpoint.id, eventType: input.eventType, attempt, responseCode: response.status, idempotencyKey: input.idempotencyKey }));
           return;
         }
 
@@ -253,7 +255,8 @@ export class WebhooksService {
             responseCode: response.status,
           },
         });
-      } catch {
+        this.logger.warn(JSON.stringify({ event: 'webhook.delivery.response_not_ok', deliveryId: input.deliveryId, endpointId: input.endpoint.id, eventType: input.eventType, attempt, maxAttempts: this.maxAttempts, responseCode: response.status, willRetry: !isLastAttempt, idempotencyKey: input.idempotencyKey }));
+      } catch (error) {
         await this.prisma.webhookDelivery.update({
           where: { id: input.deliveryId },
           data: {
@@ -263,6 +266,7 @@ export class WebhooksService {
             responseCode: null,
           },
         });
+        this.logger.error(JSON.stringify({ event: 'webhook.delivery.request_failed', deliveryId: input.deliveryId, endpointId: input.endpoint.id, eventType: input.eventType, attempt, maxAttempts: this.maxAttempts, willRetry: !isLastAttempt, idempotencyKey: input.idempotencyKey, errorName: error instanceof Error ? error.name : 'UnknownError', errorMessage: error instanceof Error ? error.message : String(error) }));
       }
 
       if (!isLastAttempt) {

@@ -75,11 +75,7 @@ export class MessageDispatchService {
         lastError = error;
         const retryable = this.isRetryable(error);
         const statusCode = this.getStatusCode(error);
-        this.logger.warn(
-          `Message dispatch failed via ${input.providerName} (attempt ${attempt}/${maxAttempts})` +
-            `${statusCode ? ` status=${statusCode}` : ''}` +
-            `${retryable ? ' retryable=true' : ' retryable=false'}`,
-        );
+        this.logger.warn(JSON.stringify({ event: 'provider.dispatch.failed', provider: input.providerName, attempt, maxAttempts, statusCode, retryable }));
         if (!retryable || attempt >= maxAttempts) {
           break;
         }
@@ -90,7 +86,7 @@ export class MessageDispatchService {
     }
 
     if (failOpen && input.providerName !== 'stub') {
-      this.logger.warn(`Fail-open is enabled. Falling back to stub provider for ${input.providerName}.`);
+      this.logger.warn(JSON.stringify({ event: 'provider.dispatch.fail_open_fallback', provider: input.providerName }));
       return input.fallback();
     }
 

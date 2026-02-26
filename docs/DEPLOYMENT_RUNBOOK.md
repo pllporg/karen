@@ -136,6 +136,34 @@ Key metrics to track:
 - auth failure/rate-limit spikes
 - webhook delivery failures and retry behavior
 
+
+## 7.1) Alerting Baseline (REQ-RC-010 / KAR-96)
+
+Alert baseline endpoint: `GET /ops/alerts/baseline`.
+
+Default lookback + thresholds (override with env vars when needed):
+
+- `api_error_rate_spike` (critical): trigger when `5xx` request rate is `>= 5%` over the last `15m`.
+- `queue_job_failures` (warning): trigger when failed async jobs are `>= 5` over the last `15m`.
+- `webhook_delivery_failures` (warning): trigger when webhook failures are `>= 3` OR retrying deliveries are `>= 5` over the last `15m`.
+- `provider_health_failures` (critical): trigger when unhealthy critical providers are `>= 1` from provider readiness checks.
+
+Operational response paths:
+
+1. API error rate spike
+   - Validate request-level logs (`event=http.request.completed`) using `x-request-id`/`x-correlation-id`.
+   - Triage top failing routes + impacted tenants.
+   - Escalate to API on-call; declare incident if sustained for >10 minutes.
+2. Queue/job failures
+   - Inspect queue worker failure logs (`event=queue.job.failed`) and dead-letter/retry state.
+   - Retry failed jobs if safe; escalate to owning subsystem (AI/import/export).
+3. Webhook retries/failures
+   - Inspect webhook delivery logs (`event=webhook.delivery.*`) for response codes and endpoint IDs.
+   - Coordinate with partner endpoint owner; use scoped manual retry once endpoint is healthy.
+4. Provider readiness failures
+   - Check `GET /ops/provider-status` for missing critical credentials/modes.
+   - Block deploy/traffic shift until provider status returns healthy.
+
 ## 8) Operational Ownership
 
 - Release owner: runs deploy + readiness checklist.

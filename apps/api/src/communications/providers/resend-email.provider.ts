@@ -66,7 +66,7 @@ export class ResendEmailProvider implements EmailProvider {
     }
 
     const providerMessageId = String(rawBody.id || `resend-${Date.now()}`);
-    this.logger.log(`Resend accepted email for ${input.to} (${providerMessageId})`);
+    this.logger.log(JSON.stringify({ event: 'provider.resend.accepted', provider: 'resend', recipient: input.to, providerMessageId }));
     return {
       id: `resend-${providerMessageId}`,
       provider: 'resend',
