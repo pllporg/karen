@@ -27,6 +27,22 @@ type WebhookDeliverySummary = {
   };
 };
 
+type ProviderStatusRow = {
+  key: string;
+  mode: string;
+  critical: boolean;
+  healthy: boolean;
+  detail: string;
+  missingEnv?: string[];
+};
+
+type ProviderStatusSnapshot = {
+  profile: string;
+  healthy: boolean;
+  evaluatedAt: string;
+  providers: ProviderStatusRow[];
+};
+
 export default function AdminPage() {
   const [org, setOrg] = useState<{ name: string; slug: string } | null>(null);
   const [users, setUsers] = useState<Array<{ id: string; user: { email: string }; role?: { name: string } }>>([]);
@@ -71,6 +87,8 @@ export default function AdminPage() {
   const [webhookStatusFilter, setWebhookStatusFilter] = useState<'ALL' | 'PENDING' | 'RETRYING' | 'FAILED' | 'DELIVERED'>('FAILED');
   const [webhookError, setWebhookError] = useState<string | null>(null);
   const [retryingDeliveryId, setRetryingDeliveryId] = useState<string | null>(null);
+  const [providerStatus, setProviderStatus] = useState<ProviderStatusSnapshot | null>(null);
+  const [providerStatusError, setProviderStatusError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -120,6 +138,15 @@ export default function AdminPage() {
         }
       })
       .catch(() => undefined);
+
+    apiFetch<ProviderStatusSnapshot>('/ops/provider-status')
+      .then((status) => {
+        setProviderStatus(status);
+        setProviderStatusError(null);
+      })
+      .catch(() => {
+        setProviderStatusError('Provider diagnostics unavailable.');
+      });
   }, []);
 
   async function createCustomField() {
@@ -535,6 +562,45 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ marginTop: 0 }}>Provider Readiness</h3>
+          {providerStatus ? (
+            <>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+                <span className="badge">{providerStatus.healthy ? 'HEALTHY' : 'UNHEALTHY'}</span>
+                <span style={{ color: 'var(--lic-text-muted)' }}>Profile: {providerStatus.profile.toUpperCase()}</span>
+                <span style={{ color: 'var(--lic-text-muted)' }}>
+                  Checked: {new Date(providerStatus.evaluatedAt).toLocaleString()}
+                </span>
+              </div>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th>Mode</th>
+                    <th>Critical</th>
+                    <th>Status</th>
+                    <th>Missing Env</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {providerStatus.providers.map((provider) => (
+                    <tr key={provider.key}>
+                      <td>{provider.key}</td>
+                      <td>{provider.mode}</td>
+                      <td>{provider.critical ? 'Yes' : 'No'}</td>
+                      <td>{provider.healthy ? 'HEALTHY' : 'UNHEALTHY'}</td>
+                      <td>{provider.missingEnv && provider.missingEnv.length > 0 ? provider.missingEnv.join(', ') : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p style={{ color: 'var(--lic-text-muted)', marginTop: 0 }}>{providerStatusError || 'Loading provider diagnostics...'}</p>
+          )}
         </div>
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
