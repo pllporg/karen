@@ -26,6 +26,8 @@ This toolkit sets up and operates a persistent parity backlog where:
   - Generates `session.snapshot.json` with priority, status, and continuity metadata.
 - `check_handoff_freshness.mjs`
   - Validates handoff freshness against snapshot timestamp and Linear evidence discipline.
+- `refresh_handoff_from_snapshot.mjs`
+  - Updates `docs/SESSION_HANDOFF.md` snapshot and verify timestamps from `session.snapshot.json`.
 
 ## Required Environment Variables
 
@@ -63,11 +65,18 @@ This toolkit sets up and operates a persistent parity backlog where:
 4. `pnpm backlog:verify`
 5. `pnpm backlog:matrix:check`
 6. `pnpm backlog:snapshot`
+7. `pnpm backlog:handoff:refresh`
+8. `pnpm backlog:handoff:check`
 
 Bootstrap check shortcut:
 
 - `pnpm backlog:bootstrap:check`
   - Runs `pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot`
+
+Post-merge governance shortcut (RC-1 lane orchestration):
+
+- `pnpm rc1:orchestrator:post-merge`
+  - Runs `backlog:sync`, `backlog:verify`, `backlog:snapshot`, `backlog:handoff:refresh`, `backlog:handoff:check`
 
 ## GitHub Repository Variables/Secrets
 

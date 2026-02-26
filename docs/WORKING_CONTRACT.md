@@ -35,6 +35,19 @@ For every requirement slice:
    - `pnpm backlog:snapshot`
 7. Update `docs/SESSION_HANDOFF.md` snapshot timestamp + delta note.
 
+## RC-1 Parallel Lane Protocol
+
+When RC-1 is active:
+
+1. Run two concurrent implementation lanes:
+   - Lane A (`REQ-RC-001`, `REQ-RC-003`, `REQ-RC-008`) using `pnpm rc1:lane:a:verify`
+   - Lane B (`REQ-RC-002`, `REQ-RC-004`) using `pnpm rc1:lane:b:verify`
+2. Cloud lanes do not update Linear directly.
+3. Local orchestrator performs post-merge governance:
+   - `pnpm rc1:orchestrator:post-merge`
+4. If both lanes touch the same file, Lane B rebases on latest `main`.
+5. Reliability lane changes to CI/test infrastructure take precedence over usability lane edits.
+
 ## Dirty Working Tree Policy
 
 Dirty tree is permitted, but every session must:

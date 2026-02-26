@@ -5,9 +5,9 @@ This document is the persistent handoff layer for new chats. Linear is canonical
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-25T17:37:18.796Z`
+- Snapshot Timestamp: `2026-02-25T23:00:42.969Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-25T17:33:56.353Z`
+- Last Successful Mirror Verify: `2026-02-25T23:00:41.326Z`
 
 ## Canonical Context Routing (Linear-First)
 
@@ -93,6 +93,7 @@ For each requirement slice:
 
 ## Delta Log
 
+- 2026-02-25: Operationalized RC-1 parallel execution as a two-lane Codex Cloud model with local backlog orchestration, including lane packets (`docs/codex-cloud/*.md`), lane verification commands (`pnpm rc1:lane:a:verify`, `pnpm rc1:lane:b:verify`), automated handoff timestamp refresh (`pnpm backlog:handoff:refresh`), and orchestrator post-merge governance command (`pnpm rc1:orchestrator:post-merge`).
 - 2026-02-24: Opened RC-1 production-readiness lane and seeded/mirrored `KAR-86`..`KAR-97` (new requirements `REQ-RC-001`..`REQ-RC-011`) as the canonical launch-hardening queue; updated matrix metadata to `1.3.0` and validated mirror/matrix/snapshot integrity via `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:matrix:check`, and `pnpm backlog:snapshot`.
 - 2026-02-24: Completed Phase-0 reliability hardening slice for `REQ-RC-001` and `REQ-RC-008`: stabilized long-running matter-dashboard tests with explicit per-test timeouts (`apps/web/test/matter-dashboard-page.spec.tsx`), added explicit Jest timeout for core workflow (`apps/api/test/core-workflow-e2e.spec.ts`), replaced API lint placeholder with ESLint gate (`apps/api/.eslintrc.cjs`, `apps/api/package.json`), and split CI checks into deterministic `api-test`, `web-test`, and `build` jobs with API lint enforcement (`.github/workflows/ci.yml`); validation passed with `pnpm --filter api lint`, `pnpm --filter api test:core-workflow`, `pnpm --filter api test`, `pnpm --filter web test`, `pnpm lint`, and `pnpm build`.
 - 2026-02-23: Advanced `KAR-78` / `REQ-PMS-CORE-007` to `In Review` by hardening matter participant lifecycle editing: added participant update endpoint (`PATCH /matters/:id/participants/:participantId`) with counsel/non-counsel linkage guards + org-scoped contact validation + `matter.participant.updated` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/update-participant.dto.ts`), expanded matter dashboard participant workflow to support role/side/primary/represented-by/law-firm/notes add-edit-remove operations with explicit feedback states (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published verification artifact `docs/parity/matter-participant-lifecycle-hardening.md`; validation passed via `pnpm --filter api test -- matters.spec.ts`, `pnpm --filter web test -- matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, and `pnpm lint`, followed by backlog sync/verify/snapshot/handoff check.

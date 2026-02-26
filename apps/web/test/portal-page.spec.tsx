@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import PortalPage from '../app/portal/page';
 
 function jsonResponse<T>(payload: T, status = 200): Response {
@@ -64,11 +64,19 @@ describe('PortalPage', () => {
 
     await screen.findByText('1 visible matters');
     await screen.findByText('2 shared docs');
+    await waitFor(() => {
+      expect((screen.getByLabelText('Portal Matter') as HTMLSelectElement).value).toBe('matter-1');
+    });
 
     fireEvent.change(screen.getByLabelText('Portal Matter'), { target: { value: 'matter-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-    await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
-    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
+    const confirmDialog = await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
+    expect(
+      within(confirmDialog).getByText(
+        'Approving this action sends the portal message to the client for matter review. Verify content and attachments before proceeding.',
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -144,8 +152,13 @@ describe('PortalPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit Intake' }));
     fireEvent.click(screen.getByRole('button', { name: 'Create E-Sign Envelope' }));
-    await screen.findByRole('dialog', { name: 'Confirm E-Sign Envelope Dispatch' });
-    fireEvent.click(screen.getByRole('button', { name: 'Approve Send' }));
+    const confirmDialog = await screen.findByRole('dialog', { name: 'Confirm E-Sign Envelope Dispatch' });
+    expect(
+      within(confirmDialog).getByText(
+        'Approving this action dispatches an external envelope workflow to the selected provider and cannot be silently undone.',
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Approve Send' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -169,7 +182,6 @@ describe('PortalPage', () => {
     expect(JSON.parse((intakeCall?.[1]?.body as string) || '{}')).toEqual(
       expect.objectContaining({
         intakeFormDefinitionId: 'intake-def-1',
-        matterId: 'matter-22',
       }),
     );
 

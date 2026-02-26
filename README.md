@@ -481,3 +481,32 @@ pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot
 Fallback rule:
 
 - If snapshot and handoff timestamps drift, trust Linear state first, regenerate snapshot, and refresh `docs/SESSION_HANDOFF.md` before planning.
+
+## RC-1 Parallel Codex Cloud Delivery
+
+Execution model:
+
+1. Two parallel Cloud lanes.
+2. Local orchestrator owns Linear status/evidence and backlog sync.
+3. Cloud lanes implement code/tests only (no backlog sync in Cloud).
+4. Merge policy is merge-as-green.
+
+Operational artifacts:
+
+- `docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md`
+- `docs/codex-cloud/README.md`
+- `docs/codex-cloud/lane-a-reliability.packet.md`
+- `docs/codex-cloud/lane-b-no-id-usability.packet.md`
+
+Lane verification commands:
+
+```bash
+pnpm rc1:lane:a:verify
+pnpm rc1:lane:b:verify
+```
+
+Local orchestrator post-merge command:
+
+```bash
+pnpm rc1:orchestrator:post-merge
+```
