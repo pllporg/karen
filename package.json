@@ -34,7 +34,8 @@
     "rc1:lane:a:verify": "pnpm --filter api lint && pnpm --filter api test:core-workflow && pnpm --filter api test && pnpm --filter web test && pnpm build",
     "rc1:lane:b:verify": "pnpm --filter web test && pnpm --filter api test && pnpm build",
     "rc1:orchestrator:post-merge": "pnpm backlog:sync && pnpm backlog:verify && pnpm backlog:snapshot && pnpm backlog:handoff:refresh && pnpm backlog:handoff:check",
-    "docs:req-ui-009:check": "node tools/backlog-sync/check_req_ui_009_docs.mjs"
+    "docs:req-ui-009:check": "node tools/backlog-sync/check_req_ui_009_docs.mjs",
+    "ops:release:smoke": "node tools/ops/run_release_smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
