@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import * as nextNavigation from 'next/navigation';
 import { AppShell } from '../components/app-shell';
+import { getAuthBootstrapFetchMock, useStrictAuthBootstrapMode } from './setup';
 
 describe('AppShell auth bootstrap', () => {
   afterEach(() => {
@@ -10,30 +11,8 @@ describe('AppShell auth bootstrap', () => {
   });
 
   it('bootstraps from cookie-backed session and restores local token', async () => {
-    window.localStorage.removeItem('session_token');
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.endsWith('/auth/session')) {
-        return {
-          ok: true,
-          status: 200,
-          statusText: 'OK',
-          json: async () => ({
-            user: { id: 'user-1' },
-            token: 'restored-token',
-          }),
-          text: async () => '',
-        } as Response;
-      }
-      return {
-        ok: false,
-        status: 500,
-        statusText: 'Unexpected',
-        json: async () => ({}),
-        text: async () => 'Unexpected request',
-      } as Response;
-    });
-    vi.stubGlobal('fetch', fetchMock);
+    useStrictAuthBootstrapMode({ token: 'restored-token' });
+    const fetchMock = getAuthBootstrapFetchMock();
 
     render(
       <AppShell>
@@ -55,7 +34,7 @@ describe('AppShell auth bootstrap', () => {
   });
 
   it('redirects to login when bootstrap session fails', async () => {
-    window.localStorage.removeItem('session_token');
+    useStrictAuthBootstrapMode({ status: 401, token: null, includeUser: false });
     const replace = vi.fn();
     vi.spyOn(nextNavigation, 'usePathname').mockReturnValue('/documents');
     vi.spyOn(nextNavigation, 'useRouter').mockReturnValue({
@@ -64,14 +43,7 @@ describe('AppShell auth bootstrap', () => {
       prefetch: vi.fn(),
     } as any);
 
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      statusText: 'Unauthorized',
-      json: async () => ({}),
-      text: async () => 'unauthorized',
-    });
-    vi.stubGlobal('fetch', fetchMock);
+    const fetchMock = getAuthBootstrapFetchMock();
 
     render(
       <AppShell>

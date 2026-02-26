@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { AppShell } from '../components/app-shell';
+import { useStrictAuthBootstrapMode } from './setup';
 
 function setViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', {
@@ -12,35 +13,10 @@ function setViewport(width: number) {
   window.dispatchEvent(new Event('resize'));
 }
 
-function mockSessionBootstrapSuccess() {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-    const url = String(input);
-    if (url.endsWith('/auth/session')) {
-      return {
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => ({
-          user: { id: 'user-1' },
-          token: 'test-session-token',
-        }),
-        text: async () => '',
-      } as Response;
-    }
-    return {
-      ok: false,
-      status: 500,
-      statusText: 'Unexpected',
-      json: async () => ({}),
-      text: async () => 'Unexpected request',
-    } as Response;
-  });
-  vi.stubGlobal('fetch', fetchMock);
-}
 
 describe('AppShell responsive behavior matrix', () => {
   it('uses full desktop mode at >=1280px', async () => {
-    mockSessionBootstrapSuccess();
+    useStrictAuthBootstrapMode();
     setViewport(1366);
     render(
       <AppShell>
@@ -55,7 +31,7 @@ describe('AppShell responsive behavior matrix', () => {
   });
 
   it('uses compact desktop mode at 1024-1279px', async () => {
-    mockSessionBootstrapSuccess();
+    useStrictAuthBootstrapMode();
     setViewport(1120);
     render(
       <AppShell>
@@ -71,7 +47,7 @@ describe('AppShell responsive behavior matrix', () => {
   });
 
   it('uses drawer behavior at tablet widths', async () => {
-    mockSessionBootstrapSuccess();
+    useStrictAuthBootstrapMode();
     setViewport(900);
     render(
       <AppShell>
@@ -91,7 +67,7 @@ describe('AppShell responsive behavior matrix', () => {
   });
 
   it('shows unsupported notice below 768px', () => {
-    mockSessionBootstrapSuccess();
+    useStrictAuthBootstrapMode();
     setViewport(640);
     render(
       <AppShell>
