@@ -115,7 +115,7 @@
         {
           "title": "Validate all required entities and relation semantics against prompt",
           "requirementId": "REQ-DATA-001",
-          "promptSection": "DATA MODEL REQUIREMENTS (Prisma) \u2014 Minimum Entities",
+          "promptSection": "DATA MODEL REQUIREMENTS (Prisma) — Minimum Entities",
           "parityStatus": "Verified",
           "component": "Data",
           "risk": "High",
@@ -1142,7 +1142,7 @@
           "title": "Create PRD + screen specifications for existing product routes",
           "requirementId": "REQ-UI-009",
           "promptSection": "UI Refactor / Existing functionality PRDs and screens",
-          "parityStatus": "Partial",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1581,7 +1581,7 @@
           "title": "Session/auth bootstrap hardening and protected-route behavior",
           "requirementId": "REQ-RC-003",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 1",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": [
@@ -1668,7 +1668,7 @@
           "title": "Stripe/email/SMS/malware/e-sign live validation suite",
           "requirementId": "REQ-RC-006",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 2",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Integrations",
           "risk": "High",
           "labels": [
@@ -1698,7 +1698,7 @@
           "title": "Clio/MyCase live OAuth+sync+webhook staging validation",
           "requirementId": "REQ-RC-007",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 2",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Integrations",
           "risk": "Medium",
           "labels": [
@@ -1755,7 +1755,7 @@
           "title": "Backup/restore + migration rollback drill automation",
           "requirementId": "REQ-RC-009",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 3",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Infra",
           "risk": "High",
           "labels": [
@@ -1784,7 +1784,7 @@
           "title": "Production observability/alerting baseline",
           "requirementId": "REQ-RC-010",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 3",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Infra",
           "risk": "Medium",
           "labels": [
@@ -1812,7 +1812,7 @@
           "title": "Launch candidate UAT and go-live signoff",
           "requirementId": "REQ-RC-011",
           "promptSection": "LIC Legal Suite: Production-Ready + Usable State Plan / Phase 4",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "Medium",
           "labels": [
