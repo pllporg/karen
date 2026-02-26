@@ -44,6 +44,10 @@ describe('DocumentsPage', () => {
         }),
       );
     });
+    await waitFor(() => {
+      const uploadSelect = screen.getByLabelText('Upload Matter') as HTMLSelectElement;
+      expect(uploadSelect.querySelector('option[value="matter-1"]')).toBeTruthy();
+    });
 
     fireEvent.change(screen.getByLabelText('Upload Matter'), { target: { value: 'matter-1' } });
     const file = new File(['inspection text'], 'inspection.txt', { type: 'text/plain' });
@@ -104,6 +108,10 @@ describe('DocumentsPage', () => {
           credentials: 'include',
         }),
       );
+    });
+    await waitFor(() => {
+      const pdfSelect = screen.getByLabelText('PDF Matter') as HTMLSelectElement;
+      expect(pdfSelect.querySelector('option[value="matter-9"]')).toBeTruthy();
     });
 
     fireEvent.change(screen.getByLabelText('PDF Matter'), { target: { value: 'matter-9' } });
