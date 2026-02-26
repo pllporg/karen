@@ -10,6 +10,7 @@ describe('ops evidence workflow guardrails', () => {
 
     expect(workflow).toContain('name: Ops Readiness Evidence');
     expect(workflow).toContain('pnpm ops:drill:backup-restore');
+    expect(workflow).toContain('--evidence-index-file artifacts/ops/rc009-drill-evidence.json');
     expect(workflow).toContain('pnpm ops:evidence:capture');
     expect(workflow).toContain('actions/upload-artifact@v4');
     expect(workflow).toContain('name: ops-readiness-evidence');

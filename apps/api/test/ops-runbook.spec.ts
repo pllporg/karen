@@ -52,12 +52,14 @@ describe('Operations runbook verification', () => {
     expect(readme).toContain('`docs/parity/ops-runbook-slos.md`');
     expect(readme).toContain('ops:drill:backup-restore');
     expect(readme).toContain('ops:evidence:capture');
+    expect(readme).toContain('rc009-drill-evidence');
   });
 
   it('documents drill and provider evidence commands in runbook', () => {
     const runbook = readFileSync(runbookPath, 'utf8');
 
     expect(runbook).toContain('pnpm ops:drill:backup-restore');
+    expect(runbook).toContain('artifacts/ops/rc009-drill-evidence');
     expect(runbook).toContain('pnpm ops:evidence:capture');
     expect(runbook).toContain('.github/workflows/ops-readiness-evidence.yml');
   });
