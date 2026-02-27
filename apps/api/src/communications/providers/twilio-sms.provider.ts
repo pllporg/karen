@@ -38,6 +38,7 @@ export class TwilioSmsProvider implements SmsProvider {
         To: input.to,
         From: from,
         Body: input.body,
+        ...(input.idempotencyKey ? { IdempotencyKey: input.idempotencyKey } : {}),
       }),
     });
 
