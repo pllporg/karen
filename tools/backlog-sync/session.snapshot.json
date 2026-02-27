@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T03:30:54.696Z",
+  "generatedAt": "2026-02-27T15:27:34.972Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,24 +14,24 @@
   },
   "matrixSummary": {
     "totalRequirements": 74,
-    "unresolvedRequirements": 11,
+    "unresolvedRequirements": 7,
     "totalCountsByPhase": {
       "phase-1": 69,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 11
+      "phase-1": 7
     },
     "unresolvedCountsByStatus": {
-      "Missing": 11
+      "Missing": 7
     },
     "unresolvedCountsByRisk": {
-      "High": 7,
-      "Medium": 4
+      "High": 5,
+      "Medium": 2
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Missing:High": 7,
-      "Missing:Medium": 4
+      "Missing:High": 5,
+      "Missing:Medium": 2
     }
   },
   "priority": {
@@ -43,15 +43,6 @@
         "risk": "High",
         "title": "Add intake queue + staged lead routes (`/intake` flow)",
         "component": "Web",
-        "epicCode": "PARITY-12",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-002",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Implement Leads API with conflict/engagement/convert gates + setup checklist",
-        "component": "API",
         "epicCode": "PARITY-12",
         "phase": "phase-1"
       },
@@ -83,15 +74,6 @@
         "phase": "phase-1"
       },
       {
-        "requirementId": "REQ-EVE2-007",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
-        "component": "Web",
-        "epicCode": "PARITY-13",
-        "phase": "phase-1"
-      },
-      {
         "requirementId": "REQ-EVE2-009",
         "parityStatus": "Missing",
         "risk": "High",
@@ -117,15 +99,6 @@
         "component": "Infra",
         "epicCode": "PARITY-13",
         "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-010",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
-        "component": "API",
-        "epicCode": "PARITY-14",
-        "phase": "phase-1"
       }
     ]
   },
@@ -134,32 +107,73 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 100,
     "stateCounts": {
-      "Backlog": 14,
-      "Done": 86
+      "Done": 90,
+      "In Progress": 4,
+      "Backlog": 6
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-113",
+      "KAR-108",
+      "KAR-105",
+      "KAR-103"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-115",
-        "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:31.472Z",
-        "requirementId": "REQ-EVE2-011"
+        "key": "KAR-103",
+        "title": "Add intake queue + staged lead routes (`/intake` flow)",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T14:51:35.578Z",
+        "requirementId": "REQ-EVE2-001"
       },
       {
-        "key": "KAR-114",
-        "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:31.195Z",
-        "requirementId": "REQ-EVE2-010"
+        "key": "KAR-105",
+        "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T14:51:23.850Z",
+        "requirementId": "REQ-EVE2-003"
+      },
+      {
+        "key": "KAR-108",
+        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T14:51:08.782Z",
+        "requirementId": "REQ-EVE2-005"
       },
       {
         "key": "KAR-113",
         "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:30.942Z",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T14:50:29.994Z",
         "requirementId": "REQ-EVE2-009"
+      },
+      {
+        "key": "KAR-114",
+        "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
+        "state": "Done",
+        "updatedAt": "2026-02-27T14:23:34.372Z",
+        "requirementId": "REQ-EVE2-010"
+      },
+      {
+        "key": "KAR-110",
+        "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
+        "state": "Done",
+        "updatedAt": "2026-02-27T14:23:34.082Z",
+        "requirementId": "REQ-EVE2-007"
+      },
+      {
+        "key": "KAR-104",
+        "title": "Implement Leads API with conflict/engagement/convert gates + setup checklist",
+        "state": "Done",
+        "updatedAt": "2026-02-27T14:23:33.791Z",
+        "requirementId": "REQ-EVE2-002"
+      },
+      {
+        "key": "KAR-115",
+        "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
+        "state": "Done",
+        "updatedAt": "2026-02-27T14:22:36.325Z",
+        "requirementId": "REQ-EVE2-011"
       },
       {
         "key": "KAR-112",
@@ -174,125 +188,40 @@
         "state": "Backlog",
         "updatedAt": "2026-02-27T03:21:30.361Z",
         "requirementId": "REQ-EVE2-008"
-      },
-      {
-        "key": "KAR-110",
-        "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:30.135Z",
-        "requirementId": "REQ-EVE2-007"
-      },
-      {
-        "key": "KAR-109",
-        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:29.922Z",
-        "requirementId": "REQ-EVE2-006"
-      },
-      {
-        "key": "KAR-108",
-        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:29.639Z",
-        "requirementId": "REQ-EVE2-005"
-      },
-      {
-        "key": "KAR-107",
-        "title": "PARITY-13 Eve 2 Auditor Parity",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:29.359Z",
-        "requirementId": "PARITY-13"
-      },
-      {
-        "key": "KAR-106",
-        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:28.973Z",
-        "requirementId": "REQ-EVE2-004"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 20,
-    "openIssueCount": 3,
+    "openIssueCount": 1,
     "stateCounts": {
-      "Backlog": 3,
-      "Done": 17
+      "Done": 19,
+      "In Progress": 1
     },
     "openIssueKeys": [
-      "KAR-103",
-      "KAR-110",
-      "KAR-115"
+      "KAR-103"
     ],
     "openIssues": [
       {
         "key": "KAR-103",
         "title": "Add intake queue + staged lead routes (`/intake` flow)",
-        "state": "Backlog",
+        "state": "In Progress",
         "requirementId": "REQ-EVE2-001",
-        "updatedAt": "2026-02-27T03:21:27.328Z"
-      },
-      {
-        "key": "KAR-110",
-        "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
-        "state": "Backlog",
-        "requirementId": "REQ-EVE2-007",
-        "updatedAt": "2026-02-27T03:21:30.135Z"
-      },
-      {
-        "key": "KAR-115",
-        "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
-        "state": "Backlog",
-        "requirementId": "REQ-EVE2-011",
-        "updatedAt": "2026-02-27T03:21:31.472Z"
+        "updatedAt": "2026-02-27T14:51:35.578Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T03:30:50.910Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T14:24:26.272Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "8d52fdde6092b765cc4003ac2b18c85df8a139e4",
+    "gitHead": "d12ff47e74e8f2a7c16fff0b791a5890170d2631",
     "gitStatusShort": [
-      "## main...origin/main",
-      " M .env.example",
-      " M README.md",
-      " M apps/api/.env.example",
-      " M apps/api/src/admin/admin.module.ts",
-      " M apps/api/src/app.module.ts",
-      " M apps/api/src/matters/matters.service.ts",
-      " M apps/web/.env.example",
-      " M apps/web/components/app-shell.tsx",
-      " M docs/PROMPT_CANONICAL_SOURCES.md",
-      " M docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md",
-      " M docs/SESSION_HANDOFF.md",
-      " M docs/UI_PRD_SCREEN_BACKLOG.md",
-      " M docs/WORKING_CONTRACT.md",
-      " M docs/codex-cloud/README.md",
-      " M package.json",
-      " M tools/backlog-sync/README.md",
-      " M tools/backlog-sync/requirements.matrix.json",
-      " M tools/backlog-sync/session.snapshot.json",
-      " M tools/backlog-sync/setup_linear_workspace.mjs",
-      "?? apps/api/src/common/utils/feature-flags.ts",
-      "?? apps/api/src/leads/",
-      "?? apps/api/test/leads.spec.ts",
-      "?? apps/web/app/intake/",
-      "?? apps/web/app/matters/[id]/setup/",
-      "?? apps/web/components/feature-disabled-state.tsx",
-      "?? apps/web/lib/feature-flags.ts",
-      "?? apps/web/test/intake-page.spec.tsx",
-      "?? docs/ACTIVE_PHASES.md",
-      "?? docs/OPERATIONS_PLAYBOOK.md",
-      "?? docs/SESSION_HISTORY_ARCHIVE.md",
-      "?? docs/parity/eve2-codex-cloud-lanes.md",
-      "?? docs/parity/eve2-scope-map.md",
-      "?? docs/templates/CODEX_CLOUD_REPORT_TEMPLATE.md",
-      "?? tools/ops/operator_preflight.mjs",
-      "?? ui-design/"
+      "## lin/KAR-86-eve2-matrix-alignment",
+      " M tools/backlog-sync/requirements.matrix.json"
     ],
-    "dirtyFileCount": 35
+    "dirtyFileCount": 1
   }
 }
