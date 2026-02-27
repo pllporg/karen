@@ -32,6 +32,32 @@ type CitationPolicyCompliance = {
   blockedChunkCount: number;
 };
 
+type AgentProposalLifecycleStatus = 'PROPOSED' | 'IN_REVIEW' | 'APPROVED' | 'EXECUTED' | 'RETURNED';
+
+type AgentStep = {
+  kind: 'PROPOSAL_CREATED' | 'REVIEW_STARTED' | 'APPROVED' | 'RETURNED' | 'EXECUTED';
+  at: string;
+  actorUserId: string;
+  metadata?: Record<string, unknown>;
+};
+
+type AgentProposal = {
+  id: string;
+  status: AgentProposalLifecycleStatus;
+  createdAt: string;
+  updatedAt: string;
+  updatedByUserId: string;
+};
+
+type AgentRun = {
+  id: string;
+  organizationId: string;
+  matterId: string;
+  artifactId: string;
+  proposal: AgentProposal;
+  steps: AgentStep[];
+};
+
 @Injectable()
 export class AiService implements OnModuleInit {
   private readonly openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
@@ -547,6 +573,69 @@ export class AiService implements OnModuleInit {
     if (!artifact) throw new Error('Artifact not found');
     await this.access.assertMatterAccess(input.user, artifact.job.matterId, 'write');
 
+    const existingOrchestration = this.readAgentRun(artifact.metadataJson);
+    let orchestration = existingOrchestration
+      ? existingOrchestration
+      : this.getOrCreateAgentRun({
+          metadataJson: artifact.metadataJson,
+          artifactId: artifact.id,
+          organizationId: artifact.organizationId,
+          matterId: artifact.job.matterId,
+          actorUserId: input.user.id,
+        });
+
+    if (!existingOrchestration) {
+      await this.audit.appendEvent({
+        organizationId: input.user.organizationId,
+        actorUserId: input.user.id,
+        action: 'ai.agent.run.created',
+        entityType: 'agentRun',
+        entityId: orchestration.id,
+        metadata: {
+          artifactId: artifact.id,
+          proposalId: orchestration.proposal.id,
+          status: orchestration.proposal.status,
+        },
+      });
+    }
+
+    orchestration = await this.transitionProposalStatus({
+      orchestration,
+      artifactId: artifact.id,
+      user: input.user,
+      toStatus: 'IN_REVIEW',
+      action: 'ai.agent.proposal.in_review',
+      metadata: {
+        reviewedStatus: input.status,
+      },
+    });
+
+    if (input.status === AiArtifactReviewStatus.APPROVED) {
+      orchestration = await this.transitionProposalStatus({
+        orchestration,
+        artifactId: artifact.id,
+        user: input.user,
+        toStatus: 'APPROVED',
+        action: 'ai.agent.proposal.approved',
+        metadata: {
+          reviewedStatus: input.status,
+        },
+      });
+    }
+
+    if (input.status === AiArtifactReviewStatus.REJECTED) {
+      orchestration = await this.transitionProposalStatus({
+        orchestration,
+        artifactId: artifact.id,
+        user: input.user,
+        toStatus: 'RETURNED',
+        action: 'ai.agent.proposal.returned',
+        metadata: {
+          reviewedStatus: input.status,
+        },
+      });
+    }
+
     return this.prisma.aiArtifact.update({
       where: { id: artifact.id },
       data: {
@@ -554,6 +643,10 @@ export class AiService implements OnModuleInit {
         reviewedByUserId: input.user.id,
         reviewedAt: new Date(),
         content: input.editedContent ?? artifact.content,
+        metadataJson: toJsonValue({
+          ...(this.readObjectJson(artifact.metadataJson) ?? {}),
+          agentOrchestration: orchestration,
+        }),
       },
     });
   }
@@ -575,6 +668,11 @@ export class AiService implements OnModuleInit {
 
     if (!artifact) throw new NotFoundException('Artifact not found');
     await this.access.assertMatterAccess(input.user, artifact.job.matterId, 'write');
+
+    let orchestration = this.readAgentRun(artifact.metadataJson);
+    if (!orchestration || orchestration.proposal.status !== 'APPROVED') {
+      throw new BadRequestException('Execution is blocked until proposal is approved');
+    }
 
     if (!Array.isArray(input.selections) || input.selections.length === 0) {
       throw new BadRequestException('At least one confirmed deadline selection is required');
@@ -658,7 +756,157 @@ export class AiService implements OnModuleInit {
       },
     });
 
+    orchestration = await this.transitionProposalStatus({
+      orchestration,
+      artifactId: artifact.id,
+      user: input.user,
+      toStatus: 'EXECUTED',
+      action: 'ai.agent.proposal.executed',
+      metadata: {
+        selectionCount: normalizedSelections.length,
+        createdCount: created.length,
+      },
+    });
+
+    await this.prisma.aiArtifact.update({
+      where: { id: artifact.id },
+      data: {
+        metadataJson: toJsonValue({
+          ...(this.readObjectJson(artifact.metadataJson) ?? {}),
+          agentOrchestration: orchestration,
+        }),
+      },
+    });
+
     return { created };
+  }
+
+  private readObjectJson(value: Prisma.JsonValue | null | undefined): Record<string, unknown> | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private readAgentRun(value: Prisma.JsonValue | null | undefined): AgentRun | null {
+    const root = this.readObjectJson(value);
+    if (!root) return null;
+    const orchestration = root.agentOrchestration;
+    if (!orchestration || typeof orchestration !== 'object' || Array.isArray(orchestration)) return null;
+    const candidate = orchestration as Partial<AgentRun>;
+    if (!candidate.proposal || typeof candidate.proposal !== 'object') return null;
+    return orchestration as AgentRun;
+  }
+
+  private getOrCreateAgentRun(input: {
+    metadataJson: Prisma.JsonValue | null | undefined;
+    artifactId: string;
+    organizationId: string;
+    matterId: string;
+    actorUserId: string;
+  }): AgentRun {
+    const existing = this.readAgentRun(input.metadataJson);
+    if (existing) {
+      return existing;
+    }
+
+    const now = new Date().toISOString();
+    const seed = `${input.artifactId}:${Date.now()}`;
+    return {
+      id: `agent-run-${this.hashPrompt(seed)}`,
+      organizationId: input.organizationId,
+      matterId: input.matterId,
+      artifactId: input.artifactId,
+      proposal: {
+        id: `agent-proposal-${this.hashPrompt(seed + ':proposal')}`,
+        status: 'PROPOSED',
+        createdAt: now,
+        updatedAt: now,
+        updatedByUserId: input.actorUserId,
+      },
+      steps: [
+        {
+          kind: 'PROPOSAL_CREATED',
+          at: now,
+          actorUserId: input.actorUserId,
+        },
+      ],
+    };
+  }
+
+  private canTransitionProposalStatus(from: AgentProposalLifecycleStatus, to: AgentProposalLifecycleStatus): boolean {
+    if (from === to) return true;
+    const allowed: Record<AgentProposalLifecycleStatus, AgentProposalLifecycleStatus[]> = {
+      PROPOSED: ['IN_REVIEW'],
+      IN_REVIEW: ['APPROVED', 'RETURNED'],
+      APPROVED: ['EXECUTED'],
+      EXECUTED: [],
+      RETURNED: [],
+    };
+    return allowed[from].includes(to);
+  }
+
+  private async transitionProposalStatus(input: {
+    orchestration: AgentRun;
+    artifactId: string;
+    user: AuthenticatedUser;
+    toStatus: AgentProposalLifecycleStatus;
+    action: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<AgentRun> {
+    const current = input.orchestration.proposal.status;
+    if (current === input.toStatus) {
+      return input.orchestration;
+    }
+
+    if (!this.canTransitionProposalStatus(current, input.toStatus)) {
+      throw new BadRequestException(`Invalid proposal lifecycle transition: ${current} -> ${input.toStatus}`);
+    }
+
+    const now = new Date().toISOString();
+    const stepKindByStatus: Record<AgentProposalLifecycleStatus, AgentStep['kind']> = {
+      PROPOSED: 'PROPOSAL_CREATED',
+      IN_REVIEW: 'REVIEW_STARTED',
+      APPROVED: 'APPROVED',
+      EXECUTED: 'EXECUTED',
+      RETURNED: 'RETURNED',
+    };
+
+    const next: AgentRun = {
+      ...input.orchestration,
+      proposal: {
+        ...input.orchestration.proposal,
+        status: input.toStatus,
+        updatedAt: now,
+        updatedByUserId: input.user.id,
+      },
+      steps: [
+        ...input.orchestration.steps,
+        {
+          kind: stepKindByStatus[input.toStatus],
+          at: now,
+          actorUserId: input.user.id,
+          metadata: input.metadata,
+        },
+      ],
+    };
+
+    await this.audit.appendEvent({
+      organizationId: input.user.organizationId,
+      actorUserId: input.user.id,
+      action: input.action,
+      entityType: 'agentProposal',
+      entityId: next.proposal.id,
+      metadata: {
+        artifactId: input.artifactId,
+        runId: next.id,
+        fromStatus: current,
+        toStatus: input.toStatus,
+        ...(input.metadata ?? {}),
+      },
+    });
+
+    return next;
   }
 
   private async runTool(
