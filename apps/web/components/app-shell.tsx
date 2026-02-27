@@ -7,6 +7,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 const LINKS = [
   { href: '/dashboard', label: 'Dashboard', shortCode: 'DB' },
+  { href: '/intake', label: 'Intake Queue', shortCode: 'IQ' },
+  { href: '/analyst', label: 'Analyst Dashboard', shortCode: 'AN' },
+  { href: '/auditor', label: 'Auditor Queue', shortCode: 'AQ' },
   { href: '/admin', label: 'Admin', shortCode: 'AD' },
   { href: '/contacts', label: 'Contacts', shortCode: 'CT' },
   { href: '/matters', label: 'Matters', shortCode: 'MT' },
@@ -20,6 +23,9 @@ const LINKS = [
   { href: '/portal', label: 'Client Portal', shortCode: 'PT' },
   { href: '/data-dictionary', label: 'Data Dictionary', shortCode: 'DD' },
 ];
+
+// `/shared-doc/[token]` remains intentionally out of primary navigation.
+// It is an access-token scoped context route entered from explicit share links.
 
 type ShellViewportMode = 'desktop' | 'compact' | 'tablet' | 'unsupported';
 

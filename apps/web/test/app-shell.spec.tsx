@@ -21,9 +21,12 @@ describe('AppShell', () => {
     expect(await screen.findByRole('button', { name: 'Menu' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#lic-main-content');
 
-    const activeLink = screen.getByRole('link', { name: /Dashboard/i });
+    const activeLink = screen.getByRole('link', { name: /^Dashboard$/i });
     expect(activeLink).toHaveAttribute('aria-current', 'page');
 
+    expect(screen.getByRole('link', { name: /Intake Queue/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Analyst Dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Auditor Queue/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Matters/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sign Out/i })).toBeInTheDocument();
     const mainPanelContent = document.querySelector('.main-panel-content');
