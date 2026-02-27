@@ -2,6 +2,7 @@ export type SendMessageInput = {
   to: string;
   subject?: string;
   body: string;
+  idempotencyKey?: string;
 };
 
 export type SendMessageResult = {
