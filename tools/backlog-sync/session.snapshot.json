@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T16:02:11.571Z",
+  "generatedAt": "2026-02-27T16:22:26.590Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -160,13 +160,13 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:02:08.214Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:22:22.961Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "cc7af2cc36f880e182182010a9b140196ae7b187",
+    "gitHead": "ab332d7e452deaec093da386455b36053b43ebd0",
     "gitStatusShort": [
-      "## lin/KAR-59-post-merge-housekeeping-20260227b...origin/lin/KAR-59-post-merge-housekeeping-20260227b"
+      "## lin/KAR-59-ops-cleanup-eve2-wave-20260227...origin/lin/KAR-59-ops-cleanup-eve2-wave-20260227"
     ],
     "dirtyFileCount": 0
   }
