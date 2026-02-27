@@ -38,7 +38,20 @@ export default function IntakeQueuePage() {
               <td><span className="badge status-in-review">{lead.stage}</span></td>
               <td className="mono-meta">{new Date(lead.updatedAt).toLocaleString()}</td>
               <td>
-                <Link className="button ghost" href={`/intake/${lead.id}/intake`}>Open Staged Route</Link>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <Link className="button ghost" href={`/intake/${lead.id}/intake`}>
+                    Intake
+                  </Link>
+                  <Link className="button ghost" href={`/intake/${lead.id}/conflict`}>
+                    Conflict
+                  </Link>
+                  <Link className="button ghost" href={`/intake/${lead.id}/engagement`}>
+                    Engagement
+                  </Link>
+                  <Link className="button ghost" href={`/intake/${lead.id}/convert`}>
+                    Convert
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}
