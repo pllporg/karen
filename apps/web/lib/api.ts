@@ -3,6 +3,11 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 let sessionBootstrapInFlight: Promise<boolean> | null = null;
 
+// Test hook: clears pending bootstrap state between suite runs.
+export function resetSessionBootstrapForTests() {
+  sessionBootstrapInFlight = null;
+}
+
 export function getSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
   return window.localStorage.getItem('session_token');

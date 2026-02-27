@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { resetSessionBootstrapForTests } from '../lib/api';
 
 type AuthBootstrapHarnessConfig = {
   status: number;
@@ -88,12 +89,14 @@ vi.mock('next/navigation', () => ({
 }));
 
 beforeEach(() => {
+  resetSessionBootstrapForTests();
   authBootstrapHarnessState.config = { ...DEFAULT_AUTH_BOOTSTRAP_HARNESS };
   window.localStorage.setItem('session_token', 'test-session-token');
   installAuthBootstrapHarness();
 });
 
 afterEach(() => {
+  resetSessionBootstrapForTests();
   window.localStorage.removeItem('session_token');
   cleanup();
   vi.restoreAllMocks();
