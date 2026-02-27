@@ -11,6 +11,25 @@ import { GenerateEngagementDto } from './dto/generate-engagement.dto';
 import { SendEngagementDto } from './dto/send-engagement.dto';
 import { ConvertLeadDto } from './dto/convert-lead.dto';
 
+type ProposalLifecycleStatus = 'PROPOSED' | 'IN_REVIEW' | 'APPROVED' | 'EXECUTED' | 'RETURNED';
+
+type ProactiveLeadProposal = {
+  id: string;
+  kind: 'CLIENT_ENGAGEMENT' | 'LIFECYCLE_NEXT_ACTION';
+  status: ProposalLifecycleStatus;
+  draftOnly: true;
+  autoSend: false;
+  confidence: number;
+  reason: string;
+  rationale: string;
+  lifecycle: {
+    currentStage: LeadStage;
+    recommendedStage: LeadStage;
+  };
+  citations: Array<{ entityType: string; entityId: string; field?: string }>;
+  createdAt: string;
+};
+
 @Injectable()
 export class LeadsService {
   constructor(
@@ -272,8 +291,8 @@ export class LeadsService {
     };
   }
 
-  async setupChecklist(organizationId: string, leadId: string) {
-    await this.requireLead(organizationId, leadId);
+  async setupChecklist(organizationId: string, actorUserId: string, leadId: string) {
+    const lead = await this.requireLead(organizationId, leadId);
 
     const [intakeCount, conflict, engagementEnvelope] = await Promise.all([
       this.prisma.intakeSubmission.count({ where: { organizationId, leadId } }),
@@ -292,7 +311,7 @@ export class LeadsService {
     const engagementSent = engagementEnvelope?.status === 'SENT' || engagementEnvelope?.status === 'SIGNED';
     const engagementSigned = engagementEnvelope?.status === 'SIGNED';
 
-    return {
+    const checklist = {
       leadId,
       intakeDraftCreated: intakeCount > 0,
       conflictChecked: Boolean(conflict),
@@ -302,6 +321,171 @@ export class LeadsService {
       engagementSigned,
       convertible: engagementSigned,
     };
+
+    const proactiveProposals = this.evaluateProactiveProposals({
+      lead,
+      checklist,
+      conflictCheckId: conflict?.id,
+      engagementEnvelopeId: engagementEnvelope?.id,
+    });
+
+    await this.audit.appendEvent({
+      organizationId,
+      actorUserId,
+      action: 'lead.proactive_proposals.evaluated',
+      entityType: 'lead',
+      entityId: leadId,
+      metadata: {
+        proposalCount: proactiveProposals.length,
+        proposals: proactiveProposals.map((proposal) => ({
+          id: proposal.id,
+          kind: proposal.kind,
+          status: proposal.status,
+          reason: proposal.reason,
+          confidence: proposal.confidence,
+          rationale: proposal.rationale,
+          citations: proposal.citations,
+          draftOnly: proposal.draftOnly,
+          autoSend: proposal.autoSend,
+          createdAt: proposal.createdAt,
+        })),
+      },
+    });
+
+    return {
+      ...checklist,
+      proactiveProposals,
+    };
+  }
+
+
+  private evaluateProactiveProposals(input: {
+    lead: Awaited<ReturnType<LeadsService['requireLead']>>;
+    checklist: {
+      leadId: string;
+      intakeDraftCreated: boolean;
+      conflictChecked: boolean;
+      conflictResolved: boolean;
+      engagementGenerated: boolean;
+      engagementSent: boolean;
+      engagementSigned: boolean;
+      convertible: boolean;
+    };
+    conflictCheckId?: string;
+    engagementEnvelopeId?: string;
+  }): ProactiveLeadProposal[] {
+    const proposals: ProactiveLeadProposal[] = [];
+    const now = new Date().toISOString();
+    const currentStageRank = this.stageRank(input.lead.stage);
+
+    const pushProposal = (proposal: Omit<ProactiveLeadProposal, 'status' | 'draftOnly' | 'autoSend' | 'createdAt'>) => {
+      proposals.push({
+        ...proposal,
+        status: 'PROPOSED',
+        draftOnly: true,
+        autoSend: false,
+        createdAt: now,
+      });
+    };
+
+    if (!input.checklist.intakeDraftCreated && currentStageRank <= this.stageRank(LeadStage.NEW)) {
+      pushProposal({
+        id: `lead-${input.lead.id}-proposal-intake`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.96,
+        reason: 'Intake draft is missing for early-stage lead triage',
+        rationale: 'Create an intake draft to move lead discovery from NEW to SCREENING.',
+        lifecycle: {
+          currentStage: input.lead.stage,
+          recommendedStage: LeadStage.SCREENING,
+        },
+        citations: [{ entityType: 'lead', entityId: input.lead.id, field: 'stage' }],
+      });
+    }
+
+    if (!input.checklist.conflictChecked && currentStageRank >= this.stageRank(LeadStage.SCREENING)) {
+      pushProposal({
+        id: `lead-${input.lead.id}-proposal-conflict-check`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.93,
+        reason: 'Conflict check has not been completed',
+        rationale: 'Run conflict checks before consultation and any external engagement workflow.',
+        lifecycle: {
+          currentStage: input.lead.stage,
+          recommendedStage: LeadStage.CONFLICT_CHECK,
+        },
+        citations: [{ entityType: 'lead', entityId: input.lead.id, field: 'stage' }],
+      });
+    }
+
+    if (!input.checklist.engagementGenerated && input.checklist.conflictResolved) {
+      pushProposal({
+        id: `lead-${input.lead.id}-proposal-engagement-generate`,
+        kind: 'CLIENT_ENGAGEMENT',
+        confidence: 0.91,
+        reason: 'Conflict is resolved but engagement draft is not prepared',
+        rationale: 'Generate a draft engagement letter for attorney review; do not auto-send.',
+        lifecycle: {
+          currentStage: input.lead.stage,
+          recommendedStage: LeadStage.CONSULTATION,
+        },
+        citations: [
+          { entityType: 'lead', entityId: input.lead.id, field: 'stage' },
+          ...(input.conflictCheckId ? [{ entityType: 'conflictCheckResult', entityId: input.conflictCheckId }] : []),
+        ],
+      });
+    }
+
+    if (input.checklist.engagementGenerated && !input.checklist.engagementSent && input.checklist.conflictResolved) {
+      pushProposal({
+        id: `lead-${input.lead.id}-proposal-engagement-review-send`,
+        kind: 'CLIENT_ENGAGEMENT',
+        confidence: 0.89,
+        reason: 'Engagement draft exists but has not progressed to delivery',
+        rationale: 'Route the engagement draft through attorney review and explicit approval before send.',
+        lifecycle: {
+          currentStage: input.lead.stage,
+          recommendedStage: LeadStage.CONSULTATION,
+        },
+        citations: [
+          { entityType: 'lead', entityId: input.lead.id, field: 'stage' },
+          ...(input.engagementEnvelopeId ? [{ entityType: 'eSignEnvelope', entityId: input.engagementEnvelopeId, field: 'status' }] : []),
+        ],
+      });
+    }
+
+    if (input.checklist.engagementSigned && input.lead.stage !== LeadStage.RETAINED) {
+      pushProposal({
+        id: `lead-${input.lead.id}-proposal-convert`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.97,
+        reason: 'Signed engagement qualifies lead for matter conversion',
+        rationale: 'Convert retained lead into a matter and advance lifecycle from consultation to retained.',
+        lifecycle: {
+          currentStage: input.lead.stage,
+          recommendedStage: LeadStage.RETAINED,
+        },
+        citations: [
+          { entityType: 'lead', entityId: input.lead.id, field: 'stage' },
+          ...(input.engagementEnvelopeId ? [{ entityType: 'eSignEnvelope', entityId: input.engagementEnvelopeId, field: 'status' }] : []),
+        ],
+      });
+    }
+
+    return proposals;
+  }
+
+  private stageRank(stage: LeadStage): number {
+    const ordered: LeadStage[] = [
+      LeadStage.NEW,
+      LeadStage.SCREENING,
+      LeadStage.CONFLICT_CHECK,
+      LeadStage.CONSULTATION,
+      LeadStage.RETAINED,
+      LeadStage.REJECTED,
+    ];
+    const index = ordered.indexOf(stage);
+    return index === -1 ? 0 : index;
   }
 
   private async requireLead(organizationId: string, leadId: string) {
