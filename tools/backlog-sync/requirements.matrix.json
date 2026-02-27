@@ -1853,7 +1853,7 @@
           "title": "Add intake queue + staged lead routes (`/intake` flow)",
           "requirementId": "REQ-EVE2-001",
           "promptSection": "Eve 2 / Agents / Client engagement",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -1910,7 +1910,7 @@
           "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
           "requirementId": "REQ-EVE2-003",
           "promptSection": "Eve 2 / Agents / Human-in-the-loop",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": [
@@ -1981,7 +1981,7 @@
           "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
           "requirementId": "REQ-EVE2-005",
           "promptSection": "Eve 2 / Auditor / Maximize case value",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": [
@@ -2106,7 +2106,7 @@
           "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
           "requirementId": "REQ-EVE2-009",
           "promptSection": "Eve 2 / Analyst / Optimize operations",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Data",
           "risk": "High",
           "labels": [
