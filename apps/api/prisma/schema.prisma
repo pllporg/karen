@@ -165,6 +165,13 @@ enum LeadStage {
   REJECTED
 }
 
+enum MatterAuditSignalReviewState {
+  GENERATED
+  IN_REVIEW
+  RESOLVED_ACTIONED
+  RESOLVED_DISMISSED
+}
+
 enum AiJobStatus {
   QUEUED
   RUNNING
@@ -289,6 +296,7 @@ model User {
   trustReconciliationRunsCreated TrustReconciliationRun[] @relation("TrustReconciliationRunCreatedBy")
   trustReconciliationRunsSignedOff TrustReconciliationRun[] @relation("TrustReconciliationRunSignedOffBy")
   trustReconciliationDiscrepanciesResolved TrustReconciliationDiscrepancy[] @relation("TrustReconciliationDiscrepancyResolvedBy")
+  matterAuditSignalsReviewed MatterAuditSignal[]
 }
 
 model Membership {
@@ -549,6 +557,7 @@ model Matter {
   intakeSubmissions    IntakeSubmission[]
   eSignEnvelopes       ESignEnvelope[]
   aiJobs               AiJob[]
+  auditSignals         MatterAuditSignal[]
   propertyProfile      PropertyProfile?
   contractProfile      ContractProfile?
   projectMilestones    ProjectMilestone[]
@@ -1341,6 +1350,31 @@ model ESignEnvelope {
   engagementLetterTemplate  EngagementLetterTemplate @relation(fields: [engagementLetterTemplateId], references: [id], onDelete: Cascade)
   matter                    Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
   document                  Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+}
+
+
+model MatterAuditSignal {
+  id                 String                       @id @default(uuid()) @db.Uuid
+  organizationId     String                       @db.Uuid
+  matterId           String                       @db.Uuid
+  signalKey          String
+  signalType         String
+  title              String
+  summary            String
+  citationsJson      Json
+  reviewState        MatterAuditSignalReviewState @default(GENERATED)
+  generatedAt        DateTime
+  reviewStateChangedAt DateTime?
+  reviewedByUserId   String?                      @db.Uuid
+  reviewNotes        String?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  matter             Matter                       @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  reviewedBy         User?                        @relation(fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, signalKey])
+  @@index([organizationId, reviewState, generatedAt])
+  @@index([organizationId, matterId, generatedAt])
 }
 
 model AiJob {
