@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T15:51:59.965Z",
+  "generatedAt": "2026-02-27T16:02:11.571Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,47 +14,29 @@
   },
   "matrixSummary": {
     "totalRequirements": 74,
-    "unresolvedRequirements": 7,
+    "unresolvedRequirements": 3,
     "totalCountsByPhase": {
       "phase-1": 69,
       "phase-2": 5
     },
     "unresolvedCountsByPhase": {
-      "phase-1": 7
+      "phase-1": 3
     },
     "unresolvedCountsByStatus": {
-      "Missing": 7
+      "Missing": 3
     },
     "unresolvedCountsByRisk": {
-      "High": 5,
-      "Medium": 2
+      "High": 2,
+      "Medium": 1
     },
     "unresolvedCountsByStatusAndRisk": {
-      "Missing:High": 5,
-      "Missing:Medium": 2
+      "Missing:High": 2,
+      "Missing:Medium": 1
     }
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
     "topRequirements": [
-      {
-        "requirementId": "REQ-EVE2-001",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Add intake queue + staged lead routes (`/intake` flow)",
-        "component": "Web",
-        "epicCode": "PARITY-12",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-003",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
-        "component": "API",
-        "epicCode": "PARITY-12",
-        "phase": "phase-1"
-      },
       {
         "requirementId": "REQ-EVE2-004",
         "parityStatus": "Missing",
@@ -69,24 +51,6 @@
         "parityStatus": "Missing",
         "risk": "High",
         "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
-        "component": "API",
-        "epicCode": "PARITY-13",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-009",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
-        "component": "Data",
-        "epicCode": "PARITY-14",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-005",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
         "component": "API",
         "epicCode": "PARITY-13",
         "phase": "phase-1"
@@ -107,52 +71,46 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 100,
     "stateCounts": {
-      "Done": 90,
-      "In Progress": 4,
+      "Done": 94,
       "Backlog": 6
     },
-    "inProgressIssueKeys": [
-      "KAR-113",
-      "KAR-108",
-      "KAR-105",
-      "KAR-103"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-103",
+        "title": "Add intake queue + staged lead routes (`/intake` flow)",
+        "state": "Done",
+        "updatedAt": "2026-02-27T15:57:37.229Z",
+        "requirementId": "REQ-EVE2-001"
+      },
+      {
+        "key": "KAR-105",
+        "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
+        "state": "Done",
+        "updatedAt": "2026-02-27T15:57:36.832Z",
+        "requirementId": "REQ-EVE2-003"
+      },
+      {
+        "key": "KAR-108",
+        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
+        "state": "Done",
+        "updatedAt": "2026-02-27T15:57:36.237Z",
+        "requirementId": "REQ-EVE2-005"
+      },
+      {
+        "key": "KAR-113",
+        "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
+        "state": "Done",
+        "updatedAt": "2026-02-27T15:57:35.870Z",
+        "requirementId": "REQ-EVE2-009"
+      },
       {
         "key": "KAR-86",
         "title": "RC-1 Usability + Production Hardening",
         "state": "Done",
         "updatedAt": "2026-02-27T15:46:49.430Z",
         "requirementId": "RC-1"
-      },
-      {
-        "key": "KAR-103",
-        "title": "Add intake queue + staged lead routes (`/intake` flow)",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T14:51:35.578Z",
-        "requirementId": "REQ-EVE2-001"
-      },
-      {
-        "key": "KAR-105",
-        "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T14:51:23.850Z",
-        "requirementId": "REQ-EVE2-003"
-      },
-      {
-        "key": "KAR-108",
-        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T14:51:08.782Z",
-        "requirementId": "REQ-EVE2-005"
-      },
-      {
-        "key": "KAR-113",
-        "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T14:50:29.994Z",
-        "requirementId": "REQ-EVE2-009"
       },
       {
         "key": "KAR-114",
@@ -194,32 +152,21 @@
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 20,
-    "openIssueCount": 1,
+    "openIssueCount": 0,
     "stateCounts": {
-      "Done": 19,
-      "In Progress": 1
+      "Done": 20
     },
-    "openIssueKeys": [
-      "KAR-103"
-    ],
-    "openIssues": [
-      {
-        "key": "KAR-103",
-        "title": "Add intake queue + staged lead routes (`/intake` flow)",
-        "state": "In Progress",
-        "requirementId": "REQ-EVE2-001",
-        "updatedAt": "2026-02-27T14:51:35.578Z"
-      }
-    ]
+    "openIssueKeys": [],
+    "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T15:51:55.259Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:02:08.214Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "be4ae89b59e8bb292f4306aca406f64cdf8d0486",
+    "gitHead": "cc7af2cc36f880e182182010a9b140196ae7b187",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-59-post-merge-housekeeping-20260227b...origin/lin/KAR-59-post-merge-housekeeping-20260227b"
     ],
     "dirtyFileCount": 0
   }
