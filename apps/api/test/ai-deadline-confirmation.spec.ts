@@ -115,6 +115,10 @@ describe('AiService deadline confirmation governance', () => {
       expect.objectContaining({
         action: 'ai.agent.proposal.executed',
         entityType: 'agentProposal',
+        metadata: expect.objectContaining({
+          reason: 'Approved deadline selections executed as downstream records',
+          transitionedAt: expect.any(String),
+        }),
       }),
     );
   });
@@ -167,6 +171,7 @@ describe('AiService deadline confirmation governance', () => {
     expect(audit.appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'ai.agent.proposal.approved',
+        metadata: expect.objectContaining({ reason: 'Attorney approved draft artifact for execution' }),
       }),
     );
     expect(prisma.aiArtifact.update).toHaveBeenCalled();

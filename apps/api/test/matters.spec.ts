@@ -1075,6 +1075,70 @@ describe('MattersService', () => {
     expect(dashboard.domainSectionCompleteness.sections.expertEngagements).toBe(true);
   });
 
+
+
+  it('dashboard returns draft-only proactive proposals for lifecycle and engagement', async () => {
+    const prisma = {
+      matter: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'matter-9',
+          matterNumber: 'M-9',
+          name: 'Matter 9',
+          practiceArea: 'Litigation',
+          status: 'OPEN',
+          stage: null,
+          participants: [],
+          docketEntries: [],
+          tasks: [
+            {
+              id: 'task-overdue-1',
+              status: 'TODO',
+              dueAt: new Date('2025-01-01T00:00:00.000Z'),
+            },
+          ],
+          calendarEvents: [],
+          communicationThreads: [],
+          documents: [],
+          invoices: [],
+          aiJobs: [{ artifacts: [{ id: 'artifact-1', reviewedStatus: 'DRAFT' }] }],
+          propertyProfile: null,
+          contractProfile: null,
+          defectIssues: [],
+          damagesItems: [],
+          lienModels: [],
+          insuranceClaims: [],
+          expertEngagements: [],
+          projectMilestones: [],
+        }),
+      },
+    } as any;
+    const service = new MattersService(
+      prisma,
+      { appendEvent: jest.fn() } as any,
+      { assertMatterAccess: jest.fn().mockResolvedValue(undefined) } as any,
+    );
+
+    const dashboard = await service.dashboard(baseUser, 'matter-9');
+
+    expect(dashboard.proactiveProposals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'matter-matter-9-proposal-assign-stage',
+          kind: 'LIFECYCLE_NEXT_ACTION',
+          status: 'PROPOSED',
+          draftOnly: true,
+          autoSend: false,
+        }),
+        expect.objectContaining({
+          id: 'matter-matter-9-proposal-client-status-update',
+          kind: 'CLIENT_ENGAGEMENT',
+          draftOnly: true,
+          autoSend: false,
+        }),
+      ]),
+    );
+  });
+
   it('saves and resumes intake drafts', async () => {
     const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
     const prisma = {

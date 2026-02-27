@@ -605,6 +605,7 @@ export class AiService implements OnModuleInit {
       user: input.user,
       toStatus: 'IN_REVIEW',
       action: 'ai.agent.proposal.in_review',
+      reason: 'Artifact entered attorney review',
       metadata: {
         reviewedStatus: input.status,
       },
@@ -617,6 +618,7 @@ export class AiService implements OnModuleInit {
         user: input.user,
         toStatus: 'APPROVED',
         action: 'ai.agent.proposal.approved',
+        reason: 'Attorney approved draft artifact for execution',
         metadata: {
           reviewedStatus: input.status,
         },
@@ -630,6 +632,7 @@ export class AiService implements OnModuleInit {
         user: input.user,
         toStatus: 'RETURNED',
         action: 'ai.agent.proposal.returned',
+        reason: 'Attorney returned draft artifact for edits',
         metadata: {
           reviewedStatus: input.status,
         },
@@ -762,6 +765,7 @@ export class AiService implements OnModuleInit {
       user: input.user,
       toStatus: 'EXECUTED',
       action: 'ai.agent.proposal.executed',
+      reason: 'Approved deadline selections executed as downstream records',
       metadata: {
         selectionCount: normalizedSelections.length,
         createdCount: created.length,
@@ -852,6 +856,7 @@ export class AiService implements OnModuleInit {
     user: AuthenticatedUser;
     toStatus: AgentProposalLifecycleStatus;
     action: string;
+    reason: string;
     metadata?: Record<string, unknown>;
   }): Promise<AgentRun> {
     const current = input.orchestration.proposal.status;
@@ -861,6 +866,11 @@ export class AiService implements OnModuleInit {
 
     if (!this.canTransitionProposalStatus(current, input.toStatus)) {
       throw new BadRequestException(`Invalid proposal lifecycle transition: ${current} -> ${input.toStatus}`);
+    }
+
+    const reason = String(input.reason || '').trim();
+    if (!reason) {
+      throw new BadRequestException('Proposal lifecycle transition reason is required');
     }
 
     const now = new Date().toISOString();
@@ -886,7 +896,10 @@ export class AiService implements OnModuleInit {
           kind: stepKindByStatus[input.toStatus],
           at: now,
           actorUserId: input.user.id,
-          metadata: input.metadata,
+          metadata: {
+            reason,
+            ...(input.metadata ?? {}),
+          },
         },
       ],
     };
@@ -902,6 +915,8 @@ export class AiService implements OnModuleInit {
         runId: next.id,
         fromStatus: current,
         toStatus: input.toStatus,
+        transitionedAt: now,
+        reason,
         ...(input.metadata ?? {}),
       },
     });
