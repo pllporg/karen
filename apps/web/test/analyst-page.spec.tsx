@@ -75,7 +75,10 @@ describe('AnalystPage', () => {
     fireEvent.change(screen.getByLabelText('Matter, client, owner, or recent activity'), { target: { value: 'cline' } });
 
     const exportLink = screen.getByRole('link', { name: 'Export CSV' });
-    expect(exportLink).toHaveAttribute('href', 'http://localhost:4000/reporting/analyst/csv?stage=Intake&bucket=Current&q=cline');
+    expect(exportLink).toHaveAttribute(
+      'href',
+      'http://localhost:4000/reporting/analyst/csv?report=bottlenecks&stage=Intake&bucket=Current&q=cline',
+    );
 
     await waitFor(() => {
       expect(screen.queryByText('Ortega v. Kelvin')).not.toBeInTheDocument();

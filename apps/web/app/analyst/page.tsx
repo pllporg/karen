@@ -32,8 +32,14 @@ type AnalystPayload = {
 };
 
 function normalizePayload(raw: unknown): AnalystPayload {
-  const payload = raw as { rows?: unknown[]; items?: unknown[]; detailsById?: Record<string, unknown[]> };
-  const sourceRows = Array.isArray(payload?.rows) ? payload.rows : Array.isArray(payload?.items) ? payload.items : [];
+  const payload = raw as { rows?: unknown[]; items?: unknown[]; detailsById?: Record<string, unknown[]> } | unknown[];
+  const sourceRows = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.rows)
+      ? payload.rows
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : [];
 
   const rows = sourceRows.map((item, index) => {
     const row = item as Record<string, unknown>;
@@ -52,7 +58,7 @@ function normalizePayload(raw: unknown): AnalystPayload {
   });
 
   const detailsById = Object.fromEntries(
-    Object.entries(payload?.detailsById || {}).map(([key, entries]) => [
+    Object.entries(Array.isArray(payload) ? {} : payload?.detailsById || {}).map(([key, entries]) => [
       key,
       (entries || []).map((entry, index) => {
         const detail = entry as Record<string, unknown>;
@@ -73,6 +79,7 @@ function normalizePayload(raw: unknown): AnalystPayload {
 function csvHref(filters: { stage: string; bucket: string; query: string }) {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
   const query = new URLSearchParams();
+  query.set('report', 'bottlenecks');
   if (filters.stage !== 'all') query.set('stage', filters.stage);
   if (filters.bucket !== 'all') query.set('bucket', filters.bucket);
   if (filters.query.trim()) query.set('q', filters.query.trim());
@@ -95,7 +102,7 @@ export default function AnalystPage() {
     setLoading(true);
     setError(null);
 
-    apiFetch<unknown>('/reporting/analyst')
+    apiFetch<unknown>('/reporting/analyst/bottlenecks')
       .then((result) => {
         if (cancelled) return;
         const normalized = normalizePayload(result);
