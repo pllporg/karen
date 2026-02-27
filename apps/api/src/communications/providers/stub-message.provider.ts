@@ -13,6 +13,7 @@ export class StubMessageProvider implements EmailProvider, SmsProvider {
       provider: 'stub',
       status: 'sent',
       externalMessageId: id,
+      raw: input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
     };
   }
 
@@ -24,6 +25,7 @@ export class StubMessageProvider implements EmailProvider, SmsProvider {
       provider: 'stub',
       status: 'sent',
       externalMessageId: id,
+      raw: input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
     };
   }
 }
