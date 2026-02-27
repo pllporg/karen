@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T16:28:25.638Z",
+  "generatedAt": "2026-02-27T20:57:05.779Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -72,11 +72,37 @@
     "scopedIssueCount": 100,
     "stateCounts": {
       "Done": 94,
-      "Backlog": 6
+      "Backlog": 3,
+      "In Progress": 3
     },
-    "inProgressIssueKeys": [],
+    "inProgressIssueKeys": [
+      "KAR-111",
+      "KAR-109",
+      "KAR-106"
+    ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-106",
+        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T20:45:12.495Z",
+        "requirementId": "REQ-EVE2-004"
+      },
+      {
+        "key": "KAR-109",
+        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T20:44:51.833Z",
+        "requirementId": "REQ-EVE2-006"
+      },
+      {
+        "key": "KAR-111",
+        "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
+        "state": "In Progress",
+        "updatedAt": "2026-02-27T20:44:11.240Z",
+        "requirementId": "REQ-EVE2-008"
+      },
       {
         "key": "KAR-103",
         "title": "Add intake queue + staged lead routes (`/intake` flow)",
@@ -125,46 +151,36 @@
         "state": "Done",
         "updatedAt": "2026-02-27T14:23:34.082Z",
         "requirementId": "REQ-EVE2-007"
-      },
-      {
-        "key": "KAR-104",
-        "title": "Implement Leads API with conflict/engagement/convert gates + setup checklist",
-        "state": "Done",
-        "updatedAt": "2026-02-27T14:23:33.791Z",
-        "requirementId": "REQ-EVE2-002"
-      },
-      {
-        "key": "KAR-115",
-        "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
-        "state": "Done",
-        "updatedAt": "2026-02-27T14:22:36.325Z",
-        "requirementId": "REQ-EVE2-011"
-      },
-      {
-        "key": "KAR-112",
-        "title": "PARITY-14 Eve 2 Analyst Parity",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:30.703Z",
-        "requirementId": "PARITY-14"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
-    "issueCount": 20,
-    "openIssueCount": 0,
+    "issueCount": 21,
+    "openIssueCount": 1,
     "stateCounts": {
+      "In Progress": 1,
       "Done": 20
     },
-    "openIssueKeys": [],
-    "openIssues": []
+    "openIssueKeys": [
+      "KAR-117"
+    ],
+    "openIssues": [
+      {
+        "key": "KAR-117",
+        "title": "Add unlisted implemented routes to primary navigation model",
+        "state": "In Progress",
+        "requirementId": "UI-NAV-001",
+        "updatedAt": "2026-02-27T20:44:05.711Z"
+      }
+    ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:28:22.289Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T20:57:02.126Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "14762855db712c192a8ae91ae53f89110e139e8b",
+    "gitHead": "c1aca7cca785a863831d9a8e38a858e8e5d3bcf9",
     "gitStatusShort": [
       "## main...origin/main"
     ],
