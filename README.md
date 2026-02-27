@@ -226,7 +226,7 @@ Included suites cover:
   - `docs/parity/ops-runbook-slos.md`
 - Recovery drill + provider evidence commands:
   - `pnpm ops:drill:backup-restore -- --out-dir artifacts/ops --evidence-index-file artifacts/ops/rc009-drill-evidence.json`
-  - `pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --out artifacts/ops/provider-status-evidence.json`
+  - `pnpm ops:evidence:capture -- --api-base http://127.0.0.1:4000 --json-out artifacts/ops/provider-readiness-evidence.json --md-out artifacts/ops/provider-readiness-evidence.md`
 
 ## UI/UX Refactor Lane
 
@@ -306,207 +306,33 @@ Live provider pull sync mode (optional, defaults to scaffold mode):
 
 ## New Chat Bootstrap
 
-Use this protocol at the start of every new chat to avoid context-compaction drift:
+Canonical operations guidance now lives in:
+
+1. `docs/OPERATIONS_PLAYBOOK.md` (canonical execution protocol)
+2. `docs/ACTIVE_PHASES.md` (phase authority)
+3. `docs/SESSION_HANDOFF.md` (current state and conflicts)
+4. `docs/WORKING_CONTRACT.md` (invariants and decision rules)
+
+Quick bootstrap command:
 
 ```bash
-git status --short --branch
-pnpm backlog:verify
-pnpm backlog:matrix:check
-pnpm backlog:snapshot
+pnpm ops:preflight
 ```
-
-Then read context in this order:
-
-1. Active Linear issue(s) for current slice
-2. Linear project state (`Prompt Parity - LIC Legal Suite`)
-3. `tools/backlog-sync/requirements.matrix.json`
-4. `README.md` (this section)
-5. `Prompt-Context`
-6. `docs/PROMPT_CANONICAL_SOURCES.md` (prompt/instruction precedence registry)
-7. `docs/UI_CANONICAL_PRECEDENCE.md` + `lic-design-system/references/` (mandatory for UI/interaction slices)
-
-Handoff artifacts:
-
-- `docs/SESSION_HANDOFF.md` (session state + operational handoff)
-- `docs/WORKING_CONTRACT.md` (implementation protocol)
-- `tools/backlog-sync/session.snapshot.json` (machine-readable status snapshot)
-- `docs/parity/data-model-checklist.md` (prompt-entity to Prisma parity mapping and gap register)
-
-Policy notes:
-
-- Linear is canonical for parity task state and acceptance evidence.
-- GitHub issues are mirror-only and not source-of-truth for parity state.
-- Dirty working tree is allowed, but must be inspected and acknowledged at session start.
-- Snapshot prioritization is phase-aware: `phase-1` requirements are ranked ahead of `phase-2` planned items.
 
 ## Prompt-Parity Backlog Operations (Linear + GitHub)
 
-This repository includes automation to maintain a persistent parity backlog where:
+Backlog operations are canonicalized in:
 
-- Linear is canonical.
-- GitHub issues are a one-way mirror from Linear.
+- `docs/OPERATIONS_PLAYBOOK.md`
+- `tools/backlog-sync/README.md`
 
-Artifacts live in `tools/backlog-sync`.
-
-Backlog scripts auto-load environment values from:
-
-1. `tools/backlog-sync/config.env` (preferred, local-only, gitignored)
-2. `.env` (root)
-3. shell exports (highest precedence)
-
-One-time local setup:
+General housekeeping command:
 
 ```bash
-cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
+pnpm ops:housekeeping
 ```
-
-### 1) Bootstrap GitHub repo + protections
-
-```bash
-pnpm backlog:github:bootstrap
-```
-
-Required env:
-
-- `GITHUB_TOKEN`
-- `GITHUB_ORG`
-- `GITHUB_REPO`
-
-Optional:
-
-- `GITHUB_REPO_VISIBILITY` (`private` default)
-- `GITHUB_DEFAULT_BRANCH` (`main` default)
-- `GITHUB_REQUIRED_CHECK` (`test` default)
-- `GIT_USER_NAME`
-- `GIT_USER_EMAIL`
-
-### 2) Setup Linear project model
-
-```bash
-pnpm backlog:linear:setup
-```
-
-Required env:
-
-- `LINEAR_API_TOKEN`
-
-Optional:
-
-- `LINEAR_TEAM_KEY` (`KAR` default)
-- `LINEAR_PROJECT_NAME` (`Prompt Parity - LIC Legal Suite` default)
-
-### 3) Seed parity backlog (epics + tasks)
-
-```bash
-pnpm backlog:seed
-```
-
-Uses `tools/backlog-sync/requirements.matrix.json` as the persistent, versioned source for parity tasks.
-
-### 4) Mirror Linear issues to GitHub issues
-
-```bash
-pnpm backlog:sync
-```
-
-Required env:
-
-- `LINEAR_API_TOKEN`
-- `GITHUB_TOKEN`
-- `GITHUB_OWNER`
-- `GITHUB_REPO`
-
-Optional:
-
-- `LINEAR_SCOPE_LABEL` (`parity` default)
-- `SYNC_LOOKBACK_MINUTES` (`120` default)
-- `DRY_RUN` (`false` default)
-
-### 5) Verify mirror integrity
-
-```bash
-pnpm backlog:verify
-```
-
-Checks:
-
-- Linear issue count vs mirrored GitHub issue count.
-- Missing mirrors.
-- Orphan mirrors.
-- Missing requirement IDs.
-
-### 6) Verify manual matrix <-> Linear alignment
-
-```bash
-pnpm backlog:matrix:check
-```
-
-Checks:
-
-- Every open Linear parity requirement issue is represented in `requirements.matrix.json`.
-- `Missing`/`Partial` matrix requirements have an open Linear issue.
-- `Complete`/`Verified` matrix requirements do not have open Linear issues.
-- No duplicate open Linear issues share the same requirement ID.
-
-### 7) Generate machine-readable session snapshot
-
-```bash
-pnpm backlog:snapshot
-```
-
-Output:
-
-- `tools/backlog-sync/session.snapshot.json`
-
-Includes:
-
-- unresolved requirement counts by phase/status/risk
-- top priority requirement IDs
-- recent Linear issue updates
-- UI refactor lane summary (`ui-ux` label) with open issue keys
-- last successful `backlog:verify` timestamp
-
-### 8) Local bootstrap check shortcut
-
-```bash
-pnpm backlog:bootstrap:check
-```
-
-Equivalent to:
-
-```bash
-pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot
-```
-
-Fallback rule:
-
-- If snapshot and handoff timestamps drift, trust Linear state first, regenerate snapshot, and refresh `docs/SESSION_HANDOFF.md` before planning.
 
 ## RC-1 Parallel Codex Cloud Delivery
 
-Execution model:
-
-1. Two parallel Cloud lanes.
-2. Local orchestrator owns Linear status/evidence and backlog sync.
-3. Cloud lanes implement code/tests only (no backlog sync in Cloud).
-4. Merge policy is merge-as-green.
-
-Operational artifacts:
-
-- `docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md`
-- `docs/codex-cloud/README.md`
-- `docs/codex-cloud/lane-a-reliability.packet.md`
-- `docs/codex-cloud/lane-b-no-id-usability.packet.md`
-
-Lane verification commands:
-
-```bash
-pnpm rc1:lane:a:verify
-pnpm rc1:lane:b:verify
-```
-
-Local orchestrator post-merge command:
-
-```bash
-pnpm rc1:orchestrator:post-merge
-```
+`docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md` is archived historical reference.
+Current execution policy for all phases is `docs/OPERATIONS_PLAYBOOK.md`.

@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "version": "1.3.0",
+    "version": "1.4.0",
     "generatedFrom": "Prompt-Context",
-    "assessmentDate": "2026-02-16",
-    "notes": "Parity matrix with LIC UI canonical-precedence lane, PRD/screen coverage backlog, and RC-1 production-readiness lane.",
+    "assessmentDate": "2026-02-27",
+    "notes": "Parity matrix with LIC UI canonical-precedence lane, PRD/screen coverage backlog, and RC-1 production-readiness lane. Eve 2.0 scope (Agents, Auditor, Analyst) queued on 2026-02-27 with REQ-EVE2-001..011 as phase-1 Missing requirements.",
     "uiCompliance": {
       "canonicalSource": "docs/UI_CANONICAL_PRECEDENCE.md",
       "componentMatrixSource": "lic-design-system/references/ui-kit.md",
@@ -1834,6 +1834,358 @@
             "UAT evidence package committed to runbook artifacts.",
             "Release candidate checklist completed.",
             "Linear issue includes final signoff evidence links."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-12",
+      "title": "Eve 2 Agents Parity",
+      "description": "Deliver Eve 2 agentic intake and proactive client-engagement parity across queue-first lead workflows, gate-controlled conversions, and human-reviewed mutation proposals.",
+      "labels": [
+        "parity",
+        "eve-2",
+        "agents",
+        "phase-1"
+      ],
+      "tasks": [
+        {
+          "title": "Add intake queue + staged lead routes (`/intake` flow)",
+          "requirementId": "REQ-EVE2-001",
+          "promptSection": "Eve 2 / Agents / Client engagement",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "agents",
+            "intake",
+            "ui-ux",
+            "phase-1"
+          ],
+          "problemStatement": "Lead intake still requires a deterministic route sequence and queue-first interaction model aligned to Eve 2 agent workflows.",
+          "requirementExcerpt": "Provide staged intake routing from queue to conversion with explicit user-visible gates and recoverable state transitions.",
+          "acceptanceCriteria": [
+            "Add `/intake`, `/intake/new`, `/intake/[leadId]/intake`, `/intake/[leadId]/conflict`, `/intake/[leadId]/engagement`, `/intake/[leadId]/convert`.",
+            "Queue screen is table-first with stage/source/owner filtering and deterministic next-action routing.",
+            "Each route includes loading, empty, error, and success states with keyboard-visible focus behavior."
+          ],
+          "apiImpact": "Consumes lead lifecycle APIs and gate-state responses.",
+          "securityImpact": "No new tenancy exposure when organization scoping and audit logging are preserved.",
+          "definitionOfDone": [
+            "Route sequence is reachable end-to-end from queue to convert.",
+            "Accessibility and regression tests cover the full intake path."
+          ]
+        },
+        {
+          "title": "Implement Leads API with conflict/engagement/convert gates + setup checklist",
+          "requirementId": "REQ-EVE2-002",
+          "promptSection": "Eve 2 / Agents / Proactive case work",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "agents",
+            "intake",
+            "phase-1"
+          ],
+          "problemStatement": "Lead-first lifecycle APIs must enforce hard transition gates and conversion artifacts before matter activation.",
+          "requirementExcerpt": "Expose lead lifecycle operations with mandatory conflict-resolution and engagement-signature gating before conversion.",
+          "acceptanceCriteria": [
+            "Implement `/leads` CRUD + intake draft/conflict/engagement/convert/setup-checklist endpoints.",
+            "Block engagement send when conflict unresolved and block conversion when engagement unsigned.",
+            "Create setup checklist artifacts during conversion and emit auditable transition events."
+          ],
+          "apiImpact": "Adds first-class lead lifecycle contracts consumed by web intake routes.",
+          "securityImpact": "Hard gates and audit trail reduce unauthorized or premature client-impacting transitions.",
+          "definitionOfDone": [
+            "Gate enforcement tests pass for happy and blocked paths.",
+            "Legacy intake adapter remains backward compatible."
+          ]
+        },
+        {
+          "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
+          "requirementId": "REQ-EVE2-003",
+          "promptSection": "Eve 2 / Agents / Human-in-the-loop",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "agents",
+            "ai-governance",
+            "security",
+            "phase-1"
+          ],
+          "problemStatement": "Single-shot tool calls cannot represent Eve 2 planning/execution provenance or policy-gated proposal handling.",
+          "requirementExcerpt": "Model agent runs, steps, and action proposals with review lifecycle states before mutation execution.",
+          "acceptanceCriteria": [
+            "Persist `AgentRun`, `AgentStep`, and `AgentProposal` entities with gate statuses.",
+            "Track planner and executor step provenance with deterministic status transitions.",
+            "Reject mutating execution attempts unless proposal status is `APPROVED`."
+          ],
+          "apiImpact": "Adds agent orchestration storage and review endpoints.",
+          "securityImpact": "Prevents unreviewed AI mutations and strengthens evidentiary traceability.",
+          "definitionOfDone": [
+            "Lifecycle tests validate `PROPOSED -> IN REVIEW -> APPROVED -> EXECUTED|RETURNED` behavior.",
+            "Audit events capture run/step/proposal identifiers."
+          ]
+        },
+        {
+          "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
+          "requirementId": "REQ-EVE2-004",
+          "promptSection": "Eve 2 / Agents / Proactive case work",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "agents",
+            "communications",
+            "ai-governance",
+            "phase-1"
+          ],
+          "problemStatement": "Agent output is not yet producing proactive, reviewable engagement and lifecycle next-action proposals tied to lead state.",
+          "requirementExcerpt": "Generate proactive next-action proposals for engagement and lifecycle progress, with explicit review and approval controls.",
+          "acceptanceCriteria": [
+            "Agent runs generate actionable engagement/lifecycle proposals with citations and confidence metadata.",
+            "Proposal execution adapters create only approved downstream actions.",
+            "Lifecycle stage context and recommendation rationale persist on proposal records."
+          ],
+          "apiImpact": "Extends agent proposal generation and execution adapter behaviors.",
+          "securityImpact": "Ensures client-impacting outbound actions remain human-approved.",
+          "definitionOfDone": [
+            "Deterministic fixtures prove proactive proposal generation per lead stage.",
+            "Execution logs include actor, timestamp, and proposal linkage."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-13",
+      "title": "Eve 2 Auditor Parity",
+      "description": "Implement Eve 2 Auditor parity for value and movement monitoring with deterministic signal generation, operations queue triage, and review-gated execution.",
+      "labels": [
+        "parity",
+        "eve-2",
+        "auditor",
+        "phase-1"
+      ],
+      "tasks": [
+        {
+          "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
+          "requirementId": "REQ-EVE2-005",
+          "promptSection": "Eve 2 / Auditor / Maximize case value",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "eve-2",
+            "auditor",
+            "ai-governance",
+            "phase-1"
+          ],
+          "problemStatement": "Value leakage indicators are not currently surfaced as structured, reviewable case signals.",
+          "requirementExcerpt": "Detect missed-value opportunities and expose citation-backed findings for attorney review.",
+          "acceptanceCriteria": [
+            "Generate `MatterAuditSignal` value indicators with severity and source citations.",
+            "Signals include deterministic rationale fields for reviewer triage.",
+            "Signals are tenant-scoped and queryable via auditor APIs."
+          ],
+          "apiImpact": "Adds auditor signal generation and retrieval contracts.",
+          "securityImpact": "No direct elevation; preserves tenant boundaries and review governance.",
+          "definitionOfDone": [
+            "Signal generation tests validate deterministic fixture output.",
+            "Evidence links and metadata appear in auditor API responses."
+          ]
+        },
+        {
+          "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
+          "requirementId": "REQ-EVE2-006",
+          "promptSection": "Eve 2 / Auditor / Keep cases moving",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "auditor",
+            "ops",
+            "phase-1"
+          ],
+          "problemStatement": "Case movement risk is not automatically monitored for inactivity, deadline compression, or statute exposure.",
+          "requirementExcerpt": "Continuously identify stale matters and deadline/statute risk signals with deterministic scoring metadata.",
+          "acceptanceCriteria": [
+            "Generate staleness/deadline/statute signals using deterministic timestamp rules.",
+            "Surface severity, stale-age, and due-window metadata for each signal.",
+            "Allow reviewers to resolve, return, or execute follow-up actions through gate controls."
+          ],
+          "apiImpact": "Expands auditor scan logic and signal payload schema.",
+          "securityImpact": "Improves operational risk detection without bypassing human approval.",
+          "definitionOfDone": [
+            "Fixture tests prove deterministic stale/deadline signal generation.",
+            "Signal review transitions are auditable and append-only."
+          ]
+        },
+        {
+          "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
+          "requirementId": "REQ-EVE2-007",
+          "promptSection": "Eve 2 / Auditor / Daily case monitoring",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "auditor",
+            "ui-ux",
+            "phase-1"
+          ],
+          "problemStatement": "Auditor workflows lack a table-first operations queue with preserved context during review decisions.",
+          "requirementExcerpt": "Provide `/auditor` queue UX with review drawer and explicit approve/return/execute state transitions.",
+          "acceptanceCriteria": [
+            "Create `/auditor` table-first queue with severity and state filters.",
+            "Use drawer review to preserve queue context while executing decisions.",
+            "Display timestamped action feedback and review-gate statuses."
+          ],
+          "apiImpact": "Consumes auditor signal and review endpoints.",
+          "securityImpact": "Human review controls prevent unapproved corrective actions.",
+          "definitionOfDone": [
+            "Keyboard-only workflow completes triage and review actions.",
+            "Route tests cover loading/empty/error/success states."
+          ]
+        },
+        {
+          "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
+          "requirementId": "REQ-EVE2-008",
+          "promptSection": "Eve 2 / Auditor / Continuous monitoring",
+          "parityStatus": "Missing",
+          "component": "Infra",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "eve-2",
+            "auditor",
+            "ops",
+            "phase-1"
+          ],
+          "problemStatement": "Auditor scans are not yet scheduled with duplicate-safe dispatch and operational reliability controls.",
+          "requirementExcerpt": "Run periodic auditor scans and dispatch notifications with strict idempotency and retry safety.",
+          "acceptanceCriteria": [
+            "Schedule recurring auditor scan jobs with tenant-safe execution windows.",
+            "Use idempotency keys to prevent duplicate notifications/actions.",
+            "Emit operational telemetry for scan outcomes and retry behavior."
+          ],
+          "apiImpact": "No new public route required; infrastructure scheduling and notification execution updates.",
+          "securityImpact": "Limits duplicate side effects and preserves auditable operational control.",
+          "definitionOfDone": [
+            "Scheduled scans run deterministically in fixtures/staging.",
+            "Idempotency controls block duplicate dispatch attempts."
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PARITY-14",
+      "title": "Eve 2 Analyst Parity",
+      "description": "Deliver Eve 2 Analyst parity for operational intelligence through reproducible metrics pipelines, analyst APIs/exports, and table-first drilldown dashboards.",
+      "labels": [
+        "parity",
+        "eve-2",
+        "analyst",
+        "phase-1"
+      ],
+      "tasks": [
+        {
+          "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
+          "requirementId": "REQ-EVE2-009",
+          "promptSection": "Eve 2 / Analyst / Optimize operations",
+          "parityStatus": "Missing",
+          "component": "Data",
+          "risk": "High",
+          "labels": [
+            "parity",
+            "eve-2",
+            "analyst",
+            "reporting",
+            "phase-1"
+          ],
+          "problemStatement": "Firm-level performance metrics are fragmented and not captured in a reproducible tenant-scoped pipeline.",
+          "requirementExcerpt": "Aggregate operational metrics into periodic snapshots for analyst decision support.",
+          "acceptanceCriteria": [
+            "Create `AnalystMetricSnapshot` generation pipeline for core operations metrics.",
+            "Ensure snapshot generation is deterministic from seeded fixtures.",
+            "Store tenant-scoped aggregates for downstream API and dashboard usage."
+          ],
+          "apiImpact": "Introduces snapshot data source for analyst reporting endpoints.",
+          "securityImpact": "Aggregates remain tenant-isolated; no cross-tenant data exposure.",
+          "definitionOfDone": [
+            "Pipeline tests verify reproducible snapshot outputs.",
+            "Snapshot cadence and schema are documented in parity artifact."
+          ]
+        },
+        {
+          "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
+          "requirementId": "REQ-EVE2-010",
+          "promptSection": "Eve 2 / Analyst / Drive growth",
+          "parityStatus": "Missing",
+          "component": "API",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "eve-2",
+            "analyst",
+            "reporting",
+            "exports",
+            "phase-1"
+          ],
+          "problemStatement": "Analyst consumers need API and export access to bottleneck, capacity, and growth insights from unified snapshots.",
+          "requirementExcerpt": "Expose analyst insight endpoints and CSV exports for operational drilldown and sharing.",
+          "acceptanceCriteria": [
+            "Implement analyst endpoints for bottlenecks, capacity, growth, and CSV export.",
+            "Apply consistent filter/date scoping semantics across analyst routes.",
+            "Ensure export payloads match API aggregates and include reproducible metadata."
+          ],
+          "apiImpact": "Adds analyst reporting API and export contracts.",
+          "securityImpact": "Export endpoints remain auth-scoped and audit logged.",
+          "definitionOfDone": [
+            "API/export regression tests validate deterministic aggregates.",
+            "CSV export contract documented and parity-verified."
+          ]
+        },
+        {
+          "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
+          "requirementId": "REQ-EVE2-011",
+          "promptSection": "Eve 2 / Analyst / Firm-wide intelligence",
+          "parityStatus": "Missing",
+          "component": "Web",
+          "risk": "Medium",
+          "labels": [
+            "parity",
+            "eve-2",
+            "analyst",
+            "ui-ux",
+            "reporting",
+            "phase-1"
+          ],
+          "problemStatement": "No dedicated analyst route exists for table-first operational drilldowns across pipeline metrics.",
+          "requirementExcerpt": "Create `/analyst` dashboard with dense tables, filters, and export actions for firm intelligence workflows.",
+          "acceptanceCriteria": [
+            "Add `/analyst` route with table-first KPI drilldowns and date/filter controls.",
+            "Support loading, empty, error, and success states with keyboard access.",
+            "Integrate CSV export actions and timestamped user feedback."
+          ],
+          "apiImpact": "Consumes new analyst API/export endpoints.",
+          "securityImpact": "No additional risk when routed through existing auth and audit controls.",
+          "definitionOfDone": [
+            "Analyst route passes accessibility and regression coverage.",
+            "Drilldown tables preserve filter state and actionable context."
           ]
         }
       ]

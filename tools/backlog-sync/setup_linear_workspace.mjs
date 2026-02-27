@@ -17,7 +17,7 @@ const projectName = env('LINEAR_PROJECT_NAME', 'Prompt Parity - LIC Legal Suite'
 const labelList = String(
   env(
     'LINEAR_PARITY_LABELS',
-    'parity,security,migration,ai-governance,billing,portal,imports,exports,integrations,domain-construction',
+    'parity,security,migration,ai-governance,billing,portal,imports,exports,integrations,domain-construction,eve-2,agents,auditor,analyst',
   ),
 )
   .split(',')

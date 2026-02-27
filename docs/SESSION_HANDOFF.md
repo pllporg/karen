@@ -1,191 +1,62 @@
 # LIC Legal Suite Session Handoff
 
-This document is the persistent handoff layer for new chats. Linear is canonical; this file provides the minimal runbook to reconstruct context quickly and consistently.
+This is the active handoff surface for new chats.
+
+Canonical operations source: `docs/OPERATIONS_PLAYBOOK.md`.
+Historical detail: `docs/SESSION_HISTORY_ARCHIVE.md`.
 
 ## Snapshot Metadata
 
 - Snapshot File: `tools/backlog-sync/session.snapshot.json`
-- Snapshot Timestamp: `2026-02-26T23:55:53.156Z`
+- Snapshot Timestamp: `2026-02-27T03:30:54.696Z`
 - Snapshot Schema Version: `1.1.0`
-- Last Successful Mirror Verify: `2026-02-26T23:55:51.297Z`
+- Last Successful Mirror Verify: `2026-02-27T03:30:50.910Z`
 
-## Canonical Context Routing (Linear-First)
+## Current Operational Status
 
-Use this order when reconstructing context:
+- Branch baseline: `main`
+- Backlog model: Linear canonical, GitHub mirror-only
+- Active phase registry: `docs/ACTIVE_PHASES.md`
+- Current queued phase: `EVE-2` in mirrored queue mode
 
-1. Active Linear issue (`In Progress`/`In Review`)
-2. Linear project status for parity scope
-3. `tools/backlog-sync/requirements.matrix.json`
-4. `README.md` -> `New Chat Bootstrap`
-5. `Prompt-Context`
-6. `docs/PROMPT_CANONICAL_SOURCES.md`
+EVE-2 queue conditions:
+1. `REQ-EVE2-001`..`REQ-EVE2-011` exist in local matrix/snapshot.
+2. Linear-backed commands are currently healthy in this workspace (`backlog:verify` passing).
+3. Dirty local Eve 2.0 WIP must not be treated as merged implementation until PR merge completes.
 
-Rule: GitHub issues are mirror-only for parity scope and never source-of-truth for task status.
+## New Chat Bootstrap
 
-## Runtime Identity
-
-- Monorepo: `apps/api` (NestJS + Prisma + BullMQ), `apps/web` (Next.js App Router), `docker-compose.yml` (Postgres pgvector, Redis, MinIO, optional ClamAV)
-- Canonical backlog model: Linear project `Prompt Parity - LIC Legal Suite`
-- Sync model: one-way Linear -> GitHub mirror via `tools/backlog-sync/linear_to_github.mjs`
-
-## New Chat Bootstrap (Command-First)
-
-Run these in order:
+Run:
 
 ```bash
-git status --short --branch
+pnpm ops:preflight
+```
+
+Then follow `docs/OPERATIONS_PLAYBOOK.md`.
+
+## Promotion Protocol (EVE-2)
+
+Use exactly:
+
+```bash
+pnpm backlog:seed
+pnpm backlog:sync
 pnpm backlog:verify
 pnpm backlog:matrix:check
 pnpm backlog:snapshot
+pnpm backlog:handoff:refresh
+pnpm backlog:handoff:check
 ```
 
-Then read:
+Only after this sequence succeeds should EVE-2 lanes be assigned in Codex Cloud.
 
-1. `tools/backlog-sync/session.snapshot.json`
-2. `docs/SESSION_HANDOFF.md`
-3. Top priority Linear issues listed in snapshot (`priority.topRequirements`, `linearSummary.inProgressIssueKeys`)
+## Open Operational Conflicts
 
-## Priority Lane Policy
+1. Local Eve 2.0 feature implementation is still in mixed WIP across branches and requires strict branch/file-owner isolation.
 
-Selection policy:
+## Short Delta Log
 
-1. `phase-1` requirements before `phase-2`
-2. Within a phase: `Missing` requirements before `Partial`
-3. Within same phase/status: `High` risk before `Medium` before `Low`
-4. Security/data-integrity/portability before UX polish
-
-UI refactor lane continuity:
-
-1. Use `tools/backlog-sync/session.snapshot.json` -> `uiLaneSummary.openIssueKeys` for active UI queue.
-2. Current refactor planning queue is tracked in `PARITY-11` (`REQ-UI-001` through `REQ-UI-015`) in `tools/backlog-sync/requirements.matrix.json`.
-3. UI primitives/state behavior should be checked against `lic-design-system/references/ui-kit.md`.
-4. `lic-design-system/references/marketing-site.md` remains out-of-scope for product app parity.
-5. The standards-manual shell (`brand/Brand Identity Document*/src/app/components/Layout.tsx`) is documentation UX only and must not be copied into `apps/web/**`.
-6. If Linear sync was not run in the current shell, execute `pnpm backlog:seed && pnpm backlog:sync && pnpm backlog:verify && pnpm backlog:snapshot` after exporting `LINEAR_API_TOKEN`/`GITHUB_TOKEN`.
-
-## Dirty Tree Policy
-
-Dirty working tree is allowed, but must be acknowledged at session start:
-
-1. Record current branch and changed files from `git status --short --branch`.
-2. Do not revert unrelated local changes.
-3. If local edits conflict with planned slice, call out conflict before modifying files.
-
-## Implementation Slice Protocol
-
-For each requirement slice:
-
-1. Implement code changes.
-2. Validate (`pnpm test`, `pnpm build`, plus targeted suites).
-3. Update Linear issue evidence/state.
-4. Run `pnpm backlog:sync`.
-5. Run `pnpm backlog:verify`.
-6. Run `pnpm backlog:snapshot`.
-7. Update this file’s `Snapshot Timestamp` and append delta note.
-
-## Decision Tree: Choosing Next Task
-
-1. Open snapshot `priority.topRequirements`.
-2. Prioritize `phase-1` items before `phase-2`.
-3. Within phase, if any requirement is `Missing`, pick highest-risk first.
-4. If no `Missing`, pick highest-risk `Partial`.
-5. If tie remains, pick requirement with greatest security/compliance impact.
-
-## Delta Log
-
-- 2026-02-26: Completed `KAR-97` / `REQ-RC-011` launch-candidate signoff package by adding runbook Section 11 with executable release-owner/on-call UAT flow, role-based UAT matrix, explicit acceptance evidence checklist, and objective rollback criteria (`docs/DEPLOYMENT_RUNBOOK.md`); added parity artifact (`docs/parity/launch-candidate-uat-signoff.md`) and signoff scaffold generator (`tools/ops/generate_launch_candidate_signoff.mjs`) for deterministic go-live evidence capture.
-- 2026-02-25: Operationalized RC-1 parallel execution as a two-lane Codex Cloud model with local backlog orchestration, including lane packets (`docs/codex-cloud/*.md`), lane verification commands (`pnpm rc1:lane:a:verify`, `pnpm rc1:lane:b:verify`), automated handoff timestamp refresh (`pnpm backlog:handoff:refresh`), and orchestrator post-merge governance command (`pnpm rc1:orchestrator:post-merge`).
-- 2026-02-24: Opened RC-1 production-readiness lane and seeded/mirrored `KAR-86`..`KAR-97` (new requirements `REQ-RC-001`..`REQ-RC-011`) as the canonical launch-hardening queue; updated matrix metadata to `1.3.0` and validated mirror/matrix/snapshot integrity via `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:matrix:check`, and `pnpm backlog:snapshot`.
-- 2026-02-24: Completed Phase-0 reliability hardening slice for `REQ-RC-001` and `REQ-RC-008`: stabilized long-running matter-dashboard tests with explicit per-test timeouts (`apps/web/test/matter-dashboard-page.spec.tsx`), added explicit Jest timeout for core workflow (`apps/api/test/core-workflow-e2e.spec.ts`), replaced API lint placeholder with ESLint gate (`apps/api/.eslintrc.cjs`, `apps/api/package.json`), and split CI checks into deterministic `api-test`, `web-test`, and `build` jobs with API lint enforcement (`.github/workflows/ci.yml`); validation passed with `pnpm --filter api lint`, `pnpm --filter api test:core-workflow`, `pnpm --filter api test`, `pnpm --filter web test`, `pnpm lint`, and `pnpm build`.
-- 2026-02-23: Advanced `KAR-78` / `REQ-PMS-CORE-007` to `In Review` by hardening matter participant lifecycle editing: added participant update endpoint (`PATCH /matters/:id/participants/:participantId`) with counsel/non-counsel linkage guards + org-scoped contact validation + `matter.participant.updated` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/update-participant.dto.ts`), expanded matter dashboard participant workflow to support role/side/primary/represented-by/law-firm/notes add-edit-remove operations with explicit feedback states (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published verification artifact `docs/parity/matter-participant-lifecycle-hardening.md`; validation passed via `pnpm --filter api test -- matters.spec.ts`, `pnpm --filter web test -- matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, and `pnpm lint`, followed by backlog sync/verify/snapshot/handoff check.
-- 2026-02-23: Extended `REQ-PMS-CORE-005` hardening with matter-level ICS export workflow coverage: added calendar-panel `Export ICS` action in `apps/web/app/matters/[id]/page.tsx`, added web regression for authenticated ICS download flow (`apps/web/test/matter-dashboard-page.spec.tsx`), and expanded API service regression coverage for ICS export payload/access behavior (`apps/api/test/calendar-events.spec.ts`), with artifact update in `docs/parity/matter-dashboard-task-calendar-lifecycle.md`.
-- 2026-02-23: Completed `KAR-77` / `REQ-UI-015` by finalizing full UI compliance review closure: updated route-by-route compliance artifact with fixed status for all findings and explicit closure evidence (`docs/parity/ui-full-compliance-review.md`), set matrix parity status for `REQ-UI-015` to `Complete`, moved Linear `KAR-77` to `Done` with `parity-status:complete`, and synced mirror/snapshot (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:matrix:check`, `pnpm backlog:snapshot`).
-- 2026-02-23: Completed `KAR-76` / `REQ-UI-014` by finalizing LIC branding migration closure: moved seeded/login demo account domains to `@lic-demo.local` (`apps/api/prisma/seed.ts`, `apps/web/app/login/page.tsx`, `README.md`), closed transitional compatibility note in precedence docs (`docs/UI_CANONICAL_PRECEDENCE.md`), refreshed boundary verification evidence (`docs/parity/ui-manual-ux-boundary-verification.md`), updated matrix parity status to `Complete`, moved Linear `KAR-76` to `Done` with `parity-status:complete`, and synced mirror/snapshot (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`).
-- 2026-02-20: Started `KAR-77` / `REQ-UI-015` full UI compliance review and published consolidated route-by-route audit evidence at `docs/parity/ui-full-compliance-review.md`, including severity findings and ownership mapping tied to `KAR-76` remediation/guardrail work.
-- 2026-02-20: Audited product UI against the new Brand Identity Document bundle and removed standards-manual UX carryover from the app shell (`Standards Manual` kicker, revision/internal metadata, section-marker nav style), replacing it with product-operational copy/taxonomy; added guardrails to block reintroduction via `tools/ui/check_lic_style_guards.mjs`, codified the standards-manual boundary in canonical docs (`docs/UI_CANONICAL_PRECEDENCE.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/WORKING_CONTRACT.md`, `lic-design-system/references/source-map.md`), and recorded verification evidence in `docs/parity/ui-manual-ux-boundary-verification.md`.
-- 2026-02-20: Conflict resolutions locked with user decision: `1A` keep transitional compatibility identifiers (package/repo ids, demo domains, legacy integration headers) until `KAR-76` is closed; `2A` keep typography split (`IBM Plex Sans Condensed` headings + `IBM Plex Mono` metadata/tables + `IBM Plex Sans` body).
-- 2026-02-20: Normalized instruction-source consistency by aligning `AGENTS.md`/`agents.md` color tokens to LIC canonical values, updating prompt precedence ordering (`docs/PROMPT_CANONICAL_SOURCES.md`) to route UI conflicts through `docs/UI_CANONICAL_PRECEDENCE.md`, and removing legacy archive ambiguity in UI precedence docs.
-- 2026-02-20: Added canonical prompt source registry (`docs/PROMPT_CANONICAL_SOURCES.md`) and marked legacy prompt artifacts (`uirefactorprompt.md`, `brand/Brandguideprompt.md`, `brand/Brandguide.md`) as non-canonical archive inputs.
-- 2026-02-20: Backlog reconciliation cleanup applied: Linear project renamed to `Prompt Parity - LIC Legal Suite`, `KAR-70`..`KAR-75` moved to `Done` (aligned with matrix `Complete` statuses), duplicate requirement chains marked with canonical/superseded links (`REQ-INT-003`, `REQ-BILL-001`, `REQ-BILL-002`, `REQ-AI-001`, `REQ-OPS-001`, `REQ-OPS-003`), and manual matrix/Linear drift check introduced via `pnpm backlog:matrix:check`.
-- 2026-02-20: Started `KAR-76` branding migration by switching product-facing naming to `LIC Legal Suite` across web shell/login metadata and API descriptors, adding a canonical app icon (`apps/web/app/icon.svg`), and adopting `x-lic-*` webhook/e-sign header conventions with legacy `x-karen-*` compatibility retained for integrations (`apps/api/src/webhooks/webhooks.service.ts`, `apps/api/src/portal/esign/*.ts`, `apps/api/test/webhooks-delivery.spec.ts`); validation passed via `pnpm --filter api test -- test/webhooks-delivery.spec.ts`, `pnpm --filter web test -- test/app-shell.spec.tsx test/admin-page.spec.tsx`, `pnpm lint`, `pnpm test`, and `pnpm build`.
-- 2026-02-20: Completed `REQ-UI-013` by standardizing review-gate visibility and audit context in AI workflows (explicit gate sequence + actor/time metadata), adding explicit confirmation gates for client-facing portal send actions (message send + e-sign dispatch), documenting evidence in `docs/parity/ui-review-gate-audit-microcopy-verification.md`, moving `KAR-75` to `In Review`, and syncing mirror issue `#148`.
-- 2026-02-19: Completed `REQ-UI-012` by normalizing primitive state semantics (added shared `Textarea` primitive, explicit primitive `data-state`/`data-tone` metadata, modal `aria-busy` contract, and expanded primitive regression coverage), documented evidence at `docs/parity/ui-primitive-normalization-verification.md`, moved `KAR-74` to `In Review`, synced mirror issue `#149`, and refreshed snapshot/verify metadata.
-- 2026-02-19: Completed `REQ-UI-011` by finishing shell foundation token alignment (`--lic-shell-sidebar-width`, `--lic-shell-sidebar-compact-width`, `--lic-content-max-width`), adding canonical `main-panel-content` wrapper semantics, and documenting verification evidence (`docs/parity/ui-shell-foundation-verification.md`); moved `KAR-73` to `In Review`, synced mirror issue `#150`, and refreshed snapshot/verify metadata.
-- 2026-02-19: Moved `KAR-70` (`REQ-UI-008`) to `In Review` with canonical-precedence and guardrail evidence (`docs/UI_CANONICAL_PRECEDENCE.md`, `tools/ui/check_lic_style_guards.mjs`, `.github/workflows/ui-regression-rollout-gates.yml`), and synced mirror issue `#153`.
-- 2026-02-19: Moved `KAR-72` (`REQ-UI-010`) to `In Review` after documenting blocked backlog-flow placeholders (`REQ-UI-BLOCK-001`..`REQ-UI-BLOCK-006`) in `docs/UI_PRD_SCREEN_BACKLOG.md`; mirror issue `#151` synced.
-- 2026-02-19: Completed full `REQ-UI-009` existing-route PRD/screen draft coverage (`dashboard`, `matters`, `matters/[id]`, `contacts`, `communications`, `documents`, `billing`, `portal`, `ai`, `imports`, `exports`, `reporting`, `admin`, `login`, `shared-doc/[token]`), updated tracker `docs/UI_PRD_SCREEN_BACKLOG.md`, set matrix status for `REQ-UI-009` to `Complete`, moved `KAR-71` to `In Review`, and synced mirror issue `#152`.
-- 2026-02-19: Moved `KAR-71` (`REQ-UI-009`) to `In Progress`, synced mirror issue `#152`, and attached verification evidence for initial route-spec draft batch.
-- 2026-02-19: Drafted initial `REQ-UI-009` route specs and screen specs for `dashboard`, `matters`, and `matters/[id]` (`docs/prd/REQ-UI-009-dashboard.prd.md`, `docs/prd/REQ-UI-009-matters-list.prd.md`, `docs/prd/REQ-UI-009-matter-workspace.prd.md`, `docs/screens/REQ-UI-009-dashboard.screen-spec.md`, `docs/screens/REQ-UI-009-matters-list.screen-spec.md`, `docs/screens/REQ-UI-009-matter-workspace.screen-spec.md`), and updated PRD backlog status tracking in `docs/UI_PRD_SCREEN_BACKLOG.md`.
-- 2026-02-19: Started Phase-0 LIC canonical refactor lock: added precedence contract (`docs/UI_CANONICAL_PRECEDENCE.md`), PRD/screen backlog scaffold (`docs/UI_PRD_SCREEN_BACKLOG.md` + templates), canonical token contract/lane-plan updates, style guardrail script (`pnpm ui:contract:check`) wired into CI and regression gates, and PARITY-11 matrix tasks (`REQ-UI-008`..`REQ-UI-013`); validated with `pnpm ui:contract:check`, `pnpm lint`, `pnpm test:ui-regression`, `pnpm test`, `pnpm build`.
-- 2026-02-19: Completed `KAR-68` / `REQ-PMS-CORE-006`; PR `#146` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).
-- 2026-02-19: Advanced `KAR-68` / `REQ-PMS-CORE-006` to `In Review` by implementing matter-dashboard document lifecycle operations: added document metadata update endpoint (`PATCH /documents/:id`) with matter-scoped write enforcement, expanded document audit coverage for version upload/share-link creation (`document.version.uploaded`, `document.share_link.created`, `document.updated`), upgraded dashboard documents panel with in-context upload/version/share/download controls and client-sharing toggle (`apps/web/app/matters/[id]/page.tsx`), added API/Web regression coverage (`apps/api/test/documents.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published parity evidence at `docs/parity/matter-dashboard-document-lifecycle.md`; validation passed via `pnpm --filter api test -- test/documents.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
-- 2026-02-19: Completed `KAR-67` / `REQ-PMS-CORE-005`; PR `#142` merged on `main`, Linear moved to `Done`, and mirror/snapshot metadata refreshed (`pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, `pnpm backlog:handoff:check`).
-- 2026-02-19: Advanced `KAR-67` / `REQ-PMS-CORE-005` by completing matter-dashboard task + calendar lifecycle operations: added task delete endpoint/service audit path (`DELETE /tasks/:id`), calendar event update/delete endpoints with matter-scoped write enforcement and audit events (`PATCH /calendar/events/:id`, `DELETE /calendar/events/:id`), upgraded dashboard workflow to support task/event edit-cancel-delete UX with tabular actions (`apps/web/app/matters/[id]/page.tsx`), expanded regression coverage (`apps/api/test/tasks.spec.ts`, `apps/api/test/calendar-events.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`), and published parity evidence at `docs/parity/matter-dashboard-task-calendar-lifecycle.md`; validation passed via `pnpm --filter api test -- test/tasks.spec.ts test/calendar-events.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`.
-- 2026-02-19: Completed `KAR-66` / `REQ-PMS-CORE-004` by adding matter-scoped communication update/delete operations (`PATCH /matters/:id/communications/:messageId`, `DELETE /matters/:id/communications/:messageId`) with strict matter/thread tenancy checks, participant remap handling, and audit events (`matter.communication.updated`, `matter.communication.deleted`) in `apps/api/src/matters/matters.service.ts` + `apps/api/src/matters/matters.controller.ts`; upgraded dashboard communications workflow to support inline edit/cancel/delete actions with participant mapping and row-level status feedback (`apps/web/app/matters/[id]/page.tsx`), and expanded lifecycle regression coverage in `apps/api/test/matters.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`; validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, and `pnpm backlog:snapshot`, and the slice merged via PR `#139`.
-- 2026-02-19: Completed `KAR-65` / `REQ-PMS-CORE-003` by implementing matter-dashboard communication logging operations: new matter-scoped endpoint (`POST /matters/:id/communications/log`) with tenant + matter write enforcement, scoped-thread validation/new-thread creation, optional participant linkage, and `matter.communication.logged` audit events (`apps/api/src/matters/matters.service.ts`, `apps/api/src/matters/matters.controller.ts`, `apps/api/src/matters/dto/log-communication-entry.dto.ts`), plus dashboard in-context communication controls + tabular log view (`apps/web/app/matters/[id]/page.tsx`) and regression coverage (`apps/api/test/matters.spec.ts`, `apps/web/test/matter-dashboard-page.spec.tsx`); validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, `pnpm build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`, and the slice merged via PR `#136`.
-- 2026-02-19: Completed `KAR-64` / `REQ-PMS-CORE-002` by adding matter-dashboard participant operations: API endpoints for participant role-option listing and scoped participant removal (`GET /matters/:id/participant-roles`, `DELETE /matters/:id/participants/:participantId`) with audit logging, plus web add/remove participant controls and regression coverage in `apps/api/test/matters.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`; validation passed via `pnpm --filter api test -- test/matters.spec.ts`, `pnpm --filter web test -- test/matter-dashboard-page.spec.tsx`, `pnpm test`, and `pnpm build`, and the slice merged via PR `#133`.
-- 2026-02-19: Completed `KAR-63` / `REQ-PMS-CORE-001` by adding core matter-dashboard operations for day-to-day practice management: task creation with due datetime + priority, inline task status updates (new API endpoint `PATCH /tasks/:id` with matter-access checks + `task.updated` audit events), and calendar event creation from matter context, with regression coverage in `apps/api/test/tasks.spec.ts` and `apps/web/test/matter-dashboard-page.spec.tsx`.
-- 2026-02-19: Implemented `KAR-59` / `REQ-UI-006` responsive matrix compliance by adding deterministic app-shell viewport modes (`desktop`, `compact`, `tablet`, `unsupported`) in `apps/web/components/app-shell.tsx`, aligning shell/table/touch-target behavior to LIC breakpoint guidance in `apps/web/app/globals.css` (including unsupported `<768px` notice copy), adding responsive regression coverage (`apps/web/test/app-shell-responsive.spec.tsx`), extending regression lane script coverage (`apps/web/package.json`), and documenting verification evidence in `docs/parity/ui-responsive-behavior-verification.md`.
-- 2026-02-19: Implemented `KAR-57` / `REQ-UI-004` primitive-system uplift by introducing canonical shared primitives in `apps/web/components/ui/` (`Button`, `Input`, `Select`, `Badge`, `Table`, `Card`, `Drawer`, `Modal`, `Toast`), integrating primitives into representative workflow routes (`apps/web/app/contacts/page.tsx`, `apps/web/app/communications/page.tsx`) and review/toast surfaces (`apps/web/components/confirm-dialog.tsx`, `apps/web/components/toast-stack.tsx`), adding primitive regression coverage (`apps/web/test/ui-primitives.spec.tsx`), and documenting parity evidence (`docs/parity/ui-primitives-state-verification.md`).
-- 2026-02-19: Implemented `KAR-60` / `REQ-UI-007` rollout governance by adding a dedicated UI regression workflow (`.github/workflows/ui-regression-rollout-gates.yml`) that enforces UI-evidence PR sections for UI-touching files and runs deterministic web regression/build gates, expanded PR template evidence sections (`UI Interaction Checklist`, `Screenshot Evidence`), added runbook coverage (`docs/UI_REGRESSION_ROLLOUT_GATES.md`), wired regression scripts (`apps/web/package.json`, `package.json`), and added governance regression tests (`apps/api/test/ui-regression-rollout-gates.spec.ts`, `apps/api/test/pr-linear-policy.spec.ts`).
-- 2026-02-19: Implemented `KAR-58` / `REQ-UI-005` accessibility-interaction remediation slice with keyboard skip-link (`#karen-main-content`), focus-trapped/returning confirmation dialog replacing browser confirm flows for dedupe actions, structured toast + inline alert feedback hierarchy, and keyboard-safe communications thread selection (button semantics + live status updates), including new web regression coverage (`apps/web/test/confirm-dialog.spec.tsx`, `apps/web/test/communications-page.spec.tsx`, `apps/web/test/contacts-page.spec.tsx`, `docs/parity/ui-interaction-accessibility-verification.md`).
-- 2026-02-19: Advanced `KAR-11` (REQ-DATA-002) to `In Review` after implementing a composable ABAC policy evaluation contract with explicit reason codes (`apps/api/src/access/access-policy.types.ts`, `apps/api/src/access/access-policy.engine.ts`, `apps/api/src/access/matter-access-policy.evaluator.ts`) and wiring `AccessService` through `evaluateMatterAccess(...)`; added policy/unit integration coverage in `apps/api/test/access-policy-evaluator.spec.ts` + expanded `apps/api/test/access-ethical-wall.spec.ts`, updated parity artifacts (`docs/parity/access-policy-abac-verification.md`, `docs/parity/data-model-checklist.md`, `docs/parity/data-model-conformance-verification.md`), and ran `pnpm --filter api test -- access-ethical-wall.spec.ts access-policy-evaluator.spec.ts`, `pnpm --filter api test`, `pnpm --filter api build`, `pnpm backlog:sync`, `pnpm backlog:verify`, `pnpm backlog:snapshot`.
-- 2026-02-19: Updated UI lane documentation and web token/primitives to align with LIC canonical references (`ui-kit`, `interaction-and-ai`, `design-tokens`; marketing reference excluded), including canonical palette/token refresh, shared primitive state styling updates, and backlog sync-script metadata updates (`apps/web/app/lic-tokens.css`, `apps/web/app/globals.css`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/UI_TOKEN_CONTRACT.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`, `tools/backlog-sync/sync_ui_refactor_backlog.mjs`).
-- 2026-02-19: Advanced `KAR-56` (REQ-UI-003) to `In Review` after implementing LIC shell/navigation refactor (desktop sidebar + mobile drawer toggle, procedural nav taxonomy with section codes, active-route semantics, and standardized header typography) with verification coverage in `apps/web/test/app-shell.spec.tsx`; validation commands passed: `pnpm --filter web test`, `pnpm --filter web build`, `pnpm test`, `pnpm build`.
-- 2026-02-18: Canonicalized UI refactor backlog to LIC design-system references by updating `KAR-54` through `KAR-60` with requirement IDs (`REQ-UI-001`..`REQ-UI-007`), explicit precedence rules, and checklist-based acceptance criteria; snapshot now publishes `uiLaneSummary` for new-chat continuity (`tools/backlog-sync/sync_ui_refactor_backlog.mjs`, `tools/backlog-sync/backlog_snapshot.mjs`, `docs/UI_REFACTOR_LANE_PLAN.md`, `docs/UI_TOKEN_CONTRACT.md`, `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`).
-- 2026-02-18: Verified `REQ-MAT-005` by hardening rules-pack selection semantics (most-specific active effective pack wins; explicit inactive/out-of-window packs rejected), plus apply-selection guardrails rejecting unknown/duplicate rule IDs with dedicated regression coverage (`apps/api/test/deadline-rules-verification.spec.ts`, `docs/parity/deadline-rules-packs.md`).
-- 2026-02-18: Verified `REQ-MAT-004` by hardening conflict profile update semantics (partial updates now preserve existing scope/weights/thresholds/default flags), adding deterministic default reassignment when a default profile is deactivated, and enforcing scoped-profile selection precedence so the most specific active match is selected for checks (`apps/api/test/admin-conflict-verification.spec.ts`, `docs/parity/conflict-rule-profiles.md`).
-- 2026-02-18: Verified `REQ-COMM-004` by hardening disposition execution to re-check legal holds at execution time (disposing only eligible documents, skipping newly-held documents, reverting skipped docs to `ACTIVE`, and recording `skippedForLegalHoldAtExecution` audit metadata), with new regression coverage in `apps/api/test/document-retention-verification.spec.ts` and parity evidence in `docs/parity/document-retention-workflows.md`.
-- 2026-02-18: Verified `REQ-BILL-004` by adding LEDES verification-hardening coverage for default-profile rotation (`isDefault` swap), explicit invoice-id export integrity (dedupe + missing-id rejection), and `includeExpenseLineItems=false` line filtering conformance, with parity evidence in `docs/parity/ledes-export-workflows.md` (`apps/api/test/billing-ledes-verification.spec.ts`).
-- 2026-02-18: Verified `REQ-BILL-003` by hardening trust reconciliation service invariants (resolution status restricted to `RESOLVED|WAIVED`, non-open discrepancies cannot be re-resolved), plus regression coverage for negative-balance discrepancy reason codes, draft->in-review note append behavior, and resolution guardrails (`apps/api/test/billing-trust-reconciliation-verification.spec.ts`, `docs/parity/trust-reconciliation-workflows.md`).
-- 2026-02-18: Verified `REQ-PORTAL-002` by adding explicit e-sign verification hardening coverage for client matter-scoped envelope listing, duplicate-webhook idempotency, refresh lifecycle history persistence, invalid-signature rejection, and portal envelope status refresh UX assertions (`apps/api/test/portal-esign-verification.spec.ts`, `apps/web/test/portal-page.spec.tsx`, `docs/parity/esign-provider-abstraction.md`).
-- 2026-02-18: Verified `REQ-OPS-003` by adding executable governance checks for `.github/workflows/pr-linear-policy.yml` and `.github/pull_request_template.md`, including regex enforcement and required metadata section assertions (`apps/api/test/pr-linear-policy.spec.ts`, `docs/parity/pr-linear-policy-verification.md`).
-- 2026-02-18: Verified `REQ-OPS-002` by adding executable runbook conformance coverage for required deployment/readiness/rollback/incident sections, baseline SLO targets, and README/parity linkage integrity (`apps/api/test/ops-runbook.spec.ts`, `docs/parity/ops-runbook-slos.md`).
-- 2026-02-18: Verified `REQ-MAT-002` by hardening contacts filter/graph query parsing to support both CSV and repeated query params (`includeTags`, `excludeTags`, `relationshipTypes`), adding controller-level regression coverage for parsing and tag-mode fallback, and updating parity evidence (`docs/parity/contacts-graph-filtering.md`).
-- 2026-02-18: Verified `REQ-INT-003` by hardening Filevine/PracticePanther connectors with live webhook registration URL support (env/config override), strict provider error surfacing, external subscription ID extraction, and expanded connector regression coverage (`docs/parity/filevine-practicepanther-connector-verification.md`).
-- 2026-02-18: Finalized `REQ-AI-003` parity status to `Verified` in the requirements matrix and snapshot after reconfirming API/Web style-pack verification suites and provenance artifact coverage (`docs/parity/style-pack-verification.md`).
-- 2026-02-18: Verified `REQ-PORT-004` by hardening full-backup manifest conformance checks with duplicate `documentVersionId`/path detection plus placeholder-flag/path-suffix consistency validation, and extending export conformance regression coverage (`docs/parity/export-conformance.md`).
-- 2026-02-18: Verified `REQ-AI-003` by hardening style-pack source detach authorization (matter-access enforced), enriching detached-source audit provenance (`documentVersionId`, `documentId`, `matterId`), and retaining artifact/execution style-pack provenance checks (`docs/parity/style-pack-verification.md`).
-- 2026-02-18: Verified `REQ-PORTAL-001` by hardening portal attachment auditability with explicit `portal.attachment.linked` and `portal.attachment.download_url_issued` events, while retaining portal upload/link/download security regression coverage (`docs/parity/portal-attachments-verification.md`).
-- 2026-02-18: Verified `REQ-PORT-003` by hardening dedupe merge safeguards (self-merge rejection), expanding contact-reference reassignment coverage before duplicate deletion, and adding web confirmation-cancel behavior validation for merge actions (`docs/parity/dedupe-merge-verification.md`).
-- 2026-02-18: Verified `REQ-PORT-002` by hardening Clio importer regression coverage for CSV/XLSX source-entity lineage, unresolved-reference row-context diagnostics, and communication external-reference payload integrity (`docs/parity/clio-import-verification.md`).
-- 2026-02-18: Verified `REQ-PORT-001` by adding MyCase importer hardening coverage for dependency-order safety with unsorted ZIP entries, unlinked communication warning context integrity, and external-reference lineage/raw-payload assertions (`docs/parity/mycase-import-verification.md`).
-- 2026-02-18: Verified `REQ-MAT-003` by expanding intake wizard regression coverage for required-domain validation gates, fallback contact resolution (lien/insurance/expert), full web payload composition, and draft resume field rehydration across construction sections (`docs/parity/intake-wizard-domain-verification.md`).
-- 2026-02-18: Verified `REQ-MAT-001` by expanding participant-role regression coverage for missing role definitions, self-reference guards, explicit side/primary overrides, counsel-role label detection, and full category matrix enforcement (`docs/parity/matter-participant-role-verification.md`).
-- 2026-02-18: Verified `REQ-INT-002` by adding MyCase OAuth refresh-grant support, validating connector refresh behavior (stub/live/error paths), and reusing integration-level callback/idempotency refresh orchestration coverage (`docs/parity/mycase-connector-verification.md`).
-- 2026-02-18: Verified `REQ-INT-001` by hardening Clio connector OAuth refresh-grant support, adding refresh-before-sync orchestration for expired tokens, and expanding regression coverage for OAuth callback state validation, idempotent sync checkpointing, and webhook subscription flows (`docs/parity/clio-connector-verification.md`).
-- 2026-02-18: Verified `REQ-DATA-001` with executable Prisma conformance coverage (`apps/api/test/schema-conformance.spec.ts`) enforcing required model presence, UUID id convention, and high-risk schema field semantics, with verification artifact `docs/parity/data-model-conformance-verification.md`.
-- 2026-02-18: Verified `REQ-SEC-001` by expanding tenant-isolation coverage across newly added modules (document retention/disposition, trust reconciliation + LEDES entities, AI style packs) and keeping org-scope assertions enforced across core service query paths (`docs/parity/tenant-isolation-verification.md`).
-- 2026-02-17: Verified `REQ-BILL-002` by hardening trust-transfer atomicity (paired transfer entries + ledger updates inside one DB transaction), adding transfer balance metadata to audit events, and fixing reconciliation transfer-delta logic to interpret `| out`/`| in` directions with expanded regression coverage (`docs/parity/billing-trust-ledger-verification.md`).
-- 2026-02-17: Verified `REQ-BILL-001` by hardening Stripe reconciliation idempotency with event-level dedupe (`stripe_event:<eventId>`), preserving payment-intent dedupe, adding deterministic `payment_intent.succeeded` paid-transition coverage, and verifying signature-enforced webhook parsing when `STRIPE_WEBHOOK_SECRET` is configured (`docs/parity/billing-stripe-reconciliation-verification.md`).
-- 2026-02-17: Verified `REQ-AI-002` by hardening ingestion/generation governance with explicit `quarantinedFromContext` metadata, citation-policy enforcement that appends trusted chunk citations when missing, `policyCompliance` artifact metadata, `ai.output.citation_policy_enforced` audit events, and expanded adversarial API coverage (`docs/parity/ai-ingestion-security-verification.md`).
-- 2026-02-17: Verified `REQ-AI-001` by hardening deadline-confirmation server validation (non-empty selections, valid dates, at-least-one output), adding explicit `ai.deadlines.confirmed` audit events with selection/created-record metadata, and extending API/Web regression coverage (`docs/parity/ai-deadline-confirmation-verification.md`).
-- 2026-02-17: Verified `REQ-OPS-001` with a new cross-module web smoke journey test (`login -> dashboard -> matter create -> portal message`) plus full-suite test/build validation, documented at `docs/parity/web-smoke-journey-coverage.md`.
-- 2026-02-17: Added webhook delivery observability + manual retry controls with org-scoped delivery list/retry API endpoints, admin monitor/filter/retry UI, and regression coverage (`docs/parity/webhook-delivery-observability.md`).
-- 2026-02-17: Completed `REQ-BILL-004` by adding LEDES export profile/job schema, profile-driven UTBMS validation, billing endpoints for profile/job/list/download flow, checksum + artifact metadata persistence, billing-page LEDES workflow controls, and API/Web regression coverage (`docs/parity/ledes-export-workflows.md`).
-- 2026-02-17: Completed `REQ-BILL-003` by adding trust reconciliation run/discrepancy schema, statement-period run lifecycle endpoints (`create/submit/resolve/complete`), sign-off gating requiring all discrepancies to be resolved/waived, billing UI reconciliation actions, and API/Web regression coverage (`docs/parity/trust-reconciliation-workflows.md`).
-- 2026-02-17: Completed `REQ-MAT-005` by adding jurisdiction/court/procedure deadline rules packs with effective-date versioning, deadline preview/apply endpoints, business-day offset logic, required override-reason governance, matter-dashboard rules-pack preview/apply UI, and API/Web regression coverage (`docs/parity/deadline-rules-packs.md`).
-- 2026-02-17: Completed `REQ-MAT-004` by adding advanced conflict rule profile configuration (weighted criteria + thresholds + scoped defaults), conflict check execution with recommendation scoring (`CLEAR/WARN/BLOCK`), and attorney resolution workflow with required rationale + auditable history, including admin UI/API coverage and tests (`docs/parity/conflict-rule-profiles.md`).
-- 2026-02-17: Completed `REQ-OPS-002` with a production deployment runbook covering deploy/migrations/rollback/readiness/incident response plus baseline SLO targets and metrics, linked from `README.md`, with parity artifact `docs/parity/ops-runbook-slos.md`.
-- 2026-02-17: Completed `REQ-PORTAL-002` by replacing stub-only e-sign with provider abstraction (`stub` fallback + `sandbox` provider), adding envelope list/refresh endpoints, signed provider webhook callback handling, persisted envelope status history/event tracking, and portal UI status surfacing with API/Web regression coverage (`docs/parity/esign-provider-abstraction.md`).
-- 2026-02-17: Completed `REQ-MAT-002` with compound contact tag filters (`include/exclude + any/all`), relationship graph search/type filtering on API + web, and inline dedupe confidence indicators on contact rows, plus API/Web regression coverage (`docs/parity/contacts-graph-filtering.md`).
-- 2026-02-17: Completed `REQ-DATA-003` by adding matter-scoped pgvector similarity retrieval for AI source chunks, vector-column persistence during ingestion, explicit recency fallback when embeddings/vector query are unavailable, and dedicated retrieval regression tests plus index migration (`docs/parity/pgvector-retrieval.md`).
-- 2026-02-17: Completed `REQ-COMM-003` document automation coverage by adding nested DOCX merge context (matter/participants/custom fields), strict missing-placeholder validation before generation, and generated artifact provenance/audit events for template merges and generated PDFs (`docs/parity/document-automation-coverage.md`).
-- 2026-02-17: Completed `REQ-COMM-002` communications search relevance/indexing with ranked `websearch_to_tsquery` full-text path, snippet generation, substring fallback, and a dedicated GIN FTS index migration plus regression coverage (`docs/parity/communications-search-indexing.md`).
-- 2026-02-17: Completed `REQ-COMM-001` production communication adapters with configurable Resend (email) + Twilio (SMS) providers behind a dispatch interface, retry/fail-open policy, persisted outbound delivery/provider metadata on `CommunicationMessage.rawSourcePayload`, and new delivery-regression tests (`docs/parity/communications-provider-adapters.md`).
-- 2026-02-17: Completed `REQ-AI-003` style-pack governance with admin CRUD/source-doc attachment endpoints, AI job `stylePackId` selection, style-pack provenance persisted in artifact + execution metadata, AI workspace style-pack management UI, and API/Web regression coverage (`docs/parity/style-pack-governance.md`).
-- 2026-02-17: Implemented `REQ-PORTAL-001` secure portal attachment workflow: client-scoped attachment upload/download endpoints, portal message attachment linking, strict server-side matter + `sharedWithClient` checks in both portal and staff communications paths, and new API/Web regression coverage (`docs/parity/portal-attachments-security.md`).
-- 2026-02-17: Completed `REQ-PORT-004` with a strict full-backup export contract (required files/columns + manifest schema/path checks), conformance-aware export job summaries, placeholder manifest-path integrity for missing document blobs, and new conformance/roundtrip regression coverage (`docs/parity/export-conformance.md`).
-- 2026-02-17: Completed `REQ-PORT-003` with confirmed dedupe workflow (`merge/ignore/defer/reopen`), field-diff candidate UX, dedupe decision API endpoints with audit events, and merge referential-integrity tests plus UI action tests (`docs/parity/dedupe-merge-workflow.md`).
-- 2026-02-17: Completed `REQ-PORT-002` with parity-level Clio CSV/XLSX mapping for contacts/matters/tasks/calendar/activities/notes/phone logs/emails, row-level unmapped-column diagnostics in `warningsJson`, and import batch summary breakdown (`warningCodeCounts`, `unmappedColumnsBySource`) plus coverage tests/artifact `docs/parity/clio-import-coverage.md`.
-- 2026-02-17: Completed `REQ-PORT-001` with expanded MyCase ZIP entity coverage (contacts/companies/matters/tasks/calendar/invoices/payments/time/notes/messages), dependency-safe import ordering, row-level warning/error mapping context in `ImportItem`, and updated fixture/test coverage plus `docs/parity/mycase-import-coverage.md`.
-- 2026-02-17: Completed `REQ-MAT-003` with full construction-intake domain capture (damages/liens/insurance/expert in wizard + API), draft save/resume endpoints and UI flow, and matter dashboard domain completeness indicators with API/Web regression tests.
-- 2026-02-17: Completed `REQ-MAT-001` with org-configurable participant role definition endpoints, represented-by/law-firm semantic validation in matter participant creation, and matrix tests spanning all required participant categories.
-- 2026-02-17: Completed `REQ-DATA-001` parity audit artifact at `docs/parity/data-model-checklist.md` with prompt-entity/model mapping and explicit gap linkage to active requirement IDs.
-- 2026-02-16: Established new-chat continuity protocol, snapshot tooling, and freshness checks for context-compaction resilience.
-- 2026-02-16: Added five end-goal features as `phase-2` planned scope (`REQ-COMM-004`, `REQ-MAT-004`, `REQ-MAT-005`, `REQ-BILL-003`, `REQ-BILL-004`) and enabled phase-aware snapshot prioritization.
-- 2026-02-16: These additions are tracked as `phase-2` planned backlog items so they do not displace active `phase-1` delivery lanes.
-- 2026-02-16: Implemented `REQ-AI-001` deadline-extraction confirmation UX with side-by-side source excerpt evidence and explicit per-row confirmation before task/event creation, plus parser/unit tests for structured deadline candidates.
-- 2026-02-16: Implemented `REQ-AI-002` ingestion hardening with chunk-level prompt-injection filtering, metadata severity flags, blocked-chunk context exclusion, and adversarial test coverage.
-- 2026-02-16: Implemented `REQ-BILL-001` Stripe lifecycle hardening with checkout metadata propagation, public webhook reconciliation endpoint, idempotent payment-intent handling, and webhook reconciliation tests.
-- 2026-02-16: Implemented `REQ-BILL-002` trust ledger invariants (negative-balance guardrail), trust transfer workflow, account/matter summary reports, and reconciliation mismatch reporting with regression tests.
+- 2026-02-27: Reorganized operations docs to canonicalize execution rules into `docs/OPERATIONS_PLAYBOOK.md`; moved historical long-form handoff log into `docs/SESSION_HISTORY_ARCHIVE.md`; added active phase registry (`docs/ACTIVE_PHASES.md`) and preflight/housekeeping guardrail protocol.
+- 2026-02-27: Restored valid Linear auth and completed queue promotion for EVE-2 (`backlog:seed`, `backlog:sync`, `backlog:verify`, `backlog:snapshot`, and `backlog:handoff:check` passing); switched phase state from draft-local to mirrored queue mode.
+- 2026-02-27: EVE-2 queue introduced as draft-local scope (`REQ-EVE2-001`..`REQ-EVE2-011`) with explicit promotion protocol and auth-blocker visibility.
+- 2026-02-26: Completed RC-2 (`REQ-RC-012`..`REQ-RC-015`) and refreshed mirror/snapshot state.

@@ -1,9 +1,9 @@
 # Backlog Sync Toolkit (Linear -> GitHub)
 
-This toolkit sets up and operates a persistent parity backlog where:
+This toolkit operates a persistent parity backlog where:
 
 - Linear is canonical.
-- GitHub Issues are an automated mirror.
+- GitHub issues are automated mirrors.
 
 ## Scripts
 
@@ -21,13 +21,27 @@ This toolkit sets up and operates a persistent parity backlog where:
   - Verifies mirror counts, traceability markers, and requirement IDs.
   - Writes `tools/backlog-sync/state/verify.last.json` on successful verification.
 - `check_matrix_linear_alignment.mjs`
-  - Verifies manual synchronization between `requirements.matrix.json` and open Linear requirement issues.
+  - Verifies matrix <-> open Linear requirement alignment.
 - `backlog_snapshot.mjs`
-  - Generates `session.snapshot.json` with priority, status, and continuity metadata.
+  - Generates `session.snapshot.json` with priority/status/continuity metadata.
 - `check_handoff_freshness.mjs`
-  - Validates handoff freshness against snapshot timestamp and Linear evidence discipline.
+  - Validates handoff freshness against snapshot + evidence discipline.
 - `refresh_handoff_from_snapshot.mjs`
-  - Updates `docs/SESSION_HANDOFF.md` snapshot and verify timestamps from `session.snapshot.json`.
+  - Updates `docs/SESSION_HANDOFF.md` timestamps from `session.snapshot.json`.
+
+## Environment Loading Precedence
+
+Backlog scripts preload env files in this order:
+
+1. `tools/backlog-sync/config.env` (preferred, local-only, gitignored)
+2. `.env` (repo root)
+3. Existing shell env vars always take precedence if already set
+
+Recommended setup:
+
+```bash
+cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
+```
 
 ## Required Environment Variables
 
@@ -37,25 +51,12 @@ This toolkit sets up and operates a persistent parity backlog where:
 - `LINEAR_TEAM_KEY` (default: `KAR`)
 - `LINEAR_PROJECT_NAME` (default: `Prompt Parity - LIC Legal Suite`)
 - `LINEAR_SCOPE_LABEL` (default: `parity`)
-- `SNAPSHOT_TOP_N` (default: `10`)
-- `SNAPSHOT_RECENT_ISSUES` (default: `10`)
 
 ### GitHub
 
 - `GITHUB_TOKEN`
 - `GITHUB_OWNER`
 - `GITHUB_REPO`
-
-### Bootstrap-only
-
-- `GITHUB_ORG`
-- `GITHUB_REPO`
-- Optional:
-  - `GITHUB_REPO_VISIBILITY` (`private`/`public`)
-  - `GITHUB_DEFAULT_BRANCH` (default `main`)
-  - `GIT_USER_NAME`
-  - `GIT_USER_EMAIL`
-  - `PUSH_ON_BOOTSTRAP` (`true`/`false`)
 
 ## Typical Run Order
 
@@ -68,41 +69,37 @@ This toolkit sets up and operates a persistent parity backlog where:
 7. `pnpm backlog:handoff:refresh`
 8. `pnpm backlog:handoff:check`
 
-Bootstrap check shortcut:
+Shortcuts:
 
 - `pnpm backlog:bootstrap:check`
-  - Runs `pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot`
+- `pnpm ops:housekeeping`
 
-Post-merge governance shortcut (RC-1 lane orchestration):
+## Linear Auth Troubleshooting
 
-- `pnpm rc1:orchestrator:post-merge`
-  - Runs `backlog:sync`, `backlog:verify`, `backlog:snapshot`, `backlog:handoff:refresh`, `backlog:handoff:check`
+If commands fail with:
 
-## GitHub Repository Variables/Secrets
+- `Entity not found: ApiKey`
 
-Set these before enabling workflows:
+Do this:
 
-- GitHub Secret: `LINEAR_API_TOKEN`
-- GitHub Variable: `LINEAR_TEAM_KEY` (example: `KAR`)
-- GitHub Variable: `LINEAR_PROJECT_NAME` (example: `Prompt Parity - LIC Legal Suite`)
-- GitHub Variable: `LINEAR_SCOPE_LABEL` (example: `parity`)
-
-## Dry Run
-
-For scripts that support dry-run:
+1. Rotate/reissue Linear API token in Linear settings.
+2. Update `LINEAR_API_TOKEN` in `tools/backlog-sync/config.env`.
+3. Re-run:
 
 ```bash
-DRY_RUN=true node tools/backlog-sync/seed_parity_backlog.mjs
-DRY_RUN=true node tools/backlog-sync/linear_to_github.mjs
+pnpm backlog:verify
+```
+
+4. Only after verify succeeds, run full housekeeping:
+
+```bash
+pnpm ops:housekeeping
 ```
 
 ## Notes
 
-- Mirror matching is idempotent using `Linear-ID` in GitHub issue body.
-- GitHub issue comments are preserved (the script only updates issue metadata/body).
-- `requirements.matrix.json` is the persistent, versioned baseline of parity work.
-- `linear_issue_template.md` defines required fields/sections for manual parity issues.
-- `session.snapshot.json` is generated and intended to be read first in new chats.
-- UI-affecting backlog items must follow `lic-design-system/references/` and include checklist evidence from `docs/UI_INTERACTION_COMPLIANCE_CHECKLIST.md`.
-- Standards-manual app shells from `brand/Brand Identity Document*/src/app/components/Layout.tsx` are documentation UX only and must not be copied into product `apps/web/**` IA/copy.
-- Snapshot output includes `uiLaneSummary` for the `ui-ux` lane so UI refactor priorities remain visible even when prompt-parity requirements are fully verified.
+- Mirror matching is idempotent using `Linear-ID` marker in issue body.
+- GitHub issue comments are preserved.
+- `requirements.matrix.json` is the versioned parity baseline.
+- `session.snapshot.json` is intended to be read first in new chats.
+- UI-affecting items must follow LIC canonical references and checklist evidence.
