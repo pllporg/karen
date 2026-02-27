@@ -1882,7 +1882,7 @@
           "title": "Implement Leads API with conflict/engagement/convert gates + setup checklist",
           "requirementId": "REQ-EVE2-002",
           "promptSection": "Eve 2 / Agents / Proactive case work",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "High",
           "labels": [
@@ -2037,7 +2037,7 @@
           "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
           "requirementId": "REQ-EVE2-007",
           "promptSection": "Eve 2 / Auditor / Daily case monitoring",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "High",
           "labels": [
@@ -2134,7 +2134,7 @@
           "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
           "requirementId": "REQ-EVE2-010",
           "promptSection": "Eve 2 / Analyst / Drive growth",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "API",
           "risk": "Medium",
           "labels": [
@@ -2163,7 +2163,7 @@
           "title": "Build Analyst dashboard (`/analyst`) with table-first drilldowns",
           "requirementId": "REQ-EVE2-011",
           "promptSection": "Eve 2 / Analyst / Firm-wide intelligence",
-          "parityStatus": "Missing",
+          "parityStatus": "Complete",
           "component": "Web",
           "risk": "Medium",
           "labels": [
