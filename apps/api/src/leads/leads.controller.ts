@@ -82,6 +82,6 @@ export class LeadsController {
   @Get(':id/setup-checklist')
   @RequirePermissions('leads:read')
   setupChecklist(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.leadsService.setupChecklist(user.organizationId, id);
+    return this.leadsService.setupChecklist(user.organizationId, user.id, id);
   }
 }

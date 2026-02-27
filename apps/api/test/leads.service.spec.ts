@@ -94,6 +94,50 @@ describe('LeadsService', () => {
     );
   });
 
+
+
+  it('generates deterministic proactive proposals with rationale citations', async () => {
+    const { service, prisma, audit } = buildService();
+    prisma.lead.findFirst.mockResolvedValue({ id: 'lead-1', organizationId, stage: LeadStage.CONSULTATION });
+    prisma.intakeSubmission.count.mockResolvedValue(1);
+    prisma.conflictCheckResult.findFirst.mockResolvedValue({
+      id: 'check-1',
+      resultJson: { leadId: 'lead-1', resolved: true },
+    });
+    prisma.eSignEnvelope.findFirst.mockResolvedValue({ id: 'env-1', status: 'DRAFT' });
+
+    const checklist = await service.setupChecklist(organizationId, actorUserId, 'lead-1');
+
+    expect(checklist.proactiveProposals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'lead-lead-1-proposal-engagement-review-send',
+          kind: 'CLIENT_ENGAGEMENT',
+          status: 'PROPOSED',
+          draftOnly: true,
+          autoSend: false,
+          lifecycle: {
+            currentStage: LeadStage.CONSULTATION,
+            recommendedStage: LeadStage.CONSULTATION,
+          },
+          citations: expect.arrayContaining([
+            expect.objectContaining({ entityType: 'eSignEnvelope', entityId: 'env-1' }),
+          ]),
+        }),
+      ]),
+    );
+
+    expect(audit.appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'lead.proactive_proposals.evaluated',
+        actorUserId,
+        entityType: 'lead',
+        entityId: 'lead-1',
+        metadata: expect.objectContaining({ proposalCount: checklist.proactiveProposals.length }),
+      }),
+    );
+  });
+
   it('enforces tenant isolation for getById', async () => {
     const { service, prisma } = buildService();
     prisma.lead.findFirst.mockResolvedValue(null);

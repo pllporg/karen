@@ -5,6 +5,21 @@ import { AuditService } from '../audit/audit.service';
 import { AccessService } from '../access/access.service';
 import { AuthenticatedUser } from '../common/types';
 
+type ProposalLifecycleStatus = 'PROPOSED' | 'IN_REVIEW' | 'APPROVED' | 'EXECUTED' | 'RETURNED';
+
+type MatterProactiveProposal = {
+  id: string;
+  kind: 'CLIENT_ENGAGEMENT' | 'LIFECYCLE_NEXT_ACTION';
+  status: ProposalLifecycleStatus;
+  draftOnly: true;
+  autoSend: false;
+  confidence: number;
+  reason: string;
+  rationale: string;
+  citations: Array<{ entityType: string; entityId: string; field?: string }>;
+  createdAt: string;
+};
+
 @Injectable()
 export class MattersService {
   private static readonly INTAKE_WIZARD_DRAFT_FORM_NAME = 'Matter Intake Wizard Draft';
@@ -1062,8 +1077,88 @@ export class MattersService {
         completionPercent: Number(((completedCount / totalCount) * 100).toFixed(1)),
         missingSections,
       },
+      proactiveProposals: this.evaluateMatterProactiveProposals(matter),
     };
   }
+
+
+  private evaluateMatterProactiveProposals(matter: {
+    id: string;
+    status: MatterStatus;
+    stage: { id: string } | null;
+    tasks: Array<{ id: string; status: string; dueAt: Date | null }>;
+    communicationThreads: Array<{ messages: Array<{ id: string; occurredAt: Date }> }>;
+    aiJobs: Array<{ artifacts: Array<{ id: string; reviewedStatus: string }> }>;
+  }): MatterProactiveProposal[] {
+    const proposals: MatterProactiveProposal[] = [];
+    const now = new Date();
+    const createdAt = now.toISOString();
+
+    const push = (proposal: Omit<MatterProactiveProposal, 'status' | 'draftOnly' | 'autoSend' | 'createdAt'>) => {
+      proposals.push({
+        ...proposal,
+        status: 'PROPOSED',
+        draftOnly: true,
+        autoSend: false,
+        createdAt,
+      });
+    };
+
+    if (matter.status === MatterStatus.OPEN && !matter.stage) {
+      push({
+        id: `matter-${matter.id}-proposal-assign-stage`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.88,
+        reason: 'Open matter has no lifecycle stage assigned',
+        rationale: 'Assigning a stage enables deterministic lifecycle next-actions and governance tracking.',
+        citations: [{ entityType: 'matter', entityId: matter.id, field: 'stageId' }],
+      });
+    }
+
+    const overdueTask = matter.tasks.find((task) => task.dueAt && task.status !== 'DONE' && task.dueAt < now);
+    if (overdueTask) {
+      push({
+        id: `matter-${matter.id}-proposal-overdue-task-followup`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.9,
+        reason: 'Matter has overdue tasks pending completion',
+        rationale: 'Review overdue tasks and queue a next-action to avoid lifecycle slippage.',
+        citations: [{ entityType: 'task', entityId: overdueTask.id, field: 'dueAt' }],
+      });
+    }
+
+    const latestMessageAt = matter.communicationThreads
+      .flatMap((thread) => thread.messages)
+      .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())[0]?.occurredAt;
+    const inactiveDays = latestMessageAt ? (now.getTime() - latestMessageAt.getTime()) / (1000 * 60 * 60 * 24) : Number.POSITIVE_INFINITY;
+    if (matter.status === MatterStatus.OPEN && inactiveDays >= 14) {
+      push({
+        id: `matter-${matter.id}-proposal-client-status-update`,
+        kind: 'CLIENT_ENGAGEMENT',
+        confidence: 0.86,
+        reason: 'No recent client communication detected for open matter',
+        rationale: 'Prepare a draft client status update for attorney review; outbound send remains manual.',
+        citations: [{ entityType: 'matter', entityId: matter.id, field: 'communicationThreads' }],
+      });
+    }
+
+    const reviewDraftArtifact = matter.aiJobs
+      .flatMap((job) => job.artifacts)
+      .find((artifact) => artifact.reviewedStatus === 'DRAFT');
+    if (reviewDraftArtifact) {
+      push({
+        id: `matter-${matter.id}-proposal-ai-draft-review`,
+        kind: 'LIFECYCLE_NEXT_ACTION',
+        confidence: 0.87,
+        reason: 'AI artifact is still in draft review state',
+        rationale: 'Advance artifact through PROPOSED→IN REVIEW→APPROVED gates before any execution action.',
+        citations: [{ entityType: 'aiArtifact', entityId: reviewDraftArtifact.id, field: 'reviewedStatus' }],
+      });
+    }
+
+    return proposals;
+  }
+
 
   async intakeWizard(input: {
     user: AuthenticatedUser;
