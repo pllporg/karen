@@ -71,7 +71,7 @@ describe('AuditorPage', () => {
     render(<AuditorPage />);
 
     const severityFilter = await screen.findByRole('combobox', { name: 'Severity Filter' });
-    const reviewButton = screen.getByRole('button', { name: 'Review sig-1' });
+    const reviewButton = await screen.findByRole('button', { name: 'Review sig-1' });
 
     severityFilter.focus();
     expect(severityFilter).toHaveFocus();
