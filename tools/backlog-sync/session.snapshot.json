@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T15:27:34.972Z",
+  "generatedAt": "2026-02-27T15:51:59.965Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -120,6 +120,13 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-86",
+        "title": "RC-1 Usability + Production Hardening",
+        "state": "Done",
+        "updatedAt": "2026-02-27T15:46:49.430Z",
+        "requirementId": "RC-1"
+      },
+      {
         "key": "KAR-103",
         "title": "Add intake queue + staged lead routes (`/intake` flow)",
         "state": "In Progress",
@@ -181,13 +188,6 @@
         "state": "Backlog",
         "updatedAt": "2026-02-27T03:21:30.703Z",
         "requirementId": "PARITY-14"
-      },
-      {
-        "key": "KAR-111",
-        "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
-        "state": "Backlog",
-        "updatedAt": "2026-02-27T03:21:30.361Z",
-        "requirementId": "REQ-EVE2-008"
       }
     ]
   },
@@ -213,15 +213,14 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T14:24:26.272Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T15:51:55.259Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "d12ff47e74e8f2a7c16fff0b791a5890170d2631",
+    "gitHead": "be4ae89b59e8bb292f4306aca406f64cdf8d0486",
     "gitStatusShort": [
-      "## lin/KAR-86-eve2-matrix-alignment",
-      " M tools/backlog-sync/requirements.matrix.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 1
+    "dirtyFileCount": 0
   }
 }
