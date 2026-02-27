@@ -3,6 +3,28 @@ import { MatterAuditSignalReviewState, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
 
+type MonitorRiskLevel = 'none' | 'warning' | 'critical' | 'overdue';
+
+type MatterMovementMonitor = {
+  matterId: string;
+  matterName: string;
+  lastMovementAt: string;
+  stalenessDays: number;
+  stale: boolean;
+  nearestDeadlineAt: string | null;
+  deadlineRisk: MonitorRiskLevel;
+  nearestStatuteAt: string | null;
+  statuteRisk: MonitorRiskLevel;
+};
+
+type MonitorThresholds = {
+  stalenessDays: number;
+  deadlineWarningDays: number;
+  deadlineCriticalDays: number;
+  statuteWarningDays: number;
+  statuteCriticalDays: number;
+};
+
 @Injectable()
 export class MatterAuditSignalService {
   constructor(
@@ -88,6 +110,187 @@ export class MatterAuditSignalService {
     };
   }
 
+  async generateMovementRiskSignals(input: {
+    organizationId: string;
+    actorUserId?: string;
+    matterId?: string;
+    limit?: number;
+    asOf?: Date;
+  }) {
+    const monitors = await this.listMovementMonitors({
+      organizationId: input.organizationId,
+      matterId: input.matterId,
+      limit: input.limit,
+      asOf: input.asOf,
+    });
+
+    const createdSignals: string[] = [];
+
+    for (const monitor of monitors.monitors) {
+      if (monitor.stale) {
+        const signalId = await this.createMonitorSignal({
+          organizationId: input.organizationId,
+          actorUserId: input.actorUserId,
+          matterId: monitor.matterId,
+          signalKey: `movement-stale:${monitor.matterId}:${monitor.lastMovementAt}`,
+          signalType: 'auditor.movement_stale',
+          title: 'Matter movement is stale',
+          summary: `${monitor.matterName} has no recorded movement for ${monitor.stalenessDays} day(s).`,
+          citations: [
+            `lastMovementAt:${monitor.lastMovementAt}`,
+            `stalenessDays:${String(monitor.stalenessDays)}`,
+          ],
+        });
+        if (signalId) createdSignals.push(signalId);
+      }
+
+      if (monitor.deadlineRisk !== 'none' && monitor.nearestDeadlineAt) {
+        const signalId = await this.createMonitorSignal({
+          organizationId: input.organizationId,
+          actorUserId: input.actorUserId,
+          matterId: monitor.matterId,
+          signalKey: `deadline-risk:${monitor.matterId}:${monitor.nearestDeadlineAt}:${monitor.deadlineRisk}`,
+          signalType: 'auditor.deadline_risk',
+          title: 'Upcoming deadline risk detected',
+          summary: `${monitor.matterName} has a ${monitor.deadlineRisk} deadline risk at ${monitor.nearestDeadlineAt}.`,
+          citations: [
+            `nearestDeadlineAt:${monitor.nearestDeadlineAt}`,
+            `deadlineRisk:${monitor.deadlineRisk}`,
+          ],
+        });
+        if (signalId) createdSignals.push(signalId);
+      }
+
+      if (monitor.statuteRisk !== 'none' && monitor.nearestStatuteAt) {
+        const signalId = await this.createMonitorSignal({
+          organizationId: input.organizationId,
+          actorUserId: input.actorUserId,
+          matterId: monitor.matterId,
+          signalKey: `statute-risk:${monitor.matterId}:${monitor.nearestStatuteAt}:${monitor.statuteRisk}`,
+          signalType: 'auditor.statute_risk',
+          title: 'Statute risk detected',
+          summary: `${monitor.matterName} has a ${monitor.statuteRisk} statute risk at ${monitor.nearestStatuteAt}.`,
+          citations: [
+            `nearestStatuteAt:${monitor.nearestStatuteAt}`,
+            `statuteRisk:${monitor.statuteRisk}`,
+          ],
+        });
+        if (signalId) createdSignals.push(signalId);
+      }
+    }
+
+    return {
+      createdCount: createdSignals.length,
+      signalIds: createdSignals,
+      monitoredMatterCount: monitors.monitors.length,
+      thresholds: monitors.thresholds,
+      asOf: monitors.asOf,
+    };
+  }
+
+  async listMovementMonitors(input: { organizationId: string; matterId?: string; limit?: number; asOf?: Date }) {
+    const asOf = input.asOf ?? new Date();
+    const thresholds = this.readThresholds();
+    const matters = await this.prisma.matter.findMany({
+      where: {
+        organizationId: input.organizationId,
+        status: 'OPEN',
+        ...(input.matterId ? { id: input.matterId } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        openedAt: true,
+        updatedAt: true,
+        tasks: {
+          where: {
+            dueAt: { not: null },
+            status: { not: 'DONE' },
+          },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            dueAt: true,
+            updatedAt: true,
+          },
+          orderBy: [{ dueAt: 'asc' }, { id: 'asc' }],
+          take: 10,
+        },
+        serviceEvents: {
+          select: { occurredAt: true },
+          orderBy: [{ occurredAt: 'desc' }],
+          take: 1,
+        },
+        docketEntries: {
+          select: { filedAt: true },
+          orderBy: [{ filedAt: 'desc' }],
+          take: 1,
+        },
+        calendarEvents: {
+          where: { startAt: { gte: new Date(asOf.getTime() - 24 * 60 * 60_000) } },
+          select: {
+            id: true,
+            startAt: true,
+            type: true,
+            description: true,
+          },
+          orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+          take: 10,
+        },
+      },
+      orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+      take: input.limit ?? 100,
+    });
+
+    const monitors: MatterMovementMonitor[] = matters.map((matter) => {
+      const lastMovementAt = this.maxDate([
+        matter.openedAt,
+        matter.updatedAt,
+        matter.serviceEvents[0]?.occurredAt,
+        matter.docketEntries[0]?.filedAt,
+        matter.tasks[0]?.updatedAt,
+        matter.calendarEvents[0]?.startAt,
+      ]);
+      const stalenessDays = this.diffDays(asOf, lastMovementAt);
+
+      const nearestDeadlineAt = this.pickNearestFutureDate([
+        ...matter.tasks.map((task) => task.dueAt).filter((value): value is Date => Boolean(value)),
+        ...matter.calendarEvents.map((event) => event.startAt),
+      ]);
+      const deadlineRisk = this.computeDeadlineRisk(nearestDeadlineAt, asOf, thresholds.deadlineWarningDays, thresholds.deadlineCriticalDays);
+
+      const nearestStatuteAt = this.pickNearestFutureDate([
+        ...matter.tasks
+          .filter((task) => this.looksLikeStatuteText(`${task.title} ${task.description ?? ''}`))
+          .map((task) => task.dueAt)
+          .filter((value): value is Date => Boolean(value)),
+        ...matter.calendarEvents
+          .filter((event) => this.looksLikeStatuteText(`${event.type} ${event.description ?? ''}`))
+          .map((event) => event.startAt),
+      ]);
+      const statuteRisk = this.computeDeadlineRisk(nearestStatuteAt, asOf, thresholds.statuteWarningDays, thresholds.statuteCriticalDays);
+
+      return {
+        matterId: matter.id,
+        matterName: matter.name,
+        lastMovementAt: lastMovementAt.toISOString(),
+        stalenessDays,
+        stale: stalenessDays >= thresholds.stalenessDays,
+        nearestDeadlineAt: nearestDeadlineAt?.toISOString() ?? null,
+        deadlineRisk,
+        nearestStatuteAt: nearestStatuteAt?.toISOString() ?? null,
+        statuteRisk,
+      };
+    });
+
+    return {
+      asOf: asOf.toISOString(),
+      thresholds,
+      monitors,
+    };
+  }
+
   async listSignals(input: {
     organizationId: string;
     reviewState?: MatterAuditSignalReviewState;
@@ -163,5 +366,129 @@ export class MatterAuditSignalService {
     }
 
     return Array.from(citationSet).sort((a, b) => a.localeCompare(b));
+  }
+
+  private async createMonitorSignal(input: {
+    organizationId: string;
+    actorUserId?: string;
+    matterId: string;
+    signalKey: string;
+    signalType: string;
+    title: string;
+    summary: string;
+    citations: string[];
+  }) {
+    const existing = await this.prisma.matterAuditSignal.findUnique({
+      where: {
+        organizationId_signalKey: {
+          organizationId: input.organizationId,
+          signalKey: input.signalKey,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return null;
+    }
+
+    const created = await this.prisma.matterAuditSignal.create({
+      data: {
+        organizationId: input.organizationId,
+        matterId: input.matterId,
+        signalKey: input.signalKey,
+        signalType: input.signalType,
+        title: input.title,
+        summary: input.summary,
+        citationsJson: input.citations as unknown as Prisma.InputJsonValue,
+        generatedAt: new Date(),
+      },
+      select: { id: true },
+    });
+
+    await this.audit.appendEvent({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: 'matter_audit_signal.created',
+      entityType: 'MatterAuditSignal',
+      entityId: created.id,
+      metadata: {
+        signalType: input.signalType,
+        citations: input.citations,
+      },
+    });
+
+    return created.id;
+  }
+
+  private readThresholds(): MonitorThresholds {
+    const deadlineWarningDays = this.readIntEnv('AUDITOR_MONITOR_DEADLINE_WARNING_DAYS', 14, 1, 365);
+    const deadlineCriticalDays = this.readIntEnv('AUDITOR_MONITOR_DEADLINE_CRITICAL_DAYS', 3, 0, deadlineWarningDays);
+    const statuteWarningDays = this.readIntEnv('AUDITOR_MONITOR_STATUTE_WARNING_DAYS', 30, 1, 730);
+    const statuteCriticalDays = this.readIntEnv('AUDITOR_MONITOR_STATUTE_CRITICAL_DAYS', 7, 0, statuteWarningDays);
+
+    return {
+      stalenessDays: this.readIntEnv('AUDITOR_MONITOR_STALENESS_DAYS', 21, 1, 365),
+      deadlineWarningDays,
+      deadlineCriticalDays,
+      statuteWarningDays,
+      statuteCriticalDays,
+    };
+  }
+
+  private readIntEnv(key: string, fallback: number, min: number, max: number) {
+    const raw = process.env[key];
+    if (!raw) {
+      return fallback;
+    }
+
+    const value = Number.parseInt(raw, 10);
+    if (!Number.isFinite(value)) {
+      return fallback;
+    }
+
+    return Math.min(max, Math.max(min, value));
+  }
+
+  private diffDays(later: Date, earlier: Date) {
+    return Math.floor((later.getTime() - earlier.getTime()) / (24 * 60 * 60_000));
+  }
+
+  private pickNearestFutureDate(dates: Date[]) {
+    return dates
+      .slice()
+      .sort((a, b) => a.getTime() - b.getTime())
+      .find(() => true);
+  }
+
+  private computeDeadlineRisk(targetDate: Date | undefined, asOf: Date, warningDays: number, criticalDays: number): MonitorRiskLevel {
+    if (!targetDate) {
+      return 'none';
+    }
+
+    const daysRemaining = this.diffDays(targetDate, asOf);
+    if (daysRemaining < 0) {
+      return 'overdue';
+    }
+    if (daysRemaining <= criticalDays) {
+      return 'critical';
+    }
+    if (daysRemaining <= warningDays) {
+      return 'warning';
+    }
+    return 'none';
+  }
+
+  private maxDate(values: Array<Date | undefined>) {
+    return values.reduce<Date>((max, value) => {
+      if (!value) {
+        return max;
+      }
+      return value.getTime() > max.getTime() ? value : max;
+    }, new Date(0));
+  }
+
+  private looksLikeStatuteText(value: string) {
+    return /\b(statute|limitations|limitation|sol)\b/i.test(value);
   }
 }
