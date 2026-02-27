@@ -1,6 +1,6 @@
-# Codex Cloud Lane Packets (RC-1 Archived)
+# Codex Cloud Lane Packets
 
-These packets are historical RC-1 prompts.
+This folder contains Cloud lane packets by wave.
 
 Current execution policy is:
 
@@ -20,6 +20,12 @@ Current execution policy is:
 
 1. Reliability lane packet: `docs/codex-cloud/lane-a-reliability.packet.md`
 2. Usability lane packet: `docs/codex-cloud/lane-b-no-id-usability.packet.md`
+3. EVE-2 wave packet: `docs/codex-cloud/eve2-wave-20260227.packet.md`
+
+Notes:
+
+1. `lane-a-*` and `lane-b-*` are RC-1 historical packets.
+2. `eve2-wave-20260227.packet.md` is the current active multi-lane packet.
 
 ## Local Orchestrator Only (Current)
 

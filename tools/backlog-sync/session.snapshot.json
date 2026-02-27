@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T16:02:11.571Z",
+  "generatedAt": "2026-02-27T16:21:12.915Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -160,14 +160,17 @@
     "openIssues": []
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:02:08.214Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-02-27T16:21:09.449Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "cc7af2cc36f880e182182010a9b140196ae7b187",
+    "gitHead": "d0456ca68c2e69f74ccac6aedb0083d458445fa7",
     "gitStatusShort": [
-      "## lin/KAR-59-post-merge-housekeeping-20260227b...origin/lin/KAR-59-post-merge-housekeeping-20260227b"
+      "## main...origin/main",
+      " M docs/SESSION_HANDOFF.md",
+      " M docs/codex-cloud/README.md",
+      "?? docs/codex-cloud/eve2-wave-20260227.packet.md"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 3
   }
 }
