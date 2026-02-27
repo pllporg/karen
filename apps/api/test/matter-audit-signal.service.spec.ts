@@ -85,4 +85,104 @@ describe('MatterAuditSignalService', () => {
       }),
     );
   });
+
+  it('calculates movement monitors with staleness and risk levels', async () => {
+    const prisma = {
+      matter: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'matter-1',
+            name: 'Estate Filing',
+            openedAt: new Date('2026-01-01T00:00:00.000Z'),
+            updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'Statute SOL deadline',
+                description: 'limitations period',
+                dueAt: new Date('2026-01-25T00:00:00.000Z'),
+                updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+              },
+            ],
+            serviceEvents: [{ occurredAt: new Date('2026-01-02T00:00:00.000Z') }],
+            docketEntries: [{ filedAt: new Date('2026-01-04T00:00:00.000Z') }],
+            calendarEvents: [
+              {
+                id: 'event-1',
+                startAt: new Date('2026-01-24T00:00:00.000Z'),
+                type: 'hearing',
+                description: 'Court status conference',
+              },
+            ],
+          },
+        ]),
+      },
+    } as any;
+
+    const service = new MatterAuditSignalService(prisma, { appendEvent: jest.fn() } as any);
+    const result = await service.listMovementMonitors({
+      organizationId: 'org-1',
+      asOf: new Date('2026-01-22T00:00:00.000Z'),
+    });
+
+    expect(result.monitors[0]).toEqual(
+      expect.objectContaining({
+        matterId: 'matter-1',
+        stale: false,
+        deadlineRisk: 'critical',
+        statuteRisk: 'critical',
+      }),
+    );
+    expect(result.thresholds).toEqual(
+      expect.objectContaining({
+        stalenessDays: 21,
+        deadlineWarningDays: 14,
+        deadlineCriticalDays: 3,
+      }),
+    );
+  });
+
+  it('creates movement/deadline/statute signals and audit events', async () => {
+    const prisma = {
+      matter: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'matter-1',
+            name: 'Injury Claim',
+            openedAt: new Date('2025-01-01T00:00:00.000Z'),
+            updatedAt: new Date('2025-01-01T00:00:00.000Z'),
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'SOL statute date',
+                description: '',
+                dueAt: new Date('2026-02-03T00:00:00.000Z'),
+                updatedAt: new Date('2025-01-01T00:00:00.000Z'),
+              },
+            ],
+            serviceEvents: [],
+            docketEntries: [],
+            calendarEvents: [],
+          },
+        ]),
+      },
+      matterAuditSignal: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValueOnce({ id: 'signal-stale' }).mockResolvedValueOnce({ id: 'signal-deadline' }).mockResolvedValueOnce({ id: 'signal-statute' }),
+      },
+    } as any;
+
+    const audit = { appendEvent: jest.fn().mockResolvedValue(undefined) } as any;
+    const service = new MatterAuditSignalService(prisma, audit);
+
+    const result = await service.generateMovementRiskSignals({
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      asOf: new Date('2026-02-01T00:00:00.000Z'),
+    });
+
+    expect(result.createdCount).toBe(3);
+    expect(result.signalIds).toEqual(['signal-stale', 'signal-deadline', 'signal-statute']);
+    expect(audit.appendEvent).toHaveBeenCalledTimes(3);
+  });
 });

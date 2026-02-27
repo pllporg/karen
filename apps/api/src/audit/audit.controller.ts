@@ -39,6 +39,20 @@ export class AuditController {
     });
   }
 
+  @Get('matter-signals/monitor')
+  @RequirePermissions('audit:read')
+  async listMatterMonitors(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('matterId') matterId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.matterAuditSignalService.listMovementMonitors({
+      organizationId: user.organizationId,
+      matterId,
+      limit: limit ? Number(limit) : 100,
+    });
+  }
+
   @Post('matter-signals/generate')
   @RequirePermissions('audit:read')
   async generateMatterSignals(
@@ -46,12 +60,27 @@ export class AuditController {
     @Query('matterId') matterId?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.matterAuditSignalService.generateMissedValueSignals({
-      organizationId: user.organizationId,
-      actorUserId: user.id,
-      matterId,
-      limit: limit ? Number(limit) : 100,
-    });
+    const [missedValue, movement] = await Promise.all([
+      this.matterAuditSignalService.generateMissedValueSignals({
+        organizationId: user.organizationId,
+        actorUserId: user.id,
+        matterId,
+        limit: limit ? Number(limit) : 100,
+      }),
+      this.matterAuditSignalService.generateMovementRiskSignals({
+        organizationId: user.organizationId,
+        actorUserId: user.id,
+        matterId,
+        limit: limit ? Number(limit) : 100,
+      }),
+    ]);
+
+    return {
+      createdCount: missedValue.createdCount + movement.createdCount,
+      signalIds: [...missedValue.signalIds, ...movement.signalIds],
+      missedValue,
+      movement,
+    };
   }
 
   @Patch('matter-signals/:signalId/review-state')
