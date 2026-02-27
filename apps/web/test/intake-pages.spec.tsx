@@ -50,7 +50,10 @@ describe('Intake routes', () => {
     });
 
     expect(await screen.findByText('Website Form')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open Staged Route' })).toHaveAttribute('href', '/intake/lead-1/intake');
+    expect(screen.getByRole('link', { name: 'Intake' })).toHaveAttribute('href', '/intake/lead-1/intake');
+    expect(screen.getByRole('link', { name: 'Conflict' })).toHaveAttribute('href', '/intake/lead-1/conflict');
+    expect(screen.getByRole('link', { name: 'Engagement' })).toHaveAttribute('href', '/intake/lead-1/engagement');
+    expect(screen.getByRole('link', { name: 'Convert' })).toHaveAttribute('href', '/intake/lead-1/convert');
   });
 
   it('creates lead then redirects from /intake/new', async () => {
