@@ -158,18 +158,86 @@ describe('Intake routes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('validates the intake draft before submitting', async () => {
+  it('validates the intake wizard and saves draft between steps', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-7' });
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith('http://localhost:4000/leads/lead-7/intake-drafts')) {
+        return jsonResponse({ id: 'draft-1' });
+      }
+
+      if (url.startsWith('http://localhost:4000/contacts?search=')) {
+        return jsonResponse([]);
+      }
+
+      return jsonResponse({ error: `Unexpected ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<LeadIntakeDraftPage />);
 
-    fireEvent.change(screen.getByDisplayValue('1234 Orchard Lane'), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit Intake Draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(await screen.findByText('First name is required.')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/^Email/i), { target: { value: 'john@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/leads/lead-7/intake-drafts',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    expect(await screen.findByRole('heading', { name: 'PROPERTY' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Address Line 1/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(await screen.findByText('Property address is required.')).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces duplicate contact matches during client intake', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-7' });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith('http://localhost:4000/contacts?search=')) {
+        return jsonResponse([
+          {
+            id: 'contact-1',
+            firstName: 'John',
+            lastName: 'Smith',
+            email: 'john@example.com',
+            type: 'INDIVIDUAL',
+            createdAt: '2026-02-20T01:00:00.000Z',
+            updatedAt: '2026-02-20T01:00:00.000Z',
+          },
+        ]);
+      }
+
+      if (url.startsWith('http://localhost:4000/leads/lead-7/intake-drafts')) {
+        return jsonResponse({ id: 'draft-1' });
+      }
+
+      return jsonResponse({ error: `Unexpected ${url}` }, 500);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadIntakeDraftPage />);
+
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/^Email/i), { target: { value: 'john@example.com' } });
+    fireEvent.blur(screen.getByLabelText(/^Email/i));
+
+    expect(await screen.findByText('Potential duplicate contacts detected.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Link to Existing' })).toBeInTheDocument();
   });
 
   it('runs and resolves conflict on staged conflict route', async () => {
@@ -182,8 +250,9 @@ describe('Intake routes', () => {
 
     render(<LeadConflictPage />);
 
+    expect(screen.getByRole('button', { name: 'Proceed to Engagement' })).toBeDisabled();
+
     fireEvent.click(screen.getByRole('button', { name: 'Run Conflict Check' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Mark Resolved' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
@@ -193,6 +262,21 @@ describe('Intake routes', () => {
       );
     });
 
+    expect(await screen.findByText('Contact')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Resolution row 1'), { target: { value: 'CLEAR' } });
+    fireEvent.change(screen.getByLabelText('Resolution row 2'), { target: { value: 'POTENTIAL' } });
+    fireEvent.change(screen.getByLabelText('Notes row 2'), {
+      target: { value: 'Prior matter cleared after reviewer check.' },
+    });
+    fireEvent.change(screen.getByLabelText('Resolution row 3'), { target: { value: 'CLEAR' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Proceed to Engagement' })).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed to Engagement' }));
+
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
@@ -200,6 +284,11 @@ describe('Intake routes', () => {
         expect.objectContaining({ method: 'POST' }),
       );
     });
+
+    expect(await screen.findByRole('link', { name: 'Proceed to Engagement' })).toHaveAttribute(
+      'href',
+      '/intake/lead-5/engagement',
+    );
   });
 
   it('blocks conflict check when query text is blank', async () => {
@@ -212,7 +301,7 @@ describe('Intake routes', () => {
     fireEvent.change(screen.getByLabelText(/Conflict Query/i), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Run Conflict Check' }));
 
-    expect(await screen.findByText('Conflict query is required.')).toBeInTheDocument();
+    expect(await screen.findByText('This field is required.')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -269,7 +358,7 @@ describe('Intake routes', () => {
     fireEvent.change(screen.getByLabelText(/Matter Name/i), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Convert Lead' }));
 
-    expect(await screen.findByText('Matter name is required.')).toBeInTheDocument();
+    expect(await screen.findByText('This field is required.')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

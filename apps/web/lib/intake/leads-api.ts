@@ -1,4 +1,5 @@
 import { apiFetch } from '../api';
+import type { ConflictCheckPayload } from './conflict-check';
 import { buildIntakeDraftData, IntakeWizardFormState } from './intake-wizard-adapter';
 
 export type Lead = {
@@ -16,6 +17,14 @@ export type Checklist = {
   conflictResolved: boolean;
   engagementSigned: boolean;
   readyToConvert: boolean;
+};
+
+export type ConflictCheckRecord = {
+  id: string;
+  queryText: string;
+  resultJson?: ConflictCheckPayload | Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export function listLeads() {
@@ -40,15 +49,15 @@ export function createIntakeDraft(leadId: string, form: IntakeWizardFormState) {
   });
 }
 
-export function runConflictCheck(leadId: string, queryText: string) {
-  return apiFetch<{ id: string }>(`/leads/${leadId}/conflict-check`, {
+export function runConflictCheck(leadId: string, queryText: string, resultJson?: ConflictCheckPayload) {
+  return apiFetch<ConflictCheckRecord>(`/leads/${leadId}/conflict-check`, {
     method: 'POST',
-    body: JSON.stringify({ queryText }),
+    body: JSON.stringify({ queryText, resultJson }),
   });
 }
 
 export function resolveConflict(leadId: string, resolved: boolean, resolutionNotes: string) {
-  return apiFetch<{ id: string }>(`/leads/${leadId}/conflict-resolution`, {
+  return apiFetch<ConflictCheckRecord>(`/leads/${leadId}/conflict-resolution`, {
     method: 'POST',
     body: JSON.stringify({ resolved, resolutionNotes }),
   });
