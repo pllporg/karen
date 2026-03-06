@@ -1,249 +1,101 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
-import { apiFetch } from '../../lib/api';
-
-type MatterLookup = {
-  id: string;
-  matterNumber: string;
-  name: string;
-  label: string;
-};
-
-type TrustAccountLookup = {
-  id: string;
-  name: string;
-  label: string;
-};
-
-type InvoiceLookup = {
-  id: string;
-  invoiceNumber: string;
-  label: string;
-};
+import { Button } from '../../components/ui/button';
+import { FormField } from '../../components/ui/form-field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import { useBillingPage } from './use-billing-page';
 
 export default function BillingPage() {
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [trustRows, setTrustRows] = useState<any[]>([]);
-  const [reconciliationRuns, setReconciliationRuns] = useState<any[]>([]);
-  const [ledesProfiles, setLedesProfiles] = useState<any[]>([]);
-  const [ledesJobs, setLedesJobs] = useState<any[]>([]);
-  const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
-  const [trustAccountOptions, setTrustAccountOptions] = useState<TrustAccountLookup[]>([]);
-  const [invoiceOptions, setInvoiceOptions] = useState<InvoiceLookup[]>([]);
-  const [selectedMatterId, setSelectedMatterId] = useState('');
-  const [invoiceStatus, setInvoiceStatus] = useState<string | null>(null);
-  const [reconciliationTrustAccountId, setReconciliationTrustAccountId] = useState('');
-  const [statementStartAt, setStatementStartAt] = useState('');
-  const [statementEndAt, setStatementEndAt] = useState('');
-  const [reconciliationStatus, setReconciliationStatus] = useState<string | null>(null);
-  const [ledesProfileName, setLedesProfileName] = useState('Default LEDES 1998B');
-  const [selectedLedesProfileId, setSelectedLedesProfileId] = useState('');
-  const [selectedLedesInvoiceId, setSelectedLedesInvoiceId] = useState('');
-  const [selectedLedesInvoiceIds, setSelectedLedesInvoiceIds] = useState<string[]>([]);
-  const [ledesStatus, setLedesStatus] = useState<string | null>(null);
-
-  async function load() {
-    const [invoiceData, trustData, reconciliationData, profileData, ledesJobData, mattersData, trustLookupData, invoiceLookupData] = await Promise.all([
-      apiFetch<any[]>('/billing/invoices'),
-      apiFetch<any[]>('/billing/trust/report'),
-      apiFetch<any[]>('/billing/trust/reconciliation/runs'),
-      apiFetch<any[]>('/billing/ledes/profiles'),
-      apiFetch<any[]>('/billing/ledes/jobs'),
-      apiFetch<MatterLookup[]>('/lookups/matters?limit=200'),
-      apiFetch<TrustAccountLookup[]>('/lookups/trust-accounts?limit=200'),
-      apiFetch<InvoiceLookup[]>('/lookups/invoices?limit=200'),
-    ]);
-    setInvoices(invoiceData);
-    setTrustRows(trustData);
-    setReconciliationRuns(reconciliationData);
-    setLedesProfiles(profileData);
-    setLedesJobs(ledesJobData);
-    setMatterOptions(mattersData);
-    setTrustAccountOptions(trustLookupData);
-    setInvoiceOptions(invoiceLookupData);
-    setSelectedMatterId((current) => current || mattersData[0]?.id || '');
-    setReconciliationTrustAccountId((current) => current || trustLookupData[0]?.id || '');
-    setSelectedLedesInvoiceId((current) => current || invoiceLookupData[0]?.id || '');
-    setSelectedLedesProfileId((current) => {
-      if (current) return current;
-      const defaultProfile = profileData.find((profile) => profile.isDefault);
-      return defaultProfile?.id || profileData[0]?.id || '';
-    });
-  }
-
-  useEffect(() => {
-    load().catch(() => undefined);
-  }, []);
-
-  async function createInvoice(e: FormEvent) {
-    e.preventDefault();
-    if (!selectedMatterId) {
-      setInvoiceStatus('Select a matter before creating an invoice.');
-      return;
-    }
-
-    await apiFetch('/billing/invoices', {
-      method: 'POST',
-      body: JSON.stringify({
-        matterId: selectedMatterId,
-        lineItems: [{ description: 'Legal Services', quantity: 2, unitPrice: 425 }],
-      }),
-    });
-    setInvoiceStatus('Created invoice draft for selected matter.');
-    await load();
-  }
-
-  async function createReconciliationRun() {
-    const payload: Record<string, string> = {};
-    if (reconciliationTrustAccountId) payload.trustAccountId = reconciliationTrustAccountId;
-    if (statementStartAt) payload.statementStartAt = new Date(statementStartAt).toISOString();
-    if (statementEndAt) payload.statementEndAt = new Date(statementEndAt).toISOString();
-    await apiFetch('/billing/trust/reconciliation/runs', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    setReconciliationStatus('Created reconciliation run.');
-    await load();
-  }
-
-  async function submitRun(runId: string) {
-    await apiFetch(`/billing/trust/reconciliation/runs/${runId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify({ notes: 'Submitted for attorney review.' }),
-    });
-    setReconciliationStatus('Submitted reconciliation run for review.');
-    await load();
-  }
-
-  async function resolveDiscrepancy(discrepancyId: string) {
-    await apiFetch(`/billing/trust/reconciliation/discrepancies/${discrepancyId}/resolve`, {
-      method: 'POST',
-      body: JSON.stringify({
-        status: 'RESOLVED',
-        resolutionNote: 'Reconciled against source statement and ledger adjustment record.',
-      }),
-    });
-    setReconciliationStatus('Resolved reconciliation discrepancy.');
-    await load();
-  }
-
-  async function completeRun(runId: string) {
-    await apiFetch(`/billing/trust/reconciliation/runs/${runId}/complete`, {
-      method: 'POST',
-      body: JSON.stringify({ notes: 'Signed off by attorney.' }),
-    });
-    setReconciliationStatus('Completed reconciliation run.');
-    await load();
-  }
-
-  async function createLedesProfile() {
-    if (!ledesProfileName.trim()) return;
-    await apiFetch('/billing/ledes/profiles', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: ledesProfileName.trim(),
-        format: 'LEDES98B',
-        isDefault: true,
-        requireUtbmsPhaseCode: true,
-        requireUtbmsTaskCode: true,
-        includeExpenseLineItems: true,
-      }),
-    });
-    setLedesStatus(`Created LEDES profile "${ledesProfileName.trim()}".`);
-    await load();
-  }
-
-  async function createLedesJob() {
-    if (!selectedLedesProfileId) {
-      setLedesStatus('Select a LEDES profile before running export.');
-      return;
-    }
-
-    const invoiceIds = selectedLedesInvoiceIds.filter(Boolean);
-
-    const created = await apiFetch<any>('/billing/ledes/jobs', {
-      method: 'POST',
-      body: JSON.stringify({
-        profileId: selectedLedesProfileId,
-        invoiceIds: invoiceIds.length > 0 ? invoiceIds : undefined,
-      }),
-    });
-
-    if (created.status === 'FAILED') {
-      const count = created.summaryJson?.validationErrorCount || 0;
-      setLedesStatus(`LEDES export validation failed (${count} issues).`);
-    } else {
-      setLedesStatus(`Created LEDES export job ${created.id}.`);
-    }
-    await load();
-  }
-
-  function addSelectedLedesInvoice() {
-    if (!selectedLedesInvoiceId) {
-      return;
-    }
-    setSelectedLedesInvoiceIds((current) => {
-      if (current.includes(selectedLedesInvoiceId)) {
-        return current;
-      }
-      return [...current, selectedLedesInvoiceId];
-    });
-  }
-
-  function removeSelectedLedesInvoice(invoiceId: string) {
-    setSelectedLedesInvoiceIds((current) => current.filter((item) => item !== invoiceId));
-  }
-
-  async function downloadLedesJob(jobId: string) {
-    const result = await apiFetch<{ downloadUrl: string }>(`/billing/ledes/jobs/${jobId}/download`);
-    if (typeof window !== 'undefined') {
-      window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
-    }
-    setLedesStatus('Generated LEDES export download URL.');
-  }
-
-  function resolveMatterLabel(matterId: string | null | undefined): string {
-    if (!matterId) return '-';
-    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
-  }
+  const {
+    invoices,
+    trustRows,
+    reconciliationRuns,
+    ledesProfiles,
+    ledesJobs,
+    matterOptions,
+    trustAccountOptions,
+    invoiceOptions,
+    invoiceStatus,
+    reconciliationStatus,
+    selectedLedesInvoiceIds,
+    ledesStatus,
+    registerInvoice,
+    registerReconciliation,
+    registerLedesProfile,
+    registerLedesJob,
+    getInvoiceValues,
+    invoiceErrors,
+    reconciliationErrors,
+    ledesProfileErrors,
+    ledesJobErrors,
+    creatingInvoice,
+    creatingReconciliation,
+    creatingLedesProfile,
+    creatingLedesJob,
+    createInvoice,
+    createReconciliationRun,
+    submitRun,
+    resolveDiscrepancy,
+    completeRun,
+    createLedesProfile,
+    createLedesJob,
+    addSelectedLedesInvoice,
+    removeSelectedLedesInvoice,
+    downloadLedesJob,
+    resolveMatterLabel,
+    setInvoiceStatus,
+  } = useBillingPage();
 
   return (
     <AppShell>
       <PageHeader title="Billing & Trust" subtitle="Time/expense capture, invoice PDF, Stripe checkout links, trust ledger, and AR visibility." />
-      <div className="notice" style={{ marginBottom: 14 }}>
+
+      <div className="notice mb-3">
         Jurisdiction compliance disclaimer is stored on invoices. Attorney remains responsible for trust/billing compliance.
       </div>
-      <div className="card" style={{ marginBottom: 14 }}>
-        <form onSubmit={createInvoice} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
-          <select
-            className="input"
-            aria-label="Invoice Matter"
-            value={selectedMatterId}
-            onChange={(event) => setSelectedMatterId(event.target.value)}
-          >
-            <option value="">Select matter</option>
-            {matterOptions.map((matter) => (
-              <option key={matter.id} value={matter.id}>
-                {matter.label}
-              </option>
-            ))}
-          </select>
-          <button className="button" type="submit">Create Invoice</button>
+
+      <div className="card mb-3">
+        <form onSubmit={createInvoice} className="grid-2">
+          <FormField label="Invoice Matter" name="invoice-matter" error={invoiceErrors.matterId?.message} required>
+            <Select aria-label="Invoice Matter" {...registerInvoice('matterId')} invalid={!!invoiceErrors.matterId}>
+              <option value="">Select matter</option>
+              {matterOptions.map((matter) => (
+                <option key={matter.id} value={matter.id}>
+                  {matter.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Create Invoice</p>
+            <Button
+              type="submit"
+              disabled={creatingInvoice}
+              onClick={() => {
+                if (!getInvoiceValues('matterId')) {
+                  setInvoiceStatus('Select a matter before creating an invoice.');
+                }
+              }}
+            >
+              {creatingInvoice ? 'Working...' : 'Create Invoice'}
+            </Button>
+          </div>
         </form>
-        {invoiceStatus ? <p style={{ color: 'var(--lic-text-muted)', marginTop: 8 }}>{invoiceStatus}</p> : null}
+        {invoiceStatus ? <p className="type-caption muted mt-2">{invoiceStatus}</p> : null}
       </div>
+
       <div className="card">
         <table className="table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Matter</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Balance</th>
+              <th scope="col">#</th>
+              <th scope="col">Matter</th>
+              <th scope="col">Status</th>
+              <th scope="col">Total</th>
+              <th scope="col">Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -259,14 +111,15 @@ export default function BillingPage() {
           </tbody>
         </table>
       </div>
-      <div className="card" style={{ marginTop: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Trust Ledger</h3>
+
+      <div className="card mt-3 stack-3">
+        <h3>Trust Ledger</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Trust Account</th>
-              <th>Matter</th>
-              <th>Balance</th>
+              <th scope="col">Trust Account</th>
+              <th scope="col">Matter</th>
+              <th scope="col">Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -280,49 +133,44 @@ export default function BillingPage() {
           </tbody>
         </table>
       </div>
-      <div className="card" style={{ marginTop: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Trust Reconciliation Runs</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px 180px auto', gap: 10, marginBottom: 12 }}>
-          <select
-            className="input"
-            aria-label="Reconciliation Trust Account"
-            value={reconciliationTrustAccountId}
-            onChange={(event) => setReconciliationTrustAccountId(event.target.value)}
-          >
-            <option value="">All trust accounts</option>
-            {trustAccountOptions.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.label}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input"
-            type="date"
-            aria-label="Statement Start"
-            value={statementStartAt}
-            onChange={(event) => setStatementStartAt(event.target.value)}
-          />
-          <input
-            className="input"
-            type="date"
-            aria-label="Statement End"
-            value={statementEndAt}
-            onChange={(event) => setStatementEndAt(event.target.value)}
-          />
-          <button className="button secondary" type="button" onClick={createReconciliationRun}>
-            Create Reconciliation Run
-          </button>
-        </div>
-        {reconciliationStatus ? <p style={{ color: 'var(--lic-text-muted)' }}>{reconciliationStatus}</p> : null}
+
+      <div className="card mt-3 stack-3">
+        <h3>Trust Reconciliation Runs</h3>
+        <form onSubmit={createReconciliationRun} className="grid-4">
+          <FormField label="Reconciliation Trust Account" name="reconciliation-trust-account">
+            <Select aria-label="Reconciliation Trust Account" {...registerReconciliation('trustAccountId')}>
+              <option value="">All trust accounts</option>
+              {trustAccountOptions.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Statement Start" name="statement-start" error={reconciliationErrors.statementStartAt?.message}>
+            <Input type="date" aria-label="Statement Start" {...registerReconciliation('statementStartAt')} />
+          </FormField>
+          <FormField label="Statement End" name="statement-end" error={reconciliationErrors.statementEndAt?.message}>
+            <Input type="date" aria-label="Statement End" {...registerReconciliation('statementEndAt')} />
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Run</p>
+            <Button tone="secondary" type="submit" disabled={creatingReconciliation}>
+              {creatingReconciliation ? 'Working...' : 'Create Reconciliation Run'}
+            </Button>
+          </div>
+        </form>
+
+        {reconciliationStatus ? <p className="type-caption muted">{reconciliationStatus}</p> : null}
+
         <table className="table">
           <thead>
             <tr>
-              <th>Run</th>
-              <th>Status</th>
-              <th>Period</th>
-              <th>Discrepancies</th>
-              <th>Actions</th>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Period</th>
+              <th scope="col">Discrepancies</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -335,31 +183,31 @@ export default function BillingPage() {
                 </td>
                 <td>{run.discrepancies?.length || 0}</td>
                 <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="row-1">
                     {run.status === 'DRAFT' ? (
-                      <button className="button secondary" type="button" onClick={() => submitRun(run.id)}>
+                      <Button tone="secondary" type="button" onClick={() => submitRun(run.id)}>
                         Submit
-                      </button>
+                      </Button>
                     ) : null}
                     {run.status === 'IN_REVIEW'
                       ? run.discrepancies
-                          ?.filter((discrepancy: any) => discrepancy.status === 'OPEN')
+                          ?.filter((discrepancy) => discrepancy.status === 'OPEN')
                           .slice(0, 1)
-                          .map((discrepancy: any) => (
-                            <button
+                          .map((discrepancy) => (
+                            <Button
                               key={discrepancy.id}
-                              className="button secondary"
+                              tone="secondary"
                               type="button"
                               onClick={() => resolveDiscrepancy(discrepancy.id)}
                             >
                               Resolve {discrepancy.id}
-                            </button>
+                            </Button>
                           ))
                       : null}
                     {run.status === 'IN_REVIEW' ? (
-                      <button className="button secondary" type="button" onClick={() => completeRun(run.id)}>
+                      <Button tone="secondary" type="button" onClick={() => completeRun(run.id)}>
                         Complete
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 </td>
@@ -368,80 +216,82 @@ export default function BillingPage() {
           </tbody>
         </table>
       </div>
-      <div className="card" style={{ marginTop: 14 }}>
-        <h3 style={{ marginTop: 0 }}>LEDES / UTBMS Export</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 10 }}>
-          <input
-            className="input"
-            placeholder="New LEDES profile name"
-            value={ledesProfileName}
-            onChange={(event) => setLedesProfileName(event.target.value)}
-          />
-          <button className="button secondary" type="button" onClick={createLedesProfile}>
-            Create Profile
-          </button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 10, marginBottom: 10 }}>
-          <select
-            className="input"
-            aria-label="LEDES Profile"
-            value={selectedLedesProfileId}
-            onChange={(event) => setSelectedLedesProfileId(event.target.value)}
-          >
-            <option value="">Select LEDES profile</option>
-            {ledesProfiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.name} ({profile.format}){profile.isDefault ? ' - default' : ''}
-              </option>
-            ))}
-          </select>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <select
-              className="input"
-              aria-label="LEDES Invoice Select"
-              value={selectedLedesInvoiceId}
-              onChange={(event) => setSelectedLedesInvoiceId(event.target.value)}
-            >
+
+      <div className="card mt-3 stack-3">
+        <h3>LEDES / UTBMS Export</h3>
+
+        <form onSubmit={createLedesProfile} className="grid-2">
+          <FormField label="New LEDES Profile Name" name="new-ledes-profile-name" error={ledesProfileErrors.name?.message} required>
+            <Input placeholder="New LEDES profile name" {...registerLedesProfile('name')} invalid={!!ledesProfileErrors.name} />
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Create Profile</p>
+            <Button tone="secondary" type="submit" disabled={creatingLedesProfile}>
+              {creatingLedesProfile ? 'Working...' : 'Create Profile'}
+            </Button>
+          </div>
+        </form>
+
+        <form onSubmit={createLedesJob} className="grid-4">
+          <FormField label="LEDES Profile" name="ledes-profile" error={ledesJobErrors.profileId?.message} required>
+            <Select aria-label="LEDES Profile" {...registerLedesJob('profileId')} invalid={!!ledesJobErrors.profileId}>
+              <option value="">Select LEDES profile</option>
+              {ledesProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name} ({profile.format}){profile.isDefault ? ' - default' : ''}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          <FormField label="LEDES Invoice Select" name="ledes-invoice-select">
+            <Select aria-label="LEDES Invoice Select" {...registerLedesJob('invoiceId')}>
               <option value="">Select invoice (optional)</option>
               {invoiceOptions.map((invoice) => (
                 <option key={invoice.id} value={invoice.id}>
                   {invoice.label}
                 </option>
               ))}
-            </select>
-            <button className="button secondary" type="button" onClick={addSelectedLedesInvoice}>
+            </Select>
+          </FormField>
+
+          <div className="stack-2">
+            <p className="type-label">Select Invoice</p>
+            <Button tone="secondary" type="button" onClick={addSelectedLedesInvoice}>
               Add Invoice
-            </button>
+            </Button>
           </div>
-          <button className="button secondary" type="button" onClick={createLedesJob}>
-            Run LEDES Export
-          </button>
-        </div>
+
+          <div className="stack-2">
+            <p className="type-label">Run Export</p>
+            <Button tone="secondary" type="submit" disabled={creatingLedesJob}>
+              {creatingLedesJob ? 'Working...' : 'Run LEDES Export'}
+            </Button>
+          </div>
+        </form>
+
         {selectedLedesInvoiceIds.length > 0 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          <div className="row-1">
             {selectedLedesInvoiceIds.map((invoiceId) => (
-              <button
-                key={invoiceId}
-                className="button secondary"
-                type="button"
-                onClick={() => removeSelectedLedesInvoice(invoiceId)}
-              >
+              <Button key={invoiceId} tone="secondary" type="button" onClick={() => removeSelectedLedesInvoice(invoiceId)}>
                 Remove {invoiceOptions.find((invoice) => invoice.id === invoiceId)?.invoiceNumber || invoiceId}
-              </button>
+              </Button>
             ))}
           </div>
         ) : null}
-        {ledesStatus ? <p style={{ color: 'var(--lic-text-muted)' }}>{ledesStatus}</p> : null}
+
+        {ledesStatus ? <p className="type-caption muted">{ledesStatus}</p> : null}
+
         <table className="table">
           <thead>
             <tr>
-              <th>Job</th>
-              <th>Profile</th>
-              <th>Status</th>
-              <th>Validation</th>
-              <th>Lines</th>
-              <th>Total</th>
-              <th>Actions</th>
+              <th scope="col">Job</th>
+              <th scope="col">Profile</th>
+              <th scope="col">Status</th>
+              <th scope="col">Validation</th>
+              <th scope="col">Lines</th>
+              <th scope="col">Total</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -451,15 +301,15 @@ export default function BillingPage() {
                 <td>{job.profile?.name || job.profileId}</td>
                 <td>{job.status}</td>
                 <td>{job.validationStatus || '-'}</td>
-                <td>{job.lineCount}</td>
-                <td>${job.totalAmount}</td>
+                <td>{job.lineCount ?? '-'}</td>
+                <td>{job.totalAmount !== undefined && job.totalAmount !== null ? `$${job.totalAmount}` : '-'}</td>
                 <td>
                   {job.status === 'COMPLETED' ? (
-                    <button className="button secondary" type="button" onClick={() => downloadLedesJob(job.id)}>
+                    <Button tone="secondary" type="button" onClick={() => downloadLedesJob(job.id)}>
                       Download
-                    </button>
+                    </Button>
                   ) : (
-                    <span style={{ color: 'var(--lic-text-muted)' }}>-</span>
+                    <span className="muted">-</span>
                   )}
                 </td>
               </tr>

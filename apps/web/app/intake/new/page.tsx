@@ -1,37 +1,56 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { AppShell } from '../../../components/app-shell';
 import { PageHeader } from '../../../components/page-header';
-import { createLead } from '../../../lib/intake/leads-api';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { Textarea } from '../../../components/ui/textarea';
+import { useCreateLead } from '../../../lib/hooks/use-leads';
+import { createLeadSchema, type CreateLeadFormData } from '../../../lib/schemas/lead';
 
 export default function IntakeNewLeadPage() {
   const router = useRouter();
-  const [source, setSource] = useState('Website Form');
-  const [notes, setNotes] = useState('Initial queue intake created.');
   const [status, setStatus] = useState('');
+  const { mutate, loading } = useCreateLead();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateLeadFormData>({
+    resolver: zodResolver(createLeadSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      source: 'Website Form',
+      notes: 'Initial queue intake created.',
+    },
+  });
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    const lead = await createLead({ source, notes });
+  const onSubmit = handleSubmit(async (data) => {
+    const lead = await mutate({ source: data.source, notes: data.notes || undefined });
     setStatus(`Lead ${lead.id} created at ${new Date(lead.createdAt).toLocaleString()}.`);
-    router.push(`/intake/${lead.id}/intake`);
-  }
+    await router.push(`/intake/${lead.id}/intake`);
+  });
 
   return (
     <AppShell>
       <PageHeader title="Create Intake Lead" subtitle="Register lead metadata before staged routing." />
-      <form className="card inline-stack" onSubmit={onSubmit}>
-        <div>
-          <label htmlFor="lead-source">Lead Source</label>
-          <input id="lead-source" className="input" value={source} onChange={(e) => setSource(e.target.value)} required />
+      <form className="card stack-4" onSubmit={onSubmit}>
+        <FormField label="Lead Source" name="source" error={errors.source?.message} required>
+          <Input {...register('source')} invalid={!!errors.source} />
+        </FormField>
+        <FormField label="Processing Notes" name="notes" error={errors.notes?.message}>
+          <Textarea {...register('notes')} invalid={!!errors.notes} />
+        </FormField>
+        <div className="form-actions">
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Working...' : 'Create Lead and Open Intake'}
+          </Button>
         </div>
-        <div>
-          <label htmlFor="lead-notes">Processing Notes</label>
-          <textarea id="lead-notes" className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </div>
-        <button className="button" type="submit">Create Lead and Open Intake</button>
         {status ? <p className="mono-meta">{status}</p> : null}
       </form>
     </AppShell>
