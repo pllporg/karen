@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T20:57:05.779Z",
+  "generatedAt": "2026-03-06T16:35:53.698Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -14,156 +14,126 @@
   },
   "matrixSummary": {
     "totalRequirements": 74,
-    "unresolvedRequirements": 3,
+    "unresolvedRequirements": 0,
     "totalCountsByPhase": {
       "phase-1": 69,
       "phase-2": 5
     },
-    "unresolvedCountsByPhase": {
-      "phase-1": 3
-    },
-    "unresolvedCountsByStatus": {
-      "Missing": 3
-    },
-    "unresolvedCountsByRisk": {
-      "High": 2,
-      "Medium": 1
-    },
-    "unresolvedCountsByStatusAndRisk": {
-      "Missing:High": 2,
-      "Missing:Medium": 1
-    }
+    "unresolvedCountsByPhase": {},
+    "unresolvedCountsByStatus": {},
+    "unresolvedCountsByRisk": {},
+    "unresolvedCountsByStatusAndRisk": {}
   },
   "priority": {
     "algorithm": "phase-1 before phase-2, then Missing -> Partial (each ordered by risk High -> Medium -> Low)",
-    "topRequirements": [
-      {
-        "requirementId": "REQ-EVE2-004",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
-        "component": "API",
-        "epicCode": "PARITY-12",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-006",
-        "parityStatus": "Missing",
-        "risk": "High",
-        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
-        "component": "API",
-        "epicCode": "PARITY-13",
-        "phase": "phase-1"
-      },
-      {
-        "requirementId": "REQ-EVE2-008",
-        "parityStatus": "Missing",
-        "risk": "Medium",
-        "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
-        "component": "Infra",
-        "epicCode": "PARITY-13",
-        "phase": "phase-1"
-      }
-    ]
+    "topRequirements": []
   },
   "linearSummary": {
     "projectName": "Prompt Parity - LIC Legal Suite",
     "scopeLabel": "parity",
-    "scopedIssueCount": 100,
+    "scopedIssueCount": 107,
     "stateCounts": {
-      "Done": 94,
-      "Backlog": 3,
-      "In Progress": 3
+      "Backlog": 4,
+      "In Review": 2,
+      "In Progress": 1,
+      "Done": 100
     },
     "inProgressIssueKeys": [
-      "KAR-111",
-      "KAR-109",
-      "KAR-106"
+      "KAR-118"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
         "key": "KAR-106",
         "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T20:45:12.495Z",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:35:24.003Z",
         "requirementId": "REQ-EVE2-004"
       },
       {
-        "key": "KAR-109",
-        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
+        "key": "KAR-122",
+        "title": "PRD-05 Remaining Page Overhaul",
+        "state": "In Review",
+        "updatedAt": "2026-03-06T16:34:08.459Z",
+        "requirementId": "PRD-05"
+      },
+      {
+        "key": "KAR-119",
+        "title": "PRD-01/02 Foundation + Data Layer",
+        "state": "In Review",
+        "updatedAt": "2026-03-06T16:34:08.248Z",
+        "requirementId": "PRD-01-02"
+      },
+      {
+        "key": "KAR-118",
+        "title": "Frontend Refactor Delivery Program",
         "state": "In Progress",
-        "updatedAt": "2026-02-27T20:44:51.833Z",
-        "requirementId": "REQ-EVE2-006"
+        "updatedAt": "2026-03-06T16:34:07.905Z",
+        "requirementId": "PRD-PROGRAM"
+      },
+      {
+        "key": "KAR-112",
+        "title": "PARITY-14 Eve 2 Analyst Parity",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:29:33.114Z",
+        "requirementId": "PARITY-14"
+      },
+      {
+        "key": "KAR-107",
+        "title": "PARITY-13 Eve 2 Auditor Parity",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:29:32.898Z",
+        "requirementId": "PARITY-13"
+      },
+      {
+        "key": "KAR-102",
+        "title": "PARITY-12 Eve 2 Agents Parity",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:29:32.571Z",
+        "requirementId": "PARITY-12"
       },
       {
         "key": "KAR-111",
         "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
-        "state": "In Progress",
-        "updatedAt": "2026-02-27T20:44:11.240Z",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:29:32.331Z",
         "requirementId": "REQ-EVE2-008"
       },
       {
-        "key": "KAR-103",
-        "title": "Add intake queue + staged lead routes (`/intake` flow)",
+        "key": "KAR-109",
+        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
         "state": "Done",
-        "updatedAt": "2026-02-27T15:57:37.229Z",
-        "requirementId": "REQ-EVE2-001"
+        "updatedAt": "2026-03-06T16:29:32.025Z",
+        "requirementId": "REQ-EVE2-006"
       },
       {
-        "key": "KAR-105",
-        "title": "Add agent orchestration entities (run/step/proposal) + review lifecycle enforcement",
-        "state": "Done",
-        "updatedAt": "2026-02-27T15:57:36.832Z",
-        "requirementId": "REQ-EVE2-003"
-      },
-      {
-        "key": "KAR-108",
-        "title": "Add Auditor value-signal detection (missed-value indicators with citations)",
-        "state": "Done",
-        "updatedAt": "2026-02-27T15:57:36.237Z",
-        "requirementId": "REQ-EVE2-005"
-      },
-      {
-        "key": "KAR-113",
-        "title": "Build Analyst metrics pipeline (cycle time, turnaround, capacity, referral, value)",
-        "state": "Done",
-        "updatedAt": "2026-02-27T15:57:35.870Z",
-        "requirementId": "REQ-EVE2-009"
-      },
-      {
-        "key": "KAR-86",
-        "title": "RC-1 Usability + Production Hardening",
-        "state": "Done",
-        "updatedAt": "2026-02-27T15:46:49.430Z",
-        "requirementId": "RC-1"
-      },
-      {
-        "key": "KAR-114",
-        "title": "Add Analyst insight APIs + CSV exports for bottlenecks/capacity/growth",
-        "state": "Done",
-        "updatedAt": "2026-02-27T14:23:34.372Z",
-        "requirementId": "REQ-EVE2-010"
-      },
-      {
-        "key": "KAR-110",
-        "title": "Build Auditor operations queue UI with review drawer + approve/return/execute",
-        "state": "Done",
-        "updatedAt": "2026-02-27T14:23:34.082Z",
-        "requirementId": "REQ-EVE2-007"
+        "key": "KAR-124",
+        "title": "PRD-07 Performance + Code Quality",
+        "state": "Backlog",
+        "updatedAt": "2026-03-06T16:22:05.305Z",
+        "requirementId": "PRD-07"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
-    "issueCount": 21,
-    "openIssueCount": 1,
+    "issueCount": 28,
+    "openIssueCount": 8,
     "stateCounts": {
-      "In Progress": 1,
+      "Backlog": 4,
+      "In Review": 2,
+      "In Progress": 2,
       "Done": 20
     },
     "openIssueKeys": [
-      "KAR-117"
+      "KAR-117",
+      "KAR-118",
+      "KAR-119",
+      "KAR-120",
+      "KAR-121",
+      "KAR-122",
+      "KAR-123",
+      "KAR-124"
     ],
     "openIssues": [
       {
@@ -171,19 +141,70 @@
         "title": "Add unlisted implemented routes to primary navigation model",
         "state": "In Progress",
         "requirementId": "UI-NAV-001",
-        "updatedAt": "2026-02-27T20:44:05.711Z"
+        "updatedAt": "2026-03-06T16:22:05.616Z"
+      },
+      {
+        "key": "KAR-118",
+        "title": "Frontend Refactor Delivery Program",
+        "state": "In Progress",
+        "requirementId": "PRD-PROGRAM",
+        "updatedAt": "2026-03-06T16:34:07.905Z"
+      },
+      {
+        "key": "KAR-119",
+        "title": "PRD-01/02 Foundation + Data Layer",
+        "state": "In Review",
+        "requirementId": "PRD-01-02",
+        "updatedAt": "2026-03-06T16:34:08.248Z"
+      },
+      {
+        "key": "KAR-120",
+        "title": "PRD-03 Forms + Validation",
+        "state": "Backlog",
+        "requirementId": "PRD-03",
+        "updatedAt": "2026-03-06T16:22:04.389Z"
+      },
+      {
+        "key": "KAR-121",
+        "title": "PRD-04 GP-01 Intake Flow",
+        "state": "Backlog",
+        "requirementId": "PRD-04",
+        "updatedAt": "2026-03-06T16:22:04.614Z"
+      },
+      {
+        "key": "KAR-122",
+        "title": "PRD-05 Remaining Page Overhaul",
+        "state": "In Review",
+        "requirementId": "PRD-05",
+        "updatedAt": "2026-03-06T16:34:08.459Z"
+      },
+      {
+        "key": "KAR-123",
+        "title": "PRD-06 Accessibility Compliance",
+        "state": "Backlog",
+        "requirementId": "PRD-06",
+        "updatedAt": "2026-03-06T16:22:05.118Z"
+      },
+      {
+        "key": "KAR-124",
+        "title": "PRD-07 Performance + Code Quality",
+        "state": "Backlog",
+        "requirementId": "PRD-07",
+        "updatedAt": "2026-03-06T16:22:05.305Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T20:57:02.126Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-06T16:34:33.130Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "c1aca7cca785a863831d9a8e38a858e8e5d3bcf9",
+    "gitHead": "2b8fef0a71d76923c628869e97b00c6b7d332568",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## lin/KAR-106-109-111-eve2-reconciliation...origin/lin/KAR-106-109-111-eve2-reconciliation",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 2
   }
 }

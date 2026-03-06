@@ -1939,7 +1939,7 @@
           "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
           "requirementId": "REQ-EVE2-004",
           "promptSection": "Eve 2 / Agents / Proactive case work",
-          "parityStatus": "Missing",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": [
@@ -2009,7 +2009,7 @@
           "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
           "requirementId": "REQ-EVE2-006",
           "promptSection": "Eve 2 / Auditor / Keep cases moving",
-          "parityStatus": "Missing",
+          "parityStatus": "Verified",
           "component": "API",
           "risk": "High",
           "labels": [
@@ -2065,7 +2065,7 @@
           "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
           "requirementId": "REQ-EVE2-008",
           "promptSection": "Eve 2 / Auditor / Continuous monitoring",
-          "parityStatus": "Missing",
+          "parityStatus": "Verified",
           "component": "Infra",
           "risk": "Medium",
           "labels": [
