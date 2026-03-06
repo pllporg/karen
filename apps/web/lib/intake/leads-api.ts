@@ -14,10 +14,30 @@ export type Lead = {
 
 export type Checklist = {
   leadId: string;
+  intakeDraftCreated: boolean;
+  conflictChecked: boolean;
+  engagementGenerated: boolean;
+  engagementSent: boolean;
+  convertible: boolean;
   intakeDraft: boolean;
   conflictResolved: boolean;
   engagementSigned: boolean;
   readyToConvert: boolean;
+  conversionPreview?: {
+    clientName?: string;
+    clientEmail?: string;
+    clientPhone?: string;
+    propertyAddress?: string;
+    suggestedMatterName: string;
+    suggestedMatterNumber: string;
+    defaultParticipants: Array<{
+      name: string;
+      roleKey: string;
+      side: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT';
+      isPrimary: boolean;
+      existingContactId?: string;
+    }>;
+  };
 };
 
 export type ConflictCheckRecord = {
@@ -98,9 +118,30 @@ export function getLatestEngagementEnvelope(leadId: string) {
 
 export function convertLead(
   leadId: string,
-  payload: { name: string; matterNumber: string; practiceArea: string; jurisdiction?: string; venue?: string },
+  payload: {
+    name: string;
+    matterNumber: string;
+    practiceArea: string;
+    jurisdiction?: string;
+    venue?: string;
+    ethicalWallEnabled?: boolean;
+    ethicalWallNotes?: string;
+    deniedUserIds?: string[];
+    participants?: Array<{
+      name: string;
+      roleKey: string;
+      side: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT';
+      isPrimary?: boolean;
+      notes?: string;
+      existingContactId?: string;
+      representedByContactId?: string;
+      representedByName?: string;
+      lawFirmContactId?: string;
+      lawFirmName?: string;
+    }>;
+  },
 ) {
-  return apiFetch<{ id: string }>(`/leads/${leadId}/convert`, {
+  return apiFetch<{ leadId: string; matter: { id: string; name: string; matterNumber: string } }>(`/leads/${leadId}/convert`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });

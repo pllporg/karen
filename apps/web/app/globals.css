@@ -2121,6 +2121,20 @@ button.stepper-circle {
   align-items: center;
 }
 
+.convert-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--lic-4);
+  border-top: var(--lic-rule-1) solid var(--lic-border);
+  padding-top: var(--lic-4);
+}
+
+.convert-deny-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--lic-3);
+}
+
 @media (max-width: 1279px) {
   .grid-3,
   .grid-4 {
@@ -2161,7 +2175,9 @@ button.stepper-circle {
 
   .engagement-template-grid,
   .engagement-secondary-row,
-  .engagement-status-track {
+  .engagement-status-track,
+  .convert-preview-grid,
+  .convert-deny-grid {
     grid-template-columns: 1fr;
   }
 }

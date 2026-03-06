@@ -375,25 +375,173 @@ describe('Intake routes', () => {
 
   it('blocks conversion when required matter fields are blank', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-19' });
-    const fetchMock = vi.fn().mockResolvedValueOnce(
-      jsonResponse({
-        leadId: 'lead-19',
-        intakeDraft: true,
-        conflictResolved: true,
-        engagementSigned: true,
-        readyToConvert: true,
-      }),
-    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url === 'http://localhost:4000/leads/lead-19/setup-checklist') {
+        return jsonResponse({
+          leadId: 'lead-19',
+          intakeDraftCreated: true,
+          conflictChecked: true,
+          conflictResolved: true,
+          engagementGenerated: true,
+          engagementSent: true,
+          engagementSigned: true,
+          convertible: true,
+          intakeDraft: true,
+          readyToConvert: true,
+          conversionPreview: {
+            clientName: 'John Smith',
+            clientEmail: 'john@example.com',
+            propertyAddress: '123 Main St, Springfield, IL 62701',
+            suggestedMatterName: 'John Smith - 123 Main St',
+            suggestedMatterNumber: 'M-2026-LEAD19',
+            defaultParticipants: [
+              {
+                name: 'John Smith',
+                roleKey: 'client',
+                side: 'CLIENT_SIDE',
+                isPrimary: true,
+              },
+            ],
+          },
+        });
+      }
+
+      if (url === 'http://localhost:4000/admin/users') {
+        return jsonResponse([]);
+      }
+
+      if (url === 'http://localhost:4000/admin/participant-roles') {
+        return jsonResponse([{ id: 'role-client', key: 'client', label: 'Client', sideDefault: 'CLIENT_SIDE' }]);
+      }
+
+      return jsonResponse({ error: `Unexpected ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<LeadConvertPage />);
 
-    await screen.findByText('Yes');
+    await screen.findByDisplayValue('John Smith - 123 Main St');
 
     fireEvent.change(screen.getByLabelText(/Matter Name/i), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Convert Lead' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Convert Lead to Matter' }));
 
     expect(await screen.findByText('This field is required.')).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'http://localhost:4000/leads/lead-19/convert',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('submits participants and ethical wall selections during conversion', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-21' });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url === 'http://localhost:4000/leads/lead-21/setup-checklist') {
+        return jsonResponse({
+          leadId: 'lead-21',
+          intakeDraftCreated: true,
+          conflictChecked: true,
+          conflictResolved: true,
+          engagementGenerated: true,
+          engagementSent: true,
+          engagementSigned: true,
+          convertible: true,
+          intakeDraft: true,
+          readyToConvert: true,
+          conversionPreview: {
+            clientName: 'Taylor Smith',
+            clientEmail: 'taylor@example.com',
+            propertyAddress: '456 Cedar Ave, South Bend, IN 46601',
+            suggestedMatterName: 'Taylor Smith - 456 Cedar Ave',
+            suggestedMatterNumber: 'M-2026-LEAD21',
+            defaultParticipants: [
+              {
+                name: 'Taylor Smith',
+                roleKey: 'client',
+                side: 'CLIENT_SIDE',
+                isPrimary: true,
+              },
+            ],
+          },
+        });
+      }
+
+      if (url === 'http://localhost:4000/admin/users') {
+        return jsonResponse([
+          {
+            id: 'membership-2',
+            user: {
+              id: 'user-2',
+              email: 'billing@lic-demo.local',
+              fullName: 'Billing User',
+            },
+            role: { name: 'Billing' },
+          },
+        ]);
+      }
+
+      if (url === 'http://localhost:4000/admin/participant-roles') {
+        return jsonResponse([
+          { id: 'role-client', key: 'client', label: 'Client', sideDefault: 'CLIENT_SIDE' },
+          { id: 'role-counsel', key: 'opposing_counsel', label: 'Opposing Counsel', sideDefault: 'OPPOSING_SIDE' },
+        ]);
+      }
+
+      if (url === 'http://localhost:4000/leads/lead-21/convert') {
+        return jsonResponse({
+          leadId: 'lead-21',
+          matter: {
+            id: 'matter-21',
+            name: 'Taylor Smith - 456 Cedar Ave',
+            matterNumber: 'M-2026-LEAD21',
+          },
+        });
+      }
+
+      return jsonResponse({ error: `Unexpected ${url}` }, 500);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadConvertPage />);
+
+    await screen.findByDisplayValue('Taylor Smith - 456 Cedar Ave');
+
+    fireEvent.click(screen.getByLabelText(/Enable ethical wall review on matter creation/i));
+    fireEvent.change(screen.getByLabelText(/Wall Notes/i), {
+      target: { value: 'Limit access to review attorney and converting operator.' },
+    });
+    fireEvent.click(screen.getByLabelText(/Billing User · Billing/i));
+    fireEvent.click(screen.getByRole('button', { name: 'Convert Lead to Matter' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/leads/lead-21/convert',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    const convertCall = fetchMock.mock.calls.find(([url]) => String(url) === 'http://localhost:4000/leads/lead-21/convert');
+    expect(convertCall).toBeTruthy();
+    expect(JSON.parse(String(convertCall?.[1]?.body))).toMatchObject({
+      ethicalWallEnabled: true,
+      ethicalWallNotes: 'Limit access to review attorney and converting operator.',
+      deniedUserIds: ['user-2'],
+      participants: [
+        expect.objectContaining({
+          name: 'Taylor Smith',
+          roleKey: 'client',
+          side: 'CLIENT_SIDE',
+          isPrimary: true,
+        }),
+      ],
+    });
+
+    expect(await screen.findByRole('link', { name: 'Open Matter Dashboard' })).toHaveAttribute(
+      'href',
+      '/matters/matter-21',
+    );
   });
 });
