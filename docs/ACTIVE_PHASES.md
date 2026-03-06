@@ -16,12 +16,12 @@ This file is the current phase registry for delivery status.
 
 ## EVE-2: Agents + Auditor + Analyst
 
-- Status: `Active queued (mirrored)`
+- Status: `Completed`
 - Scope: `REQ-EVE2-001` through `REQ-EVE2-011`
 - Current truth:
   1. Requirements exist in local matrix/snapshot.
-  2. Linear/GitHub mirror sync and verify are currently passing.
-  3. Local dirty-tree contains Eve 2.0 WIP and must be treated as draft implementation until merged.
+  2. Reconciliation confirmed `REQ-EVE2-004`, `REQ-EVE2-006`, and `REQ-EVE2-008` were already implemented and test-covered.
+  3. Linear/GitHub mirror state should reflect completion after housekeeping sync.
 
 ### Queue Refresh Protocol (EVE-2 mirrored queue maintenance)
 
@@ -33,3 +33,13 @@ This file is the current phase registry for delivery status.
 6. `pnpm backlog:handoff:refresh`
 7. `pnpm backlog:handoff:check`
 8. Only then assign new cloud lanes from Eve 2.0 requirements.
+
+## FRONTEND-REFACTOR: PRD Delivery Program
+
+- Status: `Active`
+- Scope: `KAR-118`, `KAR-119` through `KAR-124`, plus `KAR-117`
+- Current truth:
+  1. Dirty-tree refactor work was preserved on `lin/KAR-118-frontend-refactor-preservation`.
+  2. Foundation/data-layer work is isolated on `lin/KAR-119-prd-01-02-foundation`.
+  3. Route decomposition/page-overhaul work is isolated on `lin/KAR-122-prd-05-page-overhaul`.
+  4. Next execution priority after backlog housekeeping is `PRD-03`, `PRD-04`, and `KAR-117`.
