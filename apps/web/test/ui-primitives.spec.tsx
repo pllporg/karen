@@ -20,7 +20,7 @@ describe('UI primitives', () => {
         <CardGrid>
           <Card>Card body</Card>
         </CardGrid>
-        <Button tone="danger" disabled>
+        <Button tone="danger" size="lg" disabled>
           Delete
         </Button>
         <Input aria-label="Email" invalid defaultValue="x@example.com" />
@@ -29,7 +29,7 @@ describe('UI primitives', () => {
         </Select>
         <Textarea aria-label="Narrative" invalid defaultValue="Detail" />
         <Badge tone="in-review">IN REVIEW</Badge>
-        <Table>
+        <Table alternating>
           <tbody>
             <tr>
               <td>Row</td>
@@ -42,6 +42,7 @@ describe('UI primitives', () => {
     expect(screen.getByText('Card body').closest('div')).toHaveClass('card');
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('button', 'danger');
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('data-tone', 'danger');
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('data-size', 'lg');
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute('data-state', 'disabled');
     expect(screen.getByLabelText('Email')).toHaveClass('input');
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
@@ -54,6 +55,7 @@ describe('UI primitives', () => {
     expect(screen.getByText('IN REVIEW')).toHaveClass('badge', 'status-in-review');
     expect(screen.getByText('IN REVIEW')).toHaveAttribute('data-tone', 'in-review');
     expect(screen.getByRole('table')).toHaveClass('table');
+    expect(screen.getByRole('table')).toHaveAttribute('data-alternating', 'true');
   });
 
   it('renders modal and closes on escape when not busy', () => {

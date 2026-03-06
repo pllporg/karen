@@ -4,18 +4,20 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cx } from './cx';
 
 export type ButtonTone = 'default' | 'secondary' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   tone?: ButtonTone;
+  size?: ButtonSize;
   block?: boolean;
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, tone = 'default', block = false, type = 'button', disabled, ...props },
+  { className, tone = 'default', size = 'md', block = false, type = 'button', disabled, ...props },
   ref,
 ) {
   const state =
-    disabled || props['aria-disabled'] === true || props['aria-disabled'] === 'true' ? 'disabled' : 'enabled';
+    disabled || props['aria-disabled'] === true || props['aria-disabled'] === 'true' ? 'disabled' : 'default';
 
   return (
     <button
@@ -31,6 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       disabled={disabled}
       data-tone={tone}
+      data-size={size}
       data-state={state}
       {...props}
     />
