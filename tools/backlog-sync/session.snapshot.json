@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-02-27T20:57:05.779Z",
+  "generatedAt": "2026-03-02T20:08:21.886Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -176,14 +176,63 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-02-27T20:57:02.126Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-02T20:08:18.430Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "c1aca7cca785a863831d9a8e38a858e8e5d3bcf9",
+    "gitHead": "5e0cbdbdd2c3f2497c3e4e224a114bf4a461a48c",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## main...origin/main",
+      " M apps/web/app/admin/page.tsx",
+      " M apps/web/app/billing/page.tsx",
+      " M apps/web/app/communications/page.tsx",
+      " M apps/web/app/contacts/page.tsx",
+      " M apps/web/app/documents/page.tsx",
+      " M apps/web/app/globals.css",
+      " M apps/web/app/imports/page.tsx",
+      " M apps/web/app/intake/[leadId]/conflict/page.tsx",
+      " M apps/web/app/intake/[leadId]/convert/page.tsx",
+      " M apps/web/app/intake/[leadId]/engagement/page.tsx",
+      " M apps/web/app/intake/[leadId]/intake/page.tsx",
+      " M apps/web/app/intake/new/page.tsx",
+      " M apps/web/app/layout.tsx",
+      " M apps/web/app/lic-tokens.css",
+      " M apps/web/app/login/page.tsx",
+      " M apps/web/app/matters/page.tsx",
+      " M apps/web/app/portal/page.tsx",
+      " M apps/web/components/confirm-dialog.tsx",
+      " M apps/web/components/toast-stack.tsx",
+      " M apps/web/components/ui/button.tsx",
+      " M apps/web/components/ui/card.tsx",
+      " M apps/web/components/ui/table.tsx",
+      " M apps/web/lib/api.ts",
+      " M apps/web/package.json",
+      " M apps/web/test/confirm-dialog.spec.tsx",
+      " M apps/web/test/ui-primitives.spec.tsx",
+      " M docs/SESSION_HANDOFF.md",
+      " M pnpm-lock.yaml",
+      " M tools/backlog-sync/session.snapshot.json",
+      "?? FRONTEND_REFACTOR_PLAN.md",
+      "?? apps/web/app/admin/admin-operations-panels.tsx",
+      "?? apps/web/app/admin/use-admin-page.ts",
+      "?? apps/web/app/billing/use-billing-page.ts",
+      "?? apps/web/app/contacts/use-contacts-page.ts",
+      "?? apps/web/app/documents/use-documents-page.ts",
+      "?? apps/web/app/portal/use-portal-page.ts",
+      "?? apps/web/components/empty-state.tsx",
+      "?? apps/web/components/error-state.tsx",
+      "?? apps/web/components/loading-state.tsx",
+      "?? apps/web/components/ui/checkbox.tsx",
+      "?? apps/web/components/ui/form-field.tsx",
+      "?? apps/web/components/ui/kv-display.tsx",
+      "?? apps/web/components/ui/radio.tsx",
+      "?? apps/web/components/ui/stepper.tsx",
+      "?? apps/web/components/ui/toggle.tsx",
+      "?? apps/web/lib/hooks/",
+      "?? apps/web/lib/schemas/",
+      "?? apps/web/lib/types/",
+      "?? frontend-refactor/"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 49
   }
 }

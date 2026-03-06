@@ -1,10 +1,17 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
+import { Button } from '../../components/ui/button';
+import { FormField } from '../../components/ui/form-field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
 import { apiFetch } from '../../lib/api';
+import { mattersPageSchema, type MattersPageFormData } from '../../lib/schemas/matters-page';
 
 type Matter = {
   id: string;
@@ -13,7 +20,6 @@ type Matter = {
   practiceArea: string;
   status: string;
 };
-
 type IntakeDraftSummary = {
   id: string;
   label: string;
@@ -21,41 +27,127 @@ type IntakeDraftSummary = {
   matterNumber?: string | null;
   name?: string | null;
 };
-
+type IntakeDraftPayload = {
+  matterNumber?: string | null;
+  name?: string | null;
+  practiceArea?: string | null;
+  property?: {
+    addressLine1?: string | null;
+    city?: string | null;
+    state?: string | null;
+    parcelNumber?: string | null;
+  } | null;
+  contract?: {
+    contractDate?: string | null;
+    contractPrice?: number | string | null;
+  } | null;
+  defects?: Array<{
+    category?: string | null;
+    severity?: string | null;
+    description?: string | null;
+  }> | null;
+  damages?: Array<{
+    category?: string | null;
+    repairEstimate?: number | string | null;
+  }> | null;
+  liens?: Array<{
+    claimantName?: string | null;
+    amount?: number | string | null;
+    status?: string | null;
+  }> | null;
+  insuranceClaims?: Array<{
+    claimNumber?: string | null;
+    policyNumber?: string | null;
+    insurerName?: string | null;
+    adjusterName?: string | null;
+  }> | null;
+  expertEngagements?: Array<{
+    expertName?: string | null;
+    scope?: string | null;
+  }> | null;
+  milestones?: Array<{
+    name?: string | null;
+  }> | null;
+};
+const intakeFields: Array<{
+  key: keyof MattersPageFormData;
+  label: string;
+  placeholder: string;
+}> = [
+  { key: 'propertyAddress', label: 'Property Address', placeholder: 'Property address' },
+  { key: 'propertyCity', label: 'Property City', placeholder: 'City' },
+  { key: 'propertyState', label: 'Property State', placeholder: 'State' },
+  { key: 'parcelNumber', label: 'Parcel Number', placeholder: 'Parcel/APN' },
+  { key: 'contractDate', label: 'Contract Date', placeholder: 'Contract date (YYYY-MM-DD)' },
+  { key: 'contractPrice', label: 'Contract Price', placeholder: 'Contract price' },
+  { key: 'defectCategory', label: 'Defect Category', placeholder: 'Defect category' },
+  { key: 'defectSeverity', label: 'Defect Severity', placeholder: 'Defect severity' },
+  { key: 'defectDescription', label: 'Defect Description', placeholder: 'Defect description' },
+  { key: 'damageCategory', label: 'Damages Category', placeholder: 'Damages category' },
+  { key: 'repairEstimate', label: 'Repair Estimate', placeholder: 'Repair estimate' },
+  { key: 'lienClaimantName', label: 'Lien Claimant Name', placeholder: 'Lien claimant name' },
+  { key: 'lienAmount', label: 'Lien Amount', placeholder: 'Lien amount' },
+  { key: 'lienStatus', label: 'Lien Status', placeholder: 'Lien status' },
+  { key: 'claimNumber', label: 'Claim Number', placeholder: 'Claim number' },
+  { key: 'policyNumber', label: 'Policy Number', placeholder: 'Policy number' },
+  { key: 'insurerName', label: 'Insurer Name', placeholder: 'Insurer name' },
+  { key: 'adjusterName', label: 'Adjuster Name', placeholder: 'Adjuster name' },
+  { key: 'expertName', label: 'Expert Name', placeholder: 'Expert name' },
+  { key: 'expertScope', label: 'Expert Scope', placeholder: 'Expert scope' },
+  { key: 'milestoneName', label: 'Project Milestone', placeholder: 'Project milestone' },
+];
+function asNumber(value: string | undefined): number {
+  return Number(value ?? '');
+}
 export default function MattersPage() {
   const [matters, setMatters] = useState<Matter[]>([]);
-  const [matterNumber, setMatterNumber] = useState('M-2026-001');
-  const [name, setName] = useState('Kitchen Remodel Defect - Ortega');
-  const [practiceArea, setPracticeArea] = useState('Construction Litigation');
-
-  const [propertyAddress, setPropertyAddress] = useState('1234 Orchard Lane');
-  const [propertyCity, setPropertyCity] = useState('Pasadena');
-  const [propertyState, setPropertyState] = useState('CA');
-  const [parcelNumber, setParcelNumber] = useState('APN-1234-99');
-  const [contractPrice, setContractPrice] = useState('125000');
-  const [contractDate, setContractDate] = useState('2025-10-01');
-  const [defectCategory, setDefectCategory] = useState('Water Intrusion');
-  const [defectSeverity, setDefectSeverity] = useState('High');
-  const [defectDescription, setDefectDescription] = useState('Leak at kitchen window framing and drywall.');
-  const [damageCategory, setDamageCategory] = useState('Repair Estimate');
-  const [repairEstimate, setRepairEstimate] = useState('28500');
-  const [lienClaimantName, setLienClaimantName] = useState('Sunset Carpentry LLC');
-  const [lienAmount, setLienAmount] = useState('14250');
-  const [lienStatus, setLienStatus] = useState('RECORDED');
-  const [claimNumber, setClaimNumber] = useState('CLM-77821');
-  const [policyNumber, setPolicyNumber] = useState('HO-445-992');
-  const [insurerName, setInsurerName] = useState('Blue Harbor Insurance');
-  const [adjusterName, setAdjusterName] = useState('Jordan Adjuster');
-  const [expertName, setExpertName] = useState('Dr. Maya Expert');
-  const [expertScope, setExpertScope] = useState('Forensic causation and repair-cost reasonableness analysis.');
-  const [milestoneName, setMilestoneName] = useState('Initial inspection complete');
-
   const [drafts, setDrafts] = useState<IntakeDraftSummary[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState('');
   const [wizardStatus, setWizardStatus] = useState<string | null>(null);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    getValues,
+    reset,
+  } = useForm<MattersPageFormData>({
+    resolver: zodResolver(mattersPageSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      matterNumber: 'M-2026-001',
+      name: 'Kitchen Remodel Defect - Ortega',
+      practiceArea: 'Construction Litigation',
+      propertyAddress: '1234 Orchard Lane',
+      propertyCity: 'Pasadena',
+      propertyState: 'CA',
+      parcelNumber: 'APN-1234-99',
+      contractPrice: '125000',
+      contractDate: '2025-10-01',
+      defectCategory: 'Water Intrusion',
+      defectSeverity: 'High',
+      defectDescription: 'Leak at kitchen window framing and drywall.',
+      damageCategory: 'Repair Estimate',
+      repairEstimate: '28500',
+      lienClaimantName: 'Sunset Carpentry LLC',
+      lienAmount: '14250',
+      lienStatus: 'RECORDED',
+      claimNumber: 'CLM-77821',
+      policyNumber: 'HO-445-992',
+      insurerName: 'Blue Harbor Insurance',
+      adjusterName: 'Jordan Adjuster',
+      expertName: 'Dr. Maya Expert',
+      expertScope: 'Forensic causation and repair-cost reasonableness analysis.',
+      milestoneName: 'Initial inspection complete',
+    },
+  });
+
   const loadMatters = useCallback(async () => {
-    setMatters(await apiFetch<Matter[]>('/matters'));
+    const rows = await apiFetch<Matter[]>('/matters');
+    const uniqueRows = rows.filter(
+      (matter, index, list) => list.findIndex((candidate) => candidate.matterNumber === matter.matterNumber) === index,
+    );
+    setMatters(uniqueRows);
   }, []);
 
   const loadDrafts = useCallback(async () => {
@@ -68,207 +160,211 @@ export default function MattersPage() {
     Promise.all([loadMatters(), loadDrafts()]).catch(() => undefined);
   }, [loadDrafts, loadMatters]);
 
-  async function createMatter(e: FormEvent) {
-    e.preventDefault();
-    await apiFetch('/matters', {
-      method: 'POST',
-      body: JSON.stringify({ matterNumber, name, practiceArea }),
-    });
-    await loadMatters();
-  }
-
-  function buildIntakePayload() {
+  function buildIntakePayload(data: MattersPageFormData) {
     return {
-      matterNumber: `${matterNumber}-INTAKE`,
-      name: `${name} (Intake)`,
-      practiceArea,
+      matterNumber: `${data.matterNumber}-INTAKE`,
+      name: `${data.name} (Intake)`,
+      practiceArea: data.practiceArea,
       property: {
-        addressLine1: propertyAddress,
-        city: propertyCity,
-        state: propertyState,
-        parcelNumber,
+        addressLine1: data.propertyAddress,
+        city: data.propertyCity,
+        state: data.propertyState,
+        parcelNumber: data.parcelNumber,
       },
       contract: {
-        contractDate,
-        contractPrice: Number(contractPrice),
+        contractDate: data.contractDate,
+        contractPrice: asNumber(data.contractPrice),
       },
       defects: [
         {
-          category: defectCategory,
-          severity: defectSeverity,
-          description: defectDescription,
+          category: data.defectCategory,
+          severity: data.defectSeverity,
+          description: data.defectDescription,
         },
       ],
       damages: [
         {
-          category: damageCategory,
-          repairEstimate: Number(repairEstimate),
+          category: data.damageCategory,
+          repairEstimate: asNumber(data.repairEstimate),
         },
       ],
       liens: [
         {
-          claimantName: lienClaimantName,
-          amount: Number(lienAmount),
-          status: lienStatus,
+          claimantName: data.lienClaimantName,
+          amount: asNumber(data.lienAmount),
+          status: data.lienStatus,
         },
       ],
       insuranceClaims: [
         {
-          claimNumber,
-          policyNumber,
-          insurerName,
-          adjusterName,
+          claimNumber: data.claimNumber,
+          policyNumber: data.policyNumber,
+          insurerName: data.insurerName,
+          adjusterName: data.adjusterName,
           status: 'OPEN',
         },
       ],
       expertEngagements: [
         {
-          expertName,
-          scope: expertScope,
+          expertName: data.expertName,
+          scope: data.expertScope,
           status: 'ENGAGED',
         },
       ],
-      milestones: milestoneName ? [{ name: milestoneName, status: 'OPEN' }] : [],
+      milestones: data.milestoneName ? [{ name: data.milestoneName, status: 'OPEN' }] : [],
     };
   }
 
-  function applyIntakePayload(payload: any) {
-    if (!payload || typeof payload !== 'object') return;
+  function applyIntakePayload(payload: IntakeDraftPayload) {
+    const currentValues = getValues();
+    const firstDefect = payload.defects?.[0];
+    const firstDamage = payload.damages?.[0];
+    const firstLien = payload.liens?.[0];
+    const firstClaim = payload.insuranceClaims?.[0];
+    const firstExpert = payload.expertEngagements?.[0];
+    const firstMilestone = payload.milestones?.[0];
 
-    setMatterNumber((payload.matterNumber || '').replace(/-INTAKE$/, '') || matterNumber);
-    setName((payload.name || '').replace(/\s+\(Intake\)$/, '') || name);
-    setPracticeArea(payload.practiceArea || practiceArea);
-
-    setPropertyAddress(payload.property?.addressLine1 || propertyAddress);
-    setPropertyCity(payload.property?.city || propertyCity);
-    setPropertyState(payload.property?.state || propertyState);
-    setParcelNumber(payload.property?.parcelNumber || parcelNumber);
-
-    setContractDate(payload.contract?.contractDate || contractDate);
-    if (payload.contract?.contractPrice !== undefined && payload.contract?.contractPrice !== null) {
-      setContractPrice(String(payload.contract.contractPrice));
-    }
-
-    const defect = payload.defects?.[0] || {};
-    setDefectCategory(defect.category || defectCategory);
-    setDefectSeverity(defect.severity || defectSeverity);
-    setDefectDescription(defect.description || defectDescription);
-
-    const damage = payload.damages?.[0] || {};
-    setDamageCategory(damage.category || damageCategory);
-    if (damage.repairEstimate !== undefined && damage.repairEstimate !== null) {
-      setRepairEstimate(String(damage.repairEstimate));
-    }
-
-    const lien = payload.liens?.[0] || {};
-    setLienClaimantName(lien.claimantName || lienClaimantName);
-    if (lien.amount !== undefined && lien.amount !== null) {
-      setLienAmount(String(lien.amount));
-    }
-    setLienStatus(lien.status || lienStatus);
-
-    const claim = payload.insuranceClaims?.[0] || {};
-    setClaimNumber(claim.claimNumber || claimNumber);
-    setPolicyNumber(claim.policyNumber || policyNumber);
-    setInsurerName(claim.insurerName || insurerName);
-    setAdjusterName(claim.adjusterName || adjusterName);
-
-    const expert = payload.expertEngagements?.[0] || {};
-    setExpertName(expert.expertName || expertName);
-    setExpertScope(expert.scope || expertScope);
-
-    const milestone = payload.milestones?.[0] || {};
-    setMilestoneName(milestone.name || milestoneName);
+    reset({
+      ...currentValues,
+      matterNumber: (payload.matterNumber || '').replace(/-INTAKE$/, '') || currentValues.matterNumber,
+      name: (payload.name || '').replace(/\s+\(Intake\)$/, '') || currentValues.name,
+      practiceArea: payload.practiceArea || currentValues.practiceArea,
+      propertyAddress: payload.property?.addressLine1 || currentValues.propertyAddress,
+      propertyCity: payload.property?.city || currentValues.propertyCity,
+      propertyState: payload.property?.state || currentValues.propertyState,
+      parcelNumber: payload.property?.parcelNumber || currentValues.parcelNumber,
+      contractDate: payload.contract?.contractDate || currentValues.contractDate,
+      contractPrice:
+        payload.contract?.contractPrice !== undefined && payload.contract?.contractPrice !== null
+          ? String(payload.contract.contractPrice)
+          : currentValues.contractPrice,
+      defectCategory: firstDefect?.category || currentValues.defectCategory,
+      defectSeverity: firstDefect?.severity || currentValues.defectSeverity,
+      defectDescription: firstDefect?.description || currentValues.defectDescription,
+      damageCategory: firstDamage?.category || currentValues.damageCategory,
+      repairEstimate:
+        firstDamage?.repairEstimate !== undefined && firstDamage?.repairEstimate !== null
+          ? String(firstDamage.repairEstimate)
+          : currentValues.repairEstimate,
+      lienClaimantName: firstLien?.claimantName || currentValues.lienClaimantName,
+      lienAmount:
+        firstLien?.amount !== undefined && firstLien?.amount !== null
+          ? String(firstLien.amount)
+          : currentValues.lienAmount,
+      lienStatus: firstLien?.status || currentValues.lienStatus,
+      claimNumber: firstClaim?.claimNumber || currentValues.claimNumber,
+      policyNumber: firstClaim?.policyNumber || currentValues.policyNumber,
+      insurerName: firstClaim?.insurerName || currentValues.insurerName,
+      adjusterName: firstClaim?.adjusterName || currentValues.adjusterName,
+      expertName: firstExpert?.expertName || currentValues.expertName,
+      expertScope: firstExpert?.scope || currentValues.expertScope,
+      milestoneName: firstMilestone?.name || currentValues.milestoneName,
+    });
   }
 
-  async function saveIntakeDraft() {
+  const createMatter = handleSubmit(async (data) => {
+    await apiFetch('/matters', {
+      method: 'POST',
+      body: JSON.stringify({
+        matterNumber: data.matterNumber,
+        name: data.name,
+        practiceArea: data.practiceArea,
+      }),
+    });
+    await loadMatters();
+  });
+
+  const saveIntakeDraft = handleSubmit(async (data) => {
     const result = await apiFetch<{ id: string; savedAt: string }>('/matters/intake-wizard/drafts', {
       method: 'POST',
       body: JSON.stringify({
         draftId: selectedDraftId || undefined,
-        payload: buildIntakePayload(),
+        payload: buildIntakePayload(data),
       }),
     });
     await loadDrafts();
     setSelectedDraftId(result.id);
     setWizardStatus(`Draft saved at ${new Date(result.savedAt).toLocaleString()}`);
-  }
+  });
 
   async function resumeDraft() {
     if (!selectedDraftId) return;
-    const draft = await apiFetch<{ id: string; savedAt: string; payload: any }>(`/matters/intake-wizard/drafts/${selectedDraftId}`);
+    const draft = await apiFetch<{ id: string; savedAt: string; payload: IntakeDraftPayload }>(
+      `/matters/intake-wizard/drafts/${selectedDraftId}`,
+    );
     applyIntakePayload(draft.payload);
     setWizardStatus(`Draft loaded from ${new Date(draft.savedAt).toLocaleString()}`);
   }
 
-  async function createViaIntakeWizard() {
+  const createViaIntakeWizard = handleSubmit(async (data) => {
     await apiFetch('/matters/intake-wizard', {
       method: 'POST',
-      body: JSON.stringify(buildIntakePayload()),
+      body: JSON.stringify(buildIntakePayload(data)),
     });
     setWizardStatus('Matter created from intake wizard.');
     await loadMatters();
-  }
+  });
 
   return (
     <AppShell>
-      <PageHeader title="Matters" subtitle="Dashboard-ready matters with participants, timeline, billing, docs, AI workspace, and full construction intake." />
+      <PageHeader
+        title="Matters"
+        subtitle="Dashboard-ready matters with participants, timeline, billing, docs, AI workspace, and full construction intake."
+      />
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <form onSubmit={createMatter} style={{ display: 'grid', gap: 10, gridTemplateColumns: '180px 1fr 1fr 120px' }}>
-          <input className="input" value={matterNumber} onChange={(e) => setMatterNumber(e.target.value)} placeholder="Matter #" />
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Matter Name" />
-          <input className="input" value={practiceArea} onChange={(e) => setPracticeArea(e.target.value)} placeholder="Practice Area" />
-          <button className="button" type="submit">Create</button>
+      <div className="card mb-3">
+        <form onSubmit={createMatter} className="grid-4">
+          <FormField label="Matter Number" name="matter-number" error={errors.matterNumber?.message} required>
+            <Input placeholder="Matter #" {...register('matterNumber')} invalid={!!errors.matterNumber} />
+          </FormField>
+          <FormField label="Matter Name" name="matter-name" error={errors.name?.message} required>
+            <Input placeholder="Matter Name" {...register('name')} invalid={!!errors.name} />
+          </FormField>
+          <FormField label="Practice Area" name="practice-area" error={errors.practiceArea?.message} required>
+            <Input placeholder="Practice Area" {...register('practiceArea')} invalid={!!errors.practiceArea} />
+          </FormField>
+          <Button type="submit">Create</Button>
         </form>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Construction Intake Wizard</h3>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-          <input className="input" value={propertyAddress} onChange={(e) => setPropertyAddress(e.target.value)} placeholder="Property address" />
-          <input className="input" value={propertyCity} onChange={(e) => setPropertyCity(e.target.value)} placeholder="City" />
-          <input className="input" value={propertyState} onChange={(e) => setPropertyState(e.target.value)} placeholder="State" />
-          <input className="input" value={parcelNumber} onChange={(e) => setParcelNumber(e.target.value)} placeholder="Parcel/APN" />
-          <input className="input" value={contractDate} onChange={(e) => setContractDate(e.target.value)} placeholder="Contract date (YYYY-MM-DD)" />
-          <input className="input" value={contractPrice} onChange={(e) => setContractPrice(e.target.value)} placeholder="Contract price" />
-          <input className="input" value={defectCategory} onChange={(e) => setDefectCategory(e.target.value)} placeholder="Defect category" />
-          <input className="input" value={defectSeverity} onChange={(e) => setDefectSeverity(e.target.value)} placeholder="Defect severity" />
-          <input className="input" value={defectDescription} onChange={(e) => setDefectDescription(e.target.value)} placeholder="Defect description" />
-          <input className="input" value={damageCategory} onChange={(e) => setDamageCategory(e.target.value)} placeholder="Damages category" />
-          <input className="input" value={repairEstimate} onChange={(e) => setRepairEstimate(e.target.value)} placeholder="Repair estimate" />
-          <input className="input" value={lienClaimantName} onChange={(e) => setLienClaimantName(e.target.value)} placeholder="Lien claimant name" />
-          <input className="input" value={lienAmount} onChange={(e) => setLienAmount(e.target.value)} placeholder="Lien amount" />
-          <input className="input" value={lienStatus} onChange={(e) => setLienStatus(e.target.value)} placeholder="Lien status" />
-          <input className="input" value={claimNumber} onChange={(e) => setClaimNumber(e.target.value)} placeholder="Claim number" />
-          <input className="input" value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)} placeholder="Policy number" />
-          <input className="input" value={insurerName} onChange={(e) => setInsurerName(e.target.value)} placeholder="Insurer name" />
-          <input className="input" value={adjusterName} onChange={(e) => setAdjusterName(e.target.value)} placeholder="Adjuster name" />
-          <input className="input" value={expertName} onChange={(e) => setExpertName(e.target.value)} placeholder="Expert name" />
-          <input className="input" value={expertScope} onChange={(e) => setExpertScope(e.target.value)} placeholder="Expert scope" />
-          <input className="input" value={milestoneName} onChange={(e) => setMilestoneName(e.target.value)} placeholder="Project milestone" />
+      <div className="card mb-3 stack-3">
+        <h3>Construction Intake Wizard</h3>
+        <div className="form-grid-3">
+          {intakeFields.map((field) => (
+            <FormField key={field.key} label={field.label} name={`intake-${field.key}`}>
+              <Input placeholder={field.placeholder} {...register(field.key)} />
+            </FormField>
+          ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 10, marginTop: 12 }}>
-          <select
-            className="input"
-            value={selectedDraftId}
-            onChange={(e) => setSelectedDraftId(e.target.value)}
-            aria-label="Intake draft selector"
-          >
-            <option value="">Select draft...</option>
-            {drafts.map((draft) => (
-              <option key={draft.id} value={draft.id}>
-                {draft.label}
-              </option>
-            ))}
-          </select>
-          <button className="button ghost" type="button" onClick={saveIntakeDraft}>Save Intake Draft</button>
-          <button className="button ghost" type="button" onClick={resumeDraft} disabled={!selectedDraftId}>Resume Draft</button>
-          <button className="button secondary" type="button" onClick={createViaIntakeWizard}>Create via Intake Wizard</button>
+        <div className="grid-4">
+          <FormField label="Saved Drafts" name="intake-draft-selector">
+            <Select
+              value={selectedDraftId}
+              onChange={(event) => setSelectedDraftId(event.target.value)}
+              aria-label="Intake draft selector"
+            >
+              <option value="">Select draft...</option>
+              {drafts.map((draft) => (
+                <option key={draft.id} value={draft.id}>
+                  {draft.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <Button tone="ghost" type="button" onClick={saveIntakeDraft}>
+            Save Intake Draft
+          </Button>
+          <Button tone="ghost" type="button" onClick={resumeDraft} disabled={!selectedDraftId}>
+            Resume Draft
+          </Button>
+          <Button tone="secondary" type="button" onClick={createViaIntakeWizard}>
+            Create via Intake Wizard
+          </Button>
         </div>
+
         {wizardStatus ? (
-          <div style={{ marginTop: 10 }}>
+          <div className="mt-2">
             <span className="badge">{wizardStatus}</span>
           </div>
         ) : null}

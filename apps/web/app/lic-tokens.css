@@ -45,6 +45,7 @@
   --lic-font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --lic-font-condensed: var(--font-condensed), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --lic-font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --lic-font-serif: var(--font-serif), Georgia, 'Times New Roman', serif;
 
   --lic-motion-instant: 0ms;
   --lic-motion-fast: 80ms;

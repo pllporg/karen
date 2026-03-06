@@ -54,4 +54,33 @@ describe('ConfirmDialog', () => {
       expect(trigger).toHaveFocus();
     });
   });
+
+  it('requires exact typed confirmation when configured', () => {
+    const onConfirm = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        title="Confirm External Send"
+        description="External send requires explicit approval."
+        confirmLabel="Approve Send"
+        cancelLabel="Return to Review"
+        typedConfirmation="APPROVE SEND"
+        onCancel={() => undefined}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const approveButton = screen.getByRole('button', { name: 'Approve Send' });
+    const confirmationInput = screen.getByPlaceholderText('Type "APPROVE SEND" to confirm');
+
+    expect(approveButton).toBeDisabled();
+    fireEvent.change(confirmationInput, { target: { value: 'APPROVE' } });
+    expect(approveButton).toBeDisabled();
+
+    fireEvent.change(confirmationInput, { target: { value: 'APPROVE SEND' } });
+    expect(approveButton).toBeEnabled();
+
+    fireEvent.click(approveButton);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
 });
