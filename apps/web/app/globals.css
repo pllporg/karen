@@ -1865,6 +1865,83 @@ button.stepper-circle {
   padding-top: var(--lic-4);
 }
 
+.engagement-template-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.engagement-template-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lic-2);
+  min-height: 132px;
+  border: var(--lic-rule-1) solid var(--lic-fog);
+  background: var(--lic-surface-1);
+  padding: var(--lic-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.engagement-template-card[data-active='true'] {
+  border: var(--lic-rule-2) solid var(--lic-institutional);
+  padding: calc(var(--lic-3) - 1px);
+}
+
+.engagement-template-name {
+  font-family: var(--lic-font-condensed);
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.engagement-template-detail {
+  color: var(--lic-text-1);
+  font-size: 0.875rem;
+}
+
+.engagement-secondary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--lic-2);
+  align-items: end;
+}
+
+.engagement-status-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--lic-2);
+}
+
+.engagement-status-step {
+  display: flex;
+  align-items: center;
+  gap: var(--lic-2);
+}
+
+.engagement-status-circle {
+  width: 14px;
+  height: 14px;
+  border: var(--lic-rule-1) solid var(--lic-fog);
+  background: var(--lic-paper);
+  flex-shrink: 0;
+}
+
+.engagement-status-step[data-complete='true'] .engagement-status-circle {
+  border-color: var(--lic-ink);
+  background: var(--lic-ink);
+}
+
+.engagement-status-step[data-active='true'] .engagement-status-circle {
+  border-color: var(--lic-institutional);
+  background: var(--lic-institutional);
+}
+
+.engagement-status-label {
+  font-family: var(--lic-font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .intake-duplicate-alert {
   border-left: var(--lic-rule-2) solid var(--lic-filing-red);
   padding: var(--lic-3);
@@ -2079,6 +2156,12 @@ button.stepper-circle {
   }
 
   .conflict-query-row {
+    grid-template-columns: 1fr;
+  }
+
+  .engagement-template-grid,
+  .engagement-secondary-row,
+  .engagement-status-track {
     grid-template-columns: 1fr;
   }
 }
