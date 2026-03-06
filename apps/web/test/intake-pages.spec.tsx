@@ -29,13 +29,16 @@ describe('Intake routes', () => {
   });
 
   it('renders intake queue rows from leads API', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(
+    const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse([
         {
           id: 'lead-1',
-          source: 'Website Form',
+          name: 'John Smith',
+          source: 'Portal Intake',
           stage: 'NEW',
-          notes: null,
+          type: 'CD',
+          attorneyName: 'KL',
+          isPortalOrigin: true,
           createdAt: '2026-02-20T01:00:00.000Z',
           updatedAt: '2026-02-20T01:00:00.000Z',
         },
@@ -47,16 +50,64 @@ describe('Intake routes', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:4000/leads',
+        'http://localhost:4000/leads?page=1&pageSize=25',
         expect.objectContaining({ credentials: 'include' }),
       );
     });
 
-    expect(await screen.findByText('Website Form')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Intake' })).toHaveAttribute('href', '/intake/lead-1/intake');
-    expect(screen.getByRole('link', { name: 'Conflict' })).toHaveAttribute('href', '/intake/lead-1/conflict');
-    expect(screen.getByRole('link', { name: 'Engagement' })).toHaveAttribute('href', '/intake/lead-1/engagement');
-    expect(screen.getByRole('link', { name: 'Convert' })).toHaveAttribute('href', '/intake/lead-1/convert');
+    expect(await screen.findByText('John Smith')).toBeInTheDocument();
+    expect(screen.getByText('Portal Intake')).toBeInTheDocument();
+    expect(screen.getByText('KL')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/intake/lead-1/intake');
+    expect(screen.getByText(/Showing 1-1 of 1/i)).toBeInTheDocument();
+  });
+
+  it('filters queue rows by stage tab and search input', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse([
+        {
+          id: 'lead-1',
+          name: 'John Smith',
+          source: 'Website Form',
+          stage: 'NEW',
+          type: 'CD',
+          attorneyName: 'KL',
+          isPortalOrigin: false,
+          createdAt: '2026-02-20T01:00:00.000Z',
+          updatedAt: '2026-02-20T01:00:00.000Z',
+        },
+        {
+          id: 'lead-2',
+          name: 'Builder Supply',
+          source: 'Portal Intake',
+          stage: 'CONFLICT_HOLD',
+          type: 'CL',
+          attorneyName: 'MR',
+          isPortalOrigin: true,
+          createdAt: '2026-02-20T01:00:00.000Z',
+          updatedAt: '2026-02-20T01:00:00.000Z',
+        },
+      ]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<IntakeQueuePage />);
+
+    expect(await screen.findByText('John Smith')).toBeInTheDocument();
+    expect(screen.getByText('Builder Supply')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Conflict Hold/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('John Smith')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Builder Supply')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Search leads/i), { target: { value: 'absent record' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No leads match the current filter.')).toBeInTheDocument();
+    });
   });
 
   it('creates lead then redirects from /intake/new', async () => {
