@@ -1269,7 +1269,7 @@ textarea:focus-visible,
 .stepper-circle {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--lic-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1490,7 +1490,7 @@ button.stepper-circle {
 .radio-circle {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: var(--lic-radius);
   border: var(--lic-rule-1) solid var(--lic-ink);
   background: var(--lic-paper);
   display: inline-flex;
@@ -1503,7 +1503,7 @@ button.stepper-circle {
   content: '';
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--lic-radius);
   background: var(--lic-ink);
 }
 
