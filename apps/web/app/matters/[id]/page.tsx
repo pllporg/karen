@@ -35,24 +35,11 @@ export default function MatterDashboardPage() {
           <OverviewPanel
             dashboard={vm.dashboard}
             editingOverview={vm.editingOverview}
-            setEditingOverview={vm.setEditingOverview}
-            overviewName={vm.overviewName}
-            setOverviewName={vm.setOverviewName}
-            overviewMatterNumber={vm.overviewMatterNumber}
-            setOverviewMatterNumber={vm.setOverviewMatterNumber}
-            overviewPracticeArea={vm.overviewPracticeArea}
-            setOverviewPracticeArea={vm.setOverviewPracticeArea}
-            overviewStatus={vm.overviewStatus}
-            setOverviewStatus={vm.setOverviewStatus}
-            overviewVenue={vm.overviewVenue}
-            setOverviewVenue={vm.setOverviewVenue}
-            overviewJurisdiction={vm.overviewJurisdiction}
-            setOverviewJurisdiction={vm.setOverviewJurisdiction}
-            overviewOpenedAt={vm.overviewOpenedAt}
-            setOverviewOpenedAt={vm.setOverviewOpenedAt}
-            overviewClosedAt={vm.overviewClosedAt}
-            setOverviewClosedAt={vm.setOverviewClosedAt}
+            register={vm.overviewForm.register}
+            errors={vm.overviewForm.formState.errors}
+            isSubmitting={vm.overviewForm.formState.isSubmitting}
             overviewStatusMessage={vm.overviewStatusMessage}
+            startOverviewEdit={vm.startOverviewEdit}
             updateMatterOverview={vm.updateMatterOverview}
             cancelOverviewEdit={vm.cancelOverviewEdit}
           />
@@ -63,25 +50,23 @@ export default function MatterDashboardPage() {
             dashboard={vm.dashboard}
             participantContacts={vm.participantContacts}
             participantRoleOptions={vm.participantRoleOptions}
+            register={vm.participantForm.register}
+            errors={vm.participantForm.formState.errors}
+            isSubmitting={vm.participantForm.formState.isSubmitting}
             selectedParticipantContactId={vm.selectedParticipantContactId}
-            setSelectedParticipantContactId={vm.setSelectedParticipantContactId}
             selectedParticipantRoleKey={vm.selectedParticipantRoleKey}
-            setSelectedParticipantRoleKey={vm.setSelectedParticipantRoleKey}
             participantSide={vm.participantSide}
-            setParticipantSide={vm.setParticipantSide}
             participantIsPrimary={vm.participantIsPrimary}
-            setParticipantIsPrimary={vm.setParticipantIsPrimary}
             participantRepresentedByContactId={vm.participantRepresentedByContactId}
-            setParticipantRepresentedByContactId={vm.setParticipantRepresentedByContactId}
             participantLawFirmContactId={vm.participantLawFirmContactId}
-            setParticipantLawFirmContactId={vm.setParticipantLawFirmContactId}
             participantNotes={vm.participantNotes}
-            setParticipantNotes={vm.setParticipantNotes}
             participantRoleIsCounsel={vm.participantRoleIsCounsel}
             participantStatusMessage={vm.participantStatusMessage}
             editingParticipantId={vm.editingParticipantId}
             createOrUpdateParticipant={vm.createOrUpdateParticipant}
             cancelEditingParticipant={vm.cancelEditingParticipant}
+            onParticipantRoleChange={vm.onParticipantRoleChange}
+            onParticipantSideChange={vm.onParticipantSideChange}
             startEditingParticipant={vm.startEditingParticipant}
             removeParticipant={vm.removeParticipant}
           />
@@ -90,12 +75,9 @@ export default function MatterDashboardPage() {
 
           <TasksPanel
             dashboard={vm.dashboard}
-            taskTitle={vm.taskTitle}
-            setTaskTitle={vm.setTaskTitle}
-            taskDueAt={vm.taskDueAt}
-            setTaskDueAt={vm.setTaskDueAt}
-            taskPriority={vm.taskPriority}
-            setTaskPriority={vm.setTaskPriority}
+            register={vm.taskForm.register}
+            errors={vm.taskForm.formState.errors}
+            isSubmitting={vm.taskForm.formState.isSubmitting}
             taskStatusMessage={vm.taskStatusMessage}
             editingTaskId={vm.editingTaskId}
             createOrUpdateTask={vm.createOrUpdateTask}
@@ -107,14 +89,9 @@ export default function MatterDashboardPage() {
 
           <CalendarPanel
             dashboard={vm.dashboard}
-            eventType={vm.eventType}
-            setEventType={vm.setEventType}
-            eventStartAt={vm.eventStartAt}
-            setEventStartAt={vm.setEventStartAt}
-            eventEndAt={vm.eventEndAt}
-            setEventEndAt={vm.setEventEndAt}
-            eventLocation={vm.eventLocation}
-            setEventLocation={vm.setEventLocation}
+            register={vm.calendarEventForm.register}
+            errors={vm.calendarEventForm.formState.errors}
+            isSubmitting={vm.calendarEventForm.formState.isSubmitting}
             calendarStatusMessage={vm.calendarStatusMessage}
             editingCalendarEventId={vm.editingCalendarEventId}
             createOrUpdateCalendarEvent={vm.createOrUpdateCalendarEvent}
@@ -143,22 +120,10 @@ export default function MatterDashboardPage() {
           <CommunicationsPanel
             dashboard={vm.dashboard}
             participantContacts={vm.participantContacts}
+            register={vm.communicationForm.register}
+            errors={vm.communicationForm.formState.errors}
+            isSubmitting={vm.communicationForm.formState.isSubmitting}
             selectedCommunicationThreadId={vm.selectedCommunicationThreadId}
-            setSelectedCommunicationThreadId={vm.setSelectedCommunicationThreadId}
-            newCommunicationThreadSubject={vm.newCommunicationThreadSubject}
-            setNewCommunicationThreadSubject={vm.setNewCommunicationThreadSubject}
-            communicationType={vm.communicationType}
-            setCommunicationType={vm.setCommunicationType}
-            communicationDirection={vm.communicationDirection}
-            setCommunicationDirection={vm.setCommunicationDirection}
-            communicationSubject={vm.communicationSubject}
-            setCommunicationSubject={vm.setCommunicationSubject}
-            communicationBody={vm.communicationBody}
-            setCommunicationBody={vm.setCommunicationBody}
-            communicationParticipantContactId={vm.communicationParticipantContactId}
-            setCommunicationParticipantContactId={vm.setCommunicationParticipantContactId}
-            communicationOccurredAt={vm.communicationOccurredAt}
-            setCommunicationOccurredAt={vm.setCommunicationOccurredAt}
             communicationStatusMessage={vm.communicationStatusMessage}
             editingCommunicationId={vm.editingCommunicationId}
             communicationRows={vm.communicationRows}

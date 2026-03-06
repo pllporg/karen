@@ -1,7 +1,28 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
+import { Button } from '../../components/ui/button';
+import { FormField } from '../../components/ui/form-field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import {
+  adminConflictCheckSchema,
+  adminConflictResolutionSchema,
+  conflictProfileConfigSchema,
+  customFieldConfigSchema,
+  participantRoleConfigSchema,
+  sectionConfigSchema,
+  type AdminConflictCheckFormData,
+  type AdminConflictResolutionFormData,
+  type ConflictProfileConfigFormData,
+  type CustomFieldConfigFormData,
+  type ParticipantRoleConfigFormData,
+  type SectionConfigFormData,
+} from '../../lib/schemas/admin-config';
 import { AdminOperationsPanels } from './admin-operations-panels';
 import { useAdminPage } from './use-admin-page';
 
@@ -19,19 +40,6 @@ export default function AdminPage() {
     conflictChecks,
     webhookEndpoints,
     webhookDeliveries,
-    customFieldKey,
-    customFieldLabel,
-    sectionName,
-    participantRoleKey,
-    participantRoleLabel,
-    participantRoleSide,
-    conflictProfileName,
-    conflictWarnThreshold,
-    conflictBlockThreshold,
-    conflictQuery,
-    selectedConflictProfileId,
-    resolutionDecision,
-    resolutionRationale,
     webhookStatusFilter,
     webhookError,
     retryingDeliveryId,
@@ -39,19 +47,6 @@ export default function AdminPage() {
     providerStatusError,
     launchBlockers,
     launchBlockersError,
-    setCustomFieldKey,
-    setCustomFieldLabel,
-    setSectionName,
-    setParticipantRoleKey,
-    setParticipantRoleLabel,
-    setParticipantRoleSide,
-    setConflictProfileName,
-    setConflictWarnThreshold,
-    setConflictBlockThreshold,
-    setConflictQuery,
-    setSelectedConflictProfileId,
-    setResolutionDecision,
-    setResolutionRationale,
     createCustomField,
     createSection,
     createParticipantRole,
@@ -61,6 +56,100 @@ export default function AdminPage() {
     updateWebhookFilter,
     retryWebhookDelivery,
   } = useAdminPage();
+
+  const customFieldForm = useForm<CustomFieldConfigFormData>({
+    resolver: zodResolver(customFieldConfigSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      key: 'project_address',
+      label: 'Project Address',
+    },
+  });
+  const sectionForm = useForm<SectionConfigFormData>({
+    resolver: zodResolver(sectionConfigSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: 'Defect Summary',
+    },
+  });
+  const participantRoleForm = useForm<ParticipantRoleConfigFormData>({
+    resolver: zodResolver(participantRoleConfigSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      key: 'opposing_party',
+      label: 'Opposing Party',
+      sideDefault: 'OPPOSING_SIDE',
+    },
+  });
+  const conflictProfileForm = useForm<ConflictProfileConfigFormData>({
+    resolver: zodResolver(conflictProfileConfigSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: 'Construction Litigation Default',
+      warnThreshold: '45',
+      blockThreshold: '70',
+    },
+  });
+  const conflictCheckForm = useForm<AdminConflictCheckFormData>({
+    resolver: zodResolver(adminConflictCheckSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      queryText: 'Jane Doe',
+      profileId: '',
+    },
+  });
+  const conflictResolutionForm = useForm<AdminConflictResolutionFormData>({
+    resolver: zodResolver(adminConflictResolutionSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      decision: 'WAIVE',
+      rationale: 'Attorney override after review of unrelated prior engagement.',
+    },
+  });
+
+  useEffect(() => {
+    const currentProfileId = conflictCheckForm.getValues('profileId');
+    if (!currentProfileId && conflictProfiles[0]?.id) {
+      conflictCheckForm.setValue('profileId', conflictProfiles[0].id, { shouldDirty: false });
+    }
+  }, [conflictProfiles, conflictCheckForm]);
+
+  const submitCustomField = customFieldForm.handleSubmit(async (values) => {
+    await createCustomField(values);
+    customFieldForm.reset({
+      key: '',
+      label: '',
+    });
+  });
+
+  const submitSection = sectionForm.handleSubmit(async (values) => {
+    await createSection(values);
+    sectionForm.reset({
+      name: '',
+    });
+  });
+
+  const submitParticipantRole = participantRoleForm.handleSubmit(async (values) => {
+    await createParticipantRole(values);
+    participantRoleForm.reset({
+      key: '',
+      label: '',
+      sideDefault: values.sideDefault,
+    });
+  });
+
+  const submitConflictProfile = conflictProfileForm.handleSubmit(async (values) => {
+    await createConflictProfile(values);
+  });
+
+  const submitConflictCheck = conflictCheckForm.handleSubmit(async (values) => {
+    await runConflictCheck(values);
+  });
+
+  const resolveConflict = (checkId: string) =>
+    conflictResolutionForm.handleSubmit(async (values) => {
+      await resolveConflictCheck(checkId, values);
+    });
 
   return (
     <AppShell>
@@ -119,31 +208,47 @@ export default function AdminPage() {
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Participant Roles</h3>
-          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 220px auto', marginBottom: 12 }}>
-            <input
-              className="input"
-              value={participantRoleKey}
-              onChange={(e) => setParticipantRoleKey(e.target.value)}
-              placeholder="Role key (e.g. opposing_counsel)"
-            />
-            <input
-              className="input"
-              value={participantRoleLabel}
-              onChange={(e) => setParticipantRoleLabel(e.target.value)}
-              placeholder="Role label"
-            />
-            <select
-              className="input"
-              value={participantRoleSide}
-              onChange={(e) => setParticipantRoleSide(e.target.value as 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT')}
+          <form
+            style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 220px auto', marginBottom: 12 }}
+            onSubmit={submitParticipantRole}
+          >
+            <FormField label="Role Key" name="participant-role-key" error={participantRoleForm.formState.errors.key?.message} required>
+              <Input
+                placeholder="Role key (e.g. opposing_counsel)"
+                {...participantRoleForm.register('key')}
+                invalid={!!participantRoleForm.formState.errors.key}
+              />
+            </FormField>
+            <FormField label="Role Label" name="participant-role-label" error={participantRoleForm.formState.errors.label?.message} required>
+              <Input
+                placeholder="Role label"
+                {...participantRoleForm.register('label')}
+                invalid={!!participantRoleForm.formState.errors.label}
+              />
+            </FormField>
+            <FormField
+              label="Default Side"
+              name="participant-role-side"
+              error={participantRoleForm.formState.errors.sideDefault?.message}
+              required
             >
-              <option value="CLIENT_SIDE">CLIENT_SIDE</option>
-              <option value="OPPOSING_SIDE">OPPOSING_SIDE</option>
-              <option value="NEUTRAL">NEUTRAL</option>
-              <option value="COURT">COURT</option>
-            </select>
-            <button className="button secondary" onClick={createParticipantRole}>Save Role</button>
-          </div>
+              <Select
+                {...participantRoleForm.register('sideDefault')}
+                invalid={!!participantRoleForm.formState.errors.sideDefault}
+              >
+                <option value="CLIENT_SIDE">CLIENT_SIDE</option>
+                <option value="OPPOSING_SIDE">OPPOSING_SIDE</option>
+                <option value="NEUTRAL">NEUTRAL</option>
+                <option value="COURT">COURT</option>
+              </Select>
+            </FormField>
+            <div className="stack-2">
+              <p className="type-label">Save</p>
+              <Button tone="secondary" type="submit" disabled={participantRoleForm.formState.isSubmitting}>
+                {participantRoleForm.formState.isSubmitting ? 'Working...' : 'Save Role'}
+              </Button>
+            </div>
+          </form>
           <table className="table">
             <thead>
               <tr>
@@ -186,11 +291,25 @@ export default function AdminPage() {
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Custom Field Builder</h3>
-          <div style={{ display: 'grid', gap: 8 }}>
-            <input className="input" value={customFieldKey} onChange={(e) => setCustomFieldKey(e.target.value)} placeholder="Field key" />
-            <input className="input" value={customFieldLabel} onChange={(e) => setCustomFieldLabel(e.target.value)} placeholder="Field label" />
-            <button className="button" onClick={createCustomField}>Create Custom Field</button>
-          </div>
+          <form style={{ display: 'grid', gap: 8 }} onSubmit={submitCustomField}>
+            <FormField label="Field Key" name="custom-field-key" error={customFieldForm.formState.errors.key?.message} required>
+              <Input
+                placeholder="Field key"
+                {...customFieldForm.register('key')}
+                invalid={!!customFieldForm.formState.errors.key}
+              />
+            </FormField>
+            <FormField label="Field Label" name="custom-field-label" error={customFieldForm.formState.errors.label?.message} required>
+              <Input
+                placeholder="Field label"
+                {...customFieldForm.register('label')}
+                invalid={!!customFieldForm.formState.errors.label}
+              />
+            </FormField>
+            <Button type="submit" disabled={customFieldForm.formState.isSubmitting}>
+              {customFieldForm.formState.isSubmitting ? 'Working...' : 'Create Custom Field'}
+            </Button>
+          </form>
           <ul style={{ marginTop: 10, paddingLeft: 18 }}>
             {customFields.slice(0, 8).map((field) => (
               <li key={field.id}>{field.entityType}.{field.key} - {field.label}</li>
@@ -200,10 +319,18 @@ export default function AdminPage() {
 
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Section Builder</h3>
-          <div style={{ display: 'grid', gap: 8 }}>
-            <input className="input" value={sectionName} onChange={(e) => setSectionName(e.target.value)} placeholder="Section name" />
-            <button className="button secondary" onClick={createSection}>Create Section</button>
-          </div>
+          <form style={{ display: 'grid', gap: 8 }} onSubmit={submitSection}>
+            <FormField label="Section Name" name="section-name" error={sectionForm.formState.errors.name?.message} required>
+              <Input
+                placeholder="Section name"
+                {...sectionForm.register('name')}
+                invalid={!!sectionForm.formState.errors.name}
+              />
+            </FormField>
+            <Button tone="secondary" type="submit" disabled={sectionForm.formState.isSubmitting}>
+              {sectionForm.formState.isSubmitting ? 'Working...' : 'Create Section'}
+            </Button>
+          </form>
           <ul style={{ marginTop: 10, paddingLeft: 18 }}>
             {sections.slice(0, 8).map((section) => (
               <li key={section.id}>{section.name}</li>
@@ -213,27 +340,48 @@ export default function AdminPage() {
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Conflict Rule Profiles</h3>
-          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 140px 140px auto', marginBottom: 12 }}>
-            <input
-              className="input"
-              value={conflictProfileName}
-              onChange={(e) => setConflictProfileName(e.target.value)}
-              placeholder="Profile name"
-            />
-            <input
-              className="input"
-              value={conflictWarnThreshold}
-              onChange={(e) => setConflictWarnThreshold(e.target.value)}
-              placeholder="Warn threshold"
-            />
-            <input
-              className="input"
-              value={conflictBlockThreshold}
-              onChange={(e) => setConflictBlockThreshold(e.target.value)}
-              placeholder="Block threshold"
-            />
-            <button className="button secondary" onClick={createConflictProfile}>Save Profile</button>
-          </div>
+          <form
+            style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 140px 140px auto', marginBottom: 12 }}
+            onSubmit={submitConflictProfile}
+          >
+            <FormField label="Profile Name" name="conflict-profile-name" error={conflictProfileForm.formState.errors.name?.message} required>
+              <Input
+                placeholder="Profile name"
+                {...conflictProfileForm.register('name')}
+                invalid={!!conflictProfileForm.formState.errors.name}
+              />
+            </FormField>
+            <FormField
+              label="Warn Threshold"
+              name="conflict-warn-threshold"
+              error={conflictProfileForm.formState.errors.warnThreshold?.message}
+              required
+            >
+              <Input
+                placeholder="Warn threshold"
+                {...conflictProfileForm.register('warnThreshold')}
+                invalid={!!conflictProfileForm.formState.errors.warnThreshold}
+              />
+            </FormField>
+            <FormField
+              label="Block Threshold"
+              name="conflict-block-threshold"
+              error={conflictProfileForm.formState.errors.blockThreshold?.message}
+              required
+            >
+              <Input
+                placeholder="Block threshold"
+                {...conflictProfileForm.register('blockThreshold')}
+                invalid={!!conflictProfileForm.formState.errors.blockThreshold}
+              />
+            </FormField>
+            <div className="stack-2">
+              <p className="type-label">Save</p>
+              <Button tone="secondary" type="submit" disabled={conflictProfileForm.formState.isSubmitting}>
+                {conflictProfileForm.formState.isSubmitting ? 'Working...' : 'Save Profile'}
+              </Button>
+            </div>
+          </form>
           <table className="table">
             <thead>
               <tr>
@@ -258,46 +406,67 @@ export default function AdminPage() {
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Conflict Checks</h3>
-          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 260px auto', marginBottom: 12 }}>
-            <input
-              className="input"
-              value={conflictQuery}
-              onChange={(e) => setConflictQuery(e.target.value)}
-              placeholder="Conflict query text"
-            />
-            <select
-              className="select"
-              value={selectedConflictProfileId}
-              onChange={(e) => setSelectedConflictProfileId(e.target.value)}
+          <form
+            style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 260px auto', marginBottom: 12 }}
+            onSubmit={submitConflictCheck}
+          >
+            <FormField
+              label="Conflict Query"
+              name="admin-conflict-query"
+              error={conflictCheckForm.formState.errors.queryText?.message}
+              required
             >
-              <option value="">Auto-select profile</option>
-              {conflictProfiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.name}
-                </option>
-              ))}
-            </select>
-            <button className="button" onClick={runConflictCheck}>Run Check</button>
-          </div>
+              <Input
+                placeholder="Conflict query text"
+                {...conflictCheckForm.register('queryText')}
+                invalid={!!conflictCheckForm.formState.errors.queryText}
+              />
+            </FormField>
+            <FormField label="Conflict Profile" name="admin-conflict-profile">
+              <Select {...conflictCheckForm.register('profileId')}>
+                <option value="">Auto-select profile</option>
+                {conflictProfiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.name}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <div className="stack-2">
+              <p className="type-label">Run</p>
+              <Button type="submit" disabled={conflictCheckForm.formState.isSubmitting}>
+                {conflictCheckForm.formState.isSubmitting ? 'Working...' : 'Run Check'}
+              </Button>
+            </div>
+          </form>
 
-          <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '160px 1fr auto', marginBottom: 12 }}>
-            <select
-              className="select"
-              value={resolutionDecision}
-              onChange={(e) => setResolutionDecision(e.target.value as 'CLEAR' | 'WAIVE' | 'BLOCK')}
+          <form style={{ display: 'grid', gap: 8, gridTemplateColumns: '160px 1fr auto', marginBottom: 12 }}>
+            <FormField
+              label="Resolution Decision"
+              name="admin-resolution-decision"
+              error={conflictResolutionForm.formState.errors.decision?.message}
+              required
             >
-              <option value="CLEAR">CLEAR</option>
-              <option value="WAIVE">WAIVE</option>
-              <option value="BLOCK">BLOCK</option>
-            </select>
-            <input
-              className="input"
-              value={resolutionRationale}
-              onChange={(e) => setResolutionRationale(e.target.value)}
-              placeholder="Resolution rationale"
-            />
+              <Select {...conflictResolutionForm.register('decision')}>
+                <option value="CLEAR">CLEAR</option>
+                <option value="WAIVE">WAIVE</option>
+                <option value="BLOCK">BLOCK</option>
+              </Select>
+            </FormField>
+            <FormField
+              label="Resolution Rationale"
+              name="admin-resolution-rationale"
+              error={conflictResolutionForm.formState.errors.rationale?.message}
+              required
+            >
+              <Input
+                placeholder="Resolution rationale"
+                {...conflictResolutionForm.register('rationale')}
+                invalid={!!conflictResolutionForm.formState.errors.rationale}
+              />
+            </FormField>
             <span style={{ color: 'var(--lic-text-muted)', alignSelf: 'center' }}>Use Resolve on a row below</span>
-          </div>
+          </form>
 
           <table className="table">
             <thead>
@@ -320,7 +489,7 @@ export default function AdminPage() {
                     <button
                       className="button ghost"
                       type="button"
-                      onClick={() => resolveConflictCheck(check.id)}
+                      onClick={() => void resolveConflict(check.id)()}
                     >
                       Resolve
                     </button>

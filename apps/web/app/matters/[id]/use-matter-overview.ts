@@ -1,34 +1,54 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { apiFetch } from '../../../lib/api';
-import { MATTER_STATUS_OPTIONS } from './types';
+import { matterOverviewSchema, type MatterOverviewFormData } from '../../../lib/schemas/matter-overview';
 import { toDateTimeLocalValue } from './utils';
 
 export function useMatterOverview(matterId: string, refreshDashboard: () => Promise<void>) {
   const [editingOverview, setEditingOverview] = useState(false);
-  const [overviewName, setOverviewName] = useState('');
-  const [overviewMatterNumber, setOverviewMatterNumber] = useState('');
-  const [overviewPracticeArea, setOverviewPracticeArea] = useState('');
-  const [overviewStatus, setOverviewStatus] = useState<(typeof MATTER_STATUS_OPTIONS)[number]>('OPEN');
-  const [overviewVenue, setOverviewVenue] = useState('');
-  const [overviewJurisdiction, setOverviewJurisdiction] = useState('');
-  const [overviewOpenedAt, setOverviewOpenedAt] = useState('');
-  const [overviewClosedAt, setOverviewClosedAt] = useState('');
   const [overviewStatusMessage, setOverviewStatusMessage] = useState<string | null>(null);
+  const overviewForm = useForm<MatterOverviewFormData>({
+    resolver: zodResolver(matterOverviewSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: '',
+      matterNumber: '',
+      practiceArea: '',
+      status: 'OPEN',
+      venue: '',
+      jurisdiction: '',
+      openedAt: '',
+      closedAt: '',
+    },
+  });
 
   const syncOverviewFromDashboard = useCallback((nextDashboard: any) => {
-    setOverviewName(nextDashboard.name || '');
-    setOverviewMatterNumber(nextDashboard.matterNumber || '');
-    setOverviewPracticeArea(nextDashboard.practiceArea || '');
-    setOverviewStatus(
-      MATTER_STATUS_OPTIONS.includes(nextDashboard.status as (typeof MATTER_STATUS_OPTIONS)[number])
-        ? nextDashboard.status
-        : 'OPEN',
-    );
-    setOverviewVenue(nextDashboard.venue || '');
-    setOverviewJurisdiction(nextDashboard.jurisdiction || '');
-    setOverviewOpenedAt(toDateTimeLocalValue(nextDashboard.openedAt));
-    setOverviewClosedAt(toDateTimeLocalValue(nextDashboard.closedAt));
-  }, []);
+    overviewForm.reset({
+      name: nextDashboard.name || '',
+      matterNumber: nextDashboard.matterNumber || '',
+      practiceArea: nextDashboard.practiceArea || '',
+      status:
+        nextDashboard.status === 'OPEN' ||
+        nextDashboard.status === 'PENDING' ||
+        nextDashboard.status === 'CLOSED' ||
+        nextDashboard.status === 'ARCHIVED'
+          ? nextDashboard.status
+          : 'OPEN',
+      venue: nextDashboard.venue || '',
+      jurisdiction: nextDashboard.jurisdiction || '',
+      openedAt: toDateTimeLocalValue(nextDashboard.openedAt),
+      closedAt: toDateTimeLocalValue(nextDashboard.closedAt),
+    });
+  }, [overviewForm]);
+
+  function startOverviewEdit(currentDashboard: any | null) {
+    if (currentDashboard) {
+      syncOverviewFromDashboard(currentDashboard);
+    }
+    setOverviewStatusMessage(null);
+    setEditingOverview(true);
+  }
 
   function cancelOverviewEdit(currentDashboard: any | null) {
     if (!currentDashboard) {
@@ -41,59 +61,36 @@ export function useMatterOverview(matterId: string, refreshDashboard: () => Prom
     setOverviewStatusMessage('Matter overview edit cancelled.');
   }
 
-  async function updateMatterOverview() {
+  const updateMatterOverview = overviewForm.handleSubmit(async (values) => {
     if (!matterId) {
-      return;
-    }
-    if (!overviewName.trim() || !overviewMatterNumber.trim() || !overviewPracticeArea.trim()) {
-      setOverviewStatusMessage('Matter name, number, and practice area are required.');
-      return;
-    }
-    if (!MATTER_STATUS_OPTIONS.includes(overviewStatus)) {
-      setOverviewStatusMessage('Matter status is invalid.');
       return;
     }
 
     await apiFetch(`/matters/${matterId}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        name: overviewName.trim(),
-        matterNumber: overviewMatterNumber.trim(),
-        practiceArea: overviewPracticeArea.trim(),
-        status: overviewStatus,
-        venue: overviewVenue.trim() ? overviewVenue.trim() : null,
-        jurisdiction: overviewJurisdiction.trim() ? overviewJurisdiction.trim() : null,
-        ...(overviewOpenedAt ? { openedAt: new Date(overviewOpenedAt).toISOString() } : {}),
-        closedAt: overviewClosedAt ? new Date(overviewClosedAt).toISOString() : null,
+        name: values.name.trim(),
+        matterNumber: values.matterNumber.trim(),
+        practiceArea: values.practiceArea.trim(),
+        status: values.status,
+        venue: values.venue?.trim() ? values.venue.trim() : null,
+        jurisdiction: values.jurisdiction?.trim() ? values.jurisdiction.trim() : null,
+        ...(values.openedAt ? { openedAt: new Date(values.openedAt).toISOString() } : {}),
+        closedAt: values.closedAt ? new Date(values.closedAt).toISOString() : null,
       }),
     });
 
     setEditingOverview(false);
     setOverviewStatusMessage('Matter overview updated.');
     await refreshDashboard();
-  }
+  });
 
   return {
     editingOverview,
-    setEditingOverview,
-    overviewName,
-    setOverviewName,
-    overviewMatterNumber,
-    setOverviewMatterNumber,
-    overviewPracticeArea,
-    setOverviewPracticeArea,
-    overviewStatus,
-    setOverviewStatus,
-    overviewVenue,
-    setOverviewVenue,
-    overviewJurisdiction,
-    setOverviewJurisdiction,
-    overviewOpenedAt,
-    setOverviewOpenedAt,
-    overviewClosedAt,
-    setOverviewClosedAt,
+    overviewForm,
     overviewStatusMessage,
     syncOverviewFromDashboard,
+    startOverviewEdit,
     cancelOverviewEdit,
     updateMatterOverview,
   };

@@ -1,9 +1,10 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 import { AppShell } from '../../../../components/app-shell';
 import { PageHeader } from '../../../../components/page-header';
 import { StageNav } from '../../../../components/intake/stage-nav';
@@ -11,26 +12,26 @@ import { Button } from '../../../../components/ui/button';
 import { FormField } from '../../../../components/ui/form-field';
 import { Input } from '../../../../components/ui/input';
 import { generateEngagement, sendEngagement } from '../../../../lib/intake/leads-api';
-import {
-  generateEnvelopeSchema,
-  sendEnvelopeSchema,
-  type GenerateEnvelopeFormData,
-  type SendEnvelopeFormData,
-} from '../../../../lib/schemas/engagement';
+import { engagementGenerateSchema, engagementSendSchema } from '../../../../lib/schemas/intake';
+
+type EngagementGenerateValues = z.infer<typeof engagementGenerateSchema>;
+type EngagementSendValues = z.infer<typeof engagementSendSchema>;
+
+type FeedbackState = {
+  tone: 'notice' | 'error';
+  message: string;
+};
 
 export default function LeadEngagementPage() {
   const params = useParams<{ leadId: string }>();
   const leadId = params.leadId;
-  const [status, setStatus] = useState('');
-  const [generating, setGenerating] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const {
     register: registerGenerate,
     handleSubmit: handleGenerateSubmit,
-    formState: { errors: generateErrors },
-  } = useForm<GenerateEnvelopeFormData>({
-    resolver: zodResolver(generateEnvelopeSchema),
-    mode: 'onBlur',
+    formState: { errors: generateErrors, isSubmitting: isGenerating },
+  } = useForm<EngagementGenerateValues>({
+    resolver: zodResolver(engagementGenerateSchema),
     defaultValues: {
       templateId: 'engagement-template-standard',
     },
@@ -38,36 +39,47 @@ export default function LeadEngagementPage() {
   const {
     register: registerSend,
     handleSubmit: handleSendSubmit,
-    setValue: setEnvelopeValue,
-    watch,
-    formState: { errors: sendErrors },
-  } = useForm<SendEnvelopeFormData>({
-    resolver: zodResolver(sendEnvelopeSchema),
-    mode: 'onBlur',
+    setValue: setSendValue,
+    formState: { errors: sendErrors, isSubmitting: isSending },
+  } = useForm<EngagementSendValues>({
+    resolver: zodResolver(engagementSendSchema),
     defaultValues: {
       envelopeId: '',
     },
   });
-  const envelopeId = watch('envelopeId');
 
-  const onGenerate = handleGenerateSubmit(async (data) => {
-    setGenerating(true);
+  const onGenerate = handleGenerateSubmit(async (values) => {
+    setFeedback(null);
+
     try {
-      const envelope = await generateEngagement(leadId, data.templateId);
-      setEnvelopeValue('envelopeId', envelope.id, { shouldDirty: true, shouldValidate: true });
-      setStatus(`Engagement envelope ${envelope.id} generated.`);
-    } finally {
-      setGenerating(false);
+      const envelope = await generateEngagement(leadId, values.templateId);
+      setSendValue('envelopeId', envelope.id, { shouldValidate: true, shouldDirty: true });
+      setFeedback({
+        tone: 'notice',
+        message: `Engagement envelope ${envelope.id} generated.`,
+      });
+    } catch (error) {
+      setFeedback({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Unable to generate engagement envelope.',
+      });
     }
   });
 
-  const onSend = handleSendSubmit(async (data) => {
-    setSending(true);
+  const onSend = handleSendSubmit(async (values) => {
+    setFeedback(null);
+
     try {
-      const envelope = await sendEngagement(leadId, data.envelopeId);
-      setStatus(`Engagement envelope ${envelope.id} sent at ${new Date().toLocaleString()}.`);
-    } finally {
-      setSending(false);
+      const envelope = await sendEngagement(leadId, values.envelopeId);
+      setFeedback({
+        tone: 'notice',
+        message: `Engagement envelope ${envelope.id} sent at ${new Date().toLocaleString()}.`,
+      });
+    } catch (error) {
+      setFeedback({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Unable to send engagement envelope.',
+      });
     }
   });
 
@@ -75,32 +87,42 @@ export default function LeadEngagementPage() {
     <AppShell>
       <PageHeader title="Engagement Routing" subtitle="Generate and send the engagement packet after conflict resolution." />
       <StageNav leadId={leadId} active="engagement" />
-      <div className="card stack-4">
-        <form className="stack-3" onSubmit={onGenerate}>
-          <FormField label="Template ID" name="templateId" error={generateErrors.templateId?.message} required>
-            <Input {...registerGenerate('templateId')} invalid={!!generateErrors.templateId} />
+      <div className="card stack-5">
+        <form className="stack-4" onSubmit={onGenerate}>
+          <FormField
+            label="Template ID"
+            name="template-id"
+            error={generateErrors.templateId?.message}
+            required
+            hint="Use the approved engagement template identifier for this intake profile."
+          >
+            <Input {...registerGenerate('templateId')} invalid={Boolean(generateErrors.templateId)} />
           </FormField>
           <div className="form-actions">
-            <Button type="submit" disabled={generating}>
-              {generating ? 'Working...' : 'Generate Envelope'}
-            </Button>
+            <Button type="submit" disabled={isGenerating}>{isGenerating ? 'Generating...' : 'Generate Envelope'}</Button>
           </div>
         </form>
-        <form className="stack-3" onSubmit={onSend}>
-          <FormField label="Envelope ID" name="envelopeId" error={sendErrors.envelopeId?.message} required>
-            <Input {...registerSend('envelopeId')} invalid={!!sendErrors.envelopeId} />
+
+        <form className="stack-4" onSubmit={onSend}>
+          <FormField
+            label="Envelope ID"
+            name="envelope-id"
+            error={sendErrors.envelopeId?.message}
+            required
+            hint="Review the generated envelope identifier before dispatch."
+          >
+            <Input {...registerSend('envelopeId')} invalid={Boolean(sendErrors.envelopeId)} />
           </FormField>
           <div className="form-actions">
-            <Button tone="secondary" type="submit" disabled={!envelopeId || sending}>
-              {sending ? 'Working...' : 'Send Envelope'}
-            </Button>
+            <Button type="submit" tone="secondary" disabled={isSending}>{isSending ? 'Sending...' : 'Send Envelope'}</Button>
           </div>
         </form>
-        <div>
-          <p className="type-label">Review Gate</p>
-          <p className="type-caption">PROPOSED - IN REVIEW - APPROVED - EXECUTED - RETURNED</p>
-        </div>
-        {status ? <p className="mono-meta">{status}</p> : null}
+
+        {feedback ? (
+          <p className={feedback.tone === 'error' ? 'error' : 'notice'} role={feedback.tone === 'error' ? 'alert' : 'status'}>
+            {feedback.message}
+          </p>
+        ) : null}
       </div>
     </AppShell>
   );

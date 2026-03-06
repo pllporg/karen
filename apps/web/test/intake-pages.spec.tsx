@@ -4,6 +4,9 @@ import * as nextNavigation from 'next/navigation';
 import IntakeQueuePage from '../app/intake/page';
 import IntakeNewLeadPage from '../app/intake/new/page';
 import LeadConflictPage from '../app/intake/[leadId]/conflict/page';
+import LeadEngagementPage from '../app/intake/[leadId]/engagement/page';
+import LeadConvertPage from '../app/intake/[leadId]/convert/page';
+import LeadIntakeDraftPage from '../app/intake/[leadId]/intake/page';
 
 function jsonResponse<T>(payload: T, status = 200): Response {
   return {
@@ -91,6 +94,33 @@ describe('Intake routes', () => {
     expect(push).toHaveBeenCalledWith('/intake/lead-9/intake');
   });
 
+  it('blocks lead creation when source is blank', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<IntakeNewLeadPage />);
+
+    fireEvent.change(screen.getByLabelText(/Lead Source/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Lead and Open Intake' }));
+
+    expect(await screen.findByText('Lead source is required.')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('validates the intake draft before submitting', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-7' });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadIntakeDraftPage />);
+
+    fireEvent.change(screen.getByDisplayValue('1234 Orchard Lane'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Intake Draft' }));
+
+    expect(await screen.findByText('Property address is required.')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('runs and resolves conflict on staged conflict route', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-5' });
     const fetchMock = vi
@@ -119,5 +149,76 @@ describe('Intake routes', () => {
         expect.objectContaining({ method: 'POST' }),
       );
     });
+  });
+
+  it('blocks conflict check when query text is blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-5' });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadConflictPage />);
+
+    fireEvent.change(screen.getByLabelText(/Conflict Query/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run Conflict Check' }));
+
+    expect(await screen.findByText('Conflict query is required.')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('generates then sends engagement routing payloads', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-11' });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ id: 'env-9' }))
+      .mockResolvedValueOnce(jsonResponse({ id: 'env-9' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadEngagementPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Envelope' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        'http://localhost:4000/leads/lead-11/engagement/generate',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    expect(screen.getByLabelText(/Envelope ID/i)).toHaveValue('env-9');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send Envelope' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        'http://localhost:4000/leads/lead-11/engagement/send',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+  });
+
+  it('blocks conversion when required matter fields are blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-19' });
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      jsonResponse({
+        leadId: 'lead-19',
+        intakeDraft: true,
+        conflictResolved: true,
+        engagementSigned: true,
+        readyToConvert: true,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LeadConvertPage />);
+
+    await screen.findByText('Yes');
+
+    fireEvent.change(screen.getByLabelText(/Matter Name/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Convert Lead' }));
+
+    expect(await screen.findByText('Matter name is required.')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

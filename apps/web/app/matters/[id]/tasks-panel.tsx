@@ -1,17 +1,20 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { FormEventHandler } from 'react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { Select } from '../../../components/ui/select';
+import type { MatterTaskFormData } from '../../../lib/schemas/matter-dashboard';
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from './types';
 
 type TasksPanelProps = {
   dashboard: any;
-  taskTitle: string;
-  setTaskTitle: Dispatch<SetStateAction<string>>;
-  taskDueAt: string;
-  setTaskDueAt: Dispatch<SetStateAction<string>>;
-  taskPriority: (typeof TASK_PRIORITY_OPTIONS)[number];
-  setTaskPriority: Dispatch<SetStateAction<(typeof TASK_PRIORITY_OPTIONS)[number]>>;
+  register: UseFormRegister<MatterTaskFormData>;
+  errors: FieldErrors<MatterTaskFormData>;
+  isSubmitting: boolean;
   taskStatusMessage: string | null;
   editingTaskId: string | null;
-  createOrUpdateTask: () => Promise<void>;
+  createOrUpdateTask: FormEventHandler<HTMLFormElement>;
   cancelEditingTask: () => void;
   updateTaskStatus: (taskId: string, status: string) => Promise<void>;
   startEditingTask: (task: {
@@ -25,12 +28,9 @@ type TasksPanelProps = {
 
 export function TasksPanel({
   dashboard,
-  taskTitle,
-  setTaskTitle,
-  taskDueAt,
-  setTaskDueAt,
-  taskPriority,
-  setTaskPriority,
+  register,
+  errors,
+  isSubmitting,
   taskStatusMessage,
   editingTaskId,
   createOrUpdateTask,
@@ -42,42 +42,36 @@ export function TasksPanel({
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Tasks</h3>
-      <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 140px auto' }}>
-        <input
-          className="input"
-          aria-label="Task Title"
-          placeholder="Task title"
-          value={taskTitle}
-          onChange={(event) => setTaskTitle(event.target.value)}
-        />
-        <input
-          className="input"
-          aria-label="Task Due At"
-          type="datetime-local"
-          value={taskDueAt}
-          onChange={(event) => setTaskDueAt(event.target.value)}
-        />
-        <select
-          className="select"
-          aria-label="Task Priority"
-          value={taskPriority}
-          onChange={(event) => setTaskPriority(event.target.value as (typeof TASK_PRIORITY_OPTIONS)[number])}
-        >
-          {TASK_PRIORITY_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <button className="button" type="button" onClick={createOrUpdateTask}>
-          {editingTaskId ? 'Save Task Edit' : 'Add Task'}
-        </button>
-      </div>
+      <form style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 140px auto' }} onSubmit={createOrUpdateTask}>
+        <FormField label="Task Title" name="matter-task-title" error={errors.title?.message} required>
+          <Input aria-label="Task Title" placeholder="Task title" {...register('title')} invalid={!!errors.title} />
+        </FormField>
+        <FormField label="Task Due At" name="matter-task-due-at" error={errors.dueAt?.message}>
+          <Input
+            aria-label="Task Due At"
+            type="datetime-local"
+            {...register('dueAt')}
+            invalid={!!errors.dueAt}
+          />
+        </FormField>
+        <FormField label="Task Priority" name="matter-task-priority" error={errors.priority?.message} required>
+          <Select aria-label="Task Priority" {...register('priority')} invalid={!!errors.priority}>
+            {TASK_PRIORITY_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Working...' : editingTaskId ? 'Save Task Edit' : 'Add Task'}
+        </Button>
+      </form>
       {editingTaskId ? (
         <div style={{ marginTop: 8 }}>
-          <button className="button secondary" type="button" onClick={cancelEditingTask}>
+          <Button tone="secondary" type="button" onClick={cancelEditingTask}>
             Cancel Task Edit
-          </button>
+          </Button>
         </div>
       ) : null}
       {taskStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{taskStatusMessage}</p> : null}
@@ -110,8 +104,8 @@ export function TasksPanel({
               </td>
               <td>{task.dueAt ? new Date(task.dueAt).toLocaleString() : '-'}</td>
               <td style={{ display: 'flex', gap: 8 }}>
-                <button
-                  className="button secondary"
+                <Button
+                  tone="secondary"
                   type="button"
                   aria-label={`Edit Task ${task.id}`}
                   onClick={() =>
@@ -124,15 +118,15 @@ export function TasksPanel({
                   }
                 >
                   Edit
-                </button>
-                <button
-                  className="button secondary"
+                </Button>
+                <Button
+                  tone="secondary"
                   type="button"
                   aria-label={`Delete Task ${task.id}`}
                   onClick={() => deleteTask(task.id)}
                 >
                   Delete
-                </button>
+                </Button>
               </td>
             </tr>
           ))}

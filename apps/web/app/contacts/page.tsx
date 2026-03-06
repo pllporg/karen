@@ -1,5 +1,7 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
@@ -8,25 +10,26 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardGrid } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
+import { FormField } from '../../components/ui/form-field';
 import { Input } from '../../components/ui/input';
 import { Select } from '../../components/ui/select';
 import { Table } from '../../components/ui/table';
+import {
+  contactsCreateSchema,
+  contactsFilterSchema,
+  contactsGraphFilterSchema,
+  type ContactsCreateFormData,
+  type ContactsFilterFormData,
+  type ContactsGraphFilterFormData,
+} from '../../lib/schemas/contacts-page';
 import { useContactsPage } from './use-contacts-page';
 
 export default function ContactsPage() {
   const {
     contacts,
     graph,
-    name,
-    kind,
     includeResolved,
-    search,
-    includeTagsInput,
-    excludeTagsInput,
-    tagMode,
     activeGraphContactId,
-    graphSearch,
-    graphRelationshipType,
     graphLoading,
     actionKey,
     pendingAction,
@@ -35,15 +38,7 @@ export default function ContactsPage() {
     visibleDedupe,
     pendingActionDialog,
     dedupeByContactId,
-    setName,
-    setKind,
     setIncludeResolved,
-    setSearch,
-    setIncludeTagsInput,
-    setExcludeTagsInput,
-    setTagMode,
-    setGraphSearch,
-    setGraphRelationshipType,
     setPendingAction,
     dismissToast,
     loadGraph,
@@ -55,57 +50,112 @@ export default function ContactsPage() {
     confirmPendingAction,
   } = useContactsPage();
 
+  const createContactForm = useForm<ContactsCreateFormData>({
+    resolver: zodResolver(contactsCreateSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      displayName: '',
+      kind: 'PERSON',
+    },
+  });
+  const filterForm = useForm<ContactsFilterFormData>({
+    resolver: zodResolver(contactsFilterSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      search: '',
+      includeTagsInput: '',
+      excludeTagsInput: '',
+      tagMode: 'any',
+    },
+  });
+  const graphFilterForm = useForm<ContactsGraphFilterFormData>({
+    resolver: zodResolver(contactsGraphFilterSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      graphSearch: '',
+      graphRelationshipType: '',
+    },
+  });
+
+  const onCreateContact = createContactForm.handleSubmit(async (values) => {
+    await addContact(values);
+    createContactForm.reset({
+      displayName: '',
+      kind: values.kind,
+    });
+  });
+
+  const onApplyFilters = filterForm.handleSubmit(async (values) => {
+    await applyContactFilters(values);
+  });
+
+  const onApplyGraphFilters = graphFilterForm.handleSubmit(async (values) => {
+    if (!activeGraphContactId) return;
+    await loadGraph(activeGraphContactId, values.graphRelationshipType, values.graphSearch);
+  });
+
   return (
     <AppShell>
       <PageHeader title="Contacts" subtitle="Unified people/organizations, relationship graph, and dedupe suggestions." />
 
       <Card className="mb-3">
-        <form
-          className="contacts-create-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            addContact().catch(() => undefined);
-          }}
-        >
-          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Display name" />
-          <Select value={kind} onChange={(event) => setKind(event.target.value as 'PERSON' | 'ORGANIZATION')}>
-            <option value="PERSON">Person</option>
-            <option value="ORGANIZATION">Organization</option>
-          </Select>
-          <Button type="submit">Create</Button>
+        <form className="contacts-create-form" onSubmit={onCreateContact}>
+          <FormField
+            label="Display Name"
+            name="contact-display-name"
+            error={createContactForm.formState.errors.displayName?.message}
+            required
+          >
+            <Input
+              placeholder="Display name"
+              {...createContactForm.register('displayName')}
+              invalid={!!createContactForm.formState.errors.displayName}
+            />
+          </FormField>
+          <FormField label="Contact Kind" name="contact-kind" error={createContactForm.formState.errors.kind?.message} required>
+            <Select {...createContactForm.register('kind')} invalid={!!createContactForm.formState.errors.kind}>
+              <option value="PERSON">Person</option>
+              <option value="ORGANIZATION">Organization</option>
+            </Select>
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Create</p>
+            <Button type="submit" disabled={createContactForm.formState.isSubmitting}>
+              {createContactForm.formState.isSubmitting ? 'Working...' : 'Create'}
+            </Button>
+          </div>
         </form>
       </Card>
 
       <Card className="mb-3">
-        <form
-          className="contacts-filter-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            applyContactFilters().catch(() => undefined);
-          }}
-        >
-          <Input
-            aria-label="Contact Search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name/email/phone"
-          />
-          <Input
-            aria-label="Include Tags"
-            value={includeTagsInput}
-            onChange={(event) => setIncludeTagsInput(event.target.value)}
-            placeholder="Include tags (comma-separated)"
-          />
-          <Input
-            aria-label="Exclude Tags"
-            value={excludeTagsInput}
-            onChange={(event) => setExcludeTagsInput(event.target.value)}
-            placeholder="Exclude tags (comma-separated)"
-          />
-          <Select aria-label="Tag Mode" value={tagMode} onChange={(event) => setTagMode(event.target.value as 'any' | 'all')}>
-            <option value="any">Include Any Tag</option>
-            <option value="all">Include All Tags</option>
-          </Select>
+        <form className="contacts-filter-form" onSubmit={onApplyFilters}>
+          <FormField label="Contact Search" name="contact-search">
+            <Input
+              aria-label="Contact Search"
+              placeholder="Search name/email/phone"
+              {...filterForm.register('search')}
+            />
+          </FormField>
+          <FormField label="Include Tags" name="include-tags">
+            <Input
+              aria-label="Include Tags"
+              placeholder="Include tags (comma-separated)"
+              {...filterForm.register('includeTagsInput')}
+            />
+          </FormField>
+          <FormField label="Exclude Tags" name="exclude-tags">
+            <Input
+              aria-label="Exclude Tags"
+              placeholder="Exclude tags (comma-separated)"
+              {...filterForm.register('excludeTagsInput')}
+            />
+          </FormField>
+          <FormField label="Tag Mode" name="tag-mode">
+            <Select aria-label="Tag Mode" {...filterForm.register('tagMode')}>
+              <option value="any">Include Any Tag</option>
+              <option value="all">Include All Tags</option>
+            </Select>
+          </FormField>
           <Button tone="secondary" type="submit">
             Apply Filters
           </Button>
@@ -113,6 +163,12 @@ export default function ContactsPage() {
             tone="ghost"
             type="button"
             onClick={() => {
+              filterForm.reset({
+                search: '',
+                includeTagsInput: '',
+                excludeTagsInput: '',
+                tagMode: 'any',
+              });
               clearContactFilters().catch(() => undefined);
             }}
           >
@@ -158,8 +214,10 @@ export default function ContactsPage() {
                       tone="ghost"
                       type="button"
                       onClick={() => {
-                        setGraphSearch('');
-                        setGraphRelationshipType('');
+                        graphFilterForm.reset({
+                          graphSearch: '',
+                          graphRelationshipType: '',
+                        });
                         loadGraph(contact.id, '', '').catch(() => undefined);
                       }}
                       disabled={graphLoading}
@@ -188,32 +246,24 @@ export default function ContactsPage() {
                   </span>
                 )}
               </div>
-              <form
-                className="contacts-graph-filter-form mb-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!activeGraphContactId) return;
-                  loadGraph(activeGraphContactId).catch(() => undefined);
-                }}
-              >
-                <Input
-                  aria-label="Graph Search"
-                  value={graphSearch}
-                  onChange={(event) => setGraphSearch(event.target.value)}
-                  placeholder="Search related contact name"
-                />
-                <Select
-                  aria-label="Relationship Type Filter"
-                  value={graphRelationshipType}
-                  onChange={(event) => setGraphRelationshipType(event.target.value)}
-                >
-                  <option value="">All Relationship Types</option>
-                  {(graph?.availableRelationshipTypes || []).map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </Select>
+              <form className="contacts-graph-filter-form mb-2" onSubmit={onApplyGraphFilters}>
+                <FormField label="Graph Search" name="graph-search">
+                  <Input
+                    aria-label="Graph Search"
+                    placeholder="Search related contact name"
+                    {...graphFilterForm.register('graphSearch')}
+                  />
+                </FormField>
+                <FormField label="Relationship Type Filter" name="graph-relationship-type">
+                  <Select aria-label="Relationship Type Filter" {...graphFilterForm.register('graphRelationshipType')}>
+                    <option value="">All Relationship Types</option>
+                    {(graph?.availableRelationshipTypes || []).map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
                 <Button tone="secondary" type="submit" disabled={graphLoading}>
                   Apply
                 </Button>
@@ -222,8 +272,10 @@ export default function ContactsPage() {
                   type="button"
                   disabled={graphLoading}
                   onClick={() => {
-                    setGraphSearch('');
-                    setGraphRelationshipType('');
+                    graphFilterForm.reset({
+                      graphSearch: '',
+                      graphRelationshipType: '',
+                    });
                     if (activeGraphContactId) {
                       loadGraph(activeGraphContactId, '', '').catch(() => undefined);
                     }

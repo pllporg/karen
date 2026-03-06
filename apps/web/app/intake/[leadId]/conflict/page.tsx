@@ -1,9 +1,10 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 import { AppShell } from '../../../../components/app-shell';
 import { PageHeader } from '../../../../components/page-header';
 import { StageNav } from '../../../../components/intake/stage-nav';
@@ -11,61 +12,73 @@ import { Button } from '../../../../components/ui/button';
 import { FormField } from '../../../../components/ui/form-field';
 import { Textarea } from '../../../../components/ui/textarea';
 import { resolveConflict, runConflictCheck } from '../../../../lib/intake/leads-api';
-import {
-  resolveConflictSchema,
-  runConflictCheckSchema,
-  type ResolveConflictFormData,
-  type RunConflictCheckFormData,
-} from '../../../../lib/schemas/conflict';
+import { conflictCheckSchema, conflictResolutionSchema } from '../../../../lib/schemas/intake';
+
+type ConflictCheckValues = z.infer<typeof conflictCheckSchema>;
+type ConflictResolutionValues = z.infer<typeof conflictResolutionSchema>;
+
+type FeedbackState = {
+  tone: 'notice' | 'error';
+  message: string;
+};
 
 export default function LeadConflictPage() {
   const params = useParams<{ leadId: string }>();
   const leadId = params.leadId;
-  const [status, setStatus] = useState('');
-  const [runningCheck, setRunningCheck] = useState(false);
-  const [resolving, setResolving] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const {
     register: registerCheck,
     handleSubmit: handleCheckSubmit,
-    formState: { errors: checkErrors },
-  } = useForm<RunConflictCheckFormData>({
-    resolver: zodResolver(runConflictCheckSchema),
-    mode: 'onBlur',
+    formState: { errors: checkErrors, isSubmitting: isRunningCheck },
+  } = useForm<ConflictCheckValues>({
+    resolver: zodResolver(conflictCheckSchema),
     defaultValues: {
       queryText: 'Client name + opposing party + property address',
     },
   });
-
   const {
     register: registerResolution,
     handleSubmit: handleResolutionSubmit,
-    formState: { errors: resolutionErrors },
-  } = useForm<ResolveConflictFormData>({
-    resolver: zodResolver(resolveConflictSchema),
-    mode: 'onBlur',
+    formState: { errors: resolutionErrors, isSubmitting: isRecordingResolution },
+  } = useForm<ConflictResolutionValues>({
+    resolver: zodResolver(conflictResolutionSchema),
     defaultValues: {
       resolutionNotes: 'No direct conflicts identified.',
     },
   });
 
-  const onRunCheck = handleCheckSubmit(async (data) => {
-    setRunningCheck(true);
+  const onRunCheck = handleCheckSubmit(async (values) => {
+    setFeedback(null);
+
     try {
-      const result = await runConflictCheck(leadId, data.queryText);
-      setStatus(`Conflict check ${result.id} logged at ${new Date().toLocaleString()}.`);
-    } finally {
-      setRunningCheck(false);
+      const result = await runConflictCheck(leadId, values.queryText);
+      setFeedback({
+        tone: 'notice',
+        message: `Conflict check ${result.id} logged at ${new Date().toLocaleString()}.`,
+      });
+    } catch (error) {
+      setFeedback({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Unable to run conflict check.',
+      });
     }
   });
 
   function onResolve(resolved: boolean) {
-    void handleResolutionSubmit(async (data) => {
-      setResolving(true);
+    return handleResolutionSubmit(async (values) => {
+      setFeedback(null);
+
       try {
-        const result = await resolveConflict(leadId, resolved, data.resolutionNotes);
-        setStatus(`Conflict resolution recorded (${resolved ? 'resolved' : 'blocked'}) via ${result.id}.`);
-      } finally {
-        setResolving(false);
+        const result = await resolveConflict(leadId, resolved, values.resolutionNotes);
+        setFeedback({
+          tone: 'notice',
+          message: `Conflict resolution recorded (${resolved ? 'resolved' : 'blocked'}) via ${result.id}.`,
+        });
+      } catch (error) {
+        setFeedback({
+          tone: 'error',
+          message: error instanceof Error ? error.message : 'Unable to record conflict resolution.',
+        });
       }
     })();
   }
@@ -74,35 +87,47 @@ export default function LeadConflictPage() {
     <AppShell>
       <PageHeader title="Conflict Check" subtitle="Run and document conflict review before engagement routing." />
       <StageNav leadId={leadId} active="conflict" />
-      <div className="card stack-4">
-        <form className="stack-3" onSubmit={onRunCheck}>
-          <FormField label="Conflict Query" name="queryText" error={checkErrors.queryText?.message} required>
-            <Textarea {...registerCheck('queryText')} invalid={!!checkErrors.queryText} />
+      <div className="card stack-5">
+        <form className="stack-4" onSubmit={onRunCheck}>
+          <FormField
+            label="Conflict Query"
+            name="conflict-query"
+            error={checkErrors.queryText?.message}
+            required
+            hint="Search terms should cover client, opposing parties, and property context."
+          >
+            <Textarea {...registerCheck('queryText')} invalid={Boolean(checkErrors.queryText)} />
           </FormField>
           <div className="form-actions">
-            <Button type="submit" disabled={runningCheck}>
-              {runningCheck ? 'Running...' : 'Run Conflict Check'}
-            </Button>
+            <Button type="submit" disabled={isRunningCheck}>{isRunningCheck ? 'Running Check...' : 'Run Conflict Check'}</Button>
           </div>
         </form>
-        <form className="stack-3" onSubmit={(event) => event.preventDefault()}>
-          <FormField label="Resolution Notes" name="resolutionNotes" error={resolutionErrors.resolutionNotes?.message} required>
-            <Textarea {...registerResolution('resolutionNotes')} invalid={!!resolutionErrors.resolutionNotes} />
+
+        <form className="stack-4" onSubmit={(event) => event.preventDefault()}>
+          <FormField
+            label="Resolution Notes"
+            name="resolution-notes"
+            error={resolutionErrors.resolutionNotes?.message}
+            required
+            hint="Document why the matter can proceed or why intake must stop."
+          >
+            <Textarea {...registerResolution('resolutionNotes')} invalid={Boolean(resolutionErrors.resolutionNotes)} />
           </FormField>
-          <div className="row-2">
-            <Button tone="secondary" type="button" disabled={resolving} onClick={() => onResolve(true)}>
-              {resolving ? 'Working...' : 'Mark Resolved'}
+          <div className="form-actions">
+            <Button type="button" tone="secondary" disabled={isRecordingResolution} onClick={() => void onResolve(true)}>
+              {isRecordingResolution ? 'Recording...' : 'Mark Resolved'}
             </Button>
-            <Button tone="danger" type="button" disabled={resolving} onClick={() => onResolve(false)}>
-              {resolving ? 'Working...' : 'Mark Blocked'}
+            <Button type="button" tone="danger" disabled={isRecordingResolution} onClick={() => void onResolve(false)}>
+              {isRecordingResolution ? 'Recording...' : 'Mark Blocked'}
             </Button>
           </div>
         </form>
-        <div>
-          <p className="type-label">Review Gate</p>
-          <p className="type-caption">PROPOSED - IN REVIEW - APPROVED - EXECUTED - RETURNED</p>
-        </div>
-        {status ? <p className="mono-meta">{status}</p> : null}
+
+        {feedback ? (
+          <p className={feedback.tone === 'error' ? 'error' : 'notice'} role={feedback.tone === 'error' ? 'alert' : 'status'}>
+            {feedback.message}
+          </p>
+        ) : null}
       </div>
     </AppShell>
   );

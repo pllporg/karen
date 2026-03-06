@@ -1,52 +1,32 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { FormEventHandler } from 'react';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { Select } from '../../../components/ui/select';
+import type { MatterOverviewFormData } from '../../../lib/schemas/matter-overview';
 import { MATTER_STATUS_OPTIONS } from './types';
 
 type OverviewPanelProps = {
   dashboard: any;
   editingOverview: boolean;
-  setEditingOverview: Dispatch<SetStateAction<boolean>>;
-  overviewName: string;
-  setOverviewName: Dispatch<SetStateAction<string>>;
-  overviewMatterNumber: string;
-  setOverviewMatterNumber: Dispatch<SetStateAction<string>>;
-  overviewPracticeArea: string;
-  setOverviewPracticeArea: Dispatch<SetStateAction<string>>;
-  overviewStatus: (typeof MATTER_STATUS_OPTIONS)[number];
-  setOverviewStatus: Dispatch<SetStateAction<(typeof MATTER_STATUS_OPTIONS)[number]>>;
-  overviewVenue: string;
-  setOverviewVenue: Dispatch<SetStateAction<string>>;
-  overviewJurisdiction: string;
-  setOverviewJurisdiction: Dispatch<SetStateAction<string>>;
-  overviewOpenedAt: string;
-  setOverviewOpenedAt: Dispatch<SetStateAction<string>>;
-  overviewClosedAt: string;
-  setOverviewClosedAt: Dispatch<SetStateAction<string>>;
+  register: UseFormRegister<MatterOverviewFormData>;
+  errors: FieldErrors<MatterOverviewFormData>;
+  isSubmitting: boolean;
   overviewStatusMessage: string | null;
-  updateMatterOverview: () => Promise<void>;
+  startOverviewEdit: () => void;
+  updateMatterOverview: FormEventHandler<HTMLFormElement>;
   cancelOverviewEdit: () => void;
 };
 
 export function OverviewPanel({
   dashboard,
   editingOverview,
-  setEditingOverview,
-  overviewName,
-  setOverviewName,
-  overviewMatterNumber,
-  setOverviewMatterNumber,
-  overviewPracticeArea,
-  setOverviewPracticeArea,
-  overviewStatus,
-  setOverviewStatus,
-  overviewVenue,
-  setOverviewVenue,
-  overviewJurisdiction,
-  setOverviewJurisdiction,
-  overviewOpenedAt,
-  setOverviewOpenedAt,
-  overviewClosedAt,
-  setOverviewClosedAt,
+  register,
+  errors,
+  isSubmitting,
   overviewStatusMessage,
+  startOverviewEdit,
   updateMatterOverview,
   cancelOverviewEdit,
 }: OverviewPanelProps) {
@@ -54,77 +34,71 @@ export function OverviewPanel({
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Overview</h3>
       {editingOverview ? (
-        <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-          <input
-            className="input"
-            aria-label="Matter Name"
-            value={overviewName}
-            onChange={(event) => setOverviewName(event.target.value)}
-            placeholder="Matter name"
-          />
-          <input
-            className="input"
-            aria-label="Matter Number"
-            value={overviewMatterNumber}
-            onChange={(event) => setOverviewMatterNumber(event.target.value)}
-            placeholder="Matter number"
-          />
-          <input
-            className="input"
-            aria-label="Practice Area"
-            value={overviewPracticeArea}
-            onChange={(event) => setOverviewPracticeArea(event.target.value)}
-            placeholder="Practice area"
-          />
-          <select
-            className="select"
-            aria-label="Matter Status"
-            value={overviewStatus}
-            onChange={(event) => setOverviewStatus(event.target.value as (typeof MATTER_STATUS_OPTIONS)[number])}
-          >
-            {MATTER_STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          <input
-            className="input"
-            aria-label="Matter Venue"
-            value={overviewVenue}
-            onChange={(event) => setOverviewVenue(event.target.value)}
-            placeholder="Venue"
-          />
-          <input
-            className="input"
-            aria-label="Matter Jurisdiction"
-            value={overviewJurisdiction}
-            onChange={(event) => setOverviewJurisdiction(event.target.value)}
-            placeholder="Jurisdiction"
-          />
-          <input
-            className="input"
-            aria-label="Matter Opened At"
-            type="datetime-local"
-            value={overviewOpenedAt}
-            onChange={(event) => setOverviewOpenedAt(event.target.value)}
-          />
-          <input
-            className="input"
-            aria-label="Matter Closed At"
-            type="datetime-local"
-            value={overviewClosedAt}
-            onChange={(event) => setOverviewClosedAt(event.target.value)}
-          />
+        <form style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }} onSubmit={updateMatterOverview}>
+          <FormField label="Matter Name" name="matter-overview-name" error={errors.name?.message} required>
+            <Input aria-label="Matter Name" placeholder="Matter name" {...register('name')} invalid={!!errors.name} />
+          </FormField>
+          <FormField label="Matter Number" name="matter-overview-number" error={errors.matterNumber?.message} required>
+            <Input
+              aria-label="Matter Number"
+              placeholder="Matter number"
+              {...register('matterNumber')}
+              invalid={!!errors.matterNumber}
+            />
+          </FormField>
+          <FormField label="Practice Area" name="matter-overview-practice-area" error={errors.practiceArea?.message} required>
+            <Input
+              aria-label="Practice Area"
+              placeholder="Practice area"
+              {...register('practiceArea')}
+              invalid={!!errors.practiceArea}
+            />
+          </FormField>
+          <FormField label="Matter Status" name="matter-overview-status" error={errors.status?.message} required>
+            <Select aria-label="Matter Status" {...register('status')} invalid={!!errors.status}>
+              {MATTER_STATUS_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Matter Venue" name="matter-overview-venue" error={errors.venue?.message}>
+            <Input aria-label="Matter Venue" placeholder="Venue" {...register('venue')} invalid={!!errors.venue} />
+          </FormField>
+          <FormField label="Matter Jurisdiction" name="matter-overview-jurisdiction" error={errors.jurisdiction?.message}>
+            <Input
+              aria-label="Matter Jurisdiction"
+              placeholder="Jurisdiction"
+              {...register('jurisdiction')}
+              invalid={!!errors.jurisdiction}
+            />
+          </FormField>
+          <FormField label="Matter Opened At" name="matter-overview-opened-at" error={errors.openedAt?.message}>
+            <Input
+              aria-label="Matter Opened At"
+              type="datetime-local"
+              {...register('openedAt')}
+              invalid={!!errors.openedAt}
+            />
+          </FormField>
+          <FormField label="Matter Closed At" name="matter-overview-closed-at" error={errors.closedAt?.message}>
+            <Input
+              aria-label="Matter Closed At"
+              type="datetime-local"
+              {...register('closedAt')}
+              invalid={!!errors.closedAt}
+            />
+          </FormField>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="button" type="button" onClick={updateMatterOverview}>
-              Save Overview
-            </button>
-            <button className="button secondary" type="button" onClick={cancelOverviewEdit}>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Working...' : 'Save Overview'}
+            </Button>
+            <Button tone="secondary" type="button" onClick={cancelOverviewEdit}>
               Cancel Overview Edit
-            </button>
+            </Button>
           </div>
-        </div>
+        </form>
       ) : (
         <div>
           <p>Name: {dashboard.name}</p>
@@ -135,9 +109,9 @@ export function OverviewPanel({
           <p>Jurisdiction: {dashboard.jurisdiction || '-'}</p>
           <p>Opened: {dashboard.openedAt ? new Date(dashboard.openedAt).toLocaleString() : '-'}</p>
           <p>Closed: {dashboard.closedAt ? new Date(dashboard.closedAt).toLocaleString() : '-'}</p>
-          <button className="button secondary" type="button" onClick={() => setEditingOverview(true)}>
+          <Button tone="secondary" type="button" onClick={startOverviewEdit}>
             Edit Overview
-          </button>
+          </Button>
         </div>
       )}
       {overviewStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{overviewStatusMessage}</p> : null}

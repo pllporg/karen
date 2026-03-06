@@ -1,29 +1,33 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { ChangeEvent, FormEventHandler } from 'react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { Select } from '../../../components/ui/select';
+import type { MatterParticipantFormData } from '../../../lib/schemas/matter-dashboard';
 import { PARTICIPANT_SIDE_OPTIONS, ParticipantContactOption, ParticipantRoleOption, ParticipantSideOption } from './types';
 
 type ParticipantsPanelProps = {
   dashboard: any;
   participantContacts: ParticipantContactOption[];
   participantRoleOptions: ParticipantRoleOption[];
+  register: UseFormRegister<MatterParticipantFormData>;
+  errors: FieldErrors<MatterParticipantFormData>;
+  isSubmitting: boolean;
   selectedParticipantContactId: string;
-  setSelectedParticipantContactId: Dispatch<SetStateAction<string>>;
   selectedParticipantRoleKey: string;
-  setSelectedParticipantRoleKey: Dispatch<SetStateAction<string>>;
   participantSide: ParticipantSideOption;
-  setParticipantSide: Dispatch<SetStateAction<ParticipantSideOption>>;
   participantIsPrimary: boolean;
-  setParticipantIsPrimary: Dispatch<SetStateAction<boolean>>;
   participantRepresentedByContactId: string;
-  setParticipantRepresentedByContactId: Dispatch<SetStateAction<string>>;
   participantLawFirmContactId: string;
-  setParticipantLawFirmContactId: Dispatch<SetStateAction<string>>;
   participantNotes: string;
-  setParticipantNotes: Dispatch<SetStateAction<string>>;
   participantRoleIsCounsel: boolean;
   participantStatusMessage: string | null;
   editingParticipantId: string | null;
-  createOrUpdateParticipant: () => Promise<void>;
+  createOrUpdateParticipant: FormEventHandler<HTMLFormElement>;
   cancelEditingParticipant: () => void;
+  onParticipantRoleChange: (value: string) => void;
+  onParticipantSideChange: (value: ParticipantSideOption) => void;
   startEditingParticipant: (participant: {
     id: string;
     contactId: string;
@@ -43,141 +47,173 @@ export function ParticipantsPanel({
   dashboard,
   participantContacts,
   participantRoleOptions,
+  register,
+  errors,
+  isSubmitting,
   selectedParticipantContactId,
-  setSelectedParticipantContactId,
   selectedParticipantRoleKey,
-  setSelectedParticipantRoleKey,
   participantSide,
-  setParticipantSide,
   participantIsPrimary,
-  setParticipantIsPrimary,
   participantRepresentedByContactId,
-  setParticipantRepresentedByContactId,
   participantLawFirmContactId,
-  setParticipantLawFirmContactId,
   participantNotes,
-  setParticipantNotes,
   participantRoleIsCounsel,
   participantStatusMessage,
   editingParticipantId,
   createOrUpdateParticipant,
   cancelEditingParticipant,
+  onParticipantRoleChange,
+  onParticipantSideChange,
   startEditingParticipant,
   removeParticipant,
 }: ParticipantsPanelProps) {
+  const participantContactRegistration = register('contactId');
+  const participantRoleRegistration = register('participantRoleKey');
+  const participantSideRegistration = register('side');
+  const participantPrimaryRegistration = register('isPrimary');
+  const participantRepresentedByRegistration = register('representedByContactId');
+  const participantLawFirmRegistration = register('lawFirmContactId');
+  const participantNotesRegistration = register('notes');
+
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Participants</h3>
       <div style={{ display: 'grid', gap: 8 }}>
-        <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-          <select
-            className="select"
-            aria-label="Participant Contact"
-            value={selectedParticipantContactId}
-            onChange={(event) => setSelectedParticipantContactId(event.target.value)}
-          >
-            <option value="">Select contact</option>
-            {participantContacts.map((contact) => (
-              <option key={contact.id} value={contact.id}>
-                {contact.displayName}
-              </option>
-            ))}
-          </select>
-          <select
-            className="select"
-            aria-label="Participant Role"
-            value={selectedParticipantRoleKey}
-            onChange={(event) => {
-              const nextRoleKey = event.target.value;
-              setSelectedParticipantRoleKey(nextRoleKey);
-              const role = participantRoleOptions.find((option) => option.key === nextRoleKey);
-              if (role?.sideDefault) {
-                setParticipantSide(role.sideDefault as ParticipantSideOption);
-              }
-            }}
-          >
-            <option value="">Select role</option>
-            {participantRoleOptions.map((role) => (
-              <option key={role.id} value={role.key}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className="select"
-            aria-label="Participant Side"
-            value={participantSide}
-            onChange={(event) => setParticipantSide(event.target.value as ParticipantSideOption)}
-          >
-            {PARTICIPANT_SIDE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="checkbox"
+        <form
+          style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
+          onSubmit={createOrUpdateParticipant}
+        >
+          <FormField label="Participant Contact" name="participant-contact" error={errors.contactId?.message} required>
+            <Select
+              aria-label="Participant Contact"
+              {...participantContactRegistration}
+              value={selectedParticipantContactId}
+              invalid={!!errors.contactId}
+            >
+              <option value="">Select contact</option>
+              {participantContacts.map((contact) => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.displayName}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Participant Role" name="participant-role" error={errors.participantRoleKey?.message} required>
+            <Select
+              aria-label="Participant Role"
+              {...participantRoleRegistration}
+              value={selectedParticipantRoleKey}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                participantRoleRegistration.onChange(event);
+                onParticipantRoleChange(event.target.value);
+              }}
+              invalid={!!errors.participantRoleKey}
+            >
+              <option value="">Select role</option>
+              {participantRoleOptions.map((role) => (
+                <option key={role.id} value={role.key}>
+                  {role.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Participant Side" name="participant-side" error={errors.side?.message} required>
+            <Select
+              aria-label="Participant Side"
+              {...participantSideRegistration}
+              value={participantSide}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                participantSideRegistration.onChange(event);
+                onParticipantSideChange(event.target.value as ParticipantSideOption);
+              }}
+              invalid={!!errors.side}
+            >
+              {PARTICIPANT_SIDE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <div className="stack-1">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input
+                type="checkbox"
               aria-label="Participant Is Primary"
+              {...participantPrimaryRegistration}
               checked={participantIsPrimary}
-              onChange={(event) => setParticipantIsPrimary(event.target.checked)}
             />
-            Primary participant
-          </label>
-          <select
-            className="select"
-            aria-label="Participant Represented By Contact"
-            value={participantRepresentedByContactId}
-            onChange={(event) => setParticipantRepresentedByContactId(event.target.value)}
-            disabled={participantRoleIsCounsel}
+              Primary participant
+            </label>
+          </div>
+          <FormField
+            label="Participant Represented By Contact"
+            name="participant-represented-by"
+            error={errors.representedByContactId?.message}
           >
-            <option value="">
-              {participantRoleIsCounsel ? 'Represented-by disabled for counsel roles' : 'No represented-by contact'}
-            </option>
-            {participantContacts
-              .filter((contact) => contact.id !== selectedParticipantContactId)
-              .map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.displayName}
-                </option>
-              ))}
-          </select>
-          <select
-            className="select"
-            aria-label="Participant Law Firm Contact"
-            value={participantLawFirmContactId}
-            onChange={(event) => setParticipantLawFirmContactId(event.target.value)}
-            disabled={!participantRoleIsCounsel}
+            <Select
+              aria-label="Participant Represented By Contact"
+              {...participantRepresentedByRegistration}
+              value={participantRepresentedByContactId}
+              disabled={participantRoleIsCounsel}
+              invalid={!!errors.representedByContactId}
+            >
+              <option value="">
+                {participantRoleIsCounsel ? 'Represented-by disabled for counsel roles' : 'No represented-by contact'}
+              </option>
+              {participantContacts
+                .filter((contact) => contact.id !== selectedParticipantContactId)
+                .map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.displayName}
+                  </option>
+                ))}
+            </Select>
+          </FormField>
+          <FormField
+            label="Participant Law Firm Contact"
+            name="participant-law-firm"
+            error={errors.lawFirmContactId?.message}
           >
-            <option value="">
-              {participantRoleIsCounsel ? 'No law firm contact' : 'Law-firm mapping only for counsel roles'}
-            </option>
-            {participantContacts
-              .filter((contact) => contact.id !== selectedParticipantContactId)
-              .map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.displayName}
-                </option>
-              ))}
-          </select>
-          <input
-            className="input"
-            aria-label="Participant Notes"
-            value={participantNotes}
-            onChange={(event) => setParticipantNotes(event.target.value)}
-            placeholder="Participant notes"
-          />
+            <Select
+              aria-label="Participant Law Firm Contact"
+              {...participantLawFirmRegistration}
+              value={participantLawFirmContactId}
+              disabled={!participantRoleIsCounsel}
+              invalid={!!errors.lawFirmContactId}
+            >
+              <option value="">
+                {participantRoleIsCounsel ? 'No law firm contact' : 'Law-firm mapping only for counsel roles'}
+              </option>
+              {participantContacts
+                .filter((contact) => contact.id !== selectedParticipantContactId)
+                .map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.displayName}
+                  </option>
+                ))}
+            </Select>
+          </FormField>
+          <FormField label="Participant Notes" name="participant-notes" error={errors.notes?.message}>
+            <Input
+              aria-label="Participant Notes"
+              placeholder="Participant notes"
+              {...participantNotesRegistration}
+              value={participantNotes}
+              invalid={!!errors.notes}
+            />
+          </FormField>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="button" type="button" onClick={createOrUpdateParticipant}>
-              {editingParticipantId ? 'Save Participant Edit' : 'Add Participant'}
-            </button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Working...' : editingParticipantId ? 'Save Participant Edit' : 'Add Participant'}
+            </Button>
             {editingParticipantId ? (
-              <button className="button secondary" type="button" onClick={cancelEditingParticipant}>
+              <Button tone="secondary" type="button" onClick={cancelEditingParticipant}>
                 Cancel Participant Edit
-              </button>
+              </Button>
             ) : null}
           </div>
-        </div>
+        </form>
       </div>
       {participantStatusMessage ? (
         <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{participantStatusMessage}</p>
@@ -207,22 +243,22 @@ export function ParticipantsPanel({
               <td>{participant.notes || '-'}</td>
               <td>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
+                  <Button
                     type="button"
-                    className="button secondary"
+                    tone="secondary"
                     aria-label={`Edit Participant ${participant.id}`}
                     onClick={() => startEditingParticipant(participant)}
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="button danger"
+                    tone="danger"
                     aria-label={`Remove Participant ${participant.id}`}
                     onClick={() => removeParticipant(participant.id)}
                   >
                     Remove
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>

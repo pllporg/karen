@@ -1,4 +1,10 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { FormEventHandler } from 'react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { Select } from '../../../components/ui/select';
+import type { MatterCommunicationFormData } from '../../../lib/schemas/matter-dashboard';
 import {
   COMMUNICATION_DIRECTION_OPTIONS,
   COMMUNICATION_TYPE_OPTIONS,
@@ -22,26 +28,14 @@ type CommunicationRow = {
 type CommunicationsPanelProps = {
   dashboard: any;
   participantContacts: ParticipantContactOption[];
+  register: UseFormRegister<MatterCommunicationFormData>;
+  errors: FieldErrors<MatterCommunicationFormData>;
+  isSubmitting: boolean;
   selectedCommunicationThreadId: string;
-  setSelectedCommunicationThreadId: Dispatch<SetStateAction<string>>;
-  newCommunicationThreadSubject: string;
-  setNewCommunicationThreadSubject: Dispatch<SetStateAction<string>>;
-  communicationType: (typeof COMMUNICATION_TYPE_OPTIONS)[number];
-  setCommunicationType: Dispatch<SetStateAction<(typeof COMMUNICATION_TYPE_OPTIONS)[number]>>;
-  communicationDirection: (typeof COMMUNICATION_DIRECTION_OPTIONS)[number];
-  setCommunicationDirection: Dispatch<SetStateAction<(typeof COMMUNICATION_DIRECTION_OPTIONS)[number]>>;
-  communicationSubject: string;
-  setCommunicationSubject: Dispatch<SetStateAction<string>>;
-  communicationBody: string;
-  setCommunicationBody: Dispatch<SetStateAction<string>>;
-  communicationParticipantContactId: string;
-  setCommunicationParticipantContactId: Dispatch<SetStateAction<string>>;
-  communicationOccurredAt: string;
-  setCommunicationOccurredAt: Dispatch<SetStateAction<string>>;
   communicationStatusMessage: string | null;
   editingCommunicationId: string | null;
   communicationRows: CommunicationRow[];
-  logCommunicationEntry: () => Promise<void>;
+  logCommunicationEntry: FormEventHandler<HTMLFormElement>;
   cancelEditingCommunication: () => void;
   deleteCommunicationEntry: (messageId: string) => Promise<void>;
   startEditingCommunication: (row: {
@@ -59,22 +53,10 @@ type CommunicationsPanelProps = {
 export function CommunicationsPanel({
   dashboard,
   participantContacts,
+  register,
+  errors,
+  isSubmitting,
   selectedCommunicationThreadId,
-  setSelectedCommunicationThreadId,
-  newCommunicationThreadSubject,
-  setNewCommunicationThreadSubject,
-  communicationType,
-  setCommunicationType,
-  communicationDirection,
-  setCommunicationDirection,
-  communicationSubject,
-  setCommunicationSubject,
-  communicationBody,
-  setCommunicationBody,
-  communicationParticipantContactId,
-  setCommunicationParticipantContactId,
-  communicationOccurredAt,
-  setCommunicationOccurredAt,
   communicationStatusMessage,
   editingCommunicationId,
   communicationRows,
@@ -83,108 +65,118 @@ export function CommunicationsPanel({
   deleteCommunicationEntry,
   startEditingCommunication,
 }: CommunicationsPanelProps) {
+  const threadRegistration = register('threadId');
+  const threadSubjectRegistration = register('threadSubject');
+  const typeRegistration = register('type');
+  const directionRegistration = register('direction');
+  const participantContactRegistration = register('participantContactId');
+  const occurredAtRegistration = register('occurredAt');
+  const subjectRegistration = register('subject');
+  const bodyRegistration = register('body');
+
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Communications</h3>
-      <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 1fr 1fr auto' }}>
-        <select
-          className="select"
-          aria-label="Communication Thread"
-          value={selectedCommunicationThreadId}
-          onChange={(event) => setSelectedCommunicationThreadId(event.target.value)}
-        >
-          <option value="__new__">Create new thread</option>
-          {(dashboard.communicationThreads || []).map((thread: CommunicationThread) => (
-            <option key={thread.id} value={thread.id}>
-              {thread.subject || thread.id}
-            </option>
-          ))}
-        </select>
-        <select
-          className="select"
-          aria-label="Communication Type"
-          value={communicationType}
-          onChange={(event) => setCommunicationType(event.target.value as (typeof COMMUNICATION_TYPE_OPTIONS)[number])}
-        >
-          {COMMUNICATION_TYPE_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <select
-          className="select"
-          aria-label="Communication Direction"
-          value={communicationDirection}
-          onChange={(event) =>
-            setCommunicationDirection(event.target.value as (typeof COMMUNICATION_DIRECTION_OPTIONS)[number])
-          }
-        >
-          {COMMUNICATION_DIRECTION_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <select
-          className="select"
-          aria-label="Communication Contact"
-          value={communicationParticipantContactId}
-          onChange={(event) => setCommunicationParticipantContactId(event.target.value)}
-        >
-          <option value="">No contact participant</option>
-          {participantContacts.map((contact) => (
-            <option key={contact.id} value={contact.id}>
-              {contact.displayName}
-            </option>
-          ))}
-        </select>
-        <button className="button" type="button" onClick={logCommunicationEntry}>
-          {editingCommunicationId ? 'Save Communication Edit' : 'Log Communication'}
-        </button>
-      </div>
+      <form onSubmit={logCommunicationEntry}>
+        <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr 1fr 1fr auto' }}>
+          <FormField label="Communication Thread" name="communication-thread" error={errors.threadId?.message} required>
+            <Select
+              aria-label="Communication Thread"
+              {...threadRegistration}
+              value={selectedCommunicationThreadId}
+              invalid={!!errors.threadId}
+            >
+              <option value="__new__">Create new thread</option>
+              {(dashboard.communicationThreads || []).map((thread: CommunicationThread) => (
+                <option key={thread.id} value={thread.id}>
+                  {thread.subject || thread.id}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Communication Type" name="communication-type" error={errors.type?.message} required>
+            <Select aria-label="Communication Type" {...typeRegistration} invalid={!!errors.type}>
+              {COMMUNICATION_TYPE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Communication Direction" name="communication-direction" error={errors.direction?.message} required>
+            <Select aria-label="Communication Direction" {...directionRegistration} invalid={!!errors.direction}>
+              {COMMUNICATION_DIRECTION_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Communication Contact" name="communication-contact" error={errors.participantContactId?.message}>
+            <Select aria-label="Communication Contact" {...participantContactRegistration} invalid={!!errors.participantContactId}>
+              <option value="">No contact participant</option>
+              {participantContacts.map((contact) => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.displayName}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Working...' : editingCommunicationId ? 'Save Communication Edit' : 'Log Communication'}
+          </Button>
+        </div>
       {editingCommunicationId ? (
         <div style={{ marginTop: 8 }}>
-          <button className="button secondary" type="button" onClick={cancelEditingCommunication}>
+          <Button tone="secondary" type="button" onClick={cancelEditingCommunication}>
             Cancel Communication Edit
-          </button>
+          </Button>
         </div>
       ) : null}
       {selectedCommunicationThreadId === '__new__' ? (
-        <input
-          className="input"
-          style={{ marginTop: 8 }}
-          aria-label="Communication Thread Subject"
-          placeholder="Thread subject"
-          value={newCommunicationThreadSubject}
-          onChange={(event) => setNewCommunicationThreadSubject(event.target.value)}
-        />
+        <FormField
+          label="Communication Thread Subject"
+          name="communication-thread-subject"
+          error={errors.threadSubject?.message}
+        >
+          <Input
+            style={{ marginTop: 8 }}
+            aria-label="Communication Thread Subject"
+            placeholder="Thread subject"
+            {...threadSubjectRegistration}
+            invalid={!!errors.threadSubject}
+          />
+        </FormField>
       ) : null}
       <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '220px 1fr', marginTop: 8 }}>
-        <input
-          className="input"
-          aria-label="Communication Occurred At"
-          type="datetime-local"
-          value={communicationOccurredAt}
-          onChange={(event) => setCommunicationOccurredAt(event.target.value)}
-        />
-        <input
-          className="input"
-          aria-label="Communication Subject"
-          placeholder="Subject (optional)"
-          value={communicationSubject}
-          onChange={(event) => setCommunicationSubject(event.target.value)}
-        />
+        <FormField label="Communication Occurred At" name="communication-occurred-at" error={errors.occurredAt?.message}>
+          <Input
+            aria-label="Communication Occurred At"
+            type="datetime-local"
+            {...occurredAtRegistration}
+            invalid={!!errors.occurredAt}
+          />
+        </FormField>
+        <FormField label="Communication Subject" name="communication-subject" error={errors.subject?.message}>
+          <Input
+            aria-label="Communication Subject"
+            placeholder="Subject (optional)"
+            {...subjectRegistration}
+            invalid={!!errors.subject}
+          />
+        </FormField>
       </div>
-      <textarea
-        className="textarea"
-        style={{ marginTop: 8 }}
-        aria-label="Communication Body"
-        rows={3}
-        placeholder="Log details"
-        value={communicationBody}
-        onChange={(event) => setCommunicationBody(event.target.value)}
-      />
+      <FormField label="Communication Body" name="communication-body" error={errors.body?.message} required>
+        <textarea
+          className="textarea"
+          style={{ marginTop: 8 }}
+          aria-label="Communication Body"
+          rows={3}
+          placeholder="Log details"
+          {...bodyRegistration}
+        />
+      </FormField>
+      </form>
       {communicationStatusMessage ? (
         <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{communicationStatusMessage}</p>
       ) : null}
@@ -211,9 +203,9 @@ export function CommunicationsPanel({
               <td>{message.subject || String(message.body || '').slice(0, 90)}</td>
               <td>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
+                  <Button
                     type="button"
-                    className="button secondary"
+                    tone="secondary"
                     aria-label={`Edit Communication ${message.id}`}
                     onClick={() =>
                       startEditingCommunication({
@@ -229,15 +221,15 @@ export function CommunicationsPanel({
                     }
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="button danger"
+                    tone="danger"
                     aria-label={`Delete Communication ${message.id}`}
                     onClick={() => deleteCommunicationEntry(message.id)}
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>
