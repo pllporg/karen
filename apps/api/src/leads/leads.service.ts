@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { LeadStage, Prisma } from '@prisma/client';
+import { ContactKind, LeadStage, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -28,6 +28,22 @@ type ProactiveLeadProposal = {
   };
   citations: Array<{ entityType: string; entityId: string; field?: string }>;
   createdAt: string;
+};
+
+type LeadConversionPreview = {
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  propertyAddress?: string;
+  suggestedMatterName: string;
+  suggestedMatterNumber: string;
+  defaultParticipants: Array<{
+    name: string;
+    roleKey: string;
+    side: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT';
+    isPrimary: boolean;
+    existingContactId?: string;
+  }>;
 };
 
 @Injectable()
@@ -307,6 +323,50 @@ export class LeadsService {
       throw new BadRequestException('Signed engagement is required before converting lead');
     }
 
+    const participants = Array.isArray(dto.participants) ? dto.participants : [];
+    const participantRoleKeys = [...new Set(
+      participants
+        .map((participant) => this.normalizeOptionalText(participant.roleKey))
+        .filter((value): value is string => Boolean(value)),
+    )];
+    const participantRoleDefinitions = participantRoleKeys.length
+      ? await this.prisma.participantRoleDefinition.findMany({
+          where: {
+            organizationId,
+            key: {
+              in: participantRoleKeys,
+            },
+          },
+        })
+      : [];
+    const participantRoleDefinitionMap = new Map(
+      participantRoleDefinitions.map((definition) => [definition.key, definition]),
+    );
+
+    for (const roleKey of participantRoleKeys) {
+      if (!participantRoleDefinitionMap.has(roleKey)) {
+        throw new NotFoundException(`Participant role definition not found: ${roleKey}`);
+      }
+    }
+
+    const deniedUserIds = this.uniqueTextArray(dto.deniedUserIds);
+    if (deniedUserIds.length > 0) {
+      const memberships = await this.prisma.membership.findMany({
+        where: {
+          organizationId,
+          userId: {
+            in: deniedUserIds,
+          },
+        },
+        select: { userId: true },
+      });
+      const validUserIds = new Set(memberships.map((membership) => membership.userId));
+      const invalidUserIds = deniedUserIds.filter((userId) => !validUserIds.has(userId));
+      if (invalidUserIds.length > 0) {
+        throw new NotFoundException(`Denied users not found in organization: ${invalidUserIds.join(', ')}`);
+      }
+    }
+
     const matter = await this.prisma.matter.create({
       data: {
         organizationId,
@@ -315,8 +375,89 @@ export class LeadsService {
         practiceArea: dto.practiceArea,
         jurisdiction: dto.jurisdiction,
         venue: dto.venue,
+        ethicalWallEnabled: dto.ethicalWallEnabled ?? false,
       },
     });
+
+    await this.prisma.matterTeamMember.create({
+      data: {
+        matterId: matter.id,
+        userId: actorUserId,
+        canWrite: true,
+      },
+    });
+
+    for (const participant of participants) {
+      const roleKey = this.normalizeOptionalText(participant.roleKey);
+      const participantName = this.normalizeOptionalText(participant.name);
+      if (!roleKey || !participantName) {
+        throw new BadRequestException('Participant name and role are required');
+      }
+
+      const roleDefinition = participantRoleDefinitionMap.get(roleKey);
+      if (!roleDefinition) {
+        throw new NotFoundException(`Participant role definition not found: ${roleKey}`);
+      }
+
+      const counselRole = this.isCounselRole(roleDefinition.key, roleDefinition.label);
+      const contactId = await this.resolveLeadContactId({
+        organizationId,
+        providedContactId: participant.existingContactId,
+        fallbackName: participantName,
+        fallbackKind: ContactKind.PERSON,
+        missingError: 'Participant contact is required',
+      });
+      const representedByContactId = counselRole
+        ? undefined
+        : await this.resolveOptionalLeadContactId({
+            organizationId,
+            providedContactId: participant.representedByContactId,
+            fallbackName: participant.representedByName,
+            fallbackKind: ContactKind.PERSON,
+          });
+      const lawFirmContactId = counselRole
+        ? await this.resolveOptionalLeadContactId({
+            organizationId,
+            providedContactId: participant.lawFirmContactId,
+            fallbackName: participant.lawFirmName,
+            fallbackKind: ContactKind.ORGANIZATION,
+          })
+        : undefined;
+
+      if (counselRole && representedByContactId) {
+        throw new BadRequestException('Counsel participants cannot set represented-by links');
+      }
+      if (!counselRole && lawFirmContactId) {
+        throw new BadRequestException('Law firm links are only valid for counsel participants');
+      }
+
+      await this.prisma.matterParticipant.create({
+        data: {
+          organizationId,
+          matterId: matter.id,
+          contactId,
+          participantRoleKey: roleDefinition.key,
+          participantRoleDefinitionId: roleDefinition.id,
+          side: participant.side ?? roleDefinition.sideDefault,
+          isPrimary: participant.isPrimary ?? false,
+          representedByContactId,
+          lawFirmContactId,
+          notes: this.normalizeOptionalText(participant.notes),
+        },
+      });
+    }
+
+    const deniedUsersToCreate = deniedUserIds.filter((userId) => userId !== actorUserId);
+    if (deniedUsersToCreate.length > 0) {
+      await this.prisma.matterAccessDeny.createMany({
+        data: deniedUsersToCreate.map((userId) => ({
+          matterId: matter.id,
+          userId,
+          reason: this.normalizeOptionalText(dto.ethicalWallNotes) ?? 'Lead conversion ethical wall',
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     await this.prisma.lead.update({
       where: { id: lead.id },
@@ -325,11 +466,28 @@ export class LeadsService {
       },
     });
 
+    await this.audit.appendEvent({
+      organizationId,
+      actorUserId,
+      action: 'matter.created',
+      entityType: 'matter',
+      entityId: matter.id,
+      metadata: {
+        source: 'lead.convert',
+        leadId,
+        participantCount: participants.length,
+        ethicalWallEnabled: dto.ethicalWallEnabled ?? false,
+      },
+    });
+
     await this.appendTransitionEvent(organizationId, actorUserId, leadId, 'lead.converted', {
       fromStage: lead.stage,
       toStage: LeadStage.RETAINED,
       matterId: matter.id,
       envelopeId: signedEnvelope.id,
+      participantCount: participants.length,
+      ethicalWallEnabled: dto.ethicalWallEnabled ?? false,
+      deniedUserIds,
     });
 
     return {
@@ -341,8 +499,12 @@ export class LeadsService {
   async setupChecklist(organizationId: string, actorUserId: string, leadId: string) {
     const lead = await this.requireLead(organizationId, leadId);
 
-    const [intakeCount, conflict, engagementEnvelope] = await Promise.all([
+    const [intakeCount, latestIntakeSubmission, conflict, engagementEnvelope] = await Promise.all([
       this.prisma.intakeSubmission.count({ where: { organizationId, leadId } }),
+      this.prisma.intakeSubmission.findFirst({
+        where: { organizationId, leadId },
+        orderBy: { createdAt: 'desc' },
+      }),
       this.getLatestConflictCheck(organizationId, leadId),
       this.prisma.eSignEnvelope.findFirst({
         where: {
@@ -357,6 +519,7 @@ export class LeadsService {
     const conflictResolved = Boolean(conflictResult?.resolved);
     const engagementSent = engagementEnvelope?.status === 'SENT' || engagementEnvelope?.status === 'SIGNED';
     const engagementSigned = engagementEnvelope?.status === 'SIGNED';
+    const conversionPreview = this.buildLeadConversionPreview(lead.id, latestIntakeSubmission?.dataJson);
 
     const checklist = {
       leadId,
@@ -367,6 +530,9 @@ export class LeadsService {
       engagementSent,
       engagementSigned,
       convertible: engagementSigned,
+      intakeDraft: intakeCount > 0,
+      readyToConvert: engagementSigned,
+      conversionPreview,
     };
 
     const proactiveProposals = this.evaluateProactiveProposals({
@@ -587,6 +753,46 @@ export class LeadsService {
     });
   }
 
+  private buildLeadConversionPreview(leadId: string, draftJson: Prisma.JsonValue | null | undefined): LeadConversionPreview {
+    const draft = this.asObject(draftJson);
+    const client = this.asObject(draft.client);
+    const property = this.asObject(draft.property);
+
+    const clientName =
+      this.safeString([client.firstName, client.lastName].filter(Boolean).join(' ')) ??
+      this.safeString(client.company) ??
+      'Lead Intake';
+    const clientEmail = this.normalizeOptionalText(client.email);
+    const clientPhone = this.normalizeOptionalText(client.phone);
+    const propertyAddress = [property.addressLine1, property.city, property.state, property.zip]
+      .map((value) => this.normalizeOptionalText(value))
+      .filter(Boolean)
+      .join(', ');
+    const matterNameSegments = [clientName, this.normalizeOptionalText(property.addressLine1)]
+      .filter(Boolean)
+      .join(' - ');
+
+    return {
+      clientName: clientName || undefined,
+      clientEmail,
+      clientPhone,
+      propertyAddress: propertyAddress || undefined,
+      suggestedMatterName: matterNameSegments || 'Construction Intake Matter',
+      suggestedMatterNumber: this.buildSuggestedMatterNumber(leadId),
+      defaultParticipants: clientName
+        ? [
+            {
+              name: clientName,
+              roleKey: 'client',
+              side: 'CLIENT_SIDE',
+              isPrimary: true,
+              existingContactId: this.normalizeOptionalText(client.linkedContactId),
+            },
+          ]
+        : [],
+    };
+  }
+
   private async getLatestConflictCheck(organizationId: string, leadId: string) {
     return this.prisma.conflictCheckResult.findFirst({
       where: {
@@ -598,6 +804,12 @@ export class LeadsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private buildSuggestedMatterNumber(leadId: string) {
+    const stamp = new Date().getFullYear();
+    const suffix = leadId.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase() || 'LEAD';
+    return `M-${stamp}-${suffix}`;
   }
 
   private async resolveIntakeFormDefinitionId(organizationId: string, requestedIdOrName: string) {
@@ -670,8 +882,120 @@ export class LeadsService {
     return created.id;
   }
 
+  private async resolveLeadContactId(input: {
+    organizationId: string;
+    providedContactId?: string;
+    fallbackName?: string;
+    fallbackKind: ContactKind;
+    missingError: string;
+  }) {
+    if (input.providedContactId) {
+      await this.assertContactInOrganization(input.organizationId, input.providedContactId, input.missingError);
+      return input.providedContactId;
+    }
+
+    const displayName = this.normalizeOptionalText(input.fallbackName);
+    if (!displayName) {
+      throw new BadRequestException(input.missingError);
+    }
+
+    const existing = await this.prisma.contact.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        displayName,
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      return existing.id;
+    }
+
+    const contact = await this.prisma.contact.create({
+      data: {
+        organizationId: input.organizationId,
+        kind: input.fallbackKind,
+        displayName,
+        tags: ['lead-convert-generated'],
+      },
+      select: { id: true },
+    });
+
+    if (input.fallbackKind === ContactKind.PERSON) {
+      const [firstName, ...rest] = displayName.split(' ').filter(Boolean);
+      await this.prisma.personProfile.create({
+        data: {
+          contactId: contact.id,
+          firstName: firstName || displayName,
+          lastName: rest.join(' ') || null,
+        },
+      });
+    } else {
+      await this.prisma.organizationProfile.create({
+        data: {
+          contactId: contact.id,
+          legalName: displayName,
+        },
+      });
+    }
+
+    return contact.id;
+  }
+
+  private async resolveOptionalLeadContactId(input: {
+    organizationId: string;
+    providedContactId?: string;
+    fallbackName?: string;
+    fallbackKind: ContactKind;
+  }) {
+    const providedContactId = this.normalizeOptionalText(input.providedContactId);
+    const fallbackName = this.normalizeOptionalText(input.fallbackName);
+    if (!providedContactId && !fallbackName) {
+      return undefined;
+    }
+
+    return this.resolveLeadContactId({
+      organizationId: input.organizationId,
+      providedContactId,
+      fallbackName,
+      fallbackKind: input.fallbackKind,
+      missingError: 'Related contact is required',
+    });
+  }
+
+  private async assertContactInOrganization(organizationId: string, contactId: string, missingError: string) {
+    const contact = await this.prisma.contact.findFirst({
+      where: {
+        id: contactId,
+        organizationId,
+      },
+      select: { id: true },
+    });
+
+    if (!contact) {
+      throw new NotFoundException(missingError);
+    }
+  }
+
   private isUuidLike(value: string) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
+  private isCounselRole(roleKey: string, roleLabel?: string | null) {
+    const fingerprint = `${roleKey} ${roleLabel || ''}`.toLowerCase();
+    return /(counsel|attorney|lawyer)/.test(fingerprint);
+  }
+
+  private normalizeOptionalText(value?: string | null) {
+    const trimmed = String(value || '').trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  private safeString(value?: string | null) {
+    return this.normalizeOptionalText(value);
+  }
+
+  private uniqueTextArray(values?: string[] | null) {
+    return [...new Set((values ?? []).map((value) => this.normalizeOptionalText(value)).filter(Boolean) as string[])];
   }
 
   private async isConflictResolved(organizationId: string, leadId: string) {

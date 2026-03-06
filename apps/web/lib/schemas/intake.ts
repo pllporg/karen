@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { runConflictCheckSchema, resolveConflictSchema } from './conflict';
 import { generateEnvelopeSchema, sendEnvelopeSchema } from './engagement';
-import { convertLeadSchema as matterConvertLeadSchema } from './matter';
+import { optionalString, requiredString } from './common';
 
 const requiredText = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optionalText = () => z.string().trim().optional().or(z.literal(''));
@@ -74,4 +74,48 @@ export const conflictCheckSchema = runConflictCheckSchema;
 export const conflictResolutionSchema = resolveConflictSchema;
 export const engagementGenerateSchema = generateEnvelopeSchema;
 export const engagementSendSchema = sendEnvelopeSchema;
-export const leadConvertSchema = matterConvertLeadSchema;
+
+const leadConvertParticipantSchema = z
+  .object({
+    name: requiredString,
+    roleKey: requiredString,
+    side: z.enum(['CLIENT_SIDE', 'OPPOSING_SIDE', 'NEUTRAL', 'COURT'], {
+      errorMap: () => ({ message: 'Select a side.' }),
+    }),
+    isPrimary: z.boolean(),
+    notes: optionalString,
+    existingContactId: optionalString,
+    representedByContactId: optionalString,
+    representedByName: optionalString,
+    lawFirmContactId: optionalString,
+    lawFirmName: optionalString,
+  })
+  .superRefine((participant, ctx) => {
+    const counselRole = /(counsel|attorney|lawyer)/i.test(participant.roleKey);
+    if (counselRole && participant.representedByName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Counsel roles cannot use represented-by links.',
+        path: ['representedByName'],
+      });
+    }
+    if (!counselRole && participant.lawFirmName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Law firm is only valid for counsel roles.',
+        path: ['lawFirmName'],
+      });
+    }
+  });
+
+export const leadConvertSchema = z.object({
+  name: requiredString,
+  matterNumber: requiredString,
+  practiceArea: requiredString,
+  jurisdiction: optionalString,
+  venue: optionalString,
+  ethicalWallEnabled: z.boolean(),
+  ethicalWallNotes: optionalString,
+  deniedUserIds: z.array(z.string()),
+  participants: z.array(leadConvertParticipantSchema).min(1, 'At least one participant is required.'),
+});
