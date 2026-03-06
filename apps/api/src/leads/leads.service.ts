@@ -32,6 +32,31 @@ type ProactiveLeadProposal = {
 
 @Injectable()
 export class LeadsService {
+  private static readonly DEFAULT_LEAD_INTAKE_FORM_NAME = 'construction-intake-v1';
+  private static readonly DEFAULT_ENGAGEMENT_TEMPLATES: Record<
+    string,
+    { name: string; bodyTemplate: string; mergeFieldsJson?: Record<string, unknown> }
+  > = {
+    'engagement-template-standard': {
+      name: 'Standard Hourly',
+      bodyTemplate:
+        'Client: {{clientName}}\nMatter: {{matterName}}\nFee Type: Hourly\nRate: {{rate}}\nRetainer: {{retainerAmount}}\n',
+      mergeFieldsJson: { feeType: 'HOURLY', defaults: ['rate', 'retainerAmount'] },
+    },
+    'engagement-template-contingency': {
+      name: 'Contingency 33/40',
+      bodyTemplate:
+        'Client: {{clientName}}\nMatter: {{matterName}}\nFee Type: Contingency\nTerms: 33% pre-suit / 40% post-filing.\n',
+      mergeFieldsJson: { feeType: 'CONTINGENCY' },
+    },
+    'engagement-template-flat-fee': {
+      name: 'Flat Fee',
+      bodyTemplate:
+        'Client: {{clientName}}\nMatter: {{matterName}}\nFee Type: Flat Fee\nFlat Fee Amount: {{retainerAmount}}\n',
+      mergeFieldsJson: { feeType: 'FLAT' },
+    },
+  };
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
@@ -96,11 +121,15 @@ export class LeadsService {
 
   async createIntakeDraft(organizationId: string, actorUserId: string, leadId: string, dto: CreateIntakeDraftDto) {
     const lead = await this.requireLead(organizationId, leadId);
+    const intakeFormDefinitionId = await this.resolveIntakeFormDefinitionId(
+      organizationId,
+      dto.intakeFormDefinitionId,
+    );
     const submission = await this.prisma.intakeSubmission.create({
       data: {
         organizationId,
         leadId: lead.id,
-        intakeFormDefinitionId: dto.intakeFormDefinitionId,
+        intakeFormDefinitionId,
         submittedByContactId: dto.submittedByContactId,
         dataJson: dto.dataJson as Prisma.InputJsonValue,
       },
@@ -177,10 +206,14 @@ export class LeadsService {
 
   async generateEngagement(organizationId: string, actorUserId: string, leadId: string, dto: GenerateEngagementDto) {
     const lead = await this.requireLead(organizationId, leadId);
+    const engagementLetterTemplateId = await this.resolveEngagementTemplateId(
+      organizationId,
+      dto.engagementLetterTemplateId,
+    );
     const envelope = await this.prisma.eSignEnvelope.create({
       data: {
         organizationId,
-        engagementLetterTemplateId: dto.engagementLetterTemplateId,
+        engagementLetterTemplateId,
         provider: dto.provider ?? 'INTERNAL',
         status: 'DRAFT',
         payloadJson: {
@@ -239,6 +272,20 @@ export class LeadsService {
     });
 
     return updated;
+  }
+
+  async getLatestEngagementEnvelope(organizationId: string, leadId: string) {
+    await this.requireLead(organizationId, leadId);
+    return this.prisma.eSignEnvelope.findFirst({
+      where: {
+        organizationId,
+        payloadJson: {
+          path: ['leadId'],
+          equals: leadId,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async convert(organizationId: string, actorUserId: string, leadId: string, dto: ConvertLeadDto) {
@@ -551,6 +598,80 @@ export class LeadsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private async resolveIntakeFormDefinitionId(organizationId: string, requestedIdOrName: string) {
+    const normalized = requestedIdOrName?.trim() || LeadsService.DEFAULT_LEAD_INTAKE_FORM_NAME;
+    const existing = await this.prisma.intakeFormDefinition.findFirst({
+      where: {
+        organizationId,
+        OR: [{ id: normalized }, { name: normalized }],
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      return existing.id;
+    }
+
+    if (this.isUuidLike(normalized)) {
+      throw new NotFoundException('Intake form definition not found');
+    }
+
+    const created = await this.prisma.intakeFormDefinition.create({
+      data: {
+        organizationId,
+        name: normalized,
+        isClientPortalEnabled: false,
+        schemaJson: {
+          type: 'object',
+          title: 'Lead Intake Wizard Draft',
+        },
+      },
+      select: { id: true },
+    });
+
+    return created.id;
+  }
+
+  private async resolveEngagementTemplateId(organizationId: string, requestedIdOrName: string) {
+    const normalized = requestedIdOrName?.trim() || 'engagement-template-standard';
+    const existing = await this.prisma.engagementLetterTemplate.findFirst({
+      where: {
+        organizationId,
+        OR: [{ id: normalized }, { name: normalized }],
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      return existing.id;
+    }
+
+    if (this.isUuidLike(normalized)) {
+      throw new NotFoundException('Engagement letter template not found');
+    }
+
+    const fallback =
+      LeadsService.DEFAULT_ENGAGEMENT_TEMPLATES[normalized] ?? {
+        name: normalized,
+        bodyTemplate: 'Client: {{clientName}}\nMatter: {{matterName}}\n',
+        mergeFieldsJson: { generatedFrom: 'lead.generateEngagement' },
+      };
+
+    const created = await this.prisma.engagementLetterTemplate.create({
+      data: {
+        organizationId,
+        name: fallback.name,
+        bodyTemplate: fallback.bodyTemplate,
+        mergeFieldsJson: (fallback.mergeFieldsJson ?? {}) as Prisma.InputJsonValue,
+      },
+      select: { id: true },
+    });
+
+    return created.id;
+  }
+
+  private isUuidLike(value: string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
   }
 
   private async isConflictResolved(organizationId: string, leadId: string) {

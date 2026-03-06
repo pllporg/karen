@@ -14,6 +14,14 @@ describe('LeadsService', () => {
         findFirst: jest.fn(),
         update: jest.fn(),
       },
+      engagementLetterTemplate: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+      },
+      intakeFormDefinition: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+      },
       intakeSubmission: {
         create: jest.fn(),
         count: jest.fn(),
@@ -75,11 +83,12 @@ describe('LeadsService', () => {
   it('records audit events for state transitions', async () => {
     const { service, prisma, audit } = buildService();
     prisma.lead.findFirst.mockResolvedValue({ id: 'lead-1', organizationId, stage: LeadStage.NEW });
+    prisma.intakeFormDefinition.findFirst.mockResolvedValue({ id: 'intake-def-1' });
     prisma.intakeSubmission.create.mockResolvedValue({ id: 'intake-1' });
     prisma.lead.update.mockResolvedValue({ id: 'lead-1', stage: LeadStage.SCREENING });
 
     await service.createIntakeDraft(organizationId, actorUserId, 'lead-1', {
-      intakeFormDefinitionId: 'intake-def-1',
+      intakeFormDefinitionId: 'construction-intake-v1',
       dataJson: { firstName: 'Taylor' },
     });
 
@@ -90,6 +99,47 @@ describe('LeadsService', () => {
         action: 'lead.intake_draft.created',
         entityType: 'lead',
         entityId: 'lead-1',
+      }),
+    );
+  });
+
+  it('resolves named intake form definitions before saving draft submissions', async () => {
+    const { service, prisma } = buildService();
+    prisma.lead.findFirst.mockResolvedValue({ id: 'lead-1', organizationId, stage: LeadStage.NEW });
+    prisma.intakeFormDefinition.findFirst.mockResolvedValue({ id: 'intake-def-1' });
+    prisma.intakeSubmission.create.mockResolvedValue({ id: 'intake-1' });
+    prisma.lead.update.mockResolvedValue({ id: 'lead-1', stage: LeadStage.SCREENING });
+
+    await service.createIntakeDraft(organizationId, actorUserId, 'lead-1', {
+      intakeFormDefinitionId: 'construction-intake-v1',
+      dataJson: { firstName: 'Taylor' },
+    });
+
+    expect(prisma.intakeSubmission.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          intakeFormDefinitionId: 'intake-def-1',
+        }),
+      }),
+    );
+  });
+
+  it('resolves named engagement templates before generating envelopes', async () => {
+    const { service, prisma } = buildService();
+    prisma.lead.findFirst.mockResolvedValue({ id: 'lead-1', organizationId, stage: LeadStage.CONSULTATION });
+    prisma.engagementLetterTemplate.findFirst.mockResolvedValue({ id: 'template-1' });
+    prisma.eSignEnvelope.create.mockResolvedValue({ id: 'env-1' });
+
+    await service.generateEngagement(organizationId, actorUserId, 'lead-1', {
+      engagementLetterTemplateId: 'engagement-template-standard',
+      provider: 'INTERNAL',
+    });
+
+    expect(prisma.eSignEnvelope.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          engagementLetterTemplateId: 'template-1',
+        }),
       }),
     );
   });

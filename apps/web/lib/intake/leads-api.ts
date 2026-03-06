@@ -1,6 +1,7 @@
 import { apiFetch } from '../api';
 import type { ConflictCheckPayload } from './conflict-check';
 import { buildIntakeDraftData, IntakeWizardFormState } from './intake-wizard-adapter';
+import type { EngagementStatus } from '../types/common';
 
 export type Lead = {
   id: string;
@@ -25,6 +26,16 @@ export type ConflictCheckRecord = {
   resultJson?: ConflictCheckPayload | Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type EngagementEnvelopeRecord = {
+  id: string;
+  status: EngagementStatus | 'PENDING_SIGNATURE' | 'VOIDED' | 'ERROR';
+  externalId?: string | null;
+  provider: string;
+  payloadJson?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export function listLeads() {
@@ -63,18 +74,26 @@ export function resolveConflict(leadId: string, resolved: boolean, resolutionNot
   });
 }
 
-export function generateEngagement(leadId: string, engagementLetterTemplateId: string) {
-  return apiFetch<{ id: string }>(`/leads/${leadId}/engagement/generate`, {
+export function generateEngagement(
+  leadId: string,
+  engagementLetterTemplateId: string,
+  payloadJson?: Record<string, unknown>,
+) {
+  return apiFetch<EngagementEnvelopeRecord>(`/leads/${leadId}/engagement/generate`, {
     method: 'POST',
-    body: JSON.stringify({ engagementLetterTemplateId, provider: 'INTERNAL' }),
+    body: JSON.stringify({ engagementLetterTemplateId, provider: 'INTERNAL', payloadJson }),
   });
 }
 
 export function sendEngagement(leadId: string, envelopeId: string) {
-  return apiFetch<{ id: string }>(`/leads/${leadId}/engagement/send`, {
+  return apiFetch<EngagementEnvelopeRecord>(`/leads/${leadId}/engagement/send`, {
     method: 'POST',
     body: JSON.stringify({ envelopeId }),
   });
+}
+
+export function getLatestEngagementEnvelope(leadId: string) {
+  return apiFetch<EngagementEnvelopeRecord | null>(`/leads/${leadId}/engagement/latest`);
 }
 
 export function convertLead(

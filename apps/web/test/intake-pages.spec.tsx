@@ -307,35 +307,70 @@ describe('Intake routes', () => {
 
   it('generates then sends engagement routing payloads', async () => {
     vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ leadId: 'lead-11' });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({ id: 'env-9' }))
-      .mockResolvedValueOnce(jsonResponse({ id: 'env-9' }));
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url === 'http://localhost:4000/leads/lead-11/engagement/latest') {
+        return jsonResponse(null);
+      }
+
+      if (url === 'http://localhost:4000/leads/lead-11/engagement/generate') {
+        return jsonResponse({
+          id: 'env-9',
+          status: 'DRAFT',
+          provider: 'INTERNAL',
+          createdAt: '2026-03-06T15:10:00.000Z',
+          updatedAt: '2026-03-06T15:10:00.000Z',
+          payloadJson: JSON.parse(String(init?.body ?? '{}')).payloadJson,
+        });
+      }
+
+      if (url === 'http://localhost:4000/leads/lead-11/engagement/send') {
+        return jsonResponse({
+          id: 'env-9',
+          status: 'SENT',
+          provider: 'INTERNAL',
+          createdAt: '2026-03-06T15:10:00.000Z',
+          updatedAt: '2026-03-06T15:12:00.000Z',
+          payloadJson: {},
+        });
+      }
+
+      return jsonResponse({ error: `Unexpected ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<LeadEngagementPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate Envelope' }));
+    await screen.findByText('No envelope generated yet. Generate an engagement packet to begin the e-sign lifecycle.');
+
+    fireEvent.change(screen.getByLabelText(/Recipient Name/i), { target: { value: 'John Smith' } });
+    fireEvent.change(screen.getByLabelText(/Recipient Email/i), { target: { value: 'john@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Engagement Letter' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
+        2,
         'http://localhost:4000/leads/lead-11/engagement/generate',
         expect.objectContaining({ method: 'POST' }),
       );
     });
 
-    expect(screen.getByLabelText(/Envelope ID/i)).toHaveValue('env-9');
+    expect(await screen.findByText('Engagement envelope env-9 generated in DRAFT status.')).toBeInTheDocument();
+    expect(screen.getByText('env-9')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Send Envelope' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
+        3,
         'http://localhost:4000/leads/lead-11/engagement/send',
         expect.objectContaining({ method: 'POST' }),
       );
     });
+
+    expect(await screen.findByText(/Current status: SENT/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Proceed to Convert' })).toBeDisabled();
   });
 
   it('blocks conversion when required matter fields are blank', async () => {
