@@ -1,364 +1,171 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
-import { getSessionToken } from '../../lib/api';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-
-type MatterLookup = {
-  id: string;
-  matterNumber: string;
-  name: string;
-  label: string;
-};
+import { Button } from '../../components/ui/button';
+import { FormField } from '../../components/ui/form-field';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import { useDocumentsPage } from './use-documents-page';
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
-  const [retentionPolicies, setRetentionPolicies] = useState<any[]>([]);
-  const [dispositionRuns, setDispositionRuns] = useState<any[]>([]);
-  const [selectedMatterId, setSelectedMatterId] = useState('');
-  const [title, setTitle] = useState('Inspection Report');
-  const [file, setFile] = useState<File | null>(null);
-  const [selectedPdfMatterId, setSelectedPdfMatterId] = useState('');
-  const [policyName, setPolicyName] = useState('Default 7-year retention');
-  const [policyScope, setPolicyScope] = useState<'ALL_DOCUMENTS' | 'MATTER' | 'CATEGORY'>('ALL_DOCUMENTS');
-  const [policyTrigger, setPolicyTrigger] = useState<'DOCUMENT_UPLOADED' | 'MATTER_CLOSED'>('DOCUMENT_UPLOADED');
-  const [policyRetentionDays, setPolicyRetentionDays] = useState('2555');
-  const [retentionStatus, setRetentionStatus] = useState<string | null>(null);
-  const [selectedPolicyId, setSelectedPolicyId] = useState('');
-
-  function resolveMatterLabel(matterId: string | null | undefined): string {
-    if (!matterId) return '-';
-    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
-  }
-
-  async function loadDocuments() {
-    const token = getSessionToken();
-    const response = await fetch(`${API_BASE}/documents`, {
-      headers: token ? { 'x-session-token': token } : {},
-      credentials: 'include',
-    });
-    if (!response.ok) return;
-    setDocuments(await response.json());
-  }
-
-  async function loadMatterLookups() {
-    const token = getSessionToken();
-    const response = await fetch(`${API_BASE}/lookups/matters?limit=200`, {
-      headers: token ? { 'x-session-token': token } : {},
-      credentials: 'include',
-    });
-    if (!response.ok) return;
-    const matters = (await response.json()) as MatterLookup[];
-    setMatterOptions(matters);
-    setSelectedMatterId((current) => current || matters[0]?.id || '');
-    setSelectedPdfMatterId((current) => current || matters[0]?.id || '');
-  }
-
-  async function loadRetentionData() {
-    const token = getSessionToken();
-    const [policiesResponse, runsResponse] = await Promise.all([
-      fetch(`${API_BASE}/documents/retention/policies`, {
-        headers: token ? { 'x-session-token': token } : {},
-        credentials: 'include',
-      }),
-      fetch(`${API_BASE}/documents/disposition/runs`, {
-        headers: token ? { 'x-session-token': token } : {},
-        credentials: 'include',
-      }),
-    ]);
-    if (policiesResponse.ok) {
-      const policies = await policiesResponse.json();
-      setRetentionPolicies(policies);
-      if (!selectedPolicyId && policies.length > 0) {
-        setSelectedPolicyId(policies[0].id);
-      }
-    }
-    if (runsResponse.ok) {
-      setDispositionRuns(await runsResponse.json());
-    }
-  }
-
-  useEffect(() => {
-    Promise.all([loadDocuments(), loadMatterLookups()]).catch(() => undefined);
-  }, []);
-
-  async function upload(e: FormEvent) {
-    e.preventDefault();
-    if (!file || !selectedMatterId) return;
-
-    const form = new FormData();
-    form.set('matterId', selectedMatterId);
-    form.set('title', title);
-    form.set('file', file);
-
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/upload`, {
-      method: 'POST',
-      body: form,
-      headers: token ? { 'x-session-token': token } : undefined,
-      credentials: 'include',
-    });
-
-    setFile(null);
-    await loadDocuments();
-  }
-
-  async function generatePdf() {
-    if (!selectedPdfMatterId) return;
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/generate-pdf`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        matterId: selectedPdfMatterId,
-        title: 'Generated Client Letter',
-        lines: ['Attorney Review Required', 'Draft letter body here.'],
-      }),
-      credentials: 'include',
-    });
-    await loadDocuments();
-  }
-
-  async function createRetentionPolicy(e: FormEvent) {
-    e.preventDefault();
-    const token = getSessionToken();
-    const response = await fetch(`${API_BASE}/documents/retention/policies`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        name: policyName,
-        scope: policyScope,
-        trigger: policyTrigger,
-        retentionDays: Number(policyRetentionDays),
-      }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      setRetentionStatus('Failed to create retention policy.');
-      return;
-    }
-    const created = await response.json();
-    setRetentionStatus(`Created retention policy ${created.name}.`);
-    await loadRetentionData();
-    if (created?.id) {
-      setSelectedPolicyId(created.id);
-    }
-  }
-
-  async function assignRetentionPolicy(documentId: string) {
-    if (!selectedPolicyId) {
-      setRetentionStatus('Select a retention policy first.');
-      return;
-    }
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/${documentId}/retention-policy`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({ policyId: selectedPolicyId }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Assigned retention policy to document.');
-    await loadDocuments();
-  }
-
-  async function placeLegalHold(documentId: string) {
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/${documentId}/legal-hold`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        reason: 'Attorney requested preservation pending dispute resolution.',
-      }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Placed legal hold on document.');
-    await loadDocuments();
-  }
-
-  async function releaseLegalHold(documentId: string) {
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/${documentId}/legal-hold/release`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        reason: 'Matter hold release approved by supervising attorney.',
-      }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Released legal hold on document.');
-    await loadDocuments();
-  }
-
-  async function createDispositionRun() {
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/disposition/runs`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        policyId: selectedPolicyId || undefined,
-      }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Created disposition run.');
-    await loadRetentionData();
-  }
-
-  async function approveDispositionRun(runId: string) {
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/disposition/runs/${runId}/approve`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        notes: 'Approved by attorney.',
-      }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Approved disposition run.');
-    await loadRetentionData();
-  }
-
-  async function executeDispositionRun(runId: string) {
-    const token = getSessionToken();
-    await fetch(`${API_BASE}/documents/disposition/runs/${runId}/execute`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { 'x-session-token': token } : {}),
-      },
-      body: JSON.stringify({
-        notes: 'Executed after approval.',
-      }),
-      credentials: 'include',
-    });
-    setRetentionStatus('Executed disposition run.');
-    await loadRetentionData();
-    await loadDocuments();
-  }
+  const {
+    documents,
+    matterOptions,
+    retentionPolicies,
+    dispositionRuns,
+    retentionStatus,
+    registerUpload,
+    registerPdf,
+    registerRetention,
+    uploadErrors,
+    retentionErrors,
+    uploading,
+    generatingPdf,
+    creatingPolicy,
+    upload,
+    generatePdf,
+    createRetentionPolicy,
+    assignRetentionPolicy,
+    placeLegalHold,
+    releaseLegalHold,
+    loadRetentionData,
+    createDispositionRun,
+    approveDispositionRun,
+    executeDispositionRun,
+    resolveMatterLabel,
+  } = useDocumentsPage();
 
   return (
     <AppShell>
       <PageHeader title="Documents" subtitle="Secure upload/versioning, malware-scan hook, signed links, and share links." />
-      <div className="card" style={{ marginBottom: 14 }}>
-        <form onSubmit={upload} style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 1fr 1fr auto' }}>
-          <select
-            className="input"
-            aria-label="Upload Matter"
-            value={selectedMatterId}
-            onChange={(event) => setSelectedMatterId(event.target.value)}
-          >
-            <option value="">Select matter</option>
-            {matterOptions.map((matter) => (
-              <option key={matter.id} value={matter.id}>
-                {matter.label}
-              </option>
-            ))}
-          </select>
-          <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <input className="input" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          <button className="button" type="submit">Upload</button>
+
+      <div className="card mb-3 stack-3">
+        <form onSubmit={upload} className="grid-4">
+          <FormField label="Upload Matter" name="upload-matter" error={uploadErrors.matterId?.message}>
+            <Select aria-label="Upload Matter" {...registerUpload('matterId')} invalid={!!uploadErrors.matterId}>
+              <option value="">Select matter</option>
+              {matterOptions.map((matter) => (
+                <option key={matter.id} value={matter.id}>
+                  {matter.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Title" name="upload-title" error={uploadErrors.title?.message} required>
+            <Input placeholder="Title" {...registerUpload('title')} invalid={!!uploadErrors.title} />
+          </FormField>
+          <FormField label="File" name="upload-file" error={uploadErrors.file?.message as string | undefined} required>
+            <Input type="file" {...registerUpload('file')} />
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Upload</p>
+            <Button type="submit" disabled={uploading}>
+              {uploading ? 'Working...' : 'Upload'}
+            </Button>
+          </div>
         </form>
-        <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
-          <select
-            className="input"
-            aria-label="PDF Matter"
-            value={selectedPdfMatterId}
-            onChange={(event) => setSelectedPdfMatterId(event.target.value)}
-          >
-            <option value="">Select matter for generated PDF</option>
-            {matterOptions.map((matter) => (
-              <option key={matter.id} value={matter.id}>
-                {matter.label}
-              </option>
-            ))}
-          </select>
-          <button className="button secondary" type="button" onClick={generatePdf}>Generate PDF Draft</button>
-        </div>
-      </div>
-      <div className="card" style={{ marginBottom: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Retention + Legal Hold</h3>
-        <form
-          onSubmit={createRetentionPolicy}
-          style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 160px 180px 130px auto' }}
-        >
-          <input
-            className="input"
-            placeholder="Retention policy name"
-            value={policyName}
-            onChange={(e) => setPolicyName(e.target.value)}
-          />
-          <select className="select" aria-label="Retention Scope" value={policyScope} onChange={(e) => setPolicyScope(e.target.value as any)}>
-            <option value="ALL_DOCUMENTS">All Documents</option>
-            <option value="MATTER">Matter</option>
-            <option value="CATEGORY">Category</option>
-          </select>
-          <select className="select" aria-label="Retention Trigger" value={policyTrigger} onChange={(e) => setPolicyTrigger(e.target.value as any)}>
-            <option value="DOCUMENT_UPLOADED">Document Uploaded</option>
-            <option value="MATTER_CLOSED">Matter Closed</option>
-          </select>
-          <input
-            className="input"
-            aria-label="Retention Days"
-            placeholder="Days"
-            value={policyRetentionDays}
-            onChange={(e) => setPolicyRetentionDays(e.target.value)}
-          />
-          <button className="button" type="submit">Create Policy</button>
+
+        <form onSubmit={generatePdf} className="grid-2">
+          <FormField label="PDF Matter" name="pdf-matter">
+            <Select aria-label="PDF Matter" {...registerPdf('matterId')}>
+              <option value="">Select matter for generated PDF</option>
+              {matterOptions.map((matter) => (
+                <option key={matter.id} value={matter.id}>
+                  {matter.label}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">PDF Draft</p>
+            <Button tone="secondary" type="submit" disabled={generatingPdf}>
+              {generatingPdf ? 'Working...' : 'Generate PDF Draft'}
+            </Button>
+          </div>
         </form>
-        <div style={{ marginTop: 10, display: 'grid', gap: 10, gridTemplateColumns: '1fr auto auto' }}>
-          <select className="select" aria-label="Retention Policy Select" value={selectedPolicyId} onChange={(e) => setSelectedPolicyId(e.target.value)}>
-            <option value="">Select retention policy</option>
-            {retentionPolicies.map((policy) => (
-              <option key={policy.id} value={policy.id}>
-                {policy.name} ({policy.scope}, {policy.retentionDays}d)
-              </option>
-            ))}
-          </select>
-          <button className="button secondary" type="button" onClick={loadRetentionData}>
-            Load Retention Data
-          </button>
-          <button className="button secondary" type="button" onClick={createDispositionRun}>
-            Create Disposition Run
-          </button>
-        </div>
-        {retentionStatus ? <p style={{ marginTop: 10, color: 'var(--lic-text-muted)' }}>{retentionStatus}</p> : null}
       </div>
-      <div className="card">
+
+      <div className="card mb-3 stack-3">
+        <h3>Retention + Legal Hold</h3>
+
+        <form onSubmit={createRetentionPolicy} className="grid-4">
+          <FormField label="Retention Policy Name" name="retention-policy-name" error={retentionErrors.policyName?.message} required>
+            <Input
+              placeholder="Retention policy name"
+              {...registerRetention('policyName')}
+              invalid={!!retentionErrors.policyName}
+            />
+          </FormField>
+          <FormField label="Retention Scope" name="retention-policy-scope" error={retentionErrors.policyScope?.message} required>
+            <Select aria-label="Retention Scope" {...registerRetention('policyScope')} invalid={!!retentionErrors.policyScope}>
+              <option value="ALL_DOCUMENTS">All Documents</option>
+              <option value="MATTER">Matter</option>
+              <option value="CATEGORY">Category</option>
+            </Select>
+          </FormField>
+          <FormField label="Retention Trigger" name="retention-policy-trigger" error={retentionErrors.policyTrigger?.message} required>
+            <Select aria-label="Retention Trigger" {...registerRetention('policyTrigger')} invalid={!!retentionErrors.policyTrigger}>
+              <option value="DOCUMENT_UPLOADED">Document Uploaded</option>
+              <option value="MATTER_CLOSED">Matter Closed</option>
+            </Select>
+          </FormField>
+          <FormField label="Retention Days" name="retention-policy-days" error={retentionErrors.policyRetentionDays?.message} required>
+            <Input
+              aria-label="Retention Days"
+              placeholder="Days"
+              {...registerRetention('policyRetentionDays')}
+              invalid={!!retentionErrors.policyRetentionDays}
+            />
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Create</p>
+            <Button type="submit" disabled={creatingPolicy}>
+              {creatingPolicy ? 'Working...' : 'Create Policy'}
+            </Button>
+          </div>
+        </form>
+
+        <div className="grid-3">
+          <FormField label="Retention Policy Select" name="retention-policy-select">
+            <Select aria-label="Retention Policy Select" {...registerRetention('selectedPolicyId')}>
+              <option value="">Select retention policy</option>
+              {retentionPolicies.map((policy) => (
+                <option key={policy.id} value={policy.id}>
+                  {policy.name} ({policy.scope}, {policy.retentionDays}d)
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <div className="stack-2">
+            <p className="type-label">Load</p>
+            <Button tone="secondary" type="button" onClick={loadRetentionData}>
+              Load Retention Data
+            </Button>
+          </div>
+          <div className="stack-2">
+            <p className="type-label">Disposition</p>
+            <Button tone="secondary" type="button" onClick={createDispositionRun}>
+              Create Disposition Run
+            </Button>
+          </div>
+        </div>
+
+        {retentionStatus ? <p className="type-caption muted">{retentionStatus}</p> : null}
+      </div>
+
+      <div className="card mb-3">
         <table className="table">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Matter</th>
-              <th>Versions</th>
-              <th>Shared</th>
-              <th>Retention</th>
-              <th>Legal Hold</th>
-              <th>Disposition</th>
-              <th>Actions</th>
+              <th scope="col">Title</th>
+              <th scope="col">Matter</th>
+              <th scope="col">Versions</th>
+              <th scope="col">Shared</th>
+              <th scope="col">Retention</th>
+              <th scope="col">Legal Hold</th>
+              <th scope="col">Disposition</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -372,18 +179,18 @@ export default function DocumentsPage() {
                 <td>{doc.legalHoldActive ? 'Active' : 'None'}</td>
                 <td>{doc.dispositionStatus || 'ACTIVE'}</td>
                 <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="button secondary" type="button" onClick={() => assignRetentionPolicy(doc.id)}>
+                  <div className="row-1">
+                    <Button tone="secondary" type="button" onClick={() => assignRetentionPolicy(doc.id)}>
                       Assign Policy
-                    </button>
+                    </Button>
                     {doc.legalHoldActive ? (
-                      <button className="button secondary" type="button" onClick={() => releaseLegalHold(doc.id)}>
+                      <Button tone="secondary" type="button" onClick={() => releaseLegalHold(doc.id)}>
                         Release Hold
-                      </button>
+                      </Button>
                     ) : (
-                      <button className="button secondary" type="button" onClick={() => placeLegalHold(doc.id)}>
+                      <Button tone="secondary" type="button" onClick={() => placeLegalHold(doc.id)}>
                         Place Hold
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>
@@ -392,16 +199,17 @@ export default function DocumentsPage() {
           </tbody>
         </table>
       </div>
+
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Disposition Runs</h3>
+        <h3>Disposition Runs</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Run</th>
-              <th>Status</th>
-              <th>Cutoff</th>
-              <th>Items</th>
-              <th>Actions</th>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Cutoff</th>
+              <th scope="col">Items</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -412,16 +220,16 @@ export default function DocumentsPage() {
                 <td>{new Date(run.cutoffAt).toLocaleString()}</td>
                 <td>{run.items?.length || 0}</td>
                 <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {(run.status === 'DRAFT' || run.status === 'PENDING_APPROVAL') ? (
-                      <button className="button secondary" type="button" onClick={() => approveDispositionRun(run.id)}>
+                  <div className="row-1">
+                    {run.status === 'DRAFT' || run.status === 'PENDING_APPROVAL' ? (
+                      <Button tone="secondary" type="button" onClick={() => approveDispositionRun(run.id)}>
                         Approve
-                      </button>
+                      </Button>
                     ) : null}
                     {run.status === 'APPROVED' ? (
-                      <button className="button secondary" type="button" onClick={() => executeDispositionRun(run.id)}>
+                      <Button tone="secondary" type="button" onClick={() => executeDispositionRun(run.id)}>
                         Execute
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
                 </td>

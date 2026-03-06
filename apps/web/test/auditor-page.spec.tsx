@@ -45,7 +45,7 @@ describe('AuditorPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Matter Label' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Updated Timestamp' })).toBeInTheDocument();
-    expect(screen.getAllByText('CRITICAL').length).toBeGreaterThan(0);
+    expect(await screen.findByRole('cell', { name: 'CRITICAL' })).toBeInTheDocument();
   });
 
   it('opens and closes review drawer while preserving queue context', async () => {
