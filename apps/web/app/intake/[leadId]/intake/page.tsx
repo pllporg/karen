@@ -1,36 +1,55 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 import { AppShell } from '../../../../components/app-shell';
 import { PageHeader } from '../../../../components/page-header';
 import { StageNav } from '../../../../components/intake/stage-nav';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
+import { Textarea } from '../../../../components/ui/textarea';
 import { createIntakeDraft } from '../../../../lib/intake/leads-api';
-import { defaultIntakeWizardForm, type IntakeWizardFormState } from '../../../../lib/intake/intake-wizard-adapter';
-import { intakeDraftAdapterSchema } from '../../../../lib/schemas/intake';
+import { defaultIntakeWizardForm } from '../../../../lib/intake/intake-wizard-adapter';
+import { intakeDraftFields, intakeDraftSchema } from '../../../../lib/schemas/intake';
+
+type IntakeDraftFormValues = z.infer<typeof intakeDraftSchema>;
+
+type FeedbackState = {
+  tone: 'notice' | 'error';
+  message: string;
+};
 
 export default function LeadIntakeDraftPage() {
   const params = useParams<{ leadId: string }>();
   const leadId = params.leadId;
-  const [status, setStatus] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<IntakeWizardFormState>({
-    resolver: zodResolver(intakeDraftAdapterSchema),
-    mode: 'onBlur',
+  } = useForm<IntakeDraftFormValues>({
+    resolver: zodResolver(intakeDraftSchema),
     defaultValues: defaultIntakeWizardForm,
   });
-  const fields = Object.keys(defaultIntakeWizardForm) as Array<keyof IntakeWizardFormState>;
 
-  const submitDraft = handleSubmit(async (data) => {
-    const result = await createIntakeDraft(leadId, data);
-    setStatus(`Intake draft ${result.id} recorded at ${new Date().toLocaleString()}.`);
+  const submitDraft = handleSubmit(async (values) => {
+    setFeedback(null);
+
+    try {
+      const result = await createIntakeDraft(leadId, values);
+      setFeedback({
+        tone: 'notice',
+        message: `Intake draft ${result.id} recorded at ${new Date().toLocaleString()}.`,
+      });
+    } catch (error) {
+      setFeedback({
+        tone: 'error',
+        message: error instanceof Error ? error.message : 'Unable to submit intake draft.',
+      });
+    }
   });
 
   return (
@@ -41,28 +60,50 @@ export default function LeadIntakeDraftPage() {
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Field</th>
-              <th scope="col">Value</th>
+              <th>Field</th>
+              <th>Entry</th>
+              <th>Validation</th>
             </tr>
           </thead>
           <tbody>
-            {fields.map((field) => (
-              <tr key={field}>
-                <td className="mono-meta">{field}</td>
-                <td className="stack-1">
-                  <Input {...register(field)} invalid={Boolean(errors[field])} />
-                  {errors[field]?.message ? <p className="form-field-error">{errors[field]?.message as string}</p> : null}
-                </td>
-              </tr>
-            ))}
+            {intakeDraftFields.map((field) => {
+              const error = errors[field.name];
+              const errorMessage = typeof error?.message === 'string' ? error.message : undefined;
+              const control = field.multiline ? (
+                <Textarea {...register(field.name)} invalid={Boolean(errorMessage)} />
+              ) : (
+                <Input {...register(field.name)} invalid={Boolean(errorMessage)} />
+              );
+
+              return (
+                <tr key={field.name}>
+                  <td>
+                    <div className="stack-1">
+                      <span className="type-label">{field.label}</span>
+                      {field.hint ? <p className="form-field-hint">{field.hint}</p> : null}
+                    </div>
+                  </td>
+                  <td>{control}</td>
+                  <td>
+                    {errorMessage ? (
+                      <p className="form-field-error" role="alert">{errorMessage}</p>
+                    ) : (
+                      <span className="mono-meta">Valid</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+        {feedback ? (
+          <p className={feedback.tone === 'error' ? 'error' : 'notice'} role={feedback.tone === 'error' ? 'alert' : 'status'}>
+            {feedback.message}
+          </p>
+        ) : null}
         <div className="form-actions">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Working...' : 'Submit Intake Draft'}
-          </Button>
+          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Submitting Draft...' : 'Submit Intake Draft'}</Button>
         </div>
-        {status ? <p className="mono-meta">{status}</p> : null}
       </form>
     </AppShell>
   );

@@ -1,9 +1,17 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { apiFetch } from '../../lib/api';
+import {
+  aiJobCreateSchema,
+  stylePackCreateSchema,
+  type AiJobCreateFormData,
+  type StylePackCreateFormData,
+} from '../../lib/schemas/ai-workspace';
 import { JobCreatorForm } from './job-creator-form';
 import { JobsTable } from './jobs-table';
 import { StylePackManager } from './style-pack-manager';
@@ -26,16 +34,36 @@ export default function AiPage() {
   const [matterOptions, setMatterOptions] = useState<MatterLookup[]>([]);
   const [documentVersionOptions, setDocumentVersionOptions] = useState<DocumentVersionLookup[]>([]);
   const [stylePackDrafts, setStylePackDrafts] = useState<Record<string, StylePackDraft>>({});
-  const [selectedStylePackId, setSelectedStylePackId] = useState('');
-  const [newStylePackName, setNewStylePackName] = useState('');
-  const [newStylePackDescription, setNewStylePackDescription] = useState('');
   const [busyStylePackId, setBusyStylePackId] = useState<string | null>(null);
-  const [selectedMatterId, setSelectedMatterId] = useState('');
-  const [toolName, setToolName] = useState<string>('case_summary');
   const [busyArtifactId, setBusyArtifactId] = useState<string | null>(null);
   const [statusByArtifact, setStatusByArtifact] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [deadlineSelections, setDeadlineSelections] = useState<Record<string, Record<string, DeadlineSelection>>>({});
+  const jobForm = useForm<AiJobCreateFormData>({
+    resolver: zodResolver(aiJobCreateSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      matterId: '',
+      toolName: 'case_summary',
+      stylePackId: '',
+    },
+  });
+  const stylePackCreateForm = useForm<StylePackCreateFormData>({
+    resolver: zodResolver(stylePackCreateSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+  const selectedMatterId = useWatch({
+    control: jobForm.control,
+    name: 'matterId',
+  });
+  const selectedStylePackId = useWatch({
+    control: jobForm.control,
+    name: 'stylePackId',
+  });
 
   const load = useCallback(async () => {
     const query = selectedMatterId ? `&matterId=${encodeURIComponent(selectedMatterId)}` : '';
@@ -54,30 +82,29 @@ export default function AiPage() {
     setDocumentVersionOptions(nextDocumentVersions);
     setStylePackDrafts((previous) => buildStylePackDrafts(nextStylePacks, previous));
     setDeadlineSelections((previous) => buildSelectionState(nextJobs, previous));
-    setSelectedMatterId((current) => current || nextMatters[0]?.id || '');
+    if (!jobForm.getValues('matterId') && nextMatters[0]?.id) {
+      jobForm.setValue('matterId', nextMatters[0].id, { shouldDirty: false });
+    }
 
     if (selectedStylePackId && !nextStylePacks.some((stylePack) => stylePack.id === selectedStylePackId)) {
-      setSelectedStylePackId('');
+      jobForm.setValue('stylePackId', '', { shouldDirty: false });
     }
-  }, [selectedMatterId, selectedStylePackId]);
+  }, [jobForm, selectedMatterId, selectedStylePackId]);
 
   useEffect(() => {
     load().catch(() => undefined);
   }, [load]);
 
-  async function createJob(event: FormEvent) {
-    event.preventDefault();
-    if (!selectedMatterId) return;
-
+  const createJob = jobForm.handleSubmit(async (values) => {
     setError(null);
     try {
       const payload: { matterId: string; toolName: string; input: Record<string, unknown>; stylePackId?: string } = {
-        matterId: selectedMatterId,
-        toolName,
+        matterId: values.matterId,
+        toolName: values.toolName,
         input: {},
       };
-      if (selectedStylePackId) {
-        payload.stylePackId = selectedStylePackId;
+      if (values.stylePackId) {
+        payload.stylePackId = values.stylePackId;
       }
 
       await apiFetch('/ai/jobs', {
@@ -88,31 +115,30 @@ export default function AiPage() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to create AI job');
     }
-  }
+  });
 
-  async function createStylePack(event: FormEvent) {
-    event.preventDefault();
-    if (!newStylePackName.trim()) return;
-
+  const createStylePack = stylePackCreateForm.handleSubmit(async (values) => {
     setError(null);
     setBusyStylePackId('new');
     try {
       await apiFetch('/ai/style-packs', {
         method: 'POST',
         body: JSON.stringify({
-          name: newStylePackName,
-          description: newStylePackDescription || undefined,
+          name: values.name.trim(),
+          description: values.description || undefined,
         }),
       });
-      setNewStylePackName('');
-      setNewStylePackDescription('');
+      stylePackCreateForm.reset({
+        name: '',
+        description: '',
+      });
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to create style pack');
     } finally {
       setBusyStylePackId(null);
     }
-  }
+  });
 
   async function saveStylePack(stylePackId: string) {
     const draft = stylePackDrafts[stylePackId];
@@ -307,11 +333,10 @@ export default function AiPage() {
         stylePackDrafts={stylePackDrafts}
         busyStylePackId={busyStylePackId}
         documentVersionOptions={documentVersionOptions}
-        newStylePackName={newStylePackName}
-        newStylePackDescription={newStylePackDescription}
+        createFormRegister={stylePackCreateForm.register}
+        createFormErrors={stylePackCreateForm.formState.errors}
+        createFormSubmitting={stylePackCreateForm.formState.isSubmitting}
         onCreateStylePack={createStylePack}
-        onNewStylePackNameChange={setNewStylePackName}
-        onNewStylePackDescriptionChange={setNewStylePackDescription}
         onUpdateStylePackDraft={updateStylePackDraft}
         onSaveStylePack={saveStylePack}
         onAttachStylePackSourceDoc={attachStylePackSourceDoc}
@@ -322,14 +347,11 @@ export default function AiPage() {
       <JobCreatorForm
         matterOptions={matterOptions}
         stylePacks={stylePacks}
-        selectedMatterId={selectedMatterId}
-        toolName={toolName}
-        selectedStylePackId={selectedStylePackId}
         tools={TOOLS}
+        register={jobForm.register}
+        errors={jobForm.formState.errors}
+        isSubmitting={jobForm.formState.isSubmitting}
         onSubmit={createJob}
-        onMatterChange={setSelectedMatterId}
-        onToolChange={setToolName}
-        onStylePackChange={setSelectedStylePackId}
       />
 
       <JobsTable

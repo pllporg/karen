@@ -1,4 +1,9 @@
-import { FormEvent } from 'react';
+import type { FormEventHandler } from 'react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Button } from '../../components/ui/button';
+import { FormField } from '../../components/ui/form-field';
+import { Input } from '../../components/ui/input';
+import type { StylePackCreateFormData } from '../../lib/schemas/ai-workspace';
 import { DocumentVersionLookup, StylePack, StylePackDraft, StylePackSourceDoc } from './types';
 import { formatUtcTimestamp } from './utils';
 
@@ -7,11 +12,10 @@ type StylePackManagerProps = {
   stylePackDrafts: Record<string, StylePackDraft>;
   busyStylePackId: string | null;
   documentVersionOptions: DocumentVersionLookup[];
-  newStylePackName: string;
-  newStylePackDescription: string;
-  onCreateStylePack: (event: FormEvent) => Promise<void>;
-  onNewStylePackNameChange: (value: string) => void;
-  onNewStylePackDescriptionChange: (value: string) => void;
+  createFormRegister: UseFormRegister<StylePackCreateFormData>;
+  createFormErrors: FieldErrors<StylePackCreateFormData>;
+  createFormSubmitting: boolean;
+  onCreateStylePack: FormEventHandler<HTMLFormElement>;
   onUpdateStylePackDraft: (stylePackId: string, key: keyof StylePackDraft, value: string) => void;
   onSaveStylePack: (stylePackId: string) => Promise<void>;
   onAttachStylePackSourceDoc: (stylePackId: string) => Promise<void>;
@@ -28,11 +32,10 @@ export function StylePackManager({
   stylePackDrafts,
   busyStylePackId,
   documentVersionOptions,
-  newStylePackName,
-  newStylePackDescription,
+  createFormRegister,
+  createFormErrors,
+  createFormSubmitting,
   onCreateStylePack,
-  onNewStylePackNameChange,
-  onNewStylePackDescriptionChange,
   onUpdateStylePackDraft,
   onSaveStylePack,
   onAttachStylePackSourceDoc,
@@ -43,21 +46,23 @@ export function StylePackManager({
     <div className="card stack-3 mb-3">
       <h3>Style Packs (Admin)</h3>
       <form onSubmit={onCreateStylePack} className="ai-style-pack-create-form">
-        <input
-          className="input"
-          value={newStylePackName}
-          onChange={(event) => onNewStylePackNameChange(event.target.value)}
-          placeholder="Style pack name"
-        />
-        <input
-          className="input"
-          value={newStylePackDescription}
-          onChange={(event) => onNewStylePackDescriptionChange(event.target.value)}
-          placeholder="Description (optional)"
-        />
-        <button className="button" type="submit" disabled={busyStylePackId === 'new'}>
-          {busyStylePackId === 'new' ? 'Creating...' : 'Create Style Pack'}
-        </button>
+        <FormField label="Style Pack Name" name="style-pack-name" error={createFormErrors.name?.message} required>
+          <Input
+            placeholder="Style pack name"
+            {...createFormRegister('name')}
+            invalid={!!createFormErrors.name}
+          />
+        </FormField>
+        <FormField label="Description" name="style-pack-description" error={createFormErrors.description?.message}>
+          <Input
+            placeholder="Description (optional)"
+            {...createFormRegister('description')}
+            invalid={!!createFormErrors.description}
+          />
+        </FormField>
+        <Button type="submit" disabled={createFormSubmitting || busyStylePackId === 'new'}>
+          {createFormSubmitting || busyStylePackId === 'new' ? 'Creating...' : 'Create Style Pack'}
+        </Button>
       </form>
 
       {stylePacks.length === 0 ? <div className="notice">No style packs yet.</div> : null}

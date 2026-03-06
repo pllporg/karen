@@ -1,105 +1,88 @@
 import { z } from 'zod';
-import {
-  optionalDate,
-  optionalPhone,
-  optionalPositiveNumber,
-  optionalString,
-  requiredEmail,
-  requiredString,
-} from './common';
+import type { IntakeWizardFormState } from '../intake/intake-wizard-adapter';
 
-export const intakeClientSchema = z.object({
-  firstName: requiredString,
-  lastName: requiredString,
-  email: requiredEmail,
-  phone: optionalPhone,
-  company: optionalString,
-  role: optionalString,
+const requiredText = (label: string) => z.string().trim().min(1, `${label} is required.`);
+const numberText = (label: string) =>
+  requiredText(label).refine((value) => !Number.isNaN(Number(value)), `${label} must be a number.`);
+
+export const createLeadSchema = z.object({
+  source: requiredText('Lead source'),
+  notes: z.string().trim().max(2000, 'Processing notes must be 2000 characters or fewer.'),
 });
 
-export type IntakeClientFormData = z.infer<typeof intakeClientSchema>;
-
-export const intakePropertySchema = z.object({
-  addressLine1: requiredString,
-  city: requiredString,
-  state: requiredString,
-  zip: requiredString,
-  parcelNumber: optionalString,
-  propertyType: optionalString,
-  yearBuilt: optionalString,
+export const intakeDraftSchema = z.object({
+  propertyAddress: requiredText('Property address'),
+  propertyCity: requiredText('Property city'),
+  propertyState: requiredText('Property state').min(2, 'Property state must be at least 2 characters.'),
+  parcelNumber: requiredText('Parcel number'),
+  contractDate: requiredText('Contract date'),
+  contractPrice: numberText('Contract price'),
+  defectCategory: requiredText('Defect category'),
+  defectSeverity: requiredText('Defect severity'),
+  defectDescription: requiredText('Defect description'),
+  damageCategory: requiredText('Damage category'),
+  repairEstimate: numberText('Repair estimate'),
+  lienClaimantName: requiredText('Lien claimant name'),
+  lienAmount: numberText('Lien amount'),
+  lienStatus: requiredText('Lien status'),
+  claimNumber: requiredText('Claim number'),
+  policyNumber: requiredText('Policy number'),
+  insurerName: requiredText('Insurer name'),
+  adjusterName: requiredText('Adjuster name'),
+  expertName: requiredText('Expert name'),
+  expertScope: requiredText('Expert scope'),
+  milestoneName: z.string().trim().max(200, 'Milestone name must be 200 characters or fewer.'),
 });
 
-export type IntakePropertyFormData = z.infer<typeof intakePropertySchema>;
-
-export const defectSchema = z.object({
-  category: requiredString,
-  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'], {
-    errorMap: () => ({ message: 'Select a severity level.' }),
-  }),
-  description: optionalString,
+export const conflictCheckSchema = z.object({
+  queryText: requiredText('Conflict query'),
 });
 
-export const damageSchema = z.object({
-  category: requiredString,
-  repairEstimate: optionalPositiveNumber,
+export const conflictResolutionSchema = z.object({
+  resolutionNotes: requiredText('Resolution notes'),
 });
 
-export const lienSchema = z.object({
-  claimantName: requiredString,
-  amount: optionalPositiveNumber,
-  status: optionalString,
+export const engagementGenerateSchema = z.object({
+  templateId: requiredText('Template ID'),
 });
 
-export const insuranceClaimSchema = z.object({
-  claimNumber: optionalString,
-  policyNumber: optionalString,
-  insurerName: optionalString,
-  adjusterName: optionalString,
-  status: optionalString,
+export const engagementSendSchema = z.object({
+  envelopeId: requiredText('Envelope ID'),
 });
 
-export const intakeDisputeSchema = z.object({
-  contractDate: optionalDate,
-  contractPrice: optionalPositiveNumber,
-  defects: z.array(defectSchema).default([]),
-  damages: z.array(damageSchema).default([]),
-  liens: z.array(lienSchema).default([]),
-  insuranceClaims: z.array(insuranceClaimSchema).default([]),
+export const leadConvertSchema = z.object({
+  name: requiredText('Matter name'),
+  matterNumber: requiredText('Matter number'),
+  practiceArea: requiredText('Practice area'),
 });
 
-export type IntakeDisputeFormData = z.infer<typeof intakeDisputeSchema>;
+export type IntakeDraftFieldConfig = {
+  name: keyof IntakeWizardFormState;
+  label: string;
+  hint?: string;
+  multiline?: boolean;
+};
 
-export const fullIntakeSchema = z.object({
-  client: intakeClientSchema,
-  property: intakePropertySchema,
-  dispute: intakeDisputeSchema,
-});
-
-export type FullIntakeFormData = z.infer<typeof fullIntakeSchema>;
-
-// Current adapter-backed intake draft form (flat shape used by Leads API adapter).
-export const intakeDraftAdapterSchema = z.object({
-  propertyAddress: requiredString,
-  propertyCity: requiredString,
-  propertyState: requiredString,
-  parcelNumber: z.string(),
-  contractDate: z.string(),
-  contractPrice: z.string(),
-  defectCategory: requiredString,
-  defectSeverity: requiredString,
-  defectDescription: z.string(),
-  damageCategory: requiredString,
-  repairEstimate: z.string(),
-  lienClaimantName: z.string(),
-  lienAmount: z.string(),
-  lienStatus: z.string(),
-  claimNumber: z.string(),
-  policyNumber: z.string(),
-  insurerName: z.string(),
-  adjusterName: z.string(),
-  expertName: z.string(),
-  expertScope: z.string(),
-  milestoneName: z.string(),
-});
-
-export type IntakeDraftAdapterFormData = z.infer<typeof intakeDraftAdapterSchema>;
+export const intakeDraftFields: IntakeDraftFieldConfig[] = [
+  { name: 'propertyAddress', label: 'Property Address', hint: 'Primary site address for the residential project.' },
+  { name: 'propertyCity', label: 'Property City' },
+  { name: 'propertyState', label: 'Property State', hint: 'Postal abbreviation or jurisdiction code.' },
+  { name: 'parcelNumber', label: 'Parcel Number' },
+  { name: 'contractDate', label: 'Contract Date', hint: 'Use YYYY-MM-DD format.' },
+  { name: 'contractPrice', label: 'Contract Price' },
+  { name: 'defectCategory', label: 'Defect Category' },
+  { name: 'defectSeverity', label: 'Defect Severity' },
+  { name: 'defectDescription', label: 'Defect Description', multiline: true },
+  { name: 'damageCategory', label: 'Damage Category' },
+  { name: 'repairEstimate', label: 'Repair Estimate' },
+  { name: 'lienClaimantName', label: 'Lien Claimant Name' },
+  { name: 'lienAmount', label: 'Lien Amount' },
+  { name: 'lienStatus', label: 'Lien Status' },
+  { name: 'claimNumber', label: 'Claim Number' },
+  { name: 'policyNumber', label: 'Policy Number' },
+  { name: 'insurerName', label: 'Insurer Name' },
+  { name: 'adjusterName', label: 'Adjuster Name' },
+  { name: 'expertName', label: 'Expert Name' },
+  { name: 'expertScope', label: 'Expert Scope', multiline: true },
+  { name: 'milestoneName', label: 'Milestone Name', hint: 'Optional initial milestone for intake tracking.' },
+];

@@ -376,6 +376,94 @@ describe('MatterDashboardPage operational workflows', () => {
     });
   });
 
+  it('shows validation when task title is blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('This field is required.')).toBeInTheDocument();
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([input, init]) => String(input) === 'http://localhost:4000/tasks' && String(init?.method || 'GET').toUpperCase() === 'POST',
+      ),
+    ).toBe(false);
+  });
+
+  it('shows validation when calendar event fields are blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('This field is required.').length).toBeGreaterThan(0);
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([input, init]) =>
+          String(input) === 'http://localhost:4000/calendar/events' &&
+          String(init?.method || 'GET').toUpperCase() === 'POST',
+      ),
+    ).toBe(false);
+  });
+
   it(
     'executes matter-level billing operations (time, expense, invoice, payment, trust)',
     { timeout: 40000 },
@@ -733,6 +821,167 @@ describe('MatterDashboardPage operational workflows', () => {
       expect(screen.getByText('Venue: Downtown Court')).toBeInTheDocument();
       expect(screen.getByText('Jurisdiction: NV')).toBeInTheDocument();
     });
+  });
+
+  it('shows validation when overview required fields are blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    const overview = {
+      matterNumber: 'M-100',
+      name: 'Doe v. Builder',
+      practiceArea: 'Construction Litigation',
+      status: 'OPEN',
+      venue: 'Superior',
+      jurisdiction: 'CA',
+      openedAt: '2026-01-02T16:00:00.000Z',
+      closedAt: null as string | null,
+    };
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state, overview));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse([]);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Overview' }));
+    fireEvent.change(screen.getByLabelText('Matter Name'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Overview' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('This field is required.')).toBeInTheDocument();
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([input, init]) => String(input) === 'http://localhost:4000/matters/matter-1' && String(init?.method || 'GET').toUpperCase() === 'PATCH',
+      ),
+    ).toBe(false);
+  });
+
+  it('shows validation when participant contact and role are blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    const contacts = [
+      { id: 'contact-1', displayName: 'Jordan Homeowner', kind: 'PERSON' },
+      { id: 'contact-2', displayName: 'Taylor Expert', kind: 'PERSON' },
+    ];
+    const roles = [
+      { id: 'role-1', key: 'expert', label: 'Expert Witness', sideDefault: 'NEUTRAL' as const },
+    ];
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse(contacts);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse(roles);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    await waitFor(() => {
+      expect(screen.getByLabelText('Participant Contact')).toHaveValue('contact-1');
+      expect(screen.getByLabelText('Participant Role')).toHaveValue('expert');
+    });
+
+    fireEvent.change(screen.getByLabelText('Participant Contact'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('Participant Role'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add Participant' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('This field is required.').length).toBeGreaterThan(1);
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([input, init]) =>
+          String(input) === 'http://localhost:4000/matters/matter-1/participants' &&
+          String(init?.method || 'GET').toUpperCase() === 'POST',
+      ),
+    ).toBe(false);
+  });
+
+  it('shows validation when communication body is blank', async () => {
+    vi.spyOn(nextNavigation, 'useParams').mockReturnValue({ id: 'matter-1' });
+
+    const state = createDashboardState();
+    const contacts = [{ id: 'contact-1', displayName: 'Jordan Homeowner', kind: 'PERSON' }];
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = (init?.method || 'GET').toUpperCase();
+
+      if (url.endsWith('/matters/matter-1/dashboard') && method === 'GET') {
+        return jsonResponse(buildDashboardFixture(state));
+      }
+      if (url.endsWith('/calendar/rules-packs') && method === 'GET') {
+        return jsonResponse([{ id: 'pack-1', name: 'CA Superior Civil v1', pack: { version: '1.0' } }]);
+      }
+      if (url.endsWith('/contacts') && method === 'GET') {
+        return jsonResponse(contacts);
+      }
+      if (url.endsWith('/matters/matter-1/participant-roles') && method === 'GET') {
+        return jsonResponse([]);
+      }
+
+      throw new Error(`Unhandled request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MatterDashboardPage />);
+
+    await screen.findByText('M-100 - Doe v. Builder');
+    await screen.findByText('No communications logged for this matter yet.');
+    fireEvent.click(screen.getByRole('button', { name: 'Log Communication' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('This field is required.')).toBeInTheDocument();
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([input, init]) =>
+          String(input) === 'http://localhost:4000/matters/matter-1/communications/log' &&
+          String(init?.method || 'GET').toUpperCase() === 'POST',
+      ),
+    ).toBe(false);
   });
 
   it('adds, edits, and removes participants in matter context', async () => {

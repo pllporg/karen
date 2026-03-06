@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type ToastItem } from '../../components/toast-stack';
 import { apiFetch } from '../../lib/api';
+import type {
+  ContactsCreateFormData,
+  ContactsFilterFormData,
+  ContactsGraphFilterFormData,
+} from '../../lib/schemas/contacts-page';
 
 type Contact = {
   id: string;
@@ -99,20 +104,26 @@ function formatTimestamp(date: Date) {
   }).format(date);
 }
 
+const defaultContactFilters: ContactsFilterFormData = {
+  search: '',
+  includeTagsInput: '',
+  excludeTagsInput: '',
+  tagMode: 'any',
+};
+
+const defaultGraphFilters: ContactsGraphFilterFormData = {
+  graphSearch: '',
+  graphRelationshipType: '',
+};
+
 export function useContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [dedupe, setDedupe] = useState<DedupeSuggestion[]>([]);
   const [graph, setGraph] = useState<ContactGraph | null>(null);
-  const [name, setName] = useState('');
-  const [kind, setKind] = useState<'PERSON' | 'ORGANIZATION'>('PERSON');
   const [includeResolved, setIncludeResolved] = useState(false);
-  const [search, setSearch] = useState('');
-  const [includeTagsInput, setIncludeTagsInput] = useState('');
-  const [excludeTagsInput, setExcludeTagsInput] = useState('');
-  const [tagMode, setTagMode] = useState<'any' | 'all'>('any');
+  const [contactFilters, setContactFilters] = useState<ContactsFilterFormData>(defaultContactFilters);
   const [activeGraphContactId, setActiveGraphContactId] = useState<string | null>(null);
-  const [graphSearch, setGraphSearch] = useState('');
-  const [graphRelationshipType, setGraphRelationshipType] = useState('');
+  const [graphFilters, setGraphFilters] = useState<ContactsGraphFilterFormData>(defaultGraphFilters);
   const [graphLoading, setGraphLoading] = useState(false);
   const [actionKey, setActionKey] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingDedupeAction | null>(null);
@@ -136,21 +147,18 @@ export function useContactsPage() {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }
 
-  function contactsPath() {
+  async function load(nextFilters = contactFilters) {
     const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    const includeTags = splitCsv(includeTagsInput);
-    const excludeTags = splitCsv(excludeTagsInput);
+    if (nextFilters.search.trim()) params.set('search', nextFilters.search.trim());
+    const includeTags = splitCsv(nextFilters.includeTagsInput);
+    const excludeTags = splitCsv(nextFilters.excludeTagsInput);
     if (includeTags.length > 0) params.set('includeTags', includeTags.join(','));
     if (excludeTags.length > 0) params.set('excludeTags', excludeTags.join(','));
-    if (includeTags.length > 0 || excludeTags.length > 0) params.set('tagMode', tagMode);
+    if (includeTags.length > 0 || excludeTags.length > 0) params.set('tagMode', nextFilters.tagMode);
     const query = params.toString();
-    return query ? `/contacts?${query}` : '/contacts';
-  }
-
-  async function load() {
+    const path = query ? `/contacts?${query}` : '/contacts';
     const [contactData, dedupeData] = await Promise.all([
-      apiFetch<Contact[]>(contactsPath()),
+      apiFetch<Contact[]>(path),
       apiFetch<DedupeSuggestion[]>('/contacts/dedupe/suggestions'),
     ]);
     setContacts(contactData);
@@ -183,8 +191,8 @@ export function useContactsPage() {
 
   async function loadGraph(
     contactId: string,
-    nextRelationshipType = graphRelationshipType,
-    nextSearch = graphSearch,
+    nextRelationshipType = graphFilters.graphRelationshipType,
+    nextSearch = graphFilters.graphSearch,
   ) {
     const params = new URLSearchParams();
     if (nextSearch.trim()) params.set('search', nextSearch.trim());
@@ -192,6 +200,10 @@ export function useContactsPage() {
     const query = params.toString();
     const path = query ? `/contacts/${contactId}/graph?${query}` : `/contacts/${contactId}/graph`;
     setGraphLoading(true);
+    setGraphFilters({
+      graphSearch: nextSearch,
+      graphRelationshipType: nextRelationshipType,
+    });
     try {
       const graphData = await apiFetch<ContactGraph>(path);
       setGraph(graphData);
@@ -201,33 +213,26 @@ export function useContactsPage() {
     }
   }
 
-  async function applyContactFilters() {
+  async function applyContactFilters(nextFilters: ContactsFilterFormData) {
+    setContactFilters(nextFilters);
     setGraph(null);
     setActiveGraphContactId(null);
-    await load();
+    await load(nextFilters);
   }
 
   async function clearContactFilters() {
-    setSearch('');
-    setIncludeTagsInput('');
-    setExcludeTagsInput('');
-    setTagMode('any');
+    setContactFilters(defaultContactFilters);
+    setGraphFilters(defaultGraphFilters);
     setGraph(null);
     setActiveGraphContactId(null);
-    const [contactData, dedupeData] = await Promise.all([
-      apiFetch<Contact[]>('/contacts'),
-      apiFetch<DedupeSuggestion[]>('/contacts/dedupe/suggestions'),
-    ]);
-    setContacts(contactData);
-    setDedupe(dedupeData);
+    await load(defaultContactFilters);
   }
 
-  async function addContact() {
+  async function addContact(values: ContactsCreateFormData) {
     await apiFetch('/contacts', {
       method: 'POST',
-      body: JSON.stringify({ displayName: name, kind }),
+      body: JSON.stringify({ displayName: values.displayName, kind: values.kind }),
     });
-    setName('');
     await load();
   }
 
@@ -350,16 +355,8 @@ export function useContactsPage() {
   return {
     contacts,
     graph,
-    name,
-    kind,
     includeResolved,
-    search,
-    includeTagsInput,
-    excludeTagsInput,
-    tagMode,
     activeGraphContactId,
-    graphSearch,
-    graphRelationshipType,
     graphLoading,
     actionKey,
     pendingAction,
@@ -368,15 +365,7 @@ export function useContactsPage() {
     visibleDedupe,
     pendingActionDialog,
     dedupeByContactId,
-    setName,
-    setKind,
     setIncludeResolved,
-    setSearch,
-    setIncludeTagsInput,
-    setExcludeTagsInput,
-    setTagMode,
-    setGraphSearch,
-    setGraphRelationshipType,
     setPendingAction,
     dismissToast,
     loadGraph,

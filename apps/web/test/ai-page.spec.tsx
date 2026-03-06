@@ -16,8 +16,28 @@ function findCall(fetchMock: ReturnType<typeof vi.fn>, path: string) {
   return fetchMock.mock.calls.find((call) => call[0] === `http://localhost:4000${path}`);
 }
 
+function createAiFetchMock(
+  handler: (url: string, method: string, init?: RequestInit) => Response | Promise<Response>,
+) {
+  return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = (init?.method || 'GET').toUpperCase();
+
+    if (url.endsWith('/auth/session') && method === 'GET') {
+      return jsonResponse({ user: { id: 'user-ai' }, token: 'test-session-token' });
+    }
+
+    return handler(url, method, init);
+  });
+}
+
 describe('AiPage', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('session_token', 'test-session-token');
+  });
+
   afterEach(() => {
+    window.localStorage.removeItem('session_token');
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -59,10 +79,7 @@ describe('AiPage', () => {
     ];
     const matters = [{ id: 'matter-1', matterNumber: 'M-1', name: 'Builder Dispute', label: 'M-1 - Builder Dispute' }];
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = (init?.method || 'GET').toUpperCase();
-
+    const fetchMock = createAiFetchMock((url, method) => {
       if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse(jobs);
       if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
       if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
@@ -164,9 +181,7 @@ describe('AiPage', () => {
       },
     ];
     const matters = [{ id: 'matter-1', matterNumber: 'M-1', name: 'Builder Dispute', label: 'M-1 - Builder Dispute' }];
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = (init?.method || 'GET').toUpperCase();
+    const fetchMock = createAiFetchMock((url, method) => {
       if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse(jobs);
       if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
       if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);
@@ -216,8 +231,51 @@ describe('AiPage', () => {
   });
 
   it('approves artifact and reloads jobs', async () => {
-    const fetchMock = vi
-      .fn()
+    const fetchMock = createAiFetchMock((url, method) => {
+      if (url.endsWith('/ai/jobs') && method === 'GET') {
+        return jsonResponse([
+          {
+            id: 'job-2',
+            toolName: 'case_summary',
+            matterId: 'matter-2',
+            status: 'COMPLETED',
+            artifacts: [
+              {
+                id: 'artifact-2',
+                type: 'case_summary',
+                content: 'Draft case summary',
+                reviewedStatus: 'DRAFT',
+                metadataJson: {},
+              },
+            ],
+          },
+        ]);
+      }
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/ai/artifacts/artifact-2/review') && method === 'POST') {
+        return jsonResponse({ id: 'artifact-2', reviewedStatus: 'APPROVED' });
+      }
+      if (url.endsWith('/ai/jobs') && method === 'GET') {
+        return jsonResponse([
+          {
+            id: 'job-2',
+            toolName: 'case_summary',
+            matterId: 'matter-2',
+            status: 'COMPLETED',
+            artifacts: [
+              {
+                id: 'artifact-2',
+                type: 'case_summary',
+                content: 'Draft case summary',
+                reviewedStatus: 'APPROVED',
+                metadataJson: {},
+              },
+            ],
+          },
+        ]);
+      }
+      return jsonResponse([]);
+    })
       .mockResolvedValueOnce(
         jsonResponse([
           {
@@ -289,10 +347,9 @@ describe('AiPage', () => {
   });
 
   it('shows review-gate sequence and audit context for generated artifacts', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        jsonResponse([
+    const fetchMock = createAiFetchMock((url, method) => {
+      if (url.endsWith('/ai/jobs') && method === 'GET') {
+        return jsonResponse([
           {
             id: 'job-ctx-1',
             toolName: 'case_summary',
@@ -313,9 +370,11 @@ describe('AiPage', () => {
               },
             ],
           },
-        ]),
-      )
-      .mockResolvedValueOnce(jsonResponse([]));
+        ]);
+      }
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AiPage />);
@@ -349,10 +408,7 @@ describe('AiPage', () => {
       },
     ];
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = (init?.method || 'GET').toUpperCase();
-
+    const fetchMock = createAiFetchMock((url, method) => {
       if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse([]);
       if (url.endsWith('/ai/jobs') && method === 'POST') return jsonResponse({ id: 'job-3' });
       if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse(stylePacks);
@@ -385,6 +441,42 @@ describe('AiPage', () => {
         }),
       );
     });
+  });
+
+  it('shows inline validation when creating an AI job without a matter selection', async () => {
+    const fetchMock = createAiFetchMock((url, method) => {
+      if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse([]);
+      if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse([]);
+      if (url.includes('/lookups/document-versions?limit=200')) return jsonResponse([]);
+      return jsonResponse({ error: `Unexpected ${method} ${url}` }, 500);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AiPage />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/ai/jobs',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://localhost:4000/lookups/matters?limit=200',
+        expect.objectContaining({ credentials: 'include' }),
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create AI Job' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Select a matter.')).toBeInTheDocument();
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) => url === 'http://localhost:4000/ai/jobs' && ((init?.method || 'GET').toUpperCase() === 'POST'),
+      ),
+    ).toBe(false);
   });
 
   it('creates, updates, attaches, and removes style pack source docs', async () => {
@@ -430,10 +522,7 @@ describe('AiPage', () => {
     };
 
     let stylePacks: any[] = [];
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = (init?.method || 'GET').toUpperCase();
-
+    const fetchMock = createAiFetchMock((url, method) => {
       if (url.endsWith('/ai/jobs') && method === 'GET') return jsonResponse([]);
       if (url.endsWith('/ai/style-packs') && method === 'GET') return jsonResponse(stylePacks);
       if (url.endsWith('/lookups/matters?limit=200')) return jsonResponse(matters);

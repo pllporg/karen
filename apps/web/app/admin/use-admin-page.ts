@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/api';
+import type {
+  AdminConflictCheckFormData,
+  AdminConflictResolutionFormData,
+  ConflictProfileConfigFormData,
+  CustomFieldConfigFormData,
+  ParticipantRoleConfigFormData,
+  SectionConfigFormData,
+} from '../../lib/schemas/admin-config';
 
 export type WebhookEndpointSummary = {
   id: string;
@@ -88,19 +96,6 @@ export function useAdminPage() {
   >([]);
   const [webhookEndpoints, setWebhookEndpoints] = useState<WebhookEndpointSummary[]>([]);
   const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDeliverySummary[]>([]);
-  const [customFieldKey, setCustomFieldKey] = useState('project_address');
-  const [customFieldLabel, setCustomFieldLabel] = useState('Project Address');
-  const [sectionName, setSectionName] = useState('Defect Summary');
-  const [participantRoleKey, setParticipantRoleKey] = useState('opposing_party');
-  const [participantRoleLabel, setParticipantRoleLabel] = useState('Opposing Party');
-  const [participantRoleSide, setParticipantRoleSide] = useState<'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT'>('OPPOSING_SIDE');
-  const [conflictProfileName, setConflictProfileName] = useState('Construction Litigation Default');
-  const [conflictWarnThreshold, setConflictWarnThreshold] = useState('45');
-  const [conflictBlockThreshold, setConflictBlockThreshold] = useState('70');
-  const [conflictQuery, setConflictQuery] = useState('Jane Doe');
-  const [selectedConflictProfileId, setSelectedConflictProfileId] = useState('');
-  const [resolutionDecision, setResolutionDecision] = useState<'CLEAR' | 'WAIVE' | 'BLOCK'>('WAIVE');
-  const [resolutionRationale, setResolutionRationale] = useState('Attorney override after review of unrelated prior engagement.');
   const [webhookStatusFilter, setWebhookStatusFilter] = useState<'ALL' | 'PENDING' | 'RETRYING' | 'FAILED' | 'DELIVERED'>('FAILED');
   const [webhookError, setWebhookError] = useState<string | null>(null);
   const [retryingDeliveryId, setRetryingDeliveryId] = useState<string | null>(null);
@@ -152,9 +147,6 @@ export function useAdminPage() {
         setConflictChecks(cChecks);
         setWebhookEndpoints(wEndpoints);
         setWebhookDeliveries(wDeliveries);
-        if (cProfiles.length > 0) {
-          setSelectedConflictProfileId(cProfiles[0].id);
-        }
       })
       .catch(() => undefined);
 
@@ -177,44 +169,39 @@ export function useAdminPage() {
       });
   }, []);
 
-  async function createCustomField() {
+  async function createCustomField(values: CustomFieldConfigFormData) {
     await apiFetch('/config/custom-fields', {
       method: 'POST',
       body: JSON.stringify({
         entityType: 'matter',
-        key: customFieldKey,
-        label: customFieldLabel,
+        key: values.key,
+        label: values.label,
         fieldType: 'text',
       }),
     });
-    setCustomFieldKey('');
-    setCustomFieldLabel('');
     setCustomFields(await apiFetch<Array<{ id: string; key: string; entityType: string; label: string }>>('/config/custom-fields'));
   }
 
-  async function createSection() {
+  async function createSection(values: SectionConfigFormData) {
     await apiFetch('/config/sections', {
       method: 'POST',
       body: JSON.stringify({
-        name: sectionName,
+        name: values.name,
         schemaJson: { type: 'object', properties: { summary: { type: 'string' } } },
       }),
     });
-    setSectionName('');
     setSections(await apiFetch<Array<{ id: string; name: string }>>('/config/sections'));
   }
 
-  async function createParticipantRole() {
+  async function createParticipantRole(values: ParticipantRoleConfigFormData) {
     await apiFetch('/admin/participant-roles', {
       method: 'POST',
       body: JSON.stringify({
-        key: participantRoleKey,
-        label: participantRoleLabel,
-        sideDefault: participantRoleSide,
+        key: values.key,
+        label: values.label,
+        sideDefault: values.sideDefault,
       }),
     });
-    setParticipantRoleKey('');
-    setParticipantRoleLabel('');
     setParticipantRoles(
       await apiFetch<Array<{ id: string; key: string; label: string; sideDefault?: 'CLIENT_SIDE' | 'OPPOSING_SIDE' | 'NEUTRAL' | 'COURT' }>>(
         '/admin/participant-roles',
@@ -222,15 +209,15 @@ export function useAdminPage() {
     );
   }
 
-  async function createConflictProfile() {
+  async function createConflictProfile(values: ConflictProfileConfigFormData) {
     await apiFetch('/admin/conflict-rule-profiles', {
       method: 'POST',
       body: JSON.stringify({
-        name: conflictProfileName,
+        name: values.name,
         isDefault: true,
         thresholds: {
-          warn: Number(conflictWarnThreshold) || 45,
-          block: Number(conflictBlockThreshold) || 70,
+          warn: Number(values.warnThreshold) || 45,
+          block: Number(values.blockThreshold) || 70,
         },
       }),
     });
@@ -238,17 +225,14 @@ export function useAdminPage() {
       '/admin/conflict-rule-profiles',
     );
     setConflictProfiles(profiles);
-    if (profiles.length > 0) {
-      setSelectedConflictProfileId(profiles[0].id);
-    }
   }
 
-  async function runConflictCheck() {
+  async function runConflictCheck(values: AdminConflictCheckFormData) {
     await apiFetch('/admin/conflict-checks', {
       method: 'POST',
       body: JSON.stringify({
-        queryText: conflictQuery,
-        profileId: selectedConflictProfileId || undefined,
+        queryText: values.queryText,
+        profileId: values.profileId || undefined,
       }),
     });
     setConflictChecks(
@@ -267,12 +251,12 @@ export function useAdminPage() {
     );
   }
 
-  async function resolveConflictCheck(checkId: string) {
+  async function resolveConflictCheck(checkId: string, values: AdminConflictResolutionFormData) {
     await apiFetch(`/admin/conflict-checks/${checkId}/resolve`, {
       method: 'POST',
       body: JSON.stringify({
-        decision: resolutionDecision,
-        rationale: resolutionRationale,
+        decision: values.decision,
+        rationale: values.rationale,
       }),
     });
     setConflictChecks(
@@ -336,19 +320,6 @@ export function useAdminPage() {
     conflictChecks,
     webhookEndpoints,
     webhookDeliveries,
-    customFieldKey,
-    customFieldLabel,
-    sectionName,
-    participantRoleKey,
-    participantRoleLabel,
-    participantRoleSide,
-    conflictProfileName,
-    conflictWarnThreshold,
-    conflictBlockThreshold,
-    conflictQuery,
-    selectedConflictProfileId,
-    resolutionDecision,
-    resolutionRationale,
     webhookStatusFilter,
     webhookError,
     retryingDeliveryId,
@@ -356,19 +327,6 @@ export function useAdminPage() {
     providerStatusError,
     launchBlockers,
     launchBlockersError,
-    setCustomFieldKey,
-    setCustomFieldLabel,
-    setSectionName,
-    setParticipantRoleKey,
-    setParticipantRoleLabel,
-    setParticipantRoleSide,
-    setConflictProfileName,
-    setConflictWarnThreshold,
-    setConflictBlockThreshold,
-    setConflictQuery,
-    setSelectedConflictProfileId,
-    setResolutionDecision,
-    setResolutionRationale,
     createCustomField,
     createSection,
     createParticipantRole,

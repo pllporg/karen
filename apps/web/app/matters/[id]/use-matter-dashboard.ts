@@ -1,7 +1,19 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { apiFetch, getSessionToken } from '../../../lib/api';
+import {
+  matterCalendarEventSchema,
+  matterCommunicationSchema,
+  matterParticipantSchema,
+  matterTaskSchema,
+  type MatterCalendarEventFormData,
+  type MatterCommunicationFormData,
+  type MatterParticipantFormData,
+  type MatterTaskFormData,
+} from '../../../lib/schemas/matter-dashboard';
 import {
   COMMUNICATION_DIRECTION_OPTIONS,
   COMMUNICATION_TYPE_OPTIONS,
@@ -28,38 +40,14 @@ export function useMatterDashboard(matterId: string) {
   const [overrideDates, setOverrideDates] = useState<Record<string, string>>({});
   const [overrideReasons, setOverrideReasons] = useState<Record<string, string>>({});
   const [deadlineStatus, setDeadlineStatus] = useState<string | null>(null);
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDueAt, setTaskDueAt] = useState('');
-  const [taskPriority, setTaskPriority] = useState<(typeof TASK_PRIORITY_OPTIONS)[number]>('MEDIUM');
   const [taskStatusMessage, setTaskStatusMessage] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [eventType, setEventType] = useState('');
-  const [eventStartAt, setEventStartAt] = useState('');
-  const [eventEndAt, setEventEndAt] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
   const [calendarStatusMessage, setCalendarStatusMessage] = useState<string | null>(null);
   const [editingCalendarEventId, setEditingCalendarEventId] = useState<string | null>(null);
   const [participantContacts, setParticipantContacts] = useState<ParticipantContactOption[]>([]);
   const [participantRoleOptions, setParticipantRoleOptions] = useState<ParticipantRoleOption[]>([]);
-  const [selectedParticipantContactId, setSelectedParticipantContactId] = useState('');
-  const [selectedParticipantRoleKey, setSelectedParticipantRoleKey] = useState('');
-  const [participantSide, setParticipantSide] = useState<ParticipantSideOption>('NEUTRAL');
-  const [participantIsPrimary, setParticipantIsPrimary] = useState(false);
-  const [participantRepresentedByContactId, setParticipantRepresentedByContactId] = useState('');
-  const [participantLawFirmContactId, setParticipantLawFirmContactId] = useState('');
-  const [participantNotes, setParticipantNotes] = useState('');
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const [participantStatusMessage, setParticipantStatusMessage] = useState<string | null>(null);
-  const [selectedCommunicationThreadId, setSelectedCommunicationThreadId] = useState('__new__');
-  const [newCommunicationThreadSubject, setNewCommunicationThreadSubject] = useState('');
-  const [communicationType, setCommunicationType] =
-    useState<(typeof COMMUNICATION_TYPE_OPTIONS)[number]>('CALL_LOG');
-  const [communicationDirection, setCommunicationDirection] =
-    useState<(typeof COMMUNICATION_DIRECTION_OPTIONS)[number]>('INBOUND');
-  const [communicationSubject, setCommunicationSubject] = useState('');
-  const [communicationBody, setCommunicationBody] = useState('');
-  const [communicationParticipantContactId, setCommunicationParticipantContactId] = useState('');
-  const [communicationOccurredAt, setCommunicationOccurredAt] = useState(new Date().toISOString().slice(0, 16));
   const [communicationStatusMessage, setCommunicationStatusMessage] = useState<string | null>(null);
   const [editingCommunicationId, setEditingCommunicationId] = useState<string | null>(null);
   const [documentTitle, setDocumentTitle] = useState('Matter Document');
@@ -89,6 +77,61 @@ export function useMatterDashboard(matterId: string) {
   const [trustTransactionDescription, setTrustTransactionDescription] = useState('');
   const [billingStatusMessage, setBillingStatusMessage] = useState<string | null>(null);
   const trustAccountOptions = useMemo(() => collectTrustAccountOptions(dashboard), [dashboard]);
+  const taskForm = useForm<MatterTaskFormData>({
+    resolver: zodResolver(matterTaskSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      title: '',
+      dueAt: '',
+      priority: 'MEDIUM',
+    },
+  });
+  const calendarEventForm = useForm<MatterCalendarEventFormData>({
+    resolver: zodResolver(matterCalendarEventSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      type: '',
+      startAt: '',
+      endAt: '',
+      location: '',
+    },
+  });
+  const participantForm = useForm<MatterParticipantFormData>({
+    resolver: zodResolver(matterParticipantSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      contactId: '',
+      participantRoleKey: '',
+      side: 'NEUTRAL',
+      isPrimary: false,
+      representedByContactId: '',
+      lawFirmContactId: '',
+      notes: '',
+    },
+  });
+  const communicationForm = useForm<MatterCommunicationFormData>({
+    resolver: zodResolver(matterCommunicationSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      threadId: '__new__',
+      threadSubject: '',
+      type: 'CALL_LOG',
+      direction: 'INBOUND',
+      participantContactId: '',
+      occurredAt: new Date().toISOString().slice(0, 16),
+      subject: '',
+      body: '',
+    },
+  });
+  const selectedParticipantContactId = useWatch({ control: participantForm.control, name: 'contactId' }) || '';
+  const selectedParticipantRoleKey = useWatch({ control: participantForm.control, name: 'participantRoleKey' }) || '';
+  const participantSide = (useWatch({ control: participantForm.control, name: 'side' }) || 'NEUTRAL') as ParticipantSideOption;
+  const participantIsPrimary = Boolean(useWatch({ control: participantForm.control, name: 'isPrimary' }));
+  const participantRepresentedByContactId =
+    useWatch({ control: participantForm.control, name: 'representedByContactId' }) || '';
+  const participantLawFirmContactId = useWatch({ control: participantForm.control, name: 'lawFirmContactId' }) || '';
+  const participantNotes = useWatch({ control: participantForm.control, name: 'notes' }) || '';
+  const selectedCommunicationThreadId = useWatch({ control: communicationForm.control, name: 'threadId' }) || '__new__';
 
   const refreshDashboard = useCallback(async () => {
     if (!matterId) {
@@ -97,15 +140,14 @@ export function useMatterDashboard(matterId: string) {
     const nextDashboard = await apiFetch<any>(`/matters/${matterId}/dashboard`);
     setDashboard(nextDashboard);
     const threadIds = (nextDashboard.communicationThreads || []).map((thread: CommunicationThread) => thread.id);
-    setSelectedCommunicationThreadId((current) => {
-      if (threadIds.length === 0) {
-        return '__new__';
-      }
-      if (current && current !== '__new__' && threadIds.includes(current)) {
-        return current;
-      }
-      return threadIds[0];
-    });
+    const currentThreadId = communicationForm.getValues('threadId');
+    const nextThreadId =
+      threadIds.length === 0
+        ? '__new__'
+        : currentThreadId && currentThreadId !== '__new__' && threadIds.includes(currentThreadId)
+          ? currentThreadId
+          : threadIds[0];
+    communicationForm.setValue('threadId', nextThreadId, { shouldDirty: false });
     setTrustAccountId((current) => {
       if (current) {
         return current;
@@ -113,29 +155,14 @@ export function useMatterDashboard(matterId: string) {
       const nextTrustAccounts = collectTrustAccountOptions(nextDashboard);
       return nextTrustAccounts[0]?.id || '';
     });
-  }, [matterId]);
+  }, [communicationForm, matterId]);
 
   const {
     editingOverview,
-    setEditingOverview,
-    overviewName,
-    setOverviewName,
-    overviewMatterNumber,
-    setOverviewMatterNumber,
-    overviewPracticeArea,
-    setOverviewPracticeArea,
-    overviewStatus,
-    setOverviewStatus,
-    overviewVenue,
-    setOverviewVenue,
-    overviewJurisdiction,
-    setOverviewJurisdiction,
-    overviewOpenedAt,
-    setOverviewOpenedAt,
-    overviewClosedAt,
-    setOverviewClosedAt,
+    overviewForm,
     overviewStatusMessage,
     syncOverviewFromDashboard,
+    startOverviewEdit,
     cancelOverviewEdit: cancelOverviewEditState,
     updateMatterOverview,
   } = useMatterOverview(matterId, refreshDashboard);
@@ -161,8 +188,8 @@ export function useMatterDashboard(matterId: string) {
     apiFetch<ParticipantContactOption[]>('/contacts')
       .then((contacts) => {
         setParticipantContacts(contacts);
-        if (contacts.length > 0) {
-          setSelectedParticipantContactId((current) => current || contacts[0].id);
+        if (contacts.length > 0 && !participantForm.getValues('contactId')) {
+          participantForm.setValue('contactId', contacts[0].id, { shouldDirty: false });
         }
       })
       .catch(() => undefined);
@@ -170,14 +197,18 @@ export function useMatterDashboard(matterId: string) {
       .then((roles) => {
         setParticipantRoleOptions(roles);
         if (roles.length > 0) {
-          setSelectedParticipantRoleKey((current) => current || roles[0].key);
-          setParticipantSide((current) =>
-            current || (roles[0].sideDefault as ParticipantSideOption | null) || 'NEUTRAL',
-          );
+          if (!participantForm.getValues('participantRoleKey')) {
+            participantForm.setValue('participantRoleKey', roles[0].key, { shouldDirty: false });
+          }
+          if (!participantForm.getValues('side')) {
+            participantForm.setValue('side', (roles[0].sideDefault as ParticipantSideOption | null) || 'NEUTRAL', {
+              shouldDirty: false,
+            });
+          }
         }
       })
       .catch(() => undefined);
-  }, [matterId, refreshDashboard]);
+  }, [matterId, participantForm, refreshDashboard]);
 
   const selectedParticipantRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey);
   const participantRoleIsCounsel = isCounselRole(selectedParticipantRole?.key, selectedParticipantRole?.label);
@@ -188,15 +219,15 @@ export function useMatterDashboard(matterId: string) {
     }
 
     if (!editingParticipantId && selectedParticipantRole.sideDefault) {
-      setParticipantSide(selectedParticipantRole.sideDefault as ParticipantSideOption);
+      participantForm.setValue('side', selectedParticipantRole.sideDefault as ParticipantSideOption, { shouldDirty: true });
     }
 
     if (participantRoleIsCounsel) {
-      setParticipantRepresentedByContactId('');
+      participantForm.setValue('representedByContactId', '', { shouldDirty: true });
     } else {
-      setParticipantLawFirmContactId('');
+      participantForm.setValue('lawFirmContactId', '', { shouldDirty: true });
     }
-  }, [selectedParticipantRole, participantRoleIsCounsel, editingParticipantId]);
+  }, [editingParticipantId, participantForm, participantRoleIsCounsel, selectedParticipantRole]);
 
   async function previewDeadlines() {
     if (!matterId || !selectedRulesPackId || !triggerDate) return;
@@ -240,41 +271,47 @@ export function useMatterDashboard(matterId: string) {
     cancelOverviewEditState(dashboard);
   }
 
-  async function createOrUpdateTask() {
-    if (!matterId || !taskTitle.trim()) {
-      setTaskStatusMessage('Task title is required.');
-      return;
-    }
+  const createOrUpdateTask = taskForm.handleSubmit(
+    async (values) => {
+      if (!matterId) {
+        return;
+      }
 
-    if (editingTaskId) {
-      await apiFetch(`/tasks/${editingTaskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          title: taskTitle.trim(),
-          ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
-          priority: taskPriority,
-        }),
-      });
-      setTaskStatusMessage('Task updated.');
-      setEditingTaskId(null);
-    } else {
-      await apiFetch('/tasks', {
-        method: 'POST',
-        body: JSON.stringify({
-          matterId,
-          title: taskTitle.trim(),
-          ...(taskDueAt ? { dueAt: new Date(taskDueAt).toISOString() } : {}),
-          priority: taskPriority,
-        }),
-      });
-      setTaskStatusMessage('Task created.');
-    }
+      if (editingTaskId) {
+        await apiFetch(`/tasks/${editingTaskId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            title: values.title.trim(),
+            ...(values.dueAt ? { dueAt: new Date(values.dueAt).toISOString() } : {}),
+            priority: values.priority,
+          }),
+        });
+        setTaskStatusMessage('Task updated.');
+        setEditingTaskId(null);
+      } else {
+        await apiFetch('/tasks', {
+          method: 'POST',
+          body: JSON.stringify({
+            matterId,
+            title: values.title.trim(),
+            ...(values.dueAt ? { dueAt: new Date(values.dueAt).toISOString() } : {}),
+            priority: values.priority,
+          }),
+        });
+        setTaskStatusMessage('Task created.');
+      }
 
-    setTaskTitle('');
-    setTaskDueAt('');
-    setTaskPriority('MEDIUM');
-    await refreshDashboard();
-  }
+      taskForm.reset({
+        title: '',
+        dueAt: '',
+        priority: 'MEDIUM',
+      });
+      await refreshDashboard();
+    },
+    async () => {
+      setTaskStatusMessage(null);
+    },
+  );
 
   async function updateTaskStatus(taskId: string, status: string) {
     if (!TASK_STATUS_OPTIONS.includes(status as (typeof TASK_STATUS_OPTIONS)[number])) {
@@ -297,17 +334,21 @@ export function useMatterDashboard(matterId: string) {
     priority?: (typeof TASK_PRIORITY_OPTIONS)[number];
   }) {
     setEditingTaskId(task.id);
-    setTaskTitle(task.title || '');
-    setTaskDueAt(toDateTimeLocalValue(task.dueAt));
-    setTaskPriority(task.priority || 'MEDIUM');
+    taskForm.reset({
+      title: task.title || '',
+      dueAt: toDateTimeLocalValue(task.dueAt),
+      priority: task.priority || 'MEDIUM',
+    });
     setTaskStatusMessage(`Editing task ${task.id}.`);
   }
 
   function cancelEditingTask() {
     setEditingTaskId(null);
-    setTaskTitle('');
-    setTaskDueAt('');
-    setTaskPriority('MEDIUM');
+    taskForm.reset({
+      title: '',
+      dueAt: '',
+      priority: 'MEDIUM',
+    });
     setTaskStatusMessage('Task edit cancelled.');
   }
 
@@ -317,17 +358,18 @@ export function useMatterDashboard(matterId: string) {
     });
     if (editingTaskId === taskId) {
       setEditingTaskId(null);
-      setTaskTitle('');
-      setTaskDueAt('');
-      setTaskPriority('MEDIUM');
+      taskForm.reset({
+        title: '',
+        dueAt: '',
+        priority: 'MEDIUM',
+      });
     }
     setTaskStatusMessage('Task removed.');
     await refreshDashboard();
   }
 
-  async function createOrUpdateCalendarEvent() {
-    if (!matterId || !eventType.trim() || !eventStartAt) {
-      setCalendarStatusMessage('Event type and start time are required.');
+  const createOrUpdateCalendarEvent = calendarEventForm.handleSubmit(async (values) => {
+    if (!matterId) {
       return;
     }
 
@@ -335,10 +377,10 @@ export function useMatterDashboard(matterId: string) {
       await apiFetch(`/calendar/events/${editingCalendarEventId}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          type: eventType.trim(),
-          startAt: new Date(eventStartAt).toISOString(),
-          ...(eventEndAt ? { endAt: new Date(eventEndAt).toISOString() } : { clearEndAt: true }),
-          ...(eventLocation.trim() ? { location: eventLocation.trim() } : {}),
+          type: values.type.trim(),
+          startAt: new Date(values.startAt).toISOString(),
+          ...(values.endAt ? { endAt: new Date(values.endAt).toISOString() } : { clearEndAt: true }),
+          ...(values.location?.trim() ? { location: values.location.trim() } : {}),
         }),
       });
       setCalendarStatusMessage('Calendar event updated.');
@@ -348,21 +390,23 @@ export function useMatterDashboard(matterId: string) {
         method: 'POST',
         body: JSON.stringify({
           matterId,
-          type: eventType.trim(),
-          startAt: new Date(eventStartAt).toISOString(),
-          ...(eventEndAt ? { endAt: new Date(eventEndAt).toISOString() } : {}),
-          ...(eventLocation.trim() ? { location: eventLocation.trim() } : {}),
+          type: values.type.trim(),
+          startAt: new Date(values.startAt).toISOString(),
+          ...(values.endAt ? { endAt: new Date(values.endAt).toISOString() } : {}),
+          ...(values.location?.trim() ? { location: values.location.trim() } : {}),
         }),
       });
       setCalendarStatusMessage('Calendar event created.');
     }
 
-    setEventType('');
-    setEventStartAt('');
-    setEventEndAt('');
-    setEventLocation('');
+    calendarEventForm.reset({
+      type: '',
+      startAt: '',
+      endAt: '',
+      location: '',
+    });
     await refreshDashboard();
-  }
+  });
 
   function startEditingCalendarEvent(event: {
     id: string;
@@ -372,19 +416,23 @@ export function useMatterDashboard(matterId: string) {
     location?: string | null;
   }) {
     setEditingCalendarEventId(event.id);
-    setEventType(event.type || '');
-    setEventStartAt(toDateTimeLocalValue(event.startAt));
-    setEventEndAt(toDateTimeLocalValue(event.endAt));
-    setEventLocation(event.location || '');
+    calendarEventForm.reset({
+      type: event.type || '',
+      startAt: toDateTimeLocalValue(event.startAt),
+      endAt: toDateTimeLocalValue(event.endAt),
+      location: event.location || '',
+    });
     setCalendarStatusMessage(`Editing calendar event ${event.id}.`);
   }
 
   function cancelEditingCalendarEvent() {
     setEditingCalendarEventId(null);
-    setEventType('');
-    setEventStartAt('');
-    setEventEndAt('');
-    setEventLocation('');
+    calendarEventForm.reset({
+      type: '',
+      startAt: '',
+      endAt: '',
+      location: '',
+    });
     setCalendarStatusMessage('Calendar event edit cancelled.');
   }
 
@@ -394,10 +442,12 @@ export function useMatterDashboard(matterId: string) {
     });
     if (editingCalendarEventId === eventId) {
       setEditingCalendarEventId(null);
-      setEventType('');
-      setEventStartAt('');
-      setEventEndAt('');
-      setEventLocation('');
+      calendarEventForm.reset({
+        type: '',
+        startAt: '',
+        endAt: '',
+        location: '',
+      });
     }
     setCalendarStatusMessage('Calendar event removed.');
     await refreshDashboard();
@@ -436,31 +486,30 @@ export function useMatterDashboard(matterId: string) {
 
   function resetParticipantForm() {
     setEditingParticipantId(null);
-    setParticipantIsPrimary(false);
-    setParticipantRepresentedByContactId('');
-    setParticipantLawFirmContactId('');
-    setParticipantNotes('');
     const defaultRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey) || participantRoleOptions[0];
-    if (defaultRole) {
-      setSelectedParticipantRoleKey(defaultRole.key);
-      setParticipantSide((defaultRole.sideDefault as ParticipantSideOption | null) || 'NEUTRAL');
-    }
+    participantForm.reset({
+      contactId: participantContacts[0]?.id || '',
+      participantRoleKey: defaultRole?.key || '',
+      side: (defaultRole?.sideDefault as ParticipantSideOption | null) || 'NEUTRAL',
+      isPrimary: false,
+      representedByContactId: '',
+      lawFirmContactId: '',
+      notes: '',
+    });
   }
 
-  async function createOrUpdateParticipant() {
-    if (!matterId || !selectedParticipantContactId || !selectedParticipantRoleKey || !participantSide) {
-      setParticipantStatusMessage('Contact and participant role are required.');
+  const createOrUpdateParticipant = participantForm.handleSubmit(async (values) => {
+    if (!matterId) {
       return;
     }
-
     const payload = {
-      contactId: selectedParticipantContactId,
-      participantRoleKey: selectedParticipantRoleKey,
-      side: participantSide,
-      isPrimary: participantIsPrimary,
-      representedByContactId: participantRoleIsCounsel ? null : participantRepresentedByContactId || null,
-      lawFirmContactId: participantRoleIsCounsel ? participantLawFirmContactId || null : null,
-      notes: participantNotes.trim() ? participantNotes.trim() : null,
+      contactId: values.contactId,
+      participantRoleKey: values.participantRoleKey,
+      side: values.side,
+      isPrimary: values.isPrimary,
+      representedByContactId: participantRoleIsCounsel ? null : values.representedByContactId || null,
+      lawFirmContactId: participantRoleIsCounsel ? values.lawFirmContactId || null : null,
+      notes: values.notes?.trim() ? values.notes.trim() : null,
     };
 
     if (editingParticipantId) {
@@ -479,7 +528,7 @@ export function useMatterDashboard(matterId: string) {
 
     resetParticipantForm();
     await refreshDashboard();
-  }
+  });
 
   function startEditingParticipant(participant: {
     id: string;
@@ -494,13 +543,15 @@ export function useMatterDashboard(matterId: string) {
     notes?: string | null;
   }) {
     setEditingParticipantId(participant.id);
-    setSelectedParticipantContactId(participant.contactId);
-    setSelectedParticipantRoleKey(participant.participantRoleKey);
-    setParticipantSide(participant.side || 'NEUTRAL');
-    setParticipantIsPrimary(Boolean(participant.isPrimary));
-    setParticipantRepresentedByContactId(participant.representedByContact?.id || participant.representedByContactId || '');
-    setParticipantLawFirmContactId(participant.lawFirmContact?.id || participant.lawFirmContactId || '');
-    setParticipantNotes(participant.notes || '');
+    participantForm.reset({
+      contactId: participant.contactId,
+      participantRoleKey: participant.participantRoleKey,
+      side: participant.side || 'NEUTRAL',
+      isPrimary: Boolean(participant.isPrimary),
+      representedByContactId: participant.representedByContact?.id || participant.representedByContactId || '',
+      lawFirmContactId: participant.lawFirmContact?.id || participant.lawFirmContactId || '',
+      notes: participant.notes || '',
+    });
     setParticipantStatusMessage(`Editing participant ${participant.id}.`);
   }
 
@@ -525,72 +576,88 @@ export function useMatterDashboard(matterId: string) {
     await refreshDashboard();
   }
 
-  async function logCommunicationEntry() {
-    if (!matterId) {
-      return;
+  function onParticipantRoleChange(nextRoleKey: string) {
+    const role = participantRoleOptions.find((option) => option.key === nextRoleKey);
+    if (!editingParticipantId && role?.sideDefault) {
+      participantForm.setValue('side', role.sideDefault as ParticipantSideOption, { shouldDirty: true });
     }
+  }
 
-    const normalizedBody = communicationBody.trim();
-    if (!normalizedBody) {
-      setCommunicationStatusMessage('Communication body is required.');
-      return;
-    }
+  function onParticipantSideChange(nextSide: ParticipantSideOption) {
+    participantForm.setValue('side', nextSide, { shouldDirty: true, shouldValidate: true });
+  }
 
-    const normalizedSubject = communicationSubject.trim();
-    const normalizedThreadSubject = newCommunicationThreadSubject.trim();
-    const isNewThread = selectedCommunicationThreadId === '__new__';
-
-    if (editingCommunicationId) {
-      if (isNewThread) {
-        setCommunicationStatusMessage('Select an existing thread while editing a communication entry.');
+  const logCommunicationEntry = communicationForm.handleSubmit(
+    async (values) => {
+      if (!matterId) {
         return;
       }
 
-      await apiFetch(`/matters/${matterId}/communications/${editingCommunicationId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          threadId: selectedCommunicationThreadId,
-          type: communicationType,
-          direction: communicationDirection,
-          subject: normalizedSubject,
-          body: normalizedBody,
-          participantContactId: communicationParticipantContactId,
-          ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
-        }),
+      const normalizedBody = values.body.trim();
+      const normalizedSubject = values.subject?.trim() || '';
+      const normalizedThreadSubject = values.threadSubject?.trim() || '';
+      const isNewThread = values.threadId === '__new__';
+
+      if (editingCommunicationId) {
+        if (isNewThread) {
+          setCommunicationStatusMessage('Select an existing thread while editing a communication entry.');
+          return;
+        }
+
+        await apiFetch(`/matters/${matterId}/communications/${editingCommunicationId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            threadId: values.threadId,
+            type: values.type,
+            direction: values.direction,
+            subject: normalizedSubject,
+            body: normalizedBody,
+            participantContactId: values.participantContactId,
+            ...(values.occurredAt ? { occurredAt: new Date(values.occurredAt).toISOString() } : {}),
+          }),
+        });
+
+        setCommunicationStatusMessage('Communication entry updated.');
+        setEditingCommunicationId(null);
+      } else {
+        await apiFetch(`/matters/${matterId}/communications/log`, {
+          method: 'POST',
+          body: JSON.stringify({
+            ...(isNewThread
+              ? {
+                  threadSubject: normalizedThreadSubject || normalizedSubject || `${values.type} log`,
+                }
+              : {
+                  threadId: values.threadId,
+                }),
+            type: values.type,
+            direction: values.direction,
+            ...(normalizedSubject ? { subject: normalizedSubject } : {}),
+            body: normalizedBody,
+            ...(values.participantContactId ? { participantContactId: values.participantContactId } : {}),
+            ...(values.occurredAt ? { occurredAt: new Date(values.occurredAt).toISOString() } : {}),
+          }),
+        });
+
+        setCommunicationStatusMessage('Communication entry logged.');
+      }
+
+      communicationForm.reset({
+        threadId: values.threadId,
+        threadSubject: '',
+        type: values.type,
+        direction: values.direction,
+        participantContactId: '',
+        occurredAt: new Date().toISOString().slice(0, 16),
+        subject: '',
+        body: '',
       });
-
-      setCommunicationStatusMessage('Communication entry updated.');
-      setEditingCommunicationId(null);
-    } else {
-      await apiFetch(`/matters/${matterId}/communications/log`, {
-        method: 'POST',
-        body: JSON.stringify({
-          ...(isNewThread
-            ? {
-                threadSubject: normalizedThreadSubject || normalizedSubject || `${communicationType} log`,
-              }
-            : {
-                threadId: selectedCommunicationThreadId,
-              }),
-          type: communicationType,
-          direction: communicationDirection,
-          ...(normalizedSubject ? { subject: normalizedSubject } : {}),
-          body: normalizedBody,
-          ...(communicationParticipantContactId ? { participantContactId: communicationParticipantContactId } : {}),
-          ...(communicationOccurredAt ? { occurredAt: new Date(communicationOccurredAt).toISOString() } : {}),
-        }),
-      });
-
-      setCommunicationStatusMessage('Communication entry logged.');
-    }
-
-    setCommunicationSubject('');
-    setCommunicationBody('');
-    setCommunicationParticipantContactId('');
-    setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
-    setNewCommunicationThreadSubject('');
-    await refreshDashboard();
-  }
+      await refreshDashboard();
+    },
+    async () => {
+      setCommunicationStatusMessage(null);
+    },
+  );
 
   function startEditingCommunication(row: {
     id: string;
@@ -603,22 +670,31 @@ export function useMatterDashboard(matterId: string) {
     participantContactId?: string;
   }) {
     setEditingCommunicationId(row.id);
-    setSelectedCommunicationThreadId(row.threadId);
-    setCommunicationType(row.type);
-    setCommunicationDirection(row.direction);
-    setCommunicationSubject(row.subject);
-    setCommunicationBody(row.body);
-    setCommunicationParticipantContactId(row.participantContactId || '');
-    setCommunicationOccurredAt(new Date(row.occurredAt).toISOString().slice(0, 16));
+    communicationForm.reset({
+      threadId: row.threadId,
+      threadSubject: '',
+      type: row.type,
+      direction: row.direction,
+      participantContactId: row.participantContactId || '',
+      occurredAt: new Date(row.occurredAt).toISOString().slice(0, 16),
+      subject: row.subject,
+      body: row.body,
+    });
     setCommunicationStatusMessage(`Editing communication entry ${row.id}.`);
   }
 
   function cancelEditingCommunication() {
     setEditingCommunicationId(null);
-    setCommunicationSubject('');
-    setCommunicationBody('');
-    setCommunicationParticipantContactId('');
-    setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+    communicationForm.reset({
+      threadId: communicationForm.getValues('threadId'),
+      threadSubject: '',
+      type: communicationForm.getValues('type'),
+      direction: communicationForm.getValues('direction'),
+      participantContactId: '',
+      occurredAt: new Date().toISOString().slice(0, 16),
+      subject: '',
+      body: '',
+    });
     setCommunicationStatusMessage('Communication edit cancelled.');
   }
 
@@ -633,10 +709,16 @@ export function useMatterDashboard(matterId: string) {
 
     if (editingCommunicationId === messageId) {
       setEditingCommunicationId(null);
-      setCommunicationSubject('');
-      setCommunicationBody('');
-      setCommunicationParticipantContactId('');
-      setCommunicationOccurredAt(new Date().toISOString().slice(0, 16));
+      communicationForm.reset({
+        threadId: communicationForm.getValues('threadId'),
+        threadSubject: '',
+        type: communicationForm.getValues('type'),
+        direction: communicationForm.getValues('direction'),
+        participantContactId: '',
+        occurredAt: new Date().toISOString().slice(0, 16),
+        subject: '',
+        body: '',
+      });
     }
 
     setCommunicationStatusMessage('Communication entry removed.');
@@ -894,24 +976,9 @@ export function useMatterDashboard(matterId: string) {
   return {
     dashboard,
     editingOverview,
-    setEditingOverview,
-    overviewName,
-    setOverviewName,
-    overviewMatterNumber,
-    setOverviewMatterNumber,
-    overviewPracticeArea,
-    setOverviewPracticeArea,
-    overviewStatus,
-    setOverviewStatus,
-    overviewVenue,
-    setOverviewVenue,
-    overviewJurisdiction,
-    setOverviewJurisdiction,
-    overviewOpenedAt,
-    setOverviewOpenedAt,
-    overviewClosedAt,
-    setOverviewClosedAt,
+    overviewForm,
     overviewStatusMessage,
+    startOverviewEdit: () => startOverviewEdit(dashboard),
     rulesPacks,
     selectedRulesPackId,
     setSelectedRulesPackId,
@@ -923,59 +990,27 @@ export function useMatterDashboard(matterId: string) {
     overrideReasons,
     setOverrideReasons,
     deadlineStatus,
-    taskTitle,
-    setTaskTitle,
-    taskDueAt,
-    setTaskDueAt,
-    taskPriority,
-    setTaskPriority,
+    taskForm,
     taskStatusMessage,
     editingTaskId,
-    eventType,
-    setEventType,
-    eventStartAt,
-    setEventStartAt,
-    eventEndAt,
-    setEventEndAt,
-    eventLocation,
-    setEventLocation,
+    calendarEventForm,
     calendarStatusMessage,
     editingCalendarEventId,
     participantContacts,
     participantRoleOptions,
+    participantForm,
     selectedParticipantContactId,
-    setSelectedParticipantContactId,
     selectedParticipantRoleKey,
-    setSelectedParticipantRoleKey,
     participantSide,
-    setParticipantSide,
     participantIsPrimary,
-    setParticipantIsPrimary,
     participantRepresentedByContactId,
-    setParticipantRepresentedByContactId,
     participantLawFirmContactId,
-    setParticipantLawFirmContactId,
     participantNotes,
-    setParticipantNotes,
     editingParticipantId,
     participantStatusMessage,
     participantRoleIsCounsel,
+    communicationForm,
     selectedCommunicationThreadId,
-    setSelectedCommunicationThreadId,
-    newCommunicationThreadSubject,
-    setNewCommunicationThreadSubject,
-    communicationType,
-    setCommunicationType,
-    communicationDirection,
-    setCommunicationDirection,
-    communicationSubject,
-    setCommunicationSubject,
-    communicationBody,
-    setCommunicationBody,
-    communicationParticipantContactId,
-    setCommunicationParticipantContactId,
-    communicationOccurredAt,
-    setCommunicationOccurredAt,
     communicationStatusMessage,
     editingCommunicationId,
     communicationRows,
@@ -1037,6 +1072,8 @@ export function useMatterDashboard(matterId: string) {
     deleteCalendarEvent,
     exportCalendarIcs,
     createOrUpdateParticipant,
+    onParticipantRoleChange,
+    onParticipantSideChange,
     startEditingParticipant,
     cancelEditingParticipant,
     removeParticipant,

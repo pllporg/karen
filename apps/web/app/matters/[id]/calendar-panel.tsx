@@ -1,18 +1,18 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { FormEventHandler } from 'react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import type { MatterCalendarEventFormData } from '../../../lib/schemas/matter-dashboard';
 
 type CalendarPanelProps = {
   dashboard: any;
-  eventType: string;
-  setEventType: Dispatch<SetStateAction<string>>;
-  eventStartAt: string;
-  setEventStartAt: Dispatch<SetStateAction<string>>;
-  eventEndAt: string;
-  setEventEndAt: Dispatch<SetStateAction<string>>;
-  eventLocation: string;
-  setEventLocation: Dispatch<SetStateAction<string>>;
+  register: UseFormRegister<MatterCalendarEventFormData>;
+  errors: FieldErrors<MatterCalendarEventFormData>;
+  isSubmitting: boolean;
   calendarStatusMessage: string | null;
   editingCalendarEventId: string | null;
-  createOrUpdateCalendarEvent: () => Promise<void>;
+  createOrUpdateCalendarEvent: FormEventHandler<HTMLFormElement>;
   cancelEditingCalendarEvent: () => void;
   deleteCalendarEvent: (eventId: string) => Promise<void>;
   startEditingCalendarEvent: (event: {
@@ -27,14 +27,9 @@ type CalendarPanelProps = {
 
 export function CalendarPanel({
   dashboard,
-  eventType,
-  setEventType,
-  eventStartAt,
-  setEventStartAt,
-  eventEndAt,
-  setEventEndAt,
-  eventLocation,
-  setEventLocation,
+  register,
+  errors,
+  isSubmitting,
   calendarStatusMessage,
   editingCalendarEventId,
   createOrUpdateCalendarEvent,
@@ -47,48 +42,52 @@ export function CalendarPanel({
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <h3 style={{ marginTop: 0, marginBottom: 0 }}>Calendar</h3>
-        <button className="button secondary" type="button" onClick={exportCalendarIcs}>
+        <Button tone="secondary" type="button" onClick={exportCalendarIcs}>
           Export ICS
-        </button>
+        </Button>
       </div>
-      <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 180px 1fr auto' }}>
-        <input
-          className="input"
-          aria-label="Calendar Event Type"
-          placeholder="Event type"
-          value={eventType}
-          onChange={(event) => setEventType(event.target.value)}
-        />
-        <input
-          className="input"
-          aria-label="Calendar Event Start"
-          type="datetime-local"
-          value={eventStartAt}
-          onChange={(event) => setEventStartAt(event.target.value)}
-        />
-        <input
-          className="input"
-          aria-label="Calendar Event End"
-          type="datetime-local"
-          value={eventEndAt}
-          onChange={(event) => setEventEndAt(event.target.value)}
-        />
-        <input
-          className="input"
-          aria-label="Calendar Event Location"
-          placeholder="Location (optional)"
-          value={eventLocation}
-          onChange={(event) => setEventLocation(event.target.value)}
-        />
-        <button className="button" type="button" onClick={createOrUpdateCalendarEvent}>
-          {editingCalendarEventId ? 'Save Event Edit' : 'Add Event'}
-        </button>
-      </div>
+      <form style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 180px 180px 1fr auto' }} onSubmit={createOrUpdateCalendarEvent}>
+        <FormField label="Calendar Event Type" name="matter-calendar-type" error={errors.type?.message} required>
+          <Input
+            aria-label="Calendar Event Type"
+            placeholder="Event type"
+            {...register('type')}
+            invalid={!!errors.type}
+          />
+        </FormField>
+        <FormField label="Calendar Event Start" name="matter-calendar-start" error={errors.startAt?.message} required>
+          <Input
+            aria-label="Calendar Event Start"
+            type="datetime-local"
+            {...register('startAt')}
+            invalid={!!errors.startAt}
+          />
+        </FormField>
+        <FormField label="Calendar Event End" name="matter-calendar-end" error={errors.endAt?.message}>
+          <Input
+            aria-label="Calendar Event End"
+            type="datetime-local"
+            {...register('endAt')}
+            invalid={!!errors.endAt}
+          />
+        </FormField>
+        <FormField label="Calendar Event Location" name="matter-calendar-location" error={errors.location?.message}>
+          <Input
+            aria-label="Calendar Event Location"
+            placeholder="Location (optional)"
+            {...register('location')}
+            invalid={!!errors.location}
+          />
+        </FormField>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Working...' : editingCalendarEventId ? 'Save Event Edit' : 'Add Event'}
+        </Button>
+      </form>
       {editingCalendarEventId ? (
         <div style={{ marginTop: 8 }}>
-          <button className="button secondary" type="button" onClick={cancelEditingCalendarEvent}>
+          <Button tone="secondary" type="button" onClick={cancelEditingCalendarEvent}>
             Cancel Event Edit
-          </button>
+          </Button>
         </div>
       ) : null}
       {calendarStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{calendarStatusMessage}</p> : null}
@@ -110,8 +109,8 @@ export function CalendarPanel({
               <td>{event.endAt ? new Date(event.endAt).toLocaleString() : '-'}</td>
               <td>{event.location || '-'}</td>
               <td style={{ display: 'flex', gap: 8 }}>
-                <button
-                  className="button secondary"
+                <Button
+                  tone="secondary"
                   type="button"
                   aria-label={`Edit Calendar Event ${event.id}`}
                   onClick={() =>
@@ -125,15 +124,15 @@ export function CalendarPanel({
                   }
                 >
                   Edit
-                </button>
-                <button
-                  className="button secondary"
+                </Button>
+                <Button
+                  tone="secondary"
                   type="button"
                   aria-label={`Delete Calendar Event ${event.id}`}
                   onClick={() => deleteCalendarEvent(event.id)}
                 >
                   Delete
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
