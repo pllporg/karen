@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-03-06T16:32:16.967Z",
+  "generatedAt": "2026-03-06T16:35:53.698Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -34,35 +34,41 @@
     "scopedIssueCount": 107,
     "stateCounts": {
       "Backlog": 4,
-      "In Progress": 3,
+      "In Review": 2,
+      "In Progress": 1,
       "Done": 100
     },
     "inProgressIssueKeys": [
-      "KAR-122",
-      "KAR-119",
       "KAR-118"
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
+        "key": "KAR-106",
+        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:35:24.003Z",
+        "requirementId": "REQ-EVE2-004"
+      },
+      {
         "key": "KAR-122",
         "title": "PRD-05 Remaining Page Overhaul",
-        "state": "In Progress",
-        "updatedAt": "2026-03-06T16:31:26.951Z",
+        "state": "In Review",
+        "updatedAt": "2026-03-06T16:34:08.459Z",
         "requirementId": "PRD-05"
       },
       {
         "key": "KAR-119",
         "title": "PRD-01/02 Foundation + Data Layer",
-        "state": "In Progress",
-        "updatedAt": "2026-03-06T16:31:26.772Z",
+        "state": "In Review",
+        "updatedAt": "2026-03-06T16:34:08.248Z",
         "requirementId": "PRD-01-02"
       },
       {
         "key": "KAR-118",
         "title": "Frontend Refactor Delivery Program",
         "state": "In Progress",
-        "updatedAt": "2026-03-06T16:31:26.373Z",
+        "updatedAt": "2026-03-06T16:34:07.905Z",
         "requirementId": "PRD-PROGRAM"
       },
       {
@@ -101,13 +107,6 @@
         "requirementId": "REQ-EVE2-006"
       },
       {
-        "key": "KAR-106",
-        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
-        "state": "Done",
-        "updatedAt": "2026-03-06T16:29:31.817Z",
-        "requirementId": "REQ-EVE2-004"
-      },
-      {
         "key": "KAR-124",
         "title": "PRD-07 Performance + Code Quality",
         "state": "Backlog",
@@ -122,7 +121,8 @@
     "openIssueCount": 8,
     "stateCounts": {
       "Backlog": 4,
-      "In Progress": 4,
+      "In Review": 2,
+      "In Progress": 2,
       "Done": 20
     },
     "openIssueKeys": [
@@ -148,14 +148,14 @@
         "title": "Frontend Refactor Delivery Program",
         "state": "In Progress",
         "requirementId": "PRD-PROGRAM",
-        "updatedAt": "2026-03-06T16:31:26.373Z"
+        "updatedAt": "2026-03-06T16:34:07.905Z"
       },
       {
         "key": "KAR-119",
         "title": "PRD-01/02 Foundation + Data Layer",
-        "state": "In Progress",
+        "state": "In Review",
         "requirementId": "PRD-01-02",
-        "updatedAt": "2026-03-06T16:31:26.772Z"
+        "updatedAt": "2026-03-06T16:34:08.248Z"
       },
       {
         "key": "KAR-120",
@@ -174,9 +174,9 @@
       {
         "key": "KAR-122",
         "title": "PRD-05 Remaining Page Overhaul",
-        "state": "In Progress",
+        "state": "In Review",
         "requirementId": "PRD-05",
-        "updatedAt": "2026-03-06T16:31:26.951Z"
+        "updatedAt": "2026-03-06T16:34:08.459Z"
       },
       {
         "key": "KAR-123",
@@ -195,18 +195,16 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-03-06T16:31:46.625Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-06T16:34:33.130Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "5e0cbdbdd2c3f2497c3e4e224a114bf4a461a48c",
+    "gitHead": "2b8fef0a71d76923c628869e97b00c6b7d332568",
     "gitStatusShort": [
-      "## lin/KAR-106-109-111-eve2-reconciliation",
-      " M docs/ACTIVE_PHASES.md",
+      "## lin/KAR-106-109-111-eve2-reconciliation...origin/lin/KAR-106-109-111-eve2-reconciliation",
       " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/requirements.matrix.json",
       " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 4
+    "dirtyFileCount": 2
   }
 }
