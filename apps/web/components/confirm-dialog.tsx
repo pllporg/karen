@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Modal } from './ui/modal';
 
 export type ConfirmDialogProps = {
@@ -12,6 +13,7 @@ export type ConfirmDialogProps = {
   cancelLabel?: string;
   confirmTone?: 'default' | 'danger';
   busy?: boolean;
+  typedConfirmation?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -24,12 +26,17 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   confirmTone = 'default',
   busy = false,
+  typedConfirmation,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const typedInputId = useId();
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const [typedValue, setTypedValue] = useState('');
+  const requiresTypedConfirmation = Boolean(typedConfirmation);
+  const typedMatches = !requiresTypedConfirmation || typedValue === typedConfirmation;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -37,6 +44,12 @@ export function ConfirmDialog({
       cancelButtonRef.current?.focus();
     });
     return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setTypedValue('');
+    }
   }, [open]);
 
   return (
@@ -55,6 +68,23 @@ export function ConfirmDialog({
         <p id={descriptionId} className="confirm-description">
           {description}
         </p>
+        {requiresTypedConfirmation ? (
+          <div className="confirm-typed">
+            <label htmlFor={typedInputId}>Confirmation Token</label>
+            <Input
+              id={typedInputId}
+              value={typedValue}
+              onChange={(event) => setTypedValue(event.target.value)}
+              placeholder={`Type "${typedConfirmation}" to confirm`}
+              invalid={!typedMatches}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {!typedMatches ? (
+              <p className="confirm-typed-help">Token does not match required confirmation text.</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="confirm-actions">
           <Button
             ref={cancelButtonRef}
@@ -68,8 +98,11 @@ export function ConfirmDialog({
           <Button
             tone={confirmTone === 'danger' ? 'danger' : 'default'}
             type="button"
-            onClick={onConfirm}
-            disabled={busy}
+            onClick={() => {
+              if (!typedMatches) return;
+              onConfirm();
+            }}
+            disabled={busy || !typedMatches}
           >
             {confirmLabel}
           </Button>

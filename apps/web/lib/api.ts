@@ -28,11 +28,18 @@ function shouldSkipSessionBootstrap(path: string): boolean {
 }
 
 function buildHeaders(init: RequestInit | undefined, token: string | null): Record<string, string> {
-  return {
-    'content-type': 'application/json',
-    ...(token ? { 'x-session-token': token } : {}),
-    ...(init?.headers || {}),
-  } as Record<string, string>;
+  const headers = new Headers(init?.headers);
+  const isFormDataBody = init?.body instanceof FormData;
+
+  if (!isFormDataBody && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+
+  if (token && !headers.has('x-session-token')) {
+    headers.set('x-session-token', token);
+  }
+
+  return Object.fromEntries(headers.entries());
 }
 
 export async function bootstrapSession(): Promise<boolean> {
