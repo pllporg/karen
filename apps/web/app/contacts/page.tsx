@@ -1,363 +1,74 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
-import { ToastStack, type ToastItem } from '../../components/toast-stack';
+import { ToastStack } from '../../components/toast-stack';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardGrid } from '../../components/ui/card';
+import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
 import { Select } from '../../components/ui/select';
 import { Table } from '../../components/ui/table';
-import { apiFetch } from '../../lib/api';
-
-type Contact = {
-  id: string;
-  kind: 'PERSON' | 'ORGANIZATION';
-  displayName: string;
-  primaryEmail?: string | null;
-  primaryPhone?: string | null;
-  tags?: string[];
-};
-
-type DedupeSuggestion = {
-  primaryId: string;
-  duplicateId: string;
-  pairKey: string;
-  score: number;
-  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
-  decision: 'OPEN' | 'IGNORE' | 'DEFER';
-  reasons: string[];
-  primary: {
-    id: string;
-    displayName: string;
-    kind: 'PERSON' | 'ORGANIZATION';
-    primaryEmail?: string | null;
-    primaryPhone?: string | null;
-    tags?: string[];
-  };
-  duplicate: {
-    id: string;
-    displayName: string;
-    kind: 'PERSON' | 'ORGANIZATION';
-    primaryEmail?: string | null;
-    primaryPhone?: string | null;
-    tags?: string[];
-  };
-  fieldDiffs: Array<{ field: string; primaryValue: string | null; duplicateValue: string | null }>;
-};
-
-type GraphEdge = {
-  id: string;
-  fromContactId: string;
-  toContactId: string;
-  relationshipType: string;
-  notes?: string | null;
-  direction: 'OUTGOING' | 'INCOMING';
-  relatedContact: {
-    id: string;
-    displayName: string;
-    kind: 'PERSON' | 'ORGANIZATION';
-    primaryEmail?: string | null;
-    primaryPhone?: string | null;
-    tags?: string[];
-  };
-};
-
-type ContactGraph = {
-  contact: Contact;
-  nodes: Contact[];
-  edges: GraphEdge[];
-  availableRelationshipTypes: string[];
-  summary: { nodeCount: number; edgeCount: number };
-  filters: {
-    relationshipTypes: string[];
-    search: string;
-  };
-};
-
-type PendingDedupeAction =
-  | {
-      kind: 'MERGE';
-      item: DedupeSuggestion;
-    }
-  | {
-      kind: 'DECISION';
-      item: DedupeSuggestion;
-      nextDecision: 'OPEN' | 'IGNORE' | 'DEFER';
-    };
+import { useContactsPage } from './use-contacts-page';
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [dedupe, setDedupe] = useState<DedupeSuggestion[]>([]);
-  const [graph, setGraph] = useState<ContactGraph | null>(null);
-  const [name, setName] = useState('');
-  const [kind, setKind] = useState<'PERSON' | 'ORGANIZATION'>('PERSON');
-  const [includeResolved, setIncludeResolved] = useState(false);
-  const [search, setSearch] = useState('');
-  const [includeTagsInput, setIncludeTagsInput] = useState('');
-  const [excludeTagsInput, setExcludeTagsInput] = useState('');
-  const [tagMode, setTagMode] = useState<'any' | 'all'>('any');
-  const [activeGraphContactId, setActiveGraphContactId] = useState<string | null>(null);
-  const [graphSearch, setGraphSearch] = useState('');
-  const [graphRelationshipType, setGraphRelationshipType] = useState('');
-  const [graphLoading, setGraphLoading] = useState(false);
-  const [actionKey, setActionKey] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingDedupeAction | null>(null);
-  const [dedupeError, setDedupeError] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-
-  function splitCsv(value: string) {
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  function formatTimestamp(date: Date) {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    }).format(date);
-  }
-
-  function pushToast(tone: ToastItem['tone'], title: string, detail: string) {
-    setToasts((current) => [
-      ...current,
-      {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
-        tone,
-        title,
-        detail,
-        occurredAt: formatTimestamp(new Date()),
-      },
-    ]);
-  }
-
-  function dismissToast(id: string) {
-    setToasts((current) => current.filter((toast) => toast.id !== id));
-  }
-
-  function contactsPath() {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    const includeTags = splitCsv(includeTagsInput);
-    const excludeTags = splitCsv(excludeTagsInput);
-    if (includeTags.length > 0) params.set('includeTags', includeTags.join(','));
-    if (excludeTags.length > 0) params.set('excludeTags', excludeTags.join(','));
-    if (includeTags.length > 0 || excludeTags.length > 0) params.set('tagMode', tagMode);
-    const query = params.toString();
-    return query ? `/contacts?${query}` : '/contacts';
-  }
-
-  async function load() {
-    const [contactData, dedupeData] = await Promise.all([
-      apiFetch<Contact[]>(contactsPath()),
-      apiFetch<DedupeSuggestion[]>('/contacts/dedupe/suggestions'),
-    ]);
-    setContacts(contactData);
-    setDedupe(dedupeData);
-    if (activeGraphContactId && !contactData.some((contact) => contact.id === activeGraphContactId)) {
-      setGraph(null);
-      setActiveGraphContactId(null);
-    }
-  }
-
-  useEffect(() => {
-    load().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (toasts.length === 0) return undefined;
-    const timer = window.setTimeout(() => {
-      setToasts((current) => current.slice(1));
-    }, 4500);
-    return () => window.clearTimeout(timer);
-  }, [toasts]);
-
-  async function loadGraph(
-    contactId: string,
-    nextRelationshipType = graphRelationshipType,
-    nextSearch = graphSearch,
-  ) {
-    const params = new URLSearchParams();
-    if (nextSearch.trim()) params.set('search', nextSearch.trim());
-    if (nextRelationshipType) params.set('relationshipTypes', nextRelationshipType);
-    const query = params.toString();
-    const path = query ? `/contacts/${contactId}/graph?${query}` : `/contacts/${contactId}/graph`;
-    setGraphLoading(true);
-    try {
-      const graphData = await apiFetch<ContactGraph>(path);
-      setGraph(graphData);
-      setActiveGraphContactId(contactId);
-    } finally {
-      setGraphLoading(false);
-    }
-  }
-
-  async function applyContactFilters(e: FormEvent) {
-    e.preventDefault();
-    setGraph(null);
-    setActiveGraphContactId(null);
-    await load();
-  }
-
-  async function clearContactFilters() {
-    setSearch('');
-    setIncludeTagsInput('');
-    setExcludeTagsInput('');
-    setTagMode('any');
-    setGraph(null);
-    setActiveGraphContactId(null);
-    const [contactData, dedupeData] = await Promise.all([
-      apiFetch<Contact[]>('/contacts'),
-      apiFetch<DedupeSuggestion[]>('/contacts/dedupe/suggestions'),
-    ]);
-    setContacts(contactData);
-    setDedupe(dedupeData);
-  }
-
-  async function addContact(e: FormEvent) {
-    e.preventDefault();
-    await apiFetch('/contacts', {
-      method: 'POST',
-      body: JSON.stringify({ displayName: name, kind }),
-    });
-    setName('');
-    await load();
-  }
-
-  async function merge(item: DedupeSuggestion) {
-    setDedupeError(null);
-    setPendingAction({ kind: 'MERGE', item });
-  }
-
-  function decision(item: DedupeSuggestion, nextDecision: 'OPEN' | 'IGNORE' | 'DEFER') {
-    setDedupeError(null);
-    setPendingAction({ kind: 'DECISION', item, nextDecision });
-  }
-
-  async function confirmPendingAction() {
-    if (!pendingAction) return;
-    const currentAction = pendingAction;
-    const key =
-      currentAction.kind === 'MERGE'
-        ? `${currentAction.item.pairKey}:merge`
-        : `${currentAction.item.pairKey}:${currentAction.nextDecision}`;
-    setPendingAction(null);
-    setActionKey(key);
-    setDedupeError(null);
-
-    try {
-      if (currentAction.kind === 'MERGE') {
-        await apiFetch('/contacts/dedupe/merge', {
-          method: 'POST',
-          body: JSON.stringify({ primaryId: currentAction.item.primaryId, duplicateId: currentAction.item.duplicateId }),
-        });
-        pushToast(
-          'warning',
-          'Dedupe Merge Completed',
-          `${currentAction.item.duplicate.displayName} merged into ${currentAction.item.primary.displayName}.`,
-        );
-      } else {
-        await apiFetch('/contacts/dedupe/decisions', {
-          method: 'POST',
-          body: JSON.stringify({
-            primaryId: currentAction.item.primaryId,
-            duplicateId: currentAction.item.duplicateId,
-            decision: currentAction.nextDecision,
-          }),
-        });
-        pushToast(
-          'success',
-          'Dedupe Decision Recorded',
-          `${currentAction.nextDecision} recorded for ${currentAction.item.primary.displayName} ↔ ${currentAction.item.duplicate.displayName}.`,
-        );
-      }
-      await load();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to process dedupe action.';
-      setDedupeError(message);
-      pushToast('error', 'Dedupe Action Failed', message);
-    } finally {
-      setActionKey(null);
-    }
-  }
-
-  const visibleDedupe = includeResolved ? dedupe : dedupe.filter((item) => item.decision === 'OPEN');
-  const pendingActionDialog = useMemo(() => {
-    if (!pendingAction) return null;
-
-    if (pendingAction.kind === 'MERGE') {
-      return {
-        title: 'Confirm Dedupe Merge',
-        description: `Merge ${pendingAction.item.duplicate.displayName} into ${pendingAction.item.primary.displayName}. This updates participant/contact references and cannot be automatically reversed.`,
-        confirmLabel: 'Approve Merge',
-        confirmTone: 'danger' as const,
-      };
-    }
-
-    const decisionLabel =
-      pendingAction.nextDecision === 'IGNORE'
-        ? 'IGNORE'
-        : pendingAction.nextDecision === 'DEFER'
-          ? 'DEFER'
-          : 'REOPEN';
-
-    return {
-      title: 'Confirm Dedupe Decision',
-      description: `Apply ${decisionLabel} to duplicate pair ${pendingAction.item.primary.displayName} ↔ ${pendingAction.item.duplicate.displayName}.`,
-      confirmLabel: 'Record Decision',
-      confirmTone: 'default' as const,
-    };
-  }, [pendingAction]);
-
-  const dedupeByContactId = useMemo(() => {
-    const index = new Map<string, { openCount: number; highestConfidence: DedupeSuggestion['confidence'] }>();
-    const confidenceWeight = (value: DedupeSuggestion['confidence']) => {
-      if (value === 'HIGH') return 3;
-      if (value === 'MEDIUM') return 2;
-      return 1;
-    };
-
-    for (const item of dedupe) {
-      if (item.decision !== 'OPEN') continue;
-      const ids = [item.primaryId, item.duplicateId];
-      for (const id of ids) {
-        const existing = index.get(id);
-        if (!existing) {
-          index.set(id, {
-            openCount: 1,
-            highestConfidence: item.confidence,
-          });
-          continue;
-        }
-        existing.openCount += 1;
-        if (confidenceWeight(item.confidence) > confidenceWeight(existing.highestConfidence)) {
-          existing.highestConfidence = item.confidence;
-        }
-      }
-    }
-
-    return index;
-  }, [dedupe]);
+  const {
+    contacts,
+    graph,
+    name,
+    kind,
+    includeResolved,
+    search,
+    includeTagsInput,
+    excludeTagsInput,
+    tagMode,
+    activeGraphContactId,
+    graphSearch,
+    graphRelationshipType,
+    graphLoading,
+    actionKey,
+    pendingAction,
+    dedupeError,
+    toasts,
+    visibleDedupe,
+    pendingActionDialog,
+    dedupeByContactId,
+    setName,
+    setKind,
+    setIncludeResolved,
+    setSearch,
+    setIncludeTagsInput,
+    setExcludeTagsInput,
+    setTagMode,
+    setGraphSearch,
+    setGraphRelationshipType,
+    setPendingAction,
+    dismissToast,
+    loadGraph,
+    applyContactFilters,
+    clearContactFilters,
+    addContact,
+    merge,
+    decision,
+    confirmPendingAction,
+  } = useContactsPage();
 
   return (
     <AppShell>
       <PageHeader title="Contacts" subtitle="Unified people/organizations, relationship graph, and dedupe suggestions." />
 
-      <Card style={{ marginBottom: 14 }}>
-        <form onSubmit={addContact} style={{ display: 'grid', gridTemplateColumns: '1fr 180px 140px', gap: 10 }}>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" />
-          <Select value={kind} onChange={(e) => setKind(e.target.value as 'PERSON' | 'ORGANIZATION')}>
+      <Card className="mb-3">
+        <form
+          className="contacts-create-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addContact().catch(() => undefined);
+          }}
+        >
+          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Display name" />
+          <Select value={kind} onChange={(event) => setKind(event.target.value as 'PERSON' | 'ORGANIZATION')}>
             <option value="PERSON">Person</option>
             <option value="ORGANIZATION">Organization</option>
           </Select>
@@ -365,41 +76,46 @@ export default function ContactsPage() {
         </form>
       </Card>
 
-      <Card style={{ marginBottom: 14 }}>
+      <Card className="mb-3">
         <form
-          onSubmit={applyContactFilters}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 160px auto auto', gap: 10 }}
+          className="contacts-filter-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            applyContactFilters().catch(() => undefined);
+          }}
         >
           <Input
             aria-label="Contact Search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder="Search name/email/phone"
           />
           <Input
             aria-label="Include Tags"
             value={includeTagsInput}
-            onChange={(e) => setIncludeTagsInput(e.target.value)}
+            onChange={(event) => setIncludeTagsInput(event.target.value)}
             placeholder="Include tags (comma-separated)"
           />
           <Input
             aria-label="Exclude Tags"
             value={excludeTagsInput}
-            onChange={(e) => setExcludeTagsInput(e.target.value)}
+            onChange={(event) => setExcludeTagsInput(event.target.value)}
             placeholder="Exclude tags (comma-separated)"
           />
-          <Select
-            aria-label="Tag Mode"
-            value={tagMode}
-            onChange={(e) => setTagMode(e.target.value as 'any' | 'all')}
-          >
+          <Select aria-label="Tag Mode" value={tagMode} onChange={(event) => setTagMode(event.target.value as 'any' | 'all')}>
             <option value="any">Include Any Tag</option>
             <option value="all">Include All Tags</option>
           </Select>
           <Button tone="secondary" type="submit">
             Apply Filters
           </Button>
-          <Button tone="ghost" type="button" onClick={() => clearContactFilters()}>
+          <Button
+            tone="ghost"
+            type="button"
+            onClick={() => {
+              clearContactFilters().catch(() => undefined);
+            }}
+          >
             Clear
           </Button>
         </form>
@@ -407,17 +123,17 @@ export default function ContactsPage() {
 
       <CardGrid>
         <Card>
-          <h3 style={{ marginTop: 0 }}>Contacts</h3>
+          <h3>Contacts</h3>
           <Table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Kind</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Tags</th>
-                <th>Dedupe</th>
-                <th>Graph</th>
+                <th scope="col">Name</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Tags</th>
+                <th scope="col">Dedupe</th>
+                <th scope="col">Graph</th>
               </tr>
             </thead>
             <tbody>
@@ -429,14 +145,13 @@ export default function ContactsPage() {
                   <td>{contact.primaryPhone || '-'}</td>
                   <td>{contact.tags?.length ? contact.tags.join(', ') : '-'}</td>
                   <td>
-                    {dedupeByContactId.get(contact.id)
-                      ? (
-                        <Badge tone="in-review">
-                          {dedupeByContactId.get(contact.id)?.openCount} OPEN (
-                          {dedupeByContactId.get(contact.id)?.highestConfidence})
-                        </Badge>
-                        )
-                      : '-'}
+                    {dedupeByContactId.get(contact.id) ? (
+                      <Badge tone="in-review">
+                        {dedupeByContactId.get(contact.id)?.openCount} OPEN ({dedupeByContactId.get(contact.id)?.highestConfidence})
+                      </Badge>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td>
                     <Button
@@ -445,7 +160,7 @@ export default function ContactsPage() {
                       onClick={() => {
                         setGraphSearch('');
                         setGraphRelationshipType('');
-                        loadGraph(contact.id, '', '');
+                        loadGraph(contact.id, '', '').catch(() => undefined);
                       }}
                       disabled={graphLoading}
                     >
@@ -459,12 +174,12 @@ export default function ContactsPage() {
         </Card>
 
         <Card>
-          <h3 style={{ marginTop: 0 }}>Relationship Graph</h3>
+          <h3>Relationship Graph</h3>
           {!activeGraphContactId ? (
             <p>Select a contact from the table to view relationship graph details.</p>
           ) : (
             <>
-              <div style={{ marginBottom: 8 }}>
+              <div className="mb-2">
                 {graphLoading ? (
                   <span>Loading relationship graph...</span>
                 ) : (
@@ -474,23 +189,23 @@ export default function ContactsPage() {
                 )}
               </div>
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
+                className="contacts-graph-filter-form mb-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
                   if (!activeGraphContactId) return;
-                  loadGraph(activeGraphContactId);
+                  loadGraph(activeGraphContactId).catch(() => undefined);
                 }}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 220px auto auto', gap: 8, marginBottom: 10 }}
               >
                 <Input
                   aria-label="Graph Search"
                   value={graphSearch}
-                  onChange={(e) => setGraphSearch(e.target.value)}
+                  onChange={(event) => setGraphSearch(event.target.value)}
                   placeholder="Search related contact name"
                 />
                 <Select
                   aria-label="Relationship Type Filter"
                   value={graphRelationshipType}
-                  onChange={(e) => setGraphRelationshipType(e.target.value)}
+                  onChange={(event) => setGraphRelationshipType(event.target.value)}
                 >
                   <option value="">All Relationship Types</option>
                   {(graph?.availableRelationshipTypes || []).map((type) => (
@@ -510,22 +225,22 @@ export default function ContactsPage() {
                     setGraphSearch('');
                     setGraphRelationshipType('');
                     if (activeGraphContactId) {
-                      loadGraph(activeGraphContactId, '', '');
+                      loadGraph(activeGraphContactId, '', '').catch(() => undefined);
                     }
                   }}
                 >
                   Reset
                 </Button>
               </form>
-              <small style={{ color: 'var(--lic-text-muted)' }}>
+              <small className="type-caption muted">
                 Nodes: {graph?.summary.nodeCount ?? 0} | Edges: {graph?.summary.edgeCount ?? 0}
               </small>
-              <Table style={{ marginTop: 8 }}>
+              <Table className="mt-2">
                 <thead>
                   <tr>
-                    <th>Direction</th>
-                    <th>Relationship</th>
-                    <th>Related Contact</th>
+                    <th scope="col">Direction</th>
+                    <th scope="col">Relationship</th>
+                    <th scope="col">Related Contact</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -548,37 +263,36 @@ export default function ContactsPage() {
         </Card>
 
         <Card>
-          <h3 style={{ marginTop: 0 }}>Dedupe Suggestions</h3>
+          <h3>Dedupe Suggestions</h3>
           {actionKey ? (
-            <p className="notice mono-meta" role="status" style={{ marginBottom: 8 }}>
+            <p className="notice mono-meta mb-2" role="status">
               Processing dedupe action...
             </p>
           ) : null}
           {dedupeError ? (
-            <p className="error" role="alert" style={{ marginBottom: 8 }}>
+            <p className="error mb-2" role="alert">
               {dedupeError}
             </p>
           ) : null}
-          <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-            <input type="checkbox" checked={includeResolved} onChange={(e) => setIncludeResolved(e.target.checked)} />
-            Show deferred/ignored pairs
-          </label>
+          <div className="mb-2">
+            <Checkbox checked={includeResolved} onChange={setIncludeResolved} label="Show deferred/ignored pairs" />
+          </div>
           {visibleDedupe.length === 0 ? <p>No suggestions</p> : null}
           {visibleDedupe.map((item) => (
-            <div key={`${item.primaryId}-${item.duplicateId}`} style={{ marginBottom: 8 }}>
+            <div key={`${item.primaryId}-${item.duplicateId}`} className="mb-2">
               <div>
                 {item.primary.displayName} ↔ {item.duplicate.displayName} ({Math.round(item.score * 100)}%)
               </div>
-              <small style={{ color: 'var(--lic-text-muted)' }}>
+              <small className="type-caption muted">
                 Confidence: {item.confidence} | Status: {item.decision} | {item.reasons.join(', ')}
               </small>
               {item.fieldDiffs.length > 0 ? (
-                <Table style={{ marginTop: 6 }}>
+                <Table className="mt-2">
                   <thead>
                     <tr>
-                      <th>Field</th>
-                      <th>Primary</th>
-                      <th>Duplicate</th>
+                      <th scope="col">Field</th>
+                      <th scope="col">Primary</th>
+                      <th scope="col">Duplicate</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -592,41 +306,21 @@ export default function ContactsPage() {
                   </tbody>
                 </Table>
               ) : null}
-              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <Button
-                  tone="ghost"
-                  type="button"
-                  onClick={() => merge(item)}
-                  disabled={actionKey !== null}
-                >
+              <div className="row-2 mt-2">
+                <Button tone="ghost" type="button" onClick={() => merge(item)} disabled={actionKey !== null}>
                   {actionKey === `${item.pairKey}:merge` ? 'Merging...' : 'Merge'}
                 </Button>
                 {item.decision === 'OPEN' ? (
                   <>
-                    <Button
-                      tone="ghost"
-                      type="button"
-                      onClick={() => decision(item, 'DEFER')}
-                      disabled={actionKey !== null}
-                    >
+                    <Button tone="ghost" type="button" onClick={() => decision(item, 'DEFER')} disabled={actionKey !== null}>
                       {actionKey === `${item.pairKey}:DEFER` ? 'Saving...' : 'Defer'}
                     </Button>
-                    <Button
-                      tone="ghost"
-                      type="button"
-                      onClick={() => decision(item, 'IGNORE')}
-                      disabled={actionKey !== null}
-                    >
+                    <Button tone="ghost" type="button" onClick={() => decision(item, 'IGNORE')} disabled={actionKey !== null}>
                       {actionKey === `${item.pairKey}:IGNORE` ? 'Saving...' : 'Ignore'}
                     </Button>
                   </>
                 ) : (
-                  <Button
-                    tone="ghost"
-                    type="button"
-                    onClick={() => decision(item, 'OPEN')}
-                    disabled={actionKey !== null}
-                  >
+                  <Button tone="ghost" type="button" onClick={() => decision(item, 'OPEN')} disabled={actionKey !== null}>
                     {actionKey === `${item.pairKey}:OPEN` ? 'Saving...' : 'Reopen'}
                   </Button>
                 )}
