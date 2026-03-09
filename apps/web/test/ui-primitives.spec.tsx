@@ -6,12 +6,14 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardGrid } from '../components/ui/card';
 import { Drawer } from '../components/ui/drawer';
+import { FormField } from '../components/ui/form-field';
 import { Input } from '../components/ui/input';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
 import { Table } from '../components/ui/table';
 import { Textarea } from '../components/ui/textarea';
 import { Toast } from '../components/ui/toast';
+import { Toggle } from '../components/ui/toggle';
 
 describe('UI primitives', () => {
   it('renders canonical button/input/select/badge/table/card primitives with expected state classes', () => {
@@ -30,6 +32,11 @@ describe('UI primitives', () => {
         <Textarea aria-label="Narrative" invalid defaultValue="Detail" />
         <Badge tone="in-review">IN REVIEW</Badge>
         <Table alternating>
+          <thead>
+            <tr>
+              <th scope="col">Row</th>
+            </tr>
+          </thead>
           <tbody>
             <tr>
               <td>Row</td>
@@ -54,8 +61,83 @@ describe('UI primitives', () => {
     expect(screen.getByLabelText('Narrative')).toHaveAttribute('data-state', 'error');
     expect(screen.getByText('IN REVIEW')).toHaveClass('badge', 'status-in-review');
     expect(screen.getByText('IN REVIEW')).toHaveAttribute('data-tone', 'in-review');
-    expect(screen.getByRole('table')).toHaveClass('table');
-    expect(screen.getByRole('table')).toHaveAttribute('data-alternating', 'true');
+    expect(screen.getByRole('table', { name: 'Data table' })).toHaveClass('table');
+    expect(screen.getByRole('table', { name: 'Data table' })).toHaveAttribute('data-alternating', 'true');
+    expect(screen.getByRole('columnheader', { name: 'Row' })).toHaveAttribute('scope', 'col');
+  });
+
+  it('wires form labels and error semantics to controls', () => {
+    render(
+      <FormField label="Matter Name" name="matter-name" error="Matter Name is required." required>
+        <Input defaultValue="" />
+      </FormField>,
+    );
+
+    const field = screen.getByRole('textbox', { name: /Matter Name/i });
+    expect(field).toHaveAttribute('id', 'matter-name');
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveAttribute('aria-required', 'true');
+    expect(field).toHaveAttribute('aria-errormessage', 'matter-name-error');
+    expect(field).toHaveAttribute('aria-describedby', 'matter-name-error');
+    expect(screen.getByText('Matter Name is required.')).toHaveAttribute('role', 'alert');
+  });
+
+  it('keeps explicit table announcement attributes when provided', () => {
+    render(
+      <>
+        <p id="jobs-table-label">Jobs Queue</p>
+        <Table aria-labelledby="jobs-table-label">
+          <thead>
+            <tr>
+              <th scope="col">Job</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Export</td>
+            </tr>
+          </tbody>
+        </Table>
+      </>,
+    );
+
+    const table = screen.getByRole('table', { name: 'Jobs Queue' });
+    expect(table).toHaveAttribute('aria-labelledby', 'jobs-table-label');
+    expect(table).not.toHaveAttribute('aria-label', 'Data table');
+  });
+
+  it('combines hint and error ids in form field descriptions', () => {
+    render(
+      <FormField
+        label="Reference Code"
+        name="reference-code"
+        hint="Use filing code format."
+        error="Reference Code is required."
+        required
+      >
+        <Input defaultValue="" />
+      </FormField>,
+    );
+
+    const field = screen.getByRole('textbox', { name: /Reference Code/i });
+    expect(field).toHaveAttribute('aria-describedby', 'reference-code-hint reference-code-error');
+    expect(field).toHaveAttribute('aria-errormessage', 'reference-code-error');
+    expect(screen.getByText('Use filing code format.')).toHaveAttribute('id', 'reference-code-hint');
+    const requiredMarker = screen.getByText('*');
+    expect(requiredMarker).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('wires toggle labels to switch semantics and updates checked state', () => {
+    const onChange = vi.fn();
+    render(<Toggle checked={false} onChange={onChange} label="Send Update" />);
+
+    const toggle = screen.getByRole('switch', { name: 'Send Update' });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(toggle).toHaveAttribute('id');
+    expect(toggle.closest('label')).toHaveAttribute('for', toggle.getAttribute('id'));
+
+    fireEvent.click(toggle);
+    expect(onChange).toHaveBeenCalledWith(true);
   });
 
   it('renders modal and closes on escape when not busy', () => {

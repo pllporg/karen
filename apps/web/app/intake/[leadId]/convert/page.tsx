@@ -225,12 +225,12 @@ export default function LeadConvertPage() {
               </Badge>
             </div>
 
-            <table className="table">
+            <table aria-label="Data table" className="table">
               <thead>
                 <tr>
-                  <th>Checkpoint</th>
-                  <th>Status</th>
-                  <th>Evidence</th>
+                  <th scope="col">Checkpoint</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Evidence</th>
                 </tr>
               </thead>
               <tbody>
@@ -337,15 +337,15 @@ export default function LeadConvertPage() {
               </p>
             ) : null}
 
-            <table className="table">
+            <table aria-label="Data table" className="table">
               <thead>
                 <tr>
-                  <th>Participant</th>
-                  <th>Role</th>
-                  <th>Side</th>
-                  <th>Representation</th>
-                  <th>Primary</th>
-                  <th>Action</th>
+                  <th scope="col">Participant</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Side</th>
+                  <th scope="col">Representation</th>
+                  <th scope="col">Primary</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>

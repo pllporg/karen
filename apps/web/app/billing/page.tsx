@@ -88,7 +88,7 @@ export default function BillingPage() {
       </div>
 
       <div className="card">
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">#</th>
@@ -114,7 +114,7 @@ export default function BillingPage() {
 
       <div className="card mt-3 stack-3">
         <h3>Trust Ledger</h3>
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Trust Account</th>
@@ -163,7 +163,7 @@ export default function BillingPage() {
 
         {reconciliationStatus ? <p className="type-caption muted">{reconciliationStatus}</p> : null}
 
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Run</th>
@@ -282,7 +282,7 @@ export default function BillingPage() {
 
         {ledesStatus ? <p className="type-caption muted">{ledesStatus}</p> : null}
 
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Job</th>

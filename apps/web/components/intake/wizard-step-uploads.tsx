@@ -33,11 +33,11 @@ export function WizardStepUploads({
         <Table>
           <thead>
             <tr>
-              <th>File</th>
-              <th>Size</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th scope="col">File</th>
+              <th scope="col">Size</th>
+              <th scope="col">Category</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>

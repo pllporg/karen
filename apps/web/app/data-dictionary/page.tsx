@@ -64,12 +64,12 @@ export default function DataDictionaryPage() {
     <AppShell>
       <PageHeader title="Data Dictionary" subtitle="Export format reference for migration portability and round-trip mapping." />
       <div className="card">
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
-              <th>File</th>
-              <th>Description</th>
-              <th>Required Columns</th>
+              <th scope="col">File</th>
+              <th scope="col">Description</th>
+              <th scope="col">Required Columns</th>
             </tr>
           </thead>
           <tbody>

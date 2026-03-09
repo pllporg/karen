@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { Badge } from '../../components/ui/badge';
@@ -149,7 +149,7 @@ export default function AuditorPage() {
 
   const uniqueSeverities = useMemo(() => ['ALL', ...new Set(signals.map((signal) => signal.severity))], [signals]);
 
-  async function loadQueue() {
+  const loadQueue = useCallback(async () => {
     setLoading(true);
     setErrorText('');
     try {
@@ -163,11 +163,11 @@ export default function AuditorPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedSignalId]);
 
   useEffect(() => {
     loadQueue().catch(() => undefined);
-  }, []);
+  }, [loadQueue]);
 
   async function executeAction(action: QueueAction) {
     if (!selectedSignal) return;
@@ -202,9 +202,9 @@ export default function AuditorPage() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(180px, 220px))', gap: 8 }}>
-          <label>
+          <label htmlFor="auditor-severity-filter">
             Severity Filter
-            <Select aria-label="Severity Filter" value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)}>
+            <Select id="auditor-severity-filter" value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)}>
               {uniqueSeverities.map((severity) => (
                 <option key={severity} value={severity}>
                   {severity}
@@ -213,10 +213,10 @@ export default function AuditorPage() {
             </Select>
           </label>
 
-          <label>
+          <label htmlFor="auditor-status-filter">
             Status Filter
             <Select
-              aria-label="Status Filter"
+              id="auditor-status-filter"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as 'ALL' | QueueStatus)}
             >

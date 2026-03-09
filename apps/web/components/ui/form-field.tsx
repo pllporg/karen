@@ -33,7 +33,9 @@ export function FormField({
     ? cloneElement(children as ReactElement<Record<string, unknown>>, {
         id: fieldId,
         'aria-invalid': error ? 'true' : undefined,
+        'aria-required': required ? 'true' : undefined,
         'aria-describedby': describedBy || undefined,
+        'aria-errormessage': error ? errorId : undefined,
       })
     : children;
 
@@ -41,7 +43,7 @@ export function FormField({
     <div className="stack-1">
       <label htmlFor={fieldId} className="type-label">
         {label}
-        {required ? <span className="form-field-required">*</span> : null}
+        {required ? <span className="form-field-required" aria-hidden="true">*</span> : null}
       </label>
       {hint ? (
         <p id={hintId} className="form-field-hint">
@@ -50,7 +52,7 @@ export function FormField({
       ) : null}
       {control}
       {error ? (
-        <p id={errorId} className="form-field-error">
+        <p id={errorId} className="form-field-error" role="alert">
           {error}
         </p>
       ) : null}

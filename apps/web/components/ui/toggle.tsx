@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 export type ToggleProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -8,9 +10,12 @@ export type ToggleProps = {
 };
 
 export function Toggle({ checked, onChange, label, disabled = false }: ToggleProps) {
+  const toggleId = useId();
+
   return (
-    <label className="toggle-wrapper">
+    <label className="toggle-wrapper" htmlFor={toggleId}>
       <button
+        id={toggleId}
         type="button"
         role="switch"
         aria-checked={checked}

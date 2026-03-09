@@ -371,13 +371,13 @@ export default function MattersPage() {
       </div>
 
       <div className="card">
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
-              <th>Matter #</th>
-              <th>Name</th>
-              <th>Practice Area</th>
-              <th>Status</th>
+              <th scope="col">Matter #</th>
+              <th scope="col">Name</th>
+              <th scope="col">Practice Area</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>

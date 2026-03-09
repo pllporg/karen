@@ -30,7 +30,7 @@ export function JobsTable({
 }: JobsTableProps) {
   return (
     <div className="card">
-      <table className="table">
+      <table aria-label="Data table" className="table">
         <thead>
           <tr>
             <th scope="col">Tool</th>

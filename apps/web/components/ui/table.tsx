@@ -12,12 +12,15 @@ export const Table = forwardRef<HTMLTableElement, TableProps>(function Table(
   { className, alternating, sortable, ...props },
   ref,
 ) {
+  const tableLabel = props['aria-label'] || props['aria-labelledby'] ? undefined : 'Data table';
+
   return (
     <table
       ref={ref}
       className={cx('table', className)}
       data-alternating={alternating || undefined}
       data-sortable={sortable || undefined}
+      aria-label={tableLabel}
       {...props}
     />
   );

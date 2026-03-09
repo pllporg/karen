@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // Keep Vitest cache inside the app workspace to avoid writes through external node_modules symlinks.
+  cacheDir: '.vite',
   esbuild: {
     jsx: 'automatic',
     jsxImportSource: 'react',

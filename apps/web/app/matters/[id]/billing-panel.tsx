@@ -278,15 +278,15 @@ export function BillingPanel({
       </div>
 
       <h4 style={{ marginTop: 0 }}>Invoices</h4>
-      <table className="table" style={{ marginBottom: 12 }}>
+      <table aria-label="Data table" className="table" style={{ marginBottom: 12 }}>
         <thead>
           <tr>
-            <th>Invoice</th>
-            <th>Status</th>
-            <th>Total</th>
-            <th>Balance</th>
-            <th>Payments</th>
-            <th>Actions</th>
+            <th scope="col">Invoice</th>
+            <th scope="col">Status</th>
+            <th scope="col">Total</th>
+            <th scope="col">Balance</th>
+            <th scope="col">Payments</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -375,12 +375,12 @@ export function BillingPanel({
       <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
         <div>
           <h4 style={{ marginTop: 0 }}>Time Entries</h4>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Started</th>
-                <th>Duration</th>
-                <th>Amount</th>
+                <th scope="col">Started</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -402,12 +402,12 @@ export function BillingPanel({
 
         <div>
           <h4 style={{ marginTop: 0 }}>Expenses</h4>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Description</th>
-                <th>Incurred</th>
-                <th>Amount</th>
+                <th scope="col">Description</th>
+                <th scope="col">Incurred</th>
+                <th scope="col">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -429,11 +429,11 @@ export function BillingPanel({
 
         <div>
           <h4 style={{ marginTop: 0 }}>Trust Ledger</h4>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Trust Account</th>
-                <th>Balance</th>
+                <th scope="col">Trust Account</th>
+                <th scope="col">Balance</th>
               </tr>
             </thead>
             <tbody>
@@ -454,12 +454,12 @@ export function BillingPanel({
 
         <div>
           <h4 style={{ marginTop: 0 }}>Trust Transactions</h4>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Occurred</th>
+                <th scope="col">Type</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Occurred</th>
               </tr>
             </thead>
             <tbody>

@@ -169,11 +169,11 @@ export default function AdminPage() {
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Members</h3>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Email</th>
-                <th>Role</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
               </tr>
             </thead>
             <tbody>
@@ -188,11 +188,11 @@ export default function AdminPage() {
         </div>
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Stages</h3>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Practice Area</th>
-                <th>Name</th>
+                <th scope="col">Practice Area</th>
+                <th scope="col">Name</th>
               </tr>
             </thead>
             <tbody>
@@ -249,12 +249,12 @@ export default function AdminPage() {
               </Button>
             </div>
           </form>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Key</th>
-                <th>Label</th>
-                <th>Default Side</th>
+                <th scope="col">Key</th>
+                <th scope="col">Label</th>
+                <th scope="col">Default Side</th>
               </tr>
             </thead>
             <tbody>
@@ -271,11 +271,11 @@ export default function AdminPage() {
 
         <div className="card" style={{ gridColumn: '1 / -1' }}>
           <h3 style={{ marginTop: 0 }}>Audit Log</h3>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Action</th>
-                <th>Timestamp</th>
+                <th scope="col">Action</th>
+                <th scope="col">Timestamp</th>
               </tr>
             </thead>
             <tbody>
@@ -382,13 +382,13 @@ export default function AdminPage() {
               </Button>
             </div>
           </form>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Default</th>
-                <th>Warn</th>
-                <th>Block</th>
+                <th scope="col">Name</th>
+                <th scope="col">Default</th>
+                <th scope="col">Warn</th>
+                <th scope="col">Block</th>
               </tr>
             </thead>
             <tbody>
@@ -468,14 +468,14 @@ export default function AdminPage() {
             <span style={{ color: 'var(--lic-text-muted)', alignSelf: 'center' }}>Use Resolve on a row below</span>
           </form>
 
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Query</th>
-                <th>Recommendation</th>
-                <th>Score</th>
-                <th>Resolution</th>
-                <th />
+                <th scope="col">Query</th>
+                <th scope="col">Recommendation</th>
+                <th scope="col">Score</th>
+                <th scope="col">Resolution</th>
+                <th scope="col" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>

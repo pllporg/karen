@@ -136,13 +136,14 @@ export function ParticipantsPanel({
             </Select>
           </FormField>
           <div className="stack-1">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label htmlFor="participant-is-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <input
+                id="participant-is-primary"
                 type="checkbox"
-              aria-label="Participant Is Primary"
-              {...participantPrimaryRegistration}
-              checked={participantIsPrimary}
-            />
+                aria-label="Participant Is Primary"
+                {...participantPrimaryRegistration}
+                checked={participantIsPrimary}
+              />
               Primary participant
             </label>
           </div>
@@ -218,17 +219,17 @@ export function ParticipantsPanel({
       {participantStatusMessage ? (
         <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{participantStatusMessage}</p>
       ) : null}
-      <table className="table" style={{ marginTop: 10 }}>
+      <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
         <thead>
           <tr>
-            <th>Contact</th>
-            <th>Role</th>
-            <th>Side</th>
-            <th>Primary</th>
-            <th>Represented By</th>
-            <th>Law Firm</th>
-            <th>Notes</th>
-            <th>Action</th>
+            <th scope="col">Contact</th>
+            <th scope="col">Role</th>
+            <th scope="col">Side</th>
+            <th scope="col">Primary</th>
+            <th scope="col">Represented By</th>
+            <th scope="col">Law Firm</th>
+            <th scope="col">Notes</th>
+            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>

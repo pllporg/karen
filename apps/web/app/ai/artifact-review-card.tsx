@@ -93,7 +93,7 @@ export function ArtifactReviewCard({
       {candidates.length > 0 ? (
         <div className="stack-2">
           <h4 className="ai-deadline-title">Confirm Extracted Deadlines (with source evidence)</h4>
-          <table className="table">
+          <table aria-label="Extracted deadlines review" className="table">
             <thead>
               <tr>
                 <th scope="col">Deadline Draft</th>
@@ -110,8 +110,9 @@ export function ArtifactReviewCard({
                 return (
                   <tr key={candidate.id}>
                     <td>
-                      <label className="ai-confirm-toggle">
+                      <label htmlFor={`candidate-selected-${candidate.id}`} className="ai-confirm-toggle">
                         <input
+                          id={`candidate-selected-${candidate.id}`}
                           type="checkbox"
                           checked={selection.selected}
                           onChange={(event) =>
@@ -125,8 +126,9 @@ export function ArtifactReviewCard({
                       </div>
                       <div>{candidate.description}</div>
                       <div className="ai-candidate-options">
-                        <label>
+                        <label htmlFor={`candidate-task-${candidate.id}`}>
                           <input
+                            id={`candidate-task-${candidate.id}`}
                             type="checkbox"
                             checked={selection.createTask}
                             onChange={(event) =>
@@ -135,8 +137,9 @@ export function ArtifactReviewCard({
                           />{' '}
                           Create task
                         </label>
-                        <label>
+                        <label htmlFor={`candidate-event-${candidate.id}`}>
                           <input
+                            id={`candidate-event-${candidate.id}`}
                             type="checkbox"
                             checked={selection.createEvent}
                             onChange={(event) =>

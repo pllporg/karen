@@ -91,14 +91,14 @@ export function CalendarPanel({
         </div>
       ) : null}
       {calendarStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{calendarStatusMessage}</p> : null}
-      <table className="table" style={{ marginTop: 10 }}>
+      <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
         <thead>
           <tr>
-            <th>Type</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Location</th>
-            <th>Actions</th>
+            <th scope="col">Type</th>
+            <th scope="col">Start</th>
+            <th scope="col">End</th>
+            <th scope="col">Location</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

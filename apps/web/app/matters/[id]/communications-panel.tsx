@@ -180,16 +180,16 @@ export function CommunicationsPanel({
       {communicationStatusMessage ? (
         <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{communicationStatusMessage}</p>
       ) : null}
-      <table className="table" style={{ marginTop: 10 }}>
+      <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
         <thead>
           <tr>
-            <th>Occurred</th>
-            <th>Thread</th>
-            <th>Type</th>
-            <th>Direction</th>
-            <th>Participant</th>
-            <th>Summary</th>
-            <th>Action</th>
+            <th scope="col">Occurred</th>
+            <th scope="col">Thread</th>
+            <th scope="col">Type</th>
+            <th scope="col">Direction</th>
+            <th scope="col">Participant</th>
+            <th scope="col">Summary</th>
+            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>
