@@ -306,11 +306,12 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
+    await screen.findByLabelText('Task Title');
 
     fireEvent.change(screen.getByLabelText('Task Title'), { target: { value: 'Draft meet-and-confer email' } });
     fireEvent.change(screen.getByLabelText('Task Due At'), { target: { value: '2026-03-01T09:30' } });
     fireEvent.change(screen.getByLabelText('Task Priority'), { target: { value: 'HIGH' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Task' }));
 
     await expectFetchRequest(fetchMock, 'http://localhost:4000/tasks', 'POST');
     expect(await screen.findByText('Task created.')).toBeInTheDocument();
@@ -340,7 +341,7 @@ describe('MatterDashboardPage operational workflows', () => {
     fireEvent.change(screen.getByLabelText('Calendar Event Start'), { target: { value: '2026-03-02T14:00' } });
     fireEvent.change(screen.getByLabelText('Calendar Event End'), { target: { value: '2026-03-02T15:00' } });
     fireEvent.change(screen.getByLabelText('Calendar Event Location'), { target: { value: 'Property address' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Event' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -406,7 +407,7 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Task' }));
 
     await waitFor(() => {
       expect(screen.getByText('This field is required.')).toBeInTheDocument();
@@ -449,7 +450,7 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Add Event' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Event' }));
 
     await waitFor(() => {
       expect(screen.getAllByText('This field is required.').length).toBeGreaterThan(0);
@@ -581,6 +582,7 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
+    await screen.findByLabelText('Billing Time Description');
 
     fireEvent.change(screen.getByLabelText('Billing Time Description'), { target: { value: 'Prepare status memo' } });
     fireEvent.change(screen.getByLabelText('Billing Time Start'), { target: { value: '2026-02-20T09:00' } });
@@ -797,7 +799,7 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Overview' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Overview' }));
 
     fireEvent.change(screen.getByLabelText('Matter Name'), { target: { value: 'Updated Builder Dispute' } });
     fireEvent.change(screen.getByLabelText('Matter Number'), { target: { value: 'M-101' } });
@@ -863,7 +865,7 @@ describe('MatterDashboardPage operational workflows', () => {
     render(<MatterDashboardPage />);
 
     await screen.findByText('M-100 - Doe v. Builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Overview' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit Overview' }));
     fireEvent.change(screen.getByLabelText('Matter Name'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Overview' }));
 

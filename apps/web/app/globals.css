@@ -379,6 +379,11 @@ pre {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
+.card-grid > .card {
+  content-visibility: auto;
+  contain-intrinsic-size: 520px;
+}
+
 .input,
 .select,
 .textarea {

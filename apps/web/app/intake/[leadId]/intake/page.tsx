@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -8,10 +9,6 @@ import { FormProvider, useForm, type FieldPath } from 'react-hook-form';
 import { AppShell } from '../../../../components/app-shell';
 import { PageHeader } from '../../../../components/page-header';
 import { WizardStepClient } from '../../../../components/intake/wizard-step-client';
-import { WizardStepProperty } from '../../../../components/intake/wizard-step-property';
-import { WizardStepDispute } from '../../../../components/intake/wizard-step-dispute';
-import { WizardStepUploads } from '../../../../components/intake/wizard-step-uploads';
-import { WizardStepReview } from '../../../../components/intake/wizard-step-review';
 import { Button } from '../../../../components/ui/button';
 import { Stepper, type StepperStep } from '../../../../components/ui/stepper';
 import { apiFetch } from '../../../../lib/api';
@@ -25,6 +22,34 @@ type FeedbackState = {
   tone: 'notice' | 'error';
   message: string;
 };
+
+const WizardStepProperty = dynamic(
+  () => import('../../../../components/intake/wizard-step-property').then((module) => module.WizardStepProperty),
+  {
+    loading: () => <DeferredStepPanel stepLabel="PROPERTY" />,
+  },
+);
+
+const WizardStepDispute = dynamic(
+  () => import('../../../../components/intake/wizard-step-dispute').then((module) => module.WizardStepDispute),
+  {
+    loading: () => <DeferredStepPanel stepLabel="DISPUTE" />,
+  },
+);
+
+const WizardStepUploads = dynamic(
+  () => import('../../../../components/intake/wizard-step-uploads').then((module) => module.WizardStepUploads),
+  {
+    loading: () => <DeferredStepPanel stepLabel="UPLOADS" />,
+  },
+);
+
+const WizardStepReview = dynamic(
+  () => import('../../../../components/intake/wizard-step-review').then((module) => module.WizardStepReview),
+  {
+    loading: () => <DeferredStepPanel stepLabel="REVIEW" />,
+  },
+);
 
 const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
 
@@ -46,6 +71,16 @@ function makeLocalId() {
 function formatSavedAt(value: string | null) {
   if (!value) return 'Draft not yet saved';
   return `Draft saved ${new Date(value).toLocaleTimeString()}`;
+}
+
+function DeferredStepPanel({ stepLabel }: { stepLabel: string }) {
+  return (
+    <div className="card stack-2" role="status" aria-live="polite">
+      <p className="meta-note">Step Load</p>
+      <h3 style={{ marginTop: 0 }}>{stepLabel}</h3>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading staged intake controls.</p>
+    </div>
+  );
 }
 
 function buildDuplicateMatch(contact: Contact, values: IntakeWizardFormState['client']): DuplicateContactMatch {
@@ -288,7 +323,7 @@ export default function LeadIntakeDraftPage() {
             {currentStep.key === 'review' ? (
               <WizardStepReview
                 values={values}
-                onEditStep={(stepKey) => {
+                onEditStep={(stepKey: IntakeWizardStepKey) => {
                   const nextIndex = steps.findIndex((step) => step.key === stepKey);
                   if (nextIndex >= 0) setActiveStepIndex(nextIndex);
                 }}

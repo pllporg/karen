@@ -1,20 +1,76 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/app-shell';
 import { PageHeader } from '../../../components/page-header';
-import { AiWorkspacePanel } from './ai-workspace-panel';
-import { BillingPanel } from './billing-panel';
-import { CalendarPanel } from './calendar-panel';
-import { CommunicationsPanel } from './communications-panel';
-import { DeadlineRulesPanel } from './deadline-rules-panel';
 import { DomainSectionCompletenessCard } from './domain-section-completeness-card';
-import { DocumentsPanel } from './documents-panel';
-import { OverviewPanel } from './overview-panel';
-import { ParticipantsPanel } from './participants-panel';
-import { TasksPanel } from './tasks-panel';
-import { TimelineDocketPanel } from './timeline-docket-panel';
 import { useMatterDashboard } from './use-matter-dashboard';
+
+const DeadlineRulesPanel = dynamic(
+  () => import('./deadline-rules-panel').then((module) => module.DeadlineRulesPanel),
+  {
+    loading: () => <DeferredPanelLoadingCard sectionName="Deadline Rules" />,
+  },
+);
+
+const CommunicationsPanel = dynamic(
+  () => import('./communications-panel').then((module) => module.CommunicationsPanel),
+  {
+    loading: () => <DeferredPanelLoadingCard sectionName="Communications" />,
+  },
+);
+
+const ParticipantsPanel = dynamic(
+  () => import('./participants-panel').then((module) => module.ParticipantsPanel),
+  {
+    loading: () => <DeferredPanelLoadingCard sectionName="Participants" />,
+  },
+);
+
+const OverviewPanel = dynamic(() => import('./overview-panel').then((module) => module.OverviewPanel), {
+  loading: () => <DeferredPanelLoadingCard sectionName="Overview" />,
+});
+
+const TasksPanel = dynamic(() => import('./tasks-panel').then((module) => module.TasksPanel), {
+  loading: () => <DeferredPanelLoadingCard sectionName="Tasks" />,
+});
+
+const CalendarPanel = dynamic(() => import('./calendar-panel').then((module) => module.CalendarPanel), {
+  loading: () => <DeferredPanelLoadingCard sectionName="Calendar" />,
+});
+
+const TimelineDocketPanel = dynamic(
+  () => import('./timeline-docket-panel').then((module) => module.TimelineDocketPanel),
+  {
+    loading: () => <DeferredPanelLoadingCard sectionName="Timeline & Docket" />,
+  },
+);
+
+const DocumentsPanel = dynamic(() => import('./documents-panel').then((module) => module.DocumentsPanel), {
+  loading: () => <DeferredPanelLoadingCard sectionName="Documents" />,
+});
+
+const AiWorkspacePanel = dynamic(
+  () => import('./ai-workspace-panel').then((module) => module.AiWorkspacePanel),
+  {
+    loading: () => <DeferredPanelLoadingCard sectionName="AI Workspace" />,
+  },
+);
+
+const BillingPanel = dynamic(() => import('./billing-panel').then((module) => module.BillingPanel), {
+  loading: () => <DeferredPanelLoadingCard sectionName="Billing" />,
+});
+
+function DeferredPanelLoadingCard({ sectionName }: { sectionName: string }) {
+  return (
+    <div className="card">
+      <p className="meta-note">Section Load</p>
+      <h3 style={{ marginTop: 0 }}>{sectionName}</h3>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading panel data and controls.</p>
+    </div>
+  );
+}
 
 export default function MatterDashboardPage() {
   const params = useParams() as { id: string };

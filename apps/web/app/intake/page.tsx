@@ -194,7 +194,7 @@ export default function IntakeQueuePage() {
           title="Intake Queue"
           subtitle="Lead staging queue with gated progression, search, and operator review filters."
           right={
-            <Link className="button" href="/intake/new">
+            <Link className="button" href="/intake/new" prefetch={false}>
               New Lead
             </Link>
           }
@@ -254,7 +254,7 @@ export default function IntakeQueuePage() {
                             <td>{lead.displayAttorney}</td>
                             <td className="mono-meta">{formatRelativeTime(lead.createdAt)}</td>
                             <td>
-                              <Link className="button ghost" href={`/intake/${lead.id}/intake`}>
+                              <Link className="button ghost" href={`/intake/${lead.id}/intake`} prefetch={false}>
                                 Open
                               </Link>
                             </td>

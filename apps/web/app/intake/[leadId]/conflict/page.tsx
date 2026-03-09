@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -7,8 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { AppShell } from '../../../../components/app-shell';
-import { ConflictAuditTrail } from '../../../../components/intake/conflict-audit-trail';
-import { ConflictResultsTable } from '../../../../components/intake/conflict-results-table';
 import { StageNav } from '../../../../components/intake/stage-nav';
 import { EmptyState } from '../../../../components/empty-state';
 import { LoadingState } from '../../../../components/loading-state';
@@ -35,6 +34,30 @@ type FeedbackState = {
   tone: 'notice' | 'error';
   message: string;
 };
+
+const ConflictResultsTable = dynamic(
+  () => import('../../../../components/intake/conflict-results-table').then((module) => module.ConflictResultsTable),
+  {
+    loading: () => <DeferredConflictSection sectionName="Results" />,
+  },
+);
+
+const ConflictAuditTrail = dynamic(
+  () => import('../../../../components/intake/conflict-audit-trail').then((module) => module.ConflictAuditTrail),
+  {
+    loading: () => <DeferredConflictSection sectionName="Audit Trail" />,
+  },
+);
+
+function DeferredConflictSection({ sectionName }: { sectionName: string }) {
+  return (
+    <div className="card stack-2" role="status" aria-live="polite">
+      <p className="meta-note">Section Load</p>
+      <h3 style={{ marginTop: 0 }}>{sectionName}</h3>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading conflict review records.</p>
+    </div>
+  );
+}
 
 export default function LeadConflictPage() {
   const params = useParams<{ leadId: string }>();

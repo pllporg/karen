@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { AiArtifact, DeadlineCandidate, DeadlineSelection, ReviewGateStep, REVIEW_GATE_SEQUENCE } from './types';
 import { findExcerpt, formatUtcTimestamp, getDeadlineCandidates, resolveReviewGateStep, reviewGateReached, reviewGateTone } from './utils';
 
@@ -17,7 +18,7 @@ type ArtifactReviewCardProps = {
   onConfirmDeadlines: (artifact: AiArtifact, candidates: DeadlineCandidate[]) => Promise<void>;
 };
 
-export function ArtifactReviewCard({
+export const ArtifactReviewCard = memo(function ArtifactReviewCard({
   artifact,
   createdByUserId,
   busyArtifactId,
@@ -28,9 +29,12 @@ export function ArtifactReviewCard({
   onConfirmDeadlines,
 }: ArtifactReviewCardProps) {
   const metadata = artifact.metadataJson || {};
-  const candidates = getDeadlineCandidates(artifact);
-  const selectedCount = candidates.filter((candidate) => deadlineSelectionByCandidate[candidate.id]?.selected).length;
-  const reviewStep = resolveReviewGateStep(artifact);
+  const candidates = useMemo(() => getDeadlineCandidates(artifact), [artifact]);
+  const selectedCount = useMemo(
+    () => candidates.filter((candidate) => deadlineSelectionByCandidate[candidate.id]?.selected).length,
+    [candidates, deadlineSelectionByCandidate],
+  );
+  const reviewStep = useMemo(() => resolveReviewGateStep(artifact), [artifact]);
 
   return (
     <div className="card ai-artifact-card stack-2">
@@ -184,4 +188,4 @@ export function ArtifactReviewCard({
       ) : null}
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, memo } from 'react';
 import { AiArtifact, AiJob, DeadlineCandidate, DeadlineSelection } from './types';
 import { ArtifactReviewCard } from './artifact-review-card';
 
@@ -18,7 +18,9 @@ type JobsTableProps = {
   onConfirmDeadlines: (artifact: AiArtifact, candidates: DeadlineCandidate[]) => Promise<void>;
 };
 
-export function JobsTable({
+const EMPTY_DEADLINE_SELECTIONS: Record<string, DeadlineSelection> = {};
+
+export const JobsTable = memo(function JobsTable({
   jobs,
   deadlineSelections,
   statusByArtifact,
@@ -56,7 +58,7 @@ export function JobsTable({
                       createdByUserId={job.createdByUserId}
                       busyArtifactId={busyArtifactId}
                       statusText={statusByArtifact[artifact.id]}
-                      deadlineSelectionByCandidate={deadlineSelections[artifact.id] || {}}
+                      deadlineSelectionByCandidate={deadlineSelections[artifact.id] || EMPTY_DEADLINE_SELECTIONS}
                       onReviewArtifact={onReviewArtifact}
                       onToggleCandidateSelection={onToggleCandidateSelection}
                       onConfirmDeadlines={onConfirmDeadlines}
@@ -70,4 +72,4 @@ export function JobsTable({
       </table>
     </div>
   );
-}
+});

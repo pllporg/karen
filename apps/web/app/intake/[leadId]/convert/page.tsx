@@ -560,7 +560,7 @@ export default function LeadConvertPage() {
               </p>
               {feedback.matterId ? (
                 <div className="form-actions">
-                  <Link href={`/matters/${feedback.matterId}`} className="button">
+                  <Link href={`/matters/${feedback.matterId}`} className="button" prefetch={false}>
                     Open Matter Dashboard
                   </Link>
                 </div>

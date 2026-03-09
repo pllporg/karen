@@ -1,7 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
@@ -12,9 +13,6 @@ import {
   type AiJobCreateFormData,
   type StylePackCreateFormData,
 } from '../../lib/schemas/ai-workspace';
-import { JobCreatorForm } from './job-creator-form';
-import { JobsTable } from './jobs-table';
-import { StylePackManager } from './style-pack-manager';
 import {
   AiArtifact,
   AiJob,
@@ -27,6 +25,33 @@ import {
   TOOLS,
 } from './types';
 import { buildSelectionState, buildStylePackDrafts } from './utils';
+
+const JobsTable = dynamic(() => import('./jobs-table').then((module) => module.JobsTable), {
+  loading: () => (
+    <div className="card">
+      <p className="meta-note">AI Jobs</p>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading job and artifact review table.</p>
+    </div>
+  ),
+});
+
+const StylePackManager = dynamic(() => import('./style-pack-manager').then((module) => module.StylePackManager), {
+  loading: () => (
+    <div className="card">
+      <p className="meta-note">Style Packs</p>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading style pack governance controls.</p>
+    </div>
+  ),
+});
+
+const JobCreatorForm = dynamic(() => import('./job-creator-form').then((module) => module.JobCreatorForm), {
+  loading: () => (
+    <div className="card">
+      <p className="meta-note">Create AI Job</p>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading job submission controls.</p>
+    </div>
+  ),
+});
 
 export default function AiPage() {
   const [jobs, setJobs] = useState<AiJob[]>([]);
@@ -60,40 +85,71 @@ export default function AiPage() {
     control: jobForm.control,
     name: 'matterId',
   });
-  const selectedStylePackId = useWatch({
-    control: jobForm.control,
-    name: 'stylePackId',
-  });
+  const applyJobsState = useCallback((nextJobs: AiJob[]) => {
+    setJobs(nextJobs);
+    setDeadlineSelections((previous) => buildSelectionState(nextJobs, previous));
+  }, []);
 
-  const load = useCallback(async () => {
-    const query = selectedMatterId ? `&matterId=${encodeURIComponent(selectedMatterId)}` : '';
-    const [nextJobs, nextStylePacks] = await Promise.all([apiFetch<AiJob[]>('/ai/jobs'), apiFetch<StylePack[]>('/ai/style-packs')]);
-    const [nextMattersRaw, nextDocumentVersionsRaw] = await Promise.all([
+  const applyStylePackState = useCallback(
+    (nextStylePacks: StylePack[]) => {
+      setStylePacks(nextStylePacks);
+      setStylePackDrafts((previous) => buildStylePackDrafts(nextStylePacks, previous));
+
+      const currentStylePackId = jobForm.getValues('stylePackId');
+      if (currentStylePackId && !nextStylePacks.some((stylePack) => stylePack.id === currentStylePackId)) {
+        jobForm.setValue('stylePackId', '', { shouldDirty: false });
+      }
+    },
+    [jobForm],
+  );
+
+  const refreshJobs = useCallback(async () => {
+    const nextJobs = await apiFetch<AiJob[]>('/ai/jobs');
+    applyJobsState(nextJobs);
+  }, [applyJobsState]);
+
+  const refreshStylePacks = useCallback(async () => {
+    const nextStylePacks = await apiFetch<StylePack[]>('/ai/style-packs');
+    applyStylePackState(nextStylePacks);
+  }, [applyStylePackState]);
+
+  const loadWorkspace = useCallback(async () => {
+    const [nextJobs, nextStylePacks, nextMattersRaw] = await Promise.all([
+      apiFetch<AiJob[]>('/ai/jobs'),
+      apiFetch<StylePack[]>('/ai/style-packs'),
       apiFetch<MatterLookup[]>('/lookups/matters?limit=200').catch(() => []),
-      apiFetch<DocumentVersionLookup[]>(`/lookups/document-versions?limit=200${query}`).catch(() => []),
     ]);
 
     const nextMatters = Array.isArray(nextMattersRaw) ? nextMattersRaw : [];
-    const nextDocumentVersions = Array.isArray(nextDocumentVersionsRaw) ? nextDocumentVersionsRaw : [];
 
-    setJobs(nextJobs);
-    setStylePacks(nextStylePacks);
+    applyJobsState(nextJobs);
+    applyStylePackState(nextStylePacks);
     setMatterOptions(nextMatters);
-    setDocumentVersionOptions(nextDocumentVersions);
-    setStylePackDrafts((previous) => buildStylePackDrafts(nextStylePacks, previous));
-    setDeadlineSelections((previous) => buildSelectionState(nextJobs, previous));
     if (!jobForm.getValues('matterId') && nextMatters[0]?.id) {
       jobForm.setValue('matterId', nextMatters[0].id, { shouldDirty: false });
     }
+  }, [applyJobsState, applyStylePackState, jobForm]);
 
-    if (selectedStylePackId && !nextStylePacks.some((stylePack) => stylePack.id === selectedStylePackId)) {
-      jobForm.setValue('stylePackId', '', { shouldDirty: false });
-    }
-  }, [jobForm, selectedMatterId, selectedStylePackId]);
+  const loadDocumentVersions = useCallback(async (matterId?: string) => {
+    const query = matterId ? `&matterId=${encodeURIComponent(matterId)}` : '';
+    const nextDocumentVersionsRaw = await apiFetch<DocumentVersionLookup[]>(`/lookups/document-versions?limit=200${query}`).catch(
+      () => [],
+    );
+    setDocumentVersionOptions(Array.isArray(nextDocumentVersionsRaw) ? nextDocumentVersionsRaw : []);
+  }, []);
 
   useEffect(() => {
-    load().catch(() => undefined);
-  }, [load]);
+    loadWorkspace().catch(() => undefined);
+  }, [loadWorkspace]);
+
+  useEffect(() => {
+    loadDocumentVersions(selectedMatterId || undefined).catch(() => undefined);
+  }, [loadDocumentVersions, selectedMatterId]);
+
+  const matterLabelById = useMemo(
+    () => new Map(matterOptions.map((matter) => [matter.id, matter.label])),
+    [matterOptions],
+  );
 
   const createJob = jobForm.handleSubmit(async (values) => {
     setError(null);
@@ -111,7 +167,7 @@ export default function AiPage() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      await load();
+      await refreshJobs();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to create AI job');
     }
@@ -132,7 +188,7 @@ export default function AiPage() {
         name: '',
         description: '',
       });
-      await load();
+      await refreshStylePacks();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to create style pack');
     } finally {
@@ -154,7 +210,7 @@ export default function AiPage() {
           description: draft.description,
         }),
       });
-      await load();
+      await refreshStylePacks();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to update style pack');
     } finally {
@@ -182,7 +238,7 @@ export default function AiPage() {
           documentVersionId: '',
         },
       }));
-      await load();
+      await refreshStylePacks();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to attach source document');
     } finally {
@@ -197,7 +253,7 @@ export default function AiPage() {
       await apiFetch(`/ai/style-packs/${stylePackId}/source-docs/${documentVersionId}`, {
         method: 'DELETE',
       });
-      await load();
+      await refreshStylePacks();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to remove source document');
     } finally {
@@ -205,99 +261,108 @@ export default function AiPage() {
     }
   }
 
-  async function reviewArtifact(artifactId: string, status: 'APPROVED' | 'REJECTED') {
-    setError(null);
-    setBusyArtifactId(artifactId);
-    try {
-      await apiFetch(`/ai/artifacts/${artifactId}/review`, {
-        method: 'POST',
-        body: JSON.stringify({ status }),
-      });
-      setStatusByArtifact((previous) => ({
-        ...previous,
-        [artifactId]:
-          status === 'APPROVED' ? 'Review gate advanced to APPROVED.' : 'Artifact returned to review queue for revision.',
-      }));
-      await load();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to update artifact review status');
-    } finally {
-      setBusyArtifactId(null);
-    }
-  }
-
-  async function confirmDeadlines(artifact: AiArtifact, candidates: DeadlineCandidate[]) {
-    const selectedRows = candidates
-      .map((candidate) => {
-        const selection = deadlineSelections[artifact.id]?.[candidate.id];
-        if (!selection?.selected) return null;
-        return {
-          date: candidate.date,
-          description: candidate.description,
-          createTask: selection.createTask,
-          createEvent: selection.createEvent,
-        };
-      })
-      .filter((value): value is { date: string; description: string; createTask: boolean; createEvent: boolean } =>
-        Boolean(value),
-      );
-
-    if (!selectedRows.length) return;
-
-    setError(null);
-    setBusyArtifactId(artifact.id);
-    try {
-      const result = await apiFetch<{ created: Array<{ type: 'task' | 'event'; id: string }> }>(
-        `/ai/artifacts/${artifact.id}/confirm-deadlines`,
-        {
+  const reviewArtifact = useCallback(
+    async (artifactId: string, status: 'APPROVED' | 'REJECTED') => {
+      setError(null);
+      setBusyArtifactId(artifactId);
+      try {
+        await apiFetch(`/ai/artifacts/${artifactId}/review`, {
           method: 'POST',
-          body: JSON.stringify({ selections: selectedRows }),
-        },
-      );
-      setStatusByArtifact((previous) => ({
-        ...previous,
-        [artifact.id]: `Created ${result.created.length} records from confirmed deadlines.`,
-      }));
-      setDeadlineSelections((previous) => ({
-        ...previous,
-        [artifact.id]: Object.fromEntries(
-          Object.entries(previous[artifact.id] || {}).map(([candidateId, selection]) => [
-            candidateId,
-            {
-              ...selection,
-              selected: false,
-            },
-          ]),
-        ),
-      }));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to confirm deadlines');
-    } finally {
-      setBusyArtifactId(null);
-    }
-  }
+          body: JSON.stringify({ status }),
+        });
+        setStatusByArtifact((previous) => ({
+          ...previous,
+          [artifactId]:
+            status === 'APPROVED' ? 'Review gate advanced to APPROVED.' : 'Artifact returned to review queue for revision.',
+        }));
+        await refreshJobs();
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Failed to update artifact review status');
+      } finally {
+        setBusyArtifactId(null);
+      }
+    },
+    [refreshJobs],
+  );
 
-  function toggleCandidateSelection(artifactId: string, candidateId: string, key: keyof DeadlineSelection, value: boolean) {
-    setDeadlineSelections((previous) => {
-      const artifactSelection = previous[artifactId] || {};
-      const candidateSelection = artifactSelection[candidateId] || {
-        selected: false,
-        createTask: true,
-        createEvent: true,
-      };
+  const confirmDeadlines = useCallback(
+    async (artifact: AiArtifact, candidates: DeadlineCandidate[]) => {
+      const selectedRows = candidates
+        .map((candidate) => {
+          const selection = deadlineSelections[artifact.id]?.[candidate.id];
+          if (!selection?.selected) return null;
+          return {
+            date: candidate.date,
+            description: candidate.description,
+            createTask: selection.createTask,
+            createEvent: selection.createEvent,
+          };
+        })
+        .filter((value): value is { date: string; description: string; createTask: boolean; createEvent: boolean } =>
+          Boolean(value),
+        );
 
-      return {
-        ...previous,
-        [artifactId]: {
-          ...artifactSelection,
-          [candidateId]: {
-            ...candidateSelection,
-            [key]: value,
+      if (!selectedRows.length) return;
+
+      setError(null);
+      setBusyArtifactId(artifact.id);
+      try {
+        const result = await apiFetch<{ created: Array<{ type: 'task' | 'event'; id: string }> }>(
+          `/ai/artifacts/${artifact.id}/confirm-deadlines`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ selections: selectedRows }),
           },
-        },
-      };
-    });
-  }
+        );
+        setStatusByArtifact((previous) => ({
+          ...previous,
+          [artifact.id]: `Created ${result.created.length} records from confirmed deadlines.`,
+        }));
+        setDeadlineSelections((previous) => ({
+          ...previous,
+          [artifact.id]: Object.fromEntries(
+            Object.entries(previous[artifact.id] || {}).map(([candidateId, selection]) => [
+              candidateId,
+              {
+                ...selection,
+                selected: false,
+              },
+            ]),
+          ),
+        }));
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Failed to confirm deadlines');
+      } finally {
+        setBusyArtifactId(null);
+      }
+    },
+    [deadlineSelections],
+  );
+
+  const toggleCandidateSelection = useCallback(
+    (artifactId: string, candidateId: string, key: keyof DeadlineSelection, value: boolean) => {
+      setDeadlineSelections((previous) => {
+        const artifactSelection = previous[artifactId] || {};
+        const candidateSelection = artifactSelection[candidateId] || {
+          selected: false,
+          createTask: true,
+          createEvent: true,
+        };
+
+        return {
+          ...previous,
+          [artifactId]: {
+            ...artifactSelection,
+            [candidateId]: {
+              ...candidateSelection,
+              [key]: value,
+            },
+          },
+        };
+      });
+    },
+    [],
+  );
 
   function updateStylePackDraft(stylePackId: string, key: keyof StylePackDraft, value: string) {
     setStylePackDrafts((previous) => ({
@@ -313,10 +378,13 @@ export default function AiPage() {
     }));
   }
 
-  function resolveMatterLabel(matterId: string | null | undefined): string {
-    if (!matterId) return 'Matter not specified';
-    return matterOptions.find((matter) => matter.id === matterId)?.label || matterId;
-  }
+  const resolveMatterLabel = useCallback(
+    (matterId: string | null | undefined): string => {
+      if (!matterId) return 'Matter not specified';
+      return matterLabelById.get(matterId) || matterId;
+    },
+    [matterLabelById],
+  );
 
   return (
     <AppShell>
