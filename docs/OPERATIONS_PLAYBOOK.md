@@ -55,9 +55,9 @@ pnpm ops:preflight
 7. Artifact output to `artifacts/ops/operator-preflight.json`.
 8. (Manual) confirm Symphony runtime env vars are set:
    - `LINEAR_API_KEY`
-   - `LINEAR_PROJECT_SLUG`
    - `SOURCE_REPO_URL`
    - `SYMPHONY_WORKSPACE_ROOT`
+9. (Manual) confirm `tracker.project_slug` in `WORKFLOW.md` matches Linear project `slugId`.
 
 Preflight pass criteria:
 1. No canonical-control-file drift.
@@ -95,10 +95,9 @@ Symphony reference implementation:
 
 ```bash
 LINEAR_API_KEY=... \
-LINEAR_PROJECT_SLUG=... \
 SOURCE_REPO_URL=https://github.com/pllporg/karen.git \
 SYMPHONY_WORKSPACE_ROOT=~/symphony-workspaces/lic-legal-suite \
-mise exec -- ./bin/symphony /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
+mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the-usual-guardrails /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
 ```
 
 Notes:
@@ -122,7 +121,7 @@ After every merged PR:
 
 ### Symphony tracker token invalid (`401` / `forbidden`)
 1. Rotate/fix `LINEAR_API_KEY` in your Symphony runtime environment.
-2. Confirm `LINEAR_PROJECT_SLUG` is correct for this workspace.
+2. Confirm `tracker.project_slug` in `WORKFLOW.md` is the correct Linear `slugId` for this workspace.
 3. Restart Symphony with `/Users/chrispodlaski/Downloads/Karen/WORKFLOW.md`.
 
 ### Mirror drift (`missing/orphan`)

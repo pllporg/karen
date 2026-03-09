@@ -11,9 +11,12 @@ Canonical governance remains:
 
 For Symphony runtime:
 1. `LINEAR_API_KEY`
-2. `LINEAR_PROJECT_SLUG`
-3. `SOURCE_REPO_URL`
-4. `SYMPHONY_WORKSPACE_ROOT`
+2. `SOURCE_REPO_URL`
+3. `SYMPHONY_WORKSPACE_ROOT`
+
+Note:
+1. `tracker.project_slug` is set directly in `WORKFLOW.md` (Linear `slugId`).
+2. Current Symphony Elixir runtime does not resolve env vars for `project_slug`.
 
 For backlog governance scripts:
 1. `LINEAR_API_TOKEN`
@@ -42,10 +45,9 @@ mise exec -- mix setup
 mise exec -- mix build
 
 LINEAR_API_KEY=... \
-LINEAR_PROJECT_SLUG=... \
 SOURCE_REPO_URL=https://github.com/pllporg/karen.git \
 SYMPHONY_WORKSPACE_ROOT=~/symphony-workspaces/lic-legal-suite \
-mise exec -- ./bin/symphony /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
+mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the-usual-guardrails /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
 ```
 
 ## 4) Operator Workflow
