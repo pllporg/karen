@@ -1,20 +1,21 @@
-# Codex Cloud Lane Packets
+# Codex Cloud Lane Packets (Archived)
 
-This folder contains Cloud lane packets by wave.
+This folder contains historical Codex Cloud lane packets.
+Active execution has moved to Symphony with a repo-owned `WORKFLOW.md`.
 
 Current execution policy is:
 
 - `docs/OPERATIONS_PLAYBOOK.md`
 - `docs/ACTIVE_PHASES.md`
 
-## Usage
+## Historical Usage
 
 1. Start from latest `main`.
 2. Create lane branch.
 3. Paste corresponding packet prompt.
 4. Require lane verification command completion before PR creation.
 5. Do not run backlog sync in Cloud lanes.
-6. Return results using `docs/templates/CODEX_CLOUD_REPORT_TEMPLATE.md`.
+6. Return results using `docs/templates/SYMPHONY_RUN_REPORT_TEMPLATE.md`.
 
 ## Lane Packets
 
@@ -27,7 +28,7 @@ Notes:
 1. `lane-a-*` and `lane-b-*` are RC-1 historical packets.
 2. `eve2-wave-20260227.packet.md` is the current active multi-lane packet.
 
-## Local Orchestrator Only (Current)
+## Local Orchestrator Only (Legacy)
 
 Run these locally after merges:
 

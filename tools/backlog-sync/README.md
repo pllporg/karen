@@ -58,6 +58,15 @@ cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
 - `GITHUB_OWNER`
 - `GITHUB_REPO`
 
+### Symphony (execution orchestration)
+
+- `LINEAR_API_KEY` (Symphony tracker API auth)
+- `SOURCE_REPO_URL` (repo clone URL used by `WORKFLOW.md` hooks)
+- `SYMPHONY_WORKSPACE_ROOT` (root directory for issue workspaces)
+
+Note:
+- `WORKFLOW.md` currently stores `tracker.project_slug` directly as the Linear project `slugId`.
+
 ## Typical Run Order
 
 1. `pnpm backlog:linear:setup`

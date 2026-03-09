@@ -6,33 +6,37 @@ If any procedural guidance conflicts with other docs, this file wins.
 
 ## 1) Collaboration Model
 
-### Local Orchestrator
+### Symphony Service
 
-Owns operational control and backlog state.
-
-Responsibilities:
-1. Select active requirement slices.
-2. Maintain Linear status/evidence.
-3. Run housekeeping/sync commands.
-4. Resolve cross-lane conflicts and merge sequence.
-
-### Codex Cloud Lanes
-
-Own implementation execution only.
+Owns issue polling and execution orchestration.
 
 Responsibilities:
-1. Implement scoped changes on assigned branch.
-2. Run lane validations.
-3. Open PR with required evidence.
-4. Return standardized cloud report.
+1. Poll Linear and select eligible issues from configured execution states.
+2. Create isolated per-issue workspaces.
+3. Run coding-agent sessions using repository `WORKFLOW.md`.
+4. Produce run outputs and structured run reports for review.
 
 Restrictions:
-1. Cloud lanes do not update Linear directly.
-2. Cloud lanes do not run backlog mirror/snapshot commands.
+1. Symphony is execution orchestration, not backlog governance.
+2. Linear canonical status/evidence discipline is still enforced by local operators.
+3. Only assigned issues in `Ready` (and active execution states) are eligible for pickup.
+
+### Local Operator
+
+Responsibilities:
+1. Maintain `WORKFLOW.md` policy and environment wiring.
+2. Review Symphony outputs, open/merge PRs, and resolve conflicts.
+3. Maintain Linear state/evidence as source of truth.
+4. Run housekeeping/sync commands after merges.
+
+Restrictions:
+1. Do not bypass Symphony workflow policy for issue execution unless incident response requires manual override.
+2. Do not treat GitHub mirror state as canonical backlog state.
+3. Only the coordinator moves issues to `Ready` and assigns them for execution.
 
 ## 2) Start-of-Session Preflight
 
-Run before planning/coding in any chat:
+Run before planning/coding in any chat or starting Symphony:
 
 ```bash
 pnpm ops:preflight
@@ -51,6 +55,11 @@ pnpm ops:preflight
 5. `pnpm backlog:matrix:check` (only if verify succeeds).
 6. `pnpm backlog:handoff:check` pass/fail.
 7. Artifact output to `artifacts/ops/operator-preflight.json`.
+8. (Manual) confirm Symphony runtime env vars are set:
+   - `LINEAR_API_KEY`
+   - `SOURCE_REPO_URL`
+   - `SYMPHONY_WORKSPACE_ROOT`
+9. (Manual) confirm `tracker.project_slug` in `WORKFLOW.md` matches Linear project `slugId`.
 
 Preflight pass criteria:
 1. No canonical-control-file drift.
@@ -76,7 +85,29 @@ Notes:
 1. `pnpm rc1:orchestrator:post-merge` is retained as a legacy alias for RC-1 history.
 2. Use `ops:housekeeping` for current/general operations.
 
-## 4) Merge/Post-Merge Housekeeping
+## 4) Symphony Runtime
+
+Symphony reference implementation:
+
+1. `git clone https://github.com/openai/symphony`
+2. `cd symphony/elixir`
+3. `mise trust && mise install`
+4. `mise exec -- mix setup && mise exec -- mix build`
+5. Start service with this repo's workflow file:
+
+```bash
+LINEAR_API_KEY=... \
+SOURCE_REPO_URL=https://github.com/pllporg/karen.git \
+SYMPHONY_WORKSPACE_ROOT=~/symphony-workspaces/lic-legal-suite \
+mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the-usual-guardrails /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
+```
+
+Notes:
+1. `WORKFLOW.md` is the repo-owned policy contract for Symphony.
+2. Symphony writes and issue-state transitions can be agent-driven; local operator still verifies evidence and merge readiness.
+3. Dispatch policy is `Ready + assignee` (configured via `tracker.active_states` and `tracker.assignee`).
+
+## 5) Merge/Post-Merge Housekeeping
 
 After every merged PR:
 1. Pull latest `main`.
@@ -84,12 +115,17 @@ After every merged PR:
 3. Confirm `git status --short --branch` is clean.
 4. Record any operational conflicts in `docs/SESSION_HANDOFF.md` under `Open Operational Conflicts`.
 
-## 5) Failure Mode Handling
+## 6) Failure Mode Handling
 
 ### Linear token invalid (`Entity not found: ApiKey`)
 1. Rotate/fix `LINEAR_API_TOKEN` in `tools/backlog-sync/config.env` or shell.
 2. Re-run `pnpm backlog:verify`.
 3. Only after verify passes, run full `pnpm ops:housekeeping`.
+
+### Symphony tracker token invalid (`401` / `forbidden`)
+1. Rotate/fix `LINEAR_API_KEY` in your Symphony runtime environment.
+2. Confirm `tracker.project_slug` in `WORKFLOW.md` is the correct Linear `slugId` for this workspace.
+3. Restart Symphony with `/Users/chrispodlaski/Downloads/Karen/WORKFLOW.md`.
 
 ### Mirror drift (`missing/orphan`)
 1. Run `pnpm backlog:sync`.
@@ -98,8 +134,8 @@ After every merged PR:
 
 ### Dirty tree collisions
 1. Do not revert unknown edits.
-2. Isolate branch owner and file-owner scope.
-3. Rebase lane branches and resolve only owned conflict paths.
+2. Isolate issue owner and file-owner scope.
+3. Rebase issue branches and resolve only owned conflict paths.
 
 ### Actions unavailable
 1. Use local gate fallback:
@@ -108,9 +144,9 @@ After every merged PR:
    - `pnpm build`
 2. Record failure reason in PR and handoff.
 
-## 6) Required Cloud Report Contract
+## 7) Required Symphony Run Report Contract
 
-Each cloud lane must return:
+Each Symphony issue run must return:
 1. Branch.
 2. Commit SHA.
 3. PR URL.
@@ -120,12 +156,12 @@ Each cloud lane must return:
 7. Known risks/follow-ups.
 8. Ready-to-merge decision.
 
-Template: `docs/templates/CODEX_CLOUD_REPORT_TEMPLATE.md`
+Template: `docs/templates/SYMPHONY_RUN_REPORT_TEMPLATE.md`
 
-## 7) Operator Lock + Concurrency Policy
+## 8) Operator Lock + Concurrency Policy
 
 1. One orchestrator chat owns Linear state updates at a time.
-2. Cloud lanes never mutate Linear.
+2. Symphony execution does not supersede Linear canonical governance.
 3. If multiple local chats exist, only one chat runs `ops:housekeeping`.
 
 Conflict resolution:
@@ -133,7 +169,7 @@ Conflict resolution:
 2. If matrix differs from Linear, Linear is canonical except explicitly documented queued-local mode.
 3. Unresolved conflicts must be logged in `docs/SESSION_HANDOFF.md`.
 
-## 8) Do Not List
+## 9) Do Not List
 
 1. Do not edit GitHub mirror issue status as source-of-truth.
 2. Do not skip `ops:preflight` before starting work.
