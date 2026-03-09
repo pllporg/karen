@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-03-09T15:59:10.183Z",
+  "generatedAt": "2026-03-09T16:05:47.232Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,15 +33,19 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 107,
     "stateCounts": {
-      "Backlog": 2,
-      "Done": 104,
-      "In Progress": 1
+      "Backlog": 3,
+      "Done": 104
     },
-    "inProgressIssueKeys": [
-      "KAR-118"
-    ],
+    "inProgressIssueKeys": [],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-118",
+        "title": "Frontend Refactor Delivery Program",
+        "state": "Backlog",
+        "updatedAt": "2026-03-09T16:01:21.036Z",
+        "requirementId": "PRD-PROGRAM"
+      },
       {
         "key": "KAR-121",
         "title": "PRD-04 GP-01 Intake Flow",
@@ -92,13 +96,6 @@
         "requirementId": "REQ-EVE2-004"
       },
       {
-        "key": "KAR-118",
-        "title": "Frontend Refactor Delivery Program",
-        "state": "In Progress",
-        "updatedAt": "2026-03-06T16:34:07.905Z",
-        "requirementId": "PRD-PROGRAM"
-      },
-      {
         "key": "KAR-112",
         "title": "PARITY-14 Eve 2 Analyst Parity",
         "state": "Done",
@@ -121,8 +118,7 @@
     "stateCounts": {
       "Ready": 4,
       "Done": 26,
-      "Backlog": 2,
-      "In Progress": 1
+      "Backlog": 3
     },
     "openIssueKeys": [
       "KAR-118",
@@ -137,9 +133,9 @@
       {
         "key": "KAR-118",
         "title": "Frontend Refactor Delivery Program",
-        "state": "In Progress",
+        "state": "Backlog",
         "requirementId": "PRD-PROGRAM",
-        "updatedAt": "2026-03-06T16:34:07.905Z"
+        "updatedAt": "2026-03-09T16:01:21.036Z"
       },
       {
         "key": "KAR-123",
@@ -186,11 +182,11 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-03-09T15:59:06.927Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-09T16:05:44.327Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "3e3e980e8b7bfe80eb9abc86f5799ca593384ad8",
+    "gitHead": "daefa87f40163f1e7ec25e71126c6439a8be56ae",
     "gitStatusShort": [
       "## main...origin/main"
     ],
