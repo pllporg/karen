@@ -1,88 +1,121 @@
 import { z } from 'zod';
-import type { IntakeWizardFormState } from '../intake/intake-wizard-adapter';
+import { runConflictCheckSchema, resolveConflictSchema } from './conflict';
+import { generateEnvelopeSchema, sendEnvelopeSchema } from './engagement';
+import { optionalString, requiredString } from './common';
 
 const requiredText = (label: string) => z.string().trim().min(1, `${label} is required.`);
-const numberText = (label: string) =>
-  requiredText(label).refine((value) => !Number.isNaN(Number(value)), `${label} must be a number.`);
+const optionalText = () => z.string().trim().optional().or(z.literal(''));
 
 export const createLeadSchema = z.object({
   source: requiredText('Lead source'),
   notes: z.string().trim().max(2000, 'Processing notes must be 2000 characters or fewer.'),
 });
 
-export const intakeDraftSchema = z.object({
-  propertyAddress: requiredText('Property address'),
-  propertyCity: requiredText('Property city'),
-  propertyState: requiredText('Property state').min(2, 'Property state must be at least 2 characters.'),
-  parcelNumber: requiredText('Parcel number'),
+export const intakeClientSchema = z.object({
+  firstName: requiredText('First name'),
+  lastName: requiredText('Last name'),
+  email: requiredText('Email').email('Email must be valid.'),
+  phone: optionalText(),
+  company: optionalText(),
+  role: optionalText(),
+  linkedContactId: optionalText(),
+});
+
+export const intakePropertySchema = z.object({
+  addressLine1: requiredText('Property address'),
+  city: requiredText('Property city'),
+  state: requiredText('Property state').min(2, 'Property state must be at least 2 characters.'),
+  zip: requiredText('ZIP code').regex(/^\d{5}(?:-\d{4})?$/, 'ZIP code must be valid.'),
+  parcelNumber: optionalText(),
+  propertyType: optionalText(),
+  yearBuilt: optionalText().refine(
+    (value) => !value || /^\d{4}$/.test(value),
+    'Year built must be a four-digit year.',
+  ),
+});
+
+export const intakeDefectSchema = z.object({
+  category: requiredText('Defect category'),
+  severity: requiredText('Defect severity'),
+  description: requiredText('Defect description'),
+});
+
+export const intakeDamageSchema = z.object({
+  category: requiredText('Damage category'),
+  amount: requiredText('Damage amount').refine((value) => !Number.isNaN(Number(value)), 'Damage amount must be numeric.'),
+  description: optionalText(),
+});
+
+export const intakeUploadSchema = z.object({
+  id: requiredText('Upload id'),
+  name: requiredText('File name'),
+  sizeBytes: z.number().nonnegative(),
+  category: requiredText('Upload category'),
+  status: z.enum(['UPLOADING', 'COMPLETE', 'ERROR']),
+});
+
+export const intakeDisputeSchema = z.object({
   contractDate: requiredText('Contract date'),
-  contractPrice: numberText('Contract price'),
-  defectCategory: requiredText('Defect category'),
-  defectSeverity: requiredText('Defect severity'),
-  defectDescription: requiredText('Defect description'),
-  damageCategory: requiredText('Damage category'),
-  repairEstimate: numberText('Repair estimate'),
-  lienClaimantName: requiredText('Lien claimant name'),
-  lienAmount: numberText('Lien amount'),
-  lienStatus: requiredText('Lien status'),
-  claimNumber: requiredText('Claim number'),
-  policyNumber: requiredText('Policy number'),
-  insurerName: requiredText('Insurer name'),
-  adjusterName: requiredText('Adjuster name'),
-  expertName: requiredText('Expert name'),
-  expertScope: requiredText('Expert scope'),
-  milestoneName: z.string().trim().max(200, 'Milestone name must be 200 characters or fewer.'),
+  contractPrice: requiredText('Contract price').refine((value) => !Number.isNaN(Number(value)), 'Contract price must be numeric.'),
+  defects: z.array(intakeDefectSchema).min(1, 'At least one defect is required.'),
+  damages: z.array(intakeDamageSchema).min(1, 'At least one damage entry is required.'),
 });
 
-export const conflictCheckSchema = z.object({
-  queryText: requiredText('Conflict query'),
+export const intakeWizardSchema = z.object({
+  client: intakeClientSchema,
+  property: intakePropertySchema,
+  dispute: intakeDisputeSchema,
+  uploads: z.array(intakeUploadSchema),
 });
 
-export const conflictResolutionSchema = z.object({
-  resolutionNotes: requiredText('Resolution notes'),
-});
+export type IntakeWizardStepKey = 'client' | 'property' | 'dispute' | 'uploads' | 'review';
 
-export const engagementGenerateSchema = z.object({
-  templateId: requiredText('Template ID'),
-});
+export const conflictCheckSchema = runConflictCheckSchema;
+export const conflictResolutionSchema = resolveConflictSchema;
+export const engagementGenerateSchema = generateEnvelopeSchema;
+export const engagementSendSchema = sendEnvelopeSchema;
 
-export const engagementSendSchema = z.object({
-  envelopeId: requiredText('Envelope ID'),
-});
+const leadConvertParticipantSchema = z
+  .object({
+    name: requiredString,
+    roleKey: requiredString,
+    side: z.enum(['CLIENT_SIDE', 'OPPOSING_SIDE', 'NEUTRAL', 'COURT'], {
+      errorMap: () => ({ message: 'Select a side.' }),
+    }),
+    isPrimary: z.boolean(),
+    notes: optionalString,
+    existingContactId: optionalString,
+    representedByContactId: optionalString,
+    representedByName: optionalString,
+    lawFirmContactId: optionalString,
+    lawFirmName: optionalString,
+  })
+  .superRefine((participant, ctx) => {
+    const counselRole = /(counsel|attorney|lawyer)/i.test(participant.roleKey);
+    if (counselRole && participant.representedByName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Counsel roles cannot use represented-by links.',
+        path: ['representedByName'],
+      });
+    }
+    if (!counselRole && participant.lawFirmName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Law firm is only valid for counsel roles.',
+        path: ['lawFirmName'],
+      });
+    }
+  });
 
 export const leadConvertSchema = z.object({
-  name: requiredText('Matter name'),
-  matterNumber: requiredText('Matter number'),
-  practiceArea: requiredText('Practice area'),
+  name: requiredString,
+  matterNumber: requiredString,
+  practiceArea: requiredString,
+  jurisdiction: optionalString,
+  venue: optionalString,
+  ethicalWallEnabled: z.boolean(),
+  ethicalWallNotes: optionalString,
+  deniedUserIds: z.array(z.string()),
+  participants: z.array(leadConvertParticipantSchema).min(1, 'At least one participant is required.'),
 });
-
-export type IntakeDraftFieldConfig = {
-  name: keyof IntakeWizardFormState;
-  label: string;
-  hint?: string;
-  multiline?: boolean;
-};
-
-export const intakeDraftFields: IntakeDraftFieldConfig[] = [
-  { name: 'propertyAddress', label: 'Property Address', hint: 'Primary site address for the residential project.' },
-  { name: 'propertyCity', label: 'Property City' },
-  { name: 'propertyState', label: 'Property State', hint: 'Postal abbreviation or jurisdiction code.' },
-  { name: 'parcelNumber', label: 'Parcel Number' },
-  { name: 'contractDate', label: 'Contract Date', hint: 'Use YYYY-MM-DD format.' },
-  { name: 'contractPrice', label: 'Contract Price' },
-  { name: 'defectCategory', label: 'Defect Category' },
-  { name: 'defectSeverity', label: 'Defect Severity' },
-  { name: 'defectDescription', label: 'Defect Description', multiline: true },
-  { name: 'damageCategory', label: 'Damage Category' },
-  { name: 'repairEstimate', label: 'Repair Estimate' },
-  { name: 'lienClaimantName', label: 'Lien Claimant Name' },
-  { name: 'lienAmount', label: 'Lien Amount' },
-  { name: 'lienStatus', label: 'Lien Status' },
-  { name: 'claimNumber', label: 'Claim Number' },
-  { name: 'policyNumber', label: 'Policy Number' },
-  { name: 'insurerName', label: 'Insurer Name' },
-  { name: 'adjusterName', label: 'Adjuster Name' },
-  { name: 'expertName', label: 'Expert Name' },
-  { name: 'expertScope', label: 'Expert Scope', multiline: true },
-  { name: 'milestoneName', label: 'Milestone Name', hint: 'Optional initial milestone for intake tracking.' },
-];

@@ -67,6 +67,12 @@ export class LeadsController {
     return this.leadsService.generateEngagement(user.organizationId, user.id, id, dto);
   }
 
+  @Get(':id/engagement/latest')
+  @RequirePermissions('leads:read')
+  latestEngagement(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.leadsService.getLatestEngagementEnvelope(user.organizationId, id);
+  }
+
   @Post(':id/engagement/send')
   @RequirePermissions('leads:write')
   sendEngagement(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() dto: SendEngagementDto) {
