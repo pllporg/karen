@@ -38,12 +38,12 @@ export default function ReportingPage() {
         </div>
         <div className="card">
           <h3 style={{ marginTop: 0 }}>AR Aging</h3>
-          <table className="table">
+          <table aria-label="Data table" className="table">
             <thead>
               <tr>
-                <th>Invoice</th>
-                <th>Bucket</th>
-                <th>Balance</th>
+                <th scope="col">Invoice</th>
+                <th scope="col">Bucket</th>
+                <th scope="col">Balance</th>
               </tr>
             </thead>
             <tbody>

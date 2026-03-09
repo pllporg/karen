@@ -67,13 +67,13 @@ export function DeadlineRulesPanel({
       </div>
       {deadlineStatus ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{deadlineStatus}</p> : null}
       {previewRows.length > 0 ? (
-        <table className="table" style={{ marginTop: 10 }}>
+        <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
           <thead>
             <tr>
-              <th>Rule</th>
-              <th>Computed Date</th>
-              <th>Override Date</th>
-              <th>Override Reason</th>
+              <th scope="col">Rule</th>
+              <th scope="col">Computed Date</th>
+              <th scope="col">Override Date</th>
+              <th scope="col">Override Reason</th>
             </tr>
           </thead>
           <tbody>

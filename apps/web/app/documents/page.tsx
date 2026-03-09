@@ -155,7 +155,7 @@ export default function DocumentsPage() {
       </div>
 
       <div className="card mb-3">
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Title</th>
@@ -202,7 +202,7 @@ export default function DocumentsPage() {
 
       <div className="card">
         <h3>Disposition Runs</h3>
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Run</th>

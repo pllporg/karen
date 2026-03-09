@@ -44,15 +44,15 @@ export function AdminOperationsPanels({
                 Checked: {new Date(providerStatus.evaluatedAt).toLocaleString()}
               </span>
             </div>
-            <table className="table">
+            <table aria-label="Data table" className="table">
               <thead>
                 <tr>
-                  <th>Provider</th>
-                  <th>Mode</th>
-                  <th>Critical</th>
-                  <th>Status</th>
-                  <th>Issues</th>
-                  <th>Checked</th>
+                  <th scope="col">Provider</th>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Critical</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Issues</th>
+                  <th scope="col">Checked</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,15 +84,15 @@ export function AdminOperationsPanels({
                 Evaluated: {new Date(launchBlockers.evaluatedAt).toLocaleString()}
               </span>
             </div>
-            <table className="table">
+            <table aria-label="Data table" className="table">
               <thead>
                 <tr>
-                  <th>Blocker</th>
-                  <th>Severity</th>
-                  <th>Status</th>
-                  <th>Observed</th>
-                  <th>Summary</th>
-                  <th>Runbook</th>
+                  <th scope="col">Blocker</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Observed</th>
+                  <th scope="col">Summary</th>
+                  <th scope="col">Runbook</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,16 +150,16 @@ export function AdminOperationsPanels({
 
         {webhookError ? <p style={{ color: 'var(--lic-red)', marginTop: 0 }}>{webhookError}</p> : null}
 
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
-              <th>Endpoint</th>
-              <th>Event</th>
-              <th>Status</th>
-              <th>Attempts</th>
-              <th>Response</th>
-              <th>Last Attempt</th>
-              <th />
+              <th scope="col">Endpoint</th>
+              <th scope="col">Event</th>
+              <th scope="col">Status</th>
+              <th scope="col">Attempts</th>
+              <th scope="col">Response</th>
+              <th scope="col">Last Attempt</th>
+              <th scope="col" aria-label="Actions" />
             </tr>
           </thead>
           <tbody>

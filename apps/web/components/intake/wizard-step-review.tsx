@@ -84,10 +84,10 @@ export function WizardStepReview({
           <Table>
             <thead>
               <tr>
-                <th>File</th>
-                <th>Category</th>
-                <th>Size</th>
-                <th>Status</th>
+                <th scope="col">File</th>
+                <th scope="col">Category</th>
+                <th scope="col">Size</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>

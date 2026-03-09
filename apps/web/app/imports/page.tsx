@@ -141,7 +141,7 @@ export default function ImportsPage() {
 
       <div className="card mt-3">
         <h3>Recent Batches</h3>
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
               <th scope="col">Batch</th>

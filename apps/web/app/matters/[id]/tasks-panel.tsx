@@ -75,13 +75,13 @@ export function TasksPanel({
         </div>
       ) : null}
       {taskStatusMessage ? <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{taskStatusMessage}</p> : null}
-      <table className="table" style={{ marginTop: 10 }}>
+      <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
         <thead>
           <tr>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Due</th>
-            <th>Actions</th>
+            <th scope="col">Title</th>
+            <th scope="col">Status</th>
+            <th scope="col">Due</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

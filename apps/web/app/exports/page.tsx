@@ -38,12 +38,12 @@ export default function ExportsPage() {
       </div>
       <div className="card" style={{ marginTop: 14 }}>
         <h3 style={{ marginTop: 0 }}>Export Jobs</h3>
-        <table className="table">
+        <table aria-label="Data table" className="table">
           <thead>
             <tr>
-              <th>Job</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th scope="col">Job</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created</th>
             </tr>
           </thead>
           <tbody>

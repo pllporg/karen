@@ -51,13 +51,13 @@ export function DocumentsPanel({
       {documentStatusMessage ? (
         <p style={{ marginTop: 8, color: 'var(--lic-text-muted)' }}>{documentStatusMessage}</p>
       ) : null}
-      <table className="table" style={{ marginTop: 10 }}>
+      <table aria-label="Data table" className="table" style={{ marginTop: 10 }}>
         <thead>
           <tr>
-            <th>Title</th>
-            <th>Versions</th>
-            <th>Shared</th>
-            <th>Actions</th>
+            <th scope="col">Title</th>
+            <th scope="col">Versions</th>
+            <th scope="col">Shared</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>

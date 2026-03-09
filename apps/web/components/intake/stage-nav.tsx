@@ -9,11 +9,11 @@ const stages = [
 
 export function StageNav({ leadId, active }: { leadId: string; active: (typeof stages)[number]['key'] }) {
   return (
-    <table className="table" style={{ marginBottom: 16 }}>
+    <table aria-label="Data table" className="table" style={{ marginBottom: 16 }}>
       <thead>
         <tr>
-          <th>Stage</th>
-          <th>Route</th>
+          <th scope="col">Stage</th>
+          <th scope="col">Route</th>
         </tr>
       </thead>
       <tbody>

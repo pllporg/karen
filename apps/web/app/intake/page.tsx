@@ -223,13 +223,13 @@ export default function IntakeQueuePage() {
                     <Table>
                       <thead>
                         <tr>
-                          <th>Lead</th>
-                          <th>Source</th>
-                          <th>Stage</th>
-                          <th>Type</th>
-                          <th>Attorney</th>
-                          <th>Created</th>
-                          <th>Action</th>
+                          <th scope="col">Lead</th>
+                          <th scope="col">Source</th>
+                          <th scope="col">Stage</th>
+                          <th scope="col">Type</th>
+                          <th scope="col">Attorney</th>
+                          <th scope="col">Created</th>
+                          <th scope="col">Action</th>
                         </tr>
                       </thead>
                       <tbody>
