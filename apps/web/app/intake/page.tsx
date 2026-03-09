@@ -218,7 +218,6 @@ export default function IntakeQueuePage() {
             {loading ? <LoadingState label="Loading intake queue..." /> : null}
             {!loading && error ? <ErrorState message="Unable to load intake queue." onRetry={refetch} /> : null}
 
-<<<<<<< HEAD
             {!loading && !error ? (
               <>
                 {pagedRows.length ? (
