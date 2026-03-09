@@ -15,6 +15,8 @@
     "test:integrations-live": "pnpm --filter api test:connectors-live",
     "ops:drill:backup-restore": "node tools/ops/backup_restore_rollback_drill.mjs",
     "ops:evidence:capture": "node tools/ops/capture_provider_status_evidence.mjs",
+    "perf:web:evidence": "node tools/perf/capture_web_perf_evidence.mjs",
+    "perf:web:stability": "pnpm --filter web test:stability",
     "ops:preflight": "node tools/ops/operator_preflight.mjs",
     "ops:housekeeping": "pnpm backlog:sync && pnpm backlog:verify && pnpm backlog:matrix:check && pnpm backlog:snapshot && pnpm backlog:handoff:refresh && pnpm backlog:handoff:check",
     "ops:readiness:evidence": "pnpm ops:drill:backup-restore && pnpm ops:evidence:capture",
