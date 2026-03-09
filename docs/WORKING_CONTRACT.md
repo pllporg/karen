@@ -14,8 +14,9 @@ Operational procedures live in `docs/OPERATIONS_PLAYBOOK.md`.
 ## Collaboration Rules
 
 1. One local orchestrator chat owns Linear status changes at a time.
-2. Codex Cloud lanes implement code/tests only and never update Linear directly.
+2. Symphony runs implement code/tests against issue-scoped workspaces defined by `WORKFLOW.md`.
 3. If multiple local chats are active, only one chat runs `pnpm ops:housekeeping`.
+4. Symphony execution does not replace backlog governance; Linear status/evidence updates remain an operator responsibility.
 
 ## Phase/Queue Rules
 

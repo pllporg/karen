@@ -1,9 +1,11 @@
-# Codex Cloud Lane Report Template (Legacy)
+# Symphony Run Report Template
 
-This template is retained for historical packet compatibility.
-Use `docs/templates/SYMPHONY_RUN_REPORT_TEMPLATE.md` for current execution.
+Use this exact structure when returning a Symphony issue run.
 
-Use this exact structure when returning lane results.
+## Issue
+
+- Linear Key: `<KAR-...>`
+- Requirement IDs: `<REQ-...>`
 
 ## Branch
 
@@ -16,10 +18,6 @@ Use this exact structure when returning lane results.
 ## PR URL
 
 - `<github-pr-url>`
-
-## Requirement IDs
-
-- `<REQ-...>`
 
 ## Files Changed
 
