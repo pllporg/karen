@@ -19,11 +19,17 @@ function jsonResponse<T>(payload: T, status = 200): Response {
 }
 
 describe('Intake routes', () => {
+  let consoleErrorMock: ReturnType<typeof vi.spyOn> | undefined;
+
   beforeEach(() => {
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
     window.localStorage.setItem('session_token', 'test-session-token');
   });
 
   afterEach(() => {
+    expect(consoleErrorMock).toBeDefined();
+    expect(consoleErrorMock).not.toHaveBeenCalled();
+    consoleErrorMock?.mockRestore();
     window.localStorage.removeItem('session_token');
     vi.restoreAllMocks();
   });
@@ -108,6 +114,66 @@ describe('Intake routes', () => {
     await waitFor(() => {
       expect(screen.getByText('No leads match the current filter.')).toBeInTheDocument();
     });
+  });
+
+  it('supports keyboard roving tab order for stage filters', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse([
+        {
+          id: 'lead-1',
+          name: 'John Smith',
+          source: 'Website Form',
+          stage: 'NEW',
+          type: 'CD',
+          attorneyName: 'KL',
+          isPortalOrigin: false,
+          createdAt: '2026-02-20T01:00:00.000Z',
+          updatedAt: '2026-02-20T01:00:00.000Z',
+        },
+        {
+          id: 'lead-2',
+          name: 'Builder Supply',
+          source: 'Portal Intake',
+          stage: 'CONFLICT_HOLD',
+          type: 'CL',
+          attorneyName: 'MR',
+          isPortalOrigin: true,
+          createdAt: '2026-02-20T01:00:00.000Z',
+          updatedAt: '2026-02-20T01:00:00.000Z',
+        },
+      ]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<IntakeQueuePage />);
+
+    const allTab = await screen.findByRole('tab', { name: /All/i });
+    const newTab = screen.getByRole('tab', { name: /New/i });
+    const readyTab = screen.getByRole('tab', { name: /Ready/i });
+
+    expect(allTab).toHaveAttribute('tabindex', '0');
+    expect(newTab).toHaveAttribute('tabindex', '-1');
+    expect(readyTab).toHaveAttribute('tabindex', '-1');
+
+    allTab.focus();
+    fireEvent.keyDown(allTab, { key: 'ArrowRight' });
+
+    await waitFor(() => {
+      expect(newTab).toHaveAttribute('aria-selected', 'true');
+    });
+    expect(newTab).toHaveFocus();
+    expect(newTab).toHaveAttribute('tabindex', '0');
+    expect(allTab).toHaveAttribute('tabindex', '-1');
+
+    await waitFor(() => {
+      expect(screen.queryByText('Builder Supply')).not.toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(newTab, { key: 'End' });
+    await waitFor(() => {
+      expect(readyTab).toHaveAttribute('aria-selected', 'true');
+    });
+    expect(readyTab).toHaveFocus();
   });
 
   it('creates lead then redirects from /intake/new', async () => {

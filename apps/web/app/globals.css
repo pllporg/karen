@@ -148,8 +148,31 @@ pre {
   border-bottom: var(--lic-rule-1) solid var(--lic-graphite);
 }
 
+.shell-sidebar-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--lic-3);
+}
+
 .shell-brand-lockup {
   margin: 0 0 var(--lic-2);
+}
+
+.shell-sidebar-close {
+  border: var(--lic-rule-1) solid var(--lic-paper);
+  background: transparent;
+  color: var(--lic-paper);
+  padding: var(--lic-1) var(--lic-2);
+  font-family: var(--lic-font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.shell-sidebar-close:hover {
+  background: var(--lic-graphite);
 }
 
 .shell-brand-mark {
@@ -1614,6 +1637,23 @@ button.stepper-circle {
 .table th[data-sortable='true'] {
   cursor: pointer;
   user-select: none;
+}
+
+.table-sort-button {
+  width: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--lic-1);
+  cursor: pointer;
 }
 
 .table th[data-sortable='true']:hover {

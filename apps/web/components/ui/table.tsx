@@ -41,26 +41,25 @@ export type SortableThProps = HTMLAttributes<HTMLTableCellElement> & {
 export function SortableTh({ children, sorted = false, onSort, scope = 'col', ...props }: SortableThProps) {
   const indicator = sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : onSort ? '–' : '';
 
-  const handleClick = () => {
-    if (!onSort) return;
-    onSort();
-  };
-
   return (
     <th
       scope={scope}
       data-sortable={onSort ? 'true' : undefined}
       aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-      onClick={handleClick}
       {...props}
     >
-      <span>{children}</span>
-      {indicator ? (
-        <span className="sort-indicator" aria-hidden="true">
-          {' '}
-          {indicator}
-        </span>
-      ) : null}
+      {onSort ? (
+        <button type="button" className="table-sort-button" onClick={onSort}>
+          <span>{children}</span>
+          {indicator ? (
+            <span className="sort-indicator" aria-hidden="true">
+              {indicator}
+            </span>
+          ) : null}
+        </button>
+      ) : (
+        <span>{children}</span>
+      )}
     </th>
   );
 }

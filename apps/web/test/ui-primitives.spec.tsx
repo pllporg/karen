@@ -10,7 +10,7 @@ import { FormField } from '../components/ui/form-field';
 import { Input } from '../components/ui/input';
 import { Modal } from '../components/ui/modal';
 import { Select } from '../components/ui/select';
-import { Table } from '../components/ui/table';
+import { SortableTh, Table } from '../components/ui/table';
 import { Textarea } from '../components/ui/textarea';
 import { Toast } from '../components/ui/toast';
 import { Toggle } from '../components/ui/toggle';
@@ -173,18 +173,59 @@ describe('UI primitives', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('renders drawer and closes from close button', () => {
+  it('renders drawer with dialog semantics and keyboard-close behavior', () => {
     const onClose = vi.fn();
     render(
       <Drawer open title="Review Queue" onClose={onClose}>
+        <button type="button">Second Action</button>
+      </Drawer>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Review Queue' });
+    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const secondAction = screen.getByRole('button', { name: 'Second Action' });
+    expect(dialog).toBeInTheDocument();
+    expect(closeButton).toHaveFocus();
+
+    secondAction.focus();
+    fireEvent.keyDown(secondAction, { key: 'Tab' });
+    expect(closeButton).toHaveFocus();
+
+    fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
+    expect(secondAction).toHaveFocus();
+
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render drawer focusable controls when closed', () => {
+    const onClose = vi.fn();
+    render(
+      <Drawer open={false} title="Review Queue" onClose={onClose}>
         <p>Drawer body</p>
       </Drawer>,
     );
 
-    expect(screen.getByText('Review Queue')).toBeInTheDocument();
-    expect(document.querySelector('.ui-drawer')).toHaveAttribute('data-state', 'open');
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog', { name: 'Review Queue' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close drawer' })).not.toBeInTheDocument();
+  });
+
+  it('renders sortable table headers as keyboard-focusable buttons', () => {
+    const onSort = vi.fn();
+    render(
+      <Table>
+        <thead>
+          <tr>
+            <SortableTh onSort={onSort}>Matter</SortableTh>
+          </tr>
+        </thead>
+      </Table>,
+    );
+
+    const sortButton = screen.getByRole('button', { name: 'Matter' });
+    expect(sortButton).toHaveClass('table-sort-button');
+    fireEvent.click(sortButton);
+    expect(onSort).toHaveBeenCalledTimes(1);
   });
 
   it('renders toast primitive with severity role', () => {
