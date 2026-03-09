@@ -3,15 +3,11 @@ tracker:
   kind: linear
   api_key: $LINEAR_API_KEY
   project_slug: "8e8ac869bf3c"
+  assignee: "me"
   active_states:
-    - Backlog
     - Ready
     - In Progress
-    - Blocked
-    - In Review
     - Rework
-    - Human Review
-    - Merging
   terminal_states:
     - Done
     - Closed
@@ -25,7 +21,7 @@ hooks:
     git clone "$SOURCE_REPO_URL" .
     pnpm install --frozen-lockfile
 agent:
-  max_concurrent_agents: 4
+  max_concurrent_agents: 10
   max_turns: 20
 codex:
   command: codex app-server

@@ -34,6 +34,11 @@ This file defines:
 3. Agent runtime settings.
 4. Prompt contract for issue execution and report output.
 
+Current coordinator dispatch profile:
+1. `tracker.active_states`: `Ready`, `In Progress`, `Rework`
+2. `tracker.assignee`: `me` (worker identity gate)
+3. `agent.max_concurrent_agents`: `10`
+
 ## 3) Start Symphony (Elixir Reference)
 
 ```bash

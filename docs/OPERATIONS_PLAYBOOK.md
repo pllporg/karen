@@ -11,7 +11,7 @@ If any procedural guidance conflicts with other docs, this file wins.
 Owns issue polling and execution orchestration.
 
 Responsibilities:
-1. Poll Linear and select eligible issues from configured active states.
+1. Poll Linear and select eligible issues from configured execution states.
 2. Create isolated per-issue workspaces.
 3. Run coding-agent sessions using repository `WORKFLOW.md`.
 4. Produce run outputs and structured run reports for review.
@@ -19,6 +19,7 @@ Responsibilities:
 Restrictions:
 1. Symphony is execution orchestration, not backlog governance.
 2. Linear canonical status/evidence discipline is still enforced by local operators.
+3. Only assigned issues in `Ready` (and active execution states) are eligible for pickup.
 
 ### Local Operator
 
@@ -31,6 +32,7 @@ Responsibilities:
 Restrictions:
 1. Do not bypass Symphony workflow policy for issue execution unless incident response requires manual override.
 2. Do not treat GitHub mirror state as canonical backlog state.
+3. Only the coordinator moves issues to `Ready` and assigns them for execution.
 
 ## 2) Start-of-Session Preflight
 
@@ -103,6 +105,7 @@ mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the
 Notes:
 1. `WORKFLOW.md` is the repo-owned policy contract for Symphony.
 2. Symphony writes and issue-state transitions can be agent-driven; local operator still verifies evidence and merge readiness.
+3. Dispatch policy is `Ready + assignee` (configured via `tracker.active_states` and `tracker.assignee`).
 
 ## 5) Merge/Post-Merge Housekeeping
 
