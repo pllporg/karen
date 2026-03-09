@@ -105,7 +105,7 @@ mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the
 Notes:
 1. `WORKFLOW.md` is the repo-owned policy contract for Symphony.
 2. Symphony writes and issue-state transitions can be agent-driven; local operator still verifies evidence and merge readiness.
-3. Dispatch policy is `Ready + assignee` (configured via `tracker.active_states` and `tracker.assignee`).
+3. Dispatch policy is `Ready + assignee` (configured via `tracker.active_states` and an explicit `tracker.assignee` identity).
 
 ## 5) Merge/Post-Merge Housekeeping
 

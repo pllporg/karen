@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-03-09T15:23:18.671Z",
+  "generatedAt": "2026-03-09T15:59:10.183Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,8 +33,8 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 107,
     "stateCounts": {
-      "Backlog": 3,
-      "Done": 103,
+      "Backlog": 2,
+      "Done": 104,
       "In Progress": 1
     },
     "inProgressIssueKeys": [
@@ -42,6 +42,27 @@
     ],
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
+      {
+        "key": "KAR-121",
+        "title": "PRD-04 GP-01 Intake Flow",
+        "state": "Done",
+        "updatedAt": "2026-03-09T15:58:42.281Z",
+        "requirementId": "PRD-04"
+      },
+      {
+        "key": "KAR-124",
+        "title": "PRD-07 Performance + Code Quality",
+        "state": "Backlog",
+        "updatedAt": "2026-03-09T15:51:43.357Z",
+        "requirementId": "PRD-07"
+      },
+      {
+        "key": "KAR-123",
+        "title": "PRD-06 Accessibility Compliance",
+        "state": "Backlog",
+        "updatedAt": "2026-03-09T15:51:42.760Z",
+        "requirementId": "PRD-06"
+      },
       {
         "key": "KAR-120",
         "title": "PRD-03 Forms + Validation",
@@ -90,54 +111,29 @@
         "state": "Done",
         "updatedAt": "2026-03-06T16:29:32.898Z",
         "requirementId": "PARITY-13"
-      },
-      {
-        "key": "KAR-102",
-        "title": "PARITY-12 Eve 2 Agents Parity",
-        "state": "Done",
-        "updatedAt": "2026-03-06T16:29:32.571Z",
-        "requirementId": "PARITY-12"
-      },
-      {
-        "key": "KAR-111",
-        "title": "Add scheduled audit scan + notification dispatch with idempotency controls",
-        "state": "Done",
-        "updatedAt": "2026-03-06T16:29:32.331Z",
-        "requirementId": "REQ-EVE2-008"
-      },
-      {
-        "key": "KAR-109",
-        "title": "Add Auditor movement monitor (staleness, deadlines, statute risk)",
-        "state": "Done",
-        "updatedAt": "2026-03-06T16:29:32.025Z",
-        "requirementId": "REQ-EVE2-006"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
-    "issueCount": 28,
-    "openIssueCount": 5,
+    "issueCount": 33,
+    "openIssueCount": 7,
     "stateCounts": {
-      "Backlog": 3,
-      "Done": 23,
-      "In Progress": 2
+      "Ready": 4,
+      "Done": 26,
+      "Backlog": 2,
+      "In Progress": 1
     },
     "openIssueKeys": [
-      "KAR-117",
       "KAR-118",
-      "KAR-121",
       "KAR-123",
-      "KAR-124"
+      "KAR-124",
+      "KAR-126",
+      "KAR-127",
+      "KAR-128",
+      "KAR-129"
     ],
     "openIssues": [
-      {
-        "key": "KAR-117",
-        "title": "Add unlisted implemented routes to primary navigation model",
-        "state": "In Progress",
-        "requirementId": "UI-NAV-001",
-        "updatedAt": "2026-03-06T16:22:05.616Z"
-      },
       {
         "key": "KAR-118",
         "title": "Frontend Refactor Delivery Program",
@@ -146,39 +142,58 @@
         "updatedAt": "2026-03-06T16:34:07.905Z"
       },
       {
-        "key": "KAR-121",
-        "title": "PRD-04 GP-01 Intake Flow",
-        "state": "Backlog",
-        "requirementId": "PRD-04",
-        "updatedAt": "2026-03-06T16:22:04.614Z"
-      },
-      {
         "key": "KAR-123",
         "title": "PRD-06 Accessibility Compliance",
         "state": "Backlog",
         "requirementId": "PRD-06",
-        "updatedAt": "2026-03-06T16:22:05.118Z"
+        "updatedAt": "2026-03-09T15:51:42.760Z"
       },
       {
         "key": "KAR-124",
         "title": "PRD-07 Performance + Code Quality",
         "state": "Backlog",
         "requirementId": "PRD-07",
-        "updatedAt": "2026-03-06T16:22:05.305Z"
+        "updatedAt": "2026-03-09T15:51:43.357Z"
+      },
+      {
+        "key": "KAR-126",
+        "title": "PRD-06 A11y lane A: keyboard, focus-visible, and tab order hardening",
+        "state": "Ready",
+        "requirementId": "PRD-06-A11Y-A",
+        "updatedAt": "2026-03-09T15:51:42.760Z"
+      },
+      {
+        "key": "KAR-127",
+        "title": "PRD-06 A11y lane B: labels/aria/error semantics and table accessibility",
+        "state": "Ready",
+        "requirementId": "PRD-06-A11Y-B",
+        "updatedAt": "2026-03-09T15:51:43.059Z"
+      },
+      {
+        "key": "KAR-128",
+        "title": "PRD-07 Perf lane A: route bundle and render-path optimization",
+        "state": "Ready",
+        "requirementId": "PRD-07-PERF-A",
+        "updatedAt": "2026-03-09T15:51:43.357Z"
+      },
+      {
+        "key": "KAR-129",
+        "title": "PRD-07 Perf lane B: runtime stability tests and perf evidence automation",
+        "state": "Ready",
+        "requirementId": "PRD-07-PERF-B",
+        "updatedAt": "2026-03-09T15:51:43.674Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-03-09T15:23:15.956Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-09T15:59:06.927Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "efd47a272b069654abd5ee17960f71ad6f282de8",
+    "gitHead": "3e3e980e8b7bfe80eb9abc86f5799ca593384ad8",
     "gitStatusShort": [
-      "## lin/KAR-121-prd-04-gp01",
-      " M docs/SESSION_HANDOFF.md",
-      " M tools/backlog-sync/session.snapshot.json"
+      "## main...origin/main"
     ],
-    "dirtyFileCount": 2
+    "dirtyFileCount": 0
   }
 }
