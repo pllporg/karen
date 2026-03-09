@@ -1,4 +1,7 @@
-# Eve 2.0 Codex Cloud Lane Prompts
+# Eve 2.0 Codex Cloud Lane Prompts (Archived)
+
+Historical prompt set retained for audit trail only.
+Current execution model is Symphony-first (`WORKFLOW.md`).
 
 Use one worker per lane. Keep all work on committed `main` baseline and follow LIC UI rules in `AGENTS.md`.
 

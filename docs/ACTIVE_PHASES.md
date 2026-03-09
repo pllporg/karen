@@ -32,7 +32,7 @@ This file is the current phase registry for delivery status.
 5. `pnpm backlog:snapshot`
 6. `pnpm backlog:handoff:refresh`
 7. `pnpm backlog:handoff:check`
-8. Only then assign new cloud lanes from Eve 2.0 requirements.
+8. Only then assign new Symphony issue runs from EVE-2 requirements.
 
 ## FRONTEND-REFACTOR: PRD Delivery Program
 

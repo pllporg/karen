@@ -48,7 +48,7 @@ pnpm backlog:handoff:refresh
 pnpm backlog:handoff:check
 ```
 
-Only after this sequence succeeds should EVE-2 lanes be assigned in Codex Cloud.
+Only after this sequence succeeds should EVE-2 issue runs be assigned in Symphony.
 
 ## Open Operational Conflicts
 
@@ -67,3 +67,4 @@ Only after this sequence succeeds should EVE-2 lanes be assigned in Codex Cloud.
 - 2026-02-27: Restored valid Linear auth and completed queue promotion for EVE-2 (`backlog:seed`, `backlog:sync`, `backlog:verify`, `backlog:snapshot`, and `backlog:handoff:check` passing); switched phase state from draft-local to mirrored queue mode.
 - 2026-02-27: EVE-2 queue introduced as draft-local scope (`REQ-EVE2-001`..`REQ-EVE2-011`) with explicit promotion protocol and auth-blocker visibility.
 - 2026-02-26: Completed RC-2 (`REQ-RC-012`..`REQ-RC-015`) and refreshed mirror/snapshot state.
+- 2026-03-09: Switched operations model from Codex Cloud lane packets to Symphony-first orchestration; added repo `WORKFLOW.md`, Symphony adoption guide, and updated canonical operations docs/templates.

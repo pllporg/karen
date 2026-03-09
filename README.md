@@ -332,7 +332,16 @@ General housekeeping command:
 pnpm ops:housekeeping
 ```
 
-## RC-1 Parallel Codex Cloud Delivery
+## Symphony-Orchestrated Delivery
 
-`docs/RC1_PARALLEL_DELIVERY_PLAYBOOK.md` is archived historical reference.
-Current execution policy for all phases is `docs/OPERATIONS_PLAYBOOK.md`.
+Execution model is now Symphony-first:
+
+1. Repo-owned workflow contract: `WORKFLOW.md`
+2. Operational governance: `docs/OPERATIONS_PLAYBOOK.md`
+3. Backlog canonical model: Linear source of truth, GitHub mirror-only
+
+Reference setup for Symphony runtime:
+1. `docs/OPERATIONS_PLAYBOOK.md` (`Symphony Runtime` section)
+2. `docs/SYMPHONY_ADOPTION.md`
+
+Historical RC-1 Codex Cloud docs are archived references only.
