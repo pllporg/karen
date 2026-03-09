@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-03-06T16:35:53.698Z",
+  "generatedAt": "2026-03-09T15:23:18.671Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -33,10 +33,9 @@
     "scopeLabel": "parity",
     "scopedIssueCount": 107,
     "stateCounts": {
-      "Backlog": 4,
-      "In Review": 2,
-      "In Progress": 1,
-      "Done": 100
+      "Backlog": 3,
+      "Done": 103,
+      "In Progress": 1
     },
     "inProgressIssueKeys": [
       "KAR-118"
@@ -44,25 +43,32 @@
     "inProgressWithoutVerificationEvidence": [],
     "recentlyUpdatedIssues": [
       {
-        "key": "KAR-106",
-        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
+        "key": "KAR-120",
+        "title": "PRD-03 Forms + Validation",
         "state": "Done",
-        "updatedAt": "2026-03-06T16:35:24.003Z",
-        "requirementId": "REQ-EVE2-004"
+        "updatedAt": "2026-03-06T19:25:47.532Z",
+        "requirementId": "PRD-03"
       },
       {
         "key": "KAR-122",
         "title": "PRD-05 Remaining Page Overhaul",
-        "state": "In Review",
-        "updatedAt": "2026-03-06T16:34:08.459Z",
+        "state": "Done",
+        "updatedAt": "2026-03-06T19:16:25.573Z",
         "requirementId": "PRD-05"
       },
       {
         "key": "KAR-119",
         "title": "PRD-01/02 Foundation + Data Layer",
-        "state": "In Review",
-        "updatedAt": "2026-03-06T16:34:08.248Z",
+        "state": "Done",
+        "updatedAt": "2026-03-06T19:10:09.483Z",
         "requirementId": "PRD-01-02"
+      },
+      {
+        "key": "KAR-106",
+        "title": "Trigger proactive proposals for client engagement + lifecycle next-actions",
+        "state": "Done",
+        "updatedAt": "2026-03-06T16:35:24.003Z",
+        "requirementId": "REQ-EVE2-004"
       },
       {
         "key": "KAR-118",
@@ -105,33 +111,22 @@
         "state": "Done",
         "updatedAt": "2026-03-06T16:29:32.025Z",
         "requirementId": "REQ-EVE2-006"
-      },
-      {
-        "key": "KAR-124",
-        "title": "PRD-07 Performance + Code Quality",
-        "state": "Backlog",
-        "updatedAt": "2026-03-06T16:22:05.305Z",
-        "requirementId": "PRD-07"
       }
     ]
   },
   "uiLaneSummary": {
     "label": "ui-ux",
     "issueCount": 28,
-    "openIssueCount": 8,
+    "openIssueCount": 5,
     "stateCounts": {
-      "Backlog": 4,
-      "In Review": 2,
-      "In Progress": 2,
-      "Done": 20
+      "Backlog": 3,
+      "Done": 23,
+      "In Progress": 2
     },
     "openIssueKeys": [
       "KAR-117",
       "KAR-118",
-      "KAR-119",
-      "KAR-120",
       "KAR-121",
-      "KAR-122",
       "KAR-123",
       "KAR-124"
     ],
@@ -151,32 +146,11 @@
         "updatedAt": "2026-03-06T16:34:07.905Z"
       },
       {
-        "key": "KAR-119",
-        "title": "PRD-01/02 Foundation + Data Layer",
-        "state": "In Review",
-        "requirementId": "PRD-01-02",
-        "updatedAt": "2026-03-06T16:34:08.248Z"
-      },
-      {
-        "key": "KAR-120",
-        "title": "PRD-03 Forms + Validation",
-        "state": "Backlog",
-        "requirementId": "PRD-03",
-        "updatedAt": "2026-03-06T16:22:04.389Z"
-      },
-      {
         "key": "KAR-121",
         "title": "PRD-04 GP-01 Intake Flow",
         "state": "Backlog",
         "requirementId": "PRD-04",
         "updatedAt": "2026-03-06T16:22:04.614Z"
-      },
-      {
-        "key": "KAR-122",
-        "title": "PRD-05 Remaining Page Overhaul",
-        "state": "In Review",
-        "requirementId": "PRD-05",
-        "updatedAt": "2026-03-06T16:34:08.459Z"
       },
       {
         "key": "KAR-123",
@@ -195,13 +169,13 @@
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-03-06T16:34:33.130Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-09T15:23:15.956Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "2b8fef0a71d76923c628869e97b00c6b7d332568",
+    "gitHead": "efd47a272b069654abd5ee17960f71ad6f282de8",
     "gitStatusShort": [
-      "## lin/KAR-106-109-111-eve2-reconciliation...origin/lin/KAR-106-109-111-eve2-reconciliation",
+      "## lin/KAR-121-prd-04-gp01",
       " M docs/SESSION_HANDOFF.md",
       " M tools/backlog-sync/session.snapshot.json"
     ],
