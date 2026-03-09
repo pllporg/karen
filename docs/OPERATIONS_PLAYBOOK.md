@@ -84,6 +84,7 @@ pnpm backlog:sync && pnpm backlog:verify && pnpm backlog:matrix:check && pnpm ba
 Notes:
 1. `pnpm rc1:orchestrator:post-merge` is retained as a legacy alias for RC-1 history.
 2. Use `ops:housekeeping` for current/general operations.
+3. `ops:housekeeping` is post-merge/post-review governance. It is not a substitute for Symphony SCM-handoff validation.
 
 ## 4) Symphony Runtime
 
@@ -97,7 +98,7 @@ Symphony reference implementation:
 
 ```bash
 LINEAR_API_KEY=... \
-SOURCE_REPO_URL=https://github.com/pllporg/karen.git \
+SOURCE_REPO_URL=git@github.com:pllporg/karen.git \
 SYMPHONY_WORKSPACE_ROOT=~/symphony-workspaces/lic-legal-suite \
 mise exec -- ./bin/symphony --i-understand-that-this-will-be-running-without-the-usual-guardrails /Users/chrispodlaski/Downloads/Karen/WORKFLOW.md
 ```
@@ -106,6 +107,23 @@ Notes:
 1. `WORKFLOW.md` is the repo-owned policy contract for Symphony.
 2. Symphony writes and issue-state transitions can be agent-driven; local operator still verifies evidence and merge readiness.
 3. Dispatch policy is `Ready + assignee` (configured via `tracker.active_states` and an explicit `tracker.assignee` identity).
+4. Before starting Symphony, run:
+
+```bash
+pnpm ops:preflight
+pnpm ops:symphony:handoff:check
+```
+
+5. The canonical success path is:
+   - dispatch
+   - implement
+   - validate
+   - branch
+   - commit
+   - push
+   - open GitHub PR
+   - operator review/merge
+6. A lane is not review-ready until a real branch exists on origin and a real GitHub PR URL exists in the run report.
 
 ## 5) Merge/Post-Merge Housekeeping
 
@@ -137,6 +155,12 @@ After every merged PR:
 2. Isolate issue owner and file-owner scope.
 3. Rebase issue branches and resolve only owned conflict paths.
 
+### Symphony SCM / PR handoff blocked
+1. Treat this as an execution-environment incident, not successful review handoff.
+2. Do not move the issue to `In Review` if there is no real branch on origin and no real GitHub PR.
+3. Keep the issue in `In Progress` or move it to `Rework`, with the failing handoff step recorded in the run report.
+4. Salvage artifacts (`patch`, `tgz`, handoff docs) are fallback-only for operator recovery and do not count as true review-ready completion.
+
 ### Actions unavailable
 1. Use local gate fallback:
    - `pnpm ops:preflight`
@@ -150,13 +174,18 @@ Each Symphony issue run must return:
 1. Branch.
 2. Commit SHA.
 3. PR URL.
-4. Requirement IDs.
-5. Files changed.
-6. Validation commands and pass/fail.
-7. Known risks/follow-ups.
-8. Ready-to-merge decision.
+4. Handoff status (`COMPLETE` or `BLOCKED`) and blocking step if blocked.
+5. Requirement IDs.
+6. Files changed.
+7. Validation commands and pass/fail.
+8. Known risks/follow-ups.
+9. Ready-to-merge decision.
 
 Template: `docs/templates/SYMPHONY_RUN_REPORT_TEMPLATE.md`
+
+Review-ready rule:
+1. `In Review` means validations passed, branch exists on origin, GitHub PR exists, and the run report contains the PR URL.
+2. If any of those are missing, the lane remains `In Progress` or `Rework`.
 
 ## 8) Operator Lock + Concurrency Policy
 
