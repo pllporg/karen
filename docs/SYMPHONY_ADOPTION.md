@@ -36,7 +36,7 @@ This file defines:
 
 Current coordinator dispatch profile:
 1. `tracker.active_states`: `Ready`, `In Progress`, `Rework`
-2. `tracker.assignee`: `me` (worker identity gate)
+2. `tracker.assignee`: explicit coordinator identity (worker identity gate)
 3. `agent.max_concurrent_agents`: `10`
 
 ## 3) Start Symphony (Elixir Reference)

@@ -3,7 +3,7 @@ tracker:
   kind: linear
   api_key: $LINEAR_API_KEY
   project_slug: "8e8ac869bf3c"
-  assignee: "me"
+  assignee: "christopher.podlaski@gmail.com"
   active_states:
     - Ready
     - In Progress
