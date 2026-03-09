@@ -2,7 +2,7 @@
 tracker:
   kind: linear
   api_key: $LINEAR_API_KEY
-  project_slug: $LINEAR_PROJECT_SLUG
+  project_slug: "8e8ac869bf3c"
   active_states:
     - Backlog
     - Ready

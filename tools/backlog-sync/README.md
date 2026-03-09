@@ -61,9 +61,11 @@ cp tools/backlog-sync/config.example.env tools/backlog-sync/config.env
 ### Symphony (execution orchestration)
 
 - `LINEAR_API_KEY` (Symphony tracker API auth)
-- `LINEAR_PROJECT_SLUG` (Symphony project polling target)
 - `SOURCE_REPO_URL` (repo clone URL used by `WORKFLOW.md` hooks)
 - `SYMPHONY_WORKSPACE_ROOT` (root directory for issue workspaces)
+
+Note:
+- `WORKFLOW.md` currently stores `tracker.project_slug` directly as the Linear project `slugId`.
 
 ## Typical Run Order
 
