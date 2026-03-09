@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { AppShell } from '../../components/app-shell';
@@ -23,8 +24,19 @@ import {
   type ParticipantRoleConfigFormData,
   type SectionConfigFormData,
 } from '../../lib/schemas/admin-config';
-import { AdminOperationsPanels } from './admin-operations-panels';
 import { useAdminPage } from './use-admin-page';
+
+const AdminOperationsPanels = dynamic(
+  () => import('./admin-operations-panels').then((module) => module.AdminOperationsPanels),
+  {
+    loading: () => (
+      <div className="card" style={{ gridColumn: '1 / -1' }}>
+        <h3 style={{ marginTop: 0 }}>Operations Panels</h3>
+        <p style={{ color: 'var(--lic-text-muted)' }}>Loading provider diagnostics and webhook delivery monitor.</p>
+      </div>
+    ),
+  },
+);
 
 export default function AdminPage() {
   const {

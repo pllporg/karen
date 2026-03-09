@@ -384,7 +384,9 @@ export default function MattersPage() {
             {matters.map((matter) => (
               <tr key={matter.id}>
                 <td>
-                  <Link href={`/matters/${matter.id}`}>{matter.matterNumber}</Link>
+                  <Link href={`/matters/${matter.id}`} prefetch={false}>
+                    {matter.matterNumber}
+                  </Link>
                 </td>
                 <td>{matter.name}</td>
                 <td>{matter.practiceArea}</td>

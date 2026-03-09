@@ -23,7 +23,7 @@ export function StageNav({ leadId, active }: { leadId: string; active: (typeof s
               <span className={`badge ${stage.key === active ? 'status-in-review' : 'status-proposed'}`}>{stage.label}</span>
             </td>
             <td>
-              <Link href={`/intake/${leadId}/${stage.key}`} className="button ghost" style={{ minHeight: 28 }}>
+              <Link href={`/intake/${leadId}/${stage.key}`} prefetch={false} className="button ghost" style={{ minHeight: 28 }}>
                 Open {stage.label}
               </Link>
             </td>

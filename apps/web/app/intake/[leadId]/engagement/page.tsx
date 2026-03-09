@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -9,8 +10,6 @@ import { AppShell } from '../../../../components/app-shell';
 import { EngagementPreview } from '../../../../components/intake/engagement-preview';
 import { EsignStatusTracker } from '../../../../components/intake/esign-status-tracker';
 import type { EngagementTemplateOption } from '../../../../components/intake/template-picker';
-import { TemplatePicker } from '../../../../components/intake/template-picker';
-import { FeeArrangementForm } from '../../../../components/intake/fee-arrangement-form';
 import { StageNav } from '../../../../components/intake/stage-nav';
 import { EmptyState } from '../../../../components/empty-state';
 import { LoadingState } from '../../../../components/loading-state';
@@ -30,6 +29,20 @@ type FeedbackState = {
   tone: 'notice' | 'error';
   message: string;
 };
+
+const TemplatePicker = dynamic(
+  () => import('../../../../components/intake/template-picker').then((module) => module.TemplatePicker),
+  {
+    loading: () => <DeferredEngagementSection sectionName="Template" />,
+  },
+);
+
+const FeeArrangementForm = dynamic(
+  () => import('../../../../components/intake/fee-arrangement-form').then((module) => module.FeeArrangementForm),
+  {
+    loading: () => <DeferredEngagementSection sectionName="Fee Arrangement" />,
+  },
+);
 
 const templateOptions: EngagementTemplateOption[] = [
   {
@@ -79,6 +92,16 @@ function readSecondaryRecipients(payload: Record<string, unknown> | null | undef
       };
     })
     .filter((entry): entry is { name: string; email: string } => Boolean(entry));
+}
+
+function DeferredEngagementSection({ sectionName }: { sectionName: string }) {
+  return (
+    <div className="card stack-2" role="status" aria-live="polite">
+      <p className="meta-note">Section Load</p>
+      <h3 style={{ marginTop: 0 }}>{sectionName}</h3>
+      <p style={{ color: 'var(--lic-text-muted)' }}>Loading engagement controls.</p>
+    </div>
+  );
 }
 
 export default function LeadEngagementPage() {

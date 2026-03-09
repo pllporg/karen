@@ -210,7 +210,10 @@ export function useMatterDashboard(matterId: string) {
       .catch(() => undefined);
   }, [matterId, participantForm, refreshDashboard]);
 
-  const selectedParticipantRole = participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey);
+  const selectedParticipantRole = useMemo(
+    () => participantRoleOptions.find((role) => role.key === selectedParticipantRoleKey),
+    [participantRoleOptions, selectedParticipantRoleKey],
+  );
   const participantRoleIsCounsel = isCounselRole(selectedParticipantRole?.key, selectedParticipantRole?.label);
 
   useEffect(() => {
@@ -955,23 +958,27 @@ export function useMatterDashboard(matterId: string) {
     await refreshDashboard();
   }
 
-  const communicationRows = dashboard
-    ? (dashboard.communicationThreads || [])
-        .flatMap((thread: CommunicationThread) =>
-          (thread.messages || []).map((message) => ({
-            ...message,
-            threadId: thread.id,
-            threadSubject: thread.subject || thread.id,
-            subject: message.subject || '',
-            participantContactId: message.participants?.[0]?.contact?.id || message.participants?.[0]?.contactId || '',
-            participantContactName: message.participants?.[0]?.contact?.displayName || '',
-          })),
-        )
-        .sort(
-          (left: { occurredAt: string }, right: { occurredAt: string }) =>
-            new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
-        )
-    : [];
+  const communicationRows = useMemo(
+    () =>
+      dashboard
+        ? (dashboard.communicationThreads || [])
+            .flatMap((thread: CommunicationThread) =>
+              (thread.messages || []).map((message) => ({
+                ...message,
+                threadId: thread.id,
+                threadSubject: thread.subject || thread.id,
+                subject: message.subject || '',
+                participantContactId: message.participants?.[0]?.contact?.id || message.participants?.[0]?.contactId || '',
+                participantContactName: message.participants?.[0]?.contact?.displayName || '',
+              })),
+            )
+            .sort(
+              (left: { occurredAt: string }, right: { occurredAt: string }) =>
+                new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+            )
+        : [],
+    [dashboard],
+  );
 
   return {
     dashboard,

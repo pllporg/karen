@@ -113,7 +113,9 @@ describe('AiPage', () => {
         expect.objectContaining({ credentials: 'include' }),
       );
     });
-    expect(screen.getByRole('cell', { name: 'M-1 - Builder Dispute' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('cell', { name: 'M-1 - Builder Dispute' })).toBeInTheDocument();
+    }, { timeout: 5000 });
 
     expect(screen.getByRole('button', { name: 'Confirm Selected Deadlines' })).toBeDisabled();
     expect(screen.getByText('Within 14 days after Rule 26(f) conference.')).toBeInTheDocument();
@@ -420,17 +422,15 @@ describe('AiPage', () => {
 
     render(<AiPage />);
 
-    await waitFor(() => {
-      expect(screen.getByRole('option', { name: 'Plaintiff Demand Tone' })).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('option', { name: 'Plaintiff Demand Tone' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('AI Matter'), {
+    fireEvent.change(await screen.findByLabelText('AI Matter'), {
       target: { value: 'matter-99' },
     });
-    fireEvent.change(screen.getByDisplayValue('No style pack'), {
+    fireEvent.change(await screen.findByDisplayValue('No style pack'), {
       target: { value: 'style-pack-1' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Create AI Job' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create AI Job' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -466,7 +466,7 @@ describe('AiPage', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create AI Job' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create AI Job' }));
 
     await waitFor(() => {
       expect(screen.getByText('Select a matter.')).toBeInTheDocument();
@@ -554,13 +554,13 @@ describe('AiPage', () => {
 
     render(<AiPage />);
 
-    fireEvent.change(screen.getByPlaceholderText('Style pack name'), {
+    fireEvent.change(await screen.findByPlaceholderText('Style pack name'), {
       target: { value: 'Builder Defense' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Description (optional)'), {
+    fireEvent.change(await screen.findByPlaceholderText('Description (optional)'), {
       target: { value: 'Direct and plain-language' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Style Pack' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create Style Pack' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

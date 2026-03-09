@@ -206,6 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={`shell-nav-link${active ? ' is-active' : ''}`}
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => setMobileOpen(false)}
               >
