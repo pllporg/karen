@@ -210,8 +210,8 @@ describe('PortalPage', () => {
       matterId: 'matter-22',
       provider: 'stub',
     });
-    expect(screen.getByText('Intake Submission Recorded')).toBeInTheDocument();
-    expect(screen.getByText('E-Sign Envelope Dispatched')).toBeInTheDocument();
+    expect(await screen.findByText('Intake Submission Recorded')).toBeInTheDocument();
+    expect(await screen.findByText('E-Sign Envelope Dispatched')).toBeInTheDocument();
   });
 
   it('refreshes an e-sign envelope status from the portal list', async () => {
