@@ -10,6 +10,19 @@ describe('AppShell auth bootstrap', () => {
     vi.unstubAllGlobals();
   });
 
+  it('hydrates protected shell from stored token without a bootstrap roundtrip', async () => {
+    const fetchMock = getAuthBootstrapFetchMock();
+
+    render(
+      <AppShell>
+        <div>Protected content</div>
+      </AppShell>,
+    );
+
+    await screen.findByText('Protected content');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('bootstraps from cookie-backed session and restores local token', async () => {
     useStrictAuthBootstrapMode({ token: 'restored-token' });
     const fetchMock = getAuthBootstrapFetchMock();

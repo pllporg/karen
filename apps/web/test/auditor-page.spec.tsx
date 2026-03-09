@@ -118,8 +118,11 @@ describe('AuditorPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Review sig-1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByRole('dialog', { name: 'Confirm Signal Approval' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Signal' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(/APPROVE recorded for sig-1/i);
+    expect(screen.getByText('APPROVE Recorded')).toBeInTheDocument();
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -135,6 +138,8 @@ describe('AuditorPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Review sig-1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Execute' }));
+    expect(await screen.findByRole('dialog', { name: 'Confirm Signal Execution' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Execute Signal' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Unable to execute signal sig-1. No transition applied.');
   });

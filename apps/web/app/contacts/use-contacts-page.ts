@@ -181,14 +181,6 @@ export function useContactsPage() {
       .catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    if (toasts.length === 0) return undefined;
-    const timer = window.setTimeout(() => {
-      setToasts((current) => current.slice(1));
-    }, 4500);
-    return () => window.clearTimeout(timer);
-  }, [toasts]);
-
   async function loadGraph(
     contactId: string,
     nextRelationshipType = graphFilters.graphRelationshipType,

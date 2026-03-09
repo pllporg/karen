@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { cx } from './cx';
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { focusOverlayElement, trapOverlayFocus } from './overlay-focus';
 
 export function Modal({
   open,
@@ -14,6 +12,7 @@ export function Modal({
   children,
   closeOnOverlay = true,
   busy = false,
+  initialFocusRef,
   onClose,
 }: {
   open: boolean;
@@ -23,6 +22,7 @@ export function Modal({
   children: ReactNode;
   closeOnOverlay?: boolean;
   busy?: boolean;
+  initialFocusRef?: RefObject<HTMLElement | null>;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -30,13 +30,23 @@ export function Modal({
   useEffect(() => {
     if (!open) return undefined;
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    const raf =
+      dialog ?
+        requestAnimationFrame(() => {
+          focusOverlayElement(dialog, initialFocusRef?.current || null);
+        })
+      : null;
 
     return () => {
+      if (raf !== null) {
+        cancelAnimationFrame(raf);
+      }
       if (previouslyFocused && document.contains(previouslyFocused)) {
         previouslyFocused.focus();
       }
     };
-  }, [open]);
+  }, [initialFocusRef, open]);
 
   if (!open) return null;
 
@@ -49,29 +59,9 @@ export function Modal({
       return;
     }
 
-    if (event.key !== 'Tab') return;
     const container = dialogRef.current;
     if (!container) return;
-    const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-
-    if (event.shiftKey) {
-      if (active === first || !container.contains(active)) {
-        event.preventDefault();
-        last.focus();
-      }
-      return;
-    }
-    if (active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    trapOverlayFocus(container, event);
   }
 
   return (
@@ -89,6 +79,7 @@ export function Modal({
         aria-describedby={descriptionId}
         data-state="open"
         className={cx('ui-modal', className)}
+        tabIndex={-1}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

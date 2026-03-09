@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
+import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
+import { ToastStack, type ToastItem } from '../../components/toast-stack';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Drawer } from '../../components/ui/drawer';
@@ -14,6 +16,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
 
 type QueueStatus = 'PROPOSED' | 'IN REVIEW' | 'APPROVED' | 'EXECUTED' | 'RETURNED';
 type QueueAction = 'APPROVE' | 'RETURN' | 'EXECUTE';
+type PendingQueueAction = { action: QueueAction; signal: AuditorSignal } | null;
 
 type AuditorSignal = {
   id: string;
@@ -38,6 +41,10 @@ function formatUtcTimestamp(value: string | null | undefined): string {
   if (iso === 'pending') return 'PENDING';
   if (iso === 'invalid') return 'INVALID';
   return iso.replace('T', ' ').replace('Z', ' UTC');
+}
+
+function formatFeedbackTimestamp(value: Date): string {
+  return formatUtcTimestamp(value.toISOString());
 }
 
 function normalizeStatus(value: unknown): QueueStatus {
@@ -129,9 +136,11 @@ export default function AuditorPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | QueueStatus>('ALL');
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState<QueueAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingQueueAction>(null);
   const [errorText, setErrorText] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
   const selectedSignalIdRef = useRef<string | null>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => {
     selectedSignalIdRef.current = selectedSignalId;
@@ -154,6 +163,22 @@ export default function AuditorPage() {
 
   const uniqueSeverities = useMemo(() => ['ALL', ...new Set(signals.map((signal) => signal.severity))], [signals]);
 
+  function pushToast(tone: ToastItem['tone'], title: string, detail: string) {
+    setToasts((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+        tone,
+        title,
+        detail,
+        occurredAt: formatFeedbackTimestamp(new Date()),
+      },
+    ]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }
   const loadQueue = useCallback(async () => {
     setLoading(true);
     setErrorText('');
@@ -174,22 +199,60 @@ export default function AuditorPage() {
     loadQueue().catch(() => undefined);
   }, [loadQueue]);
 
-  async function executeAction(action: QueueAction) {
-    if (!selectedSignal) return;
+  async function executeAction(currentAction: PendingQueueAction) {
+    if (!currentAction) return;
+    const { action, signal } = currentAction;
     setActionBusy(action);
     setErrorText('');
-    setFeedbackText('');
+    setFeedbackText(`Applying ${action} to ${signal.id}...`);
+    setPendingAction(null);
     try {
-      await reviewSignal(selectedSignal.id, action);
+      await reviewSignal(signal.id, action);
       await loadQueue();
-      setFeedbackText(`${action} recorded for ${selectedSignal.id} at ${formatUtcTimestamp(new Date().toISOString())}.`);
+      const timestamp = formatFeedbackTimestamp(new Date());
+      setFeedbackText(`${action} recorded for ${signal.id} at ${timestamp}.`);
+      pushToast(
+        action === 'RETURN' ? 'warning' : 'success',
+        `${action} Recorded`,
+        `Signal ${signal.id} updated and audit timestamp recorded.`,
+      );
       setSelectedSignalId(null);
     } catch {
-      setErrorText(`Unable to ${action.toLowerCase()} signal ${selectedSignal.id}. No transition applied.`);
+      setFeedbackText('');
+      setErrorText(`Unable to ${action.toLowerCase()} signal ${signal.id}. No transition applied.`);
     } finally {
       setActionBusy(null);
     }
   }
+
+  const pendingActionDialog = useMemo(() => {
+    if (!pendingAction) return null;
+
+    if (pendingAction.action === 'APPROVE') {
+      return {
+        title: 'Confirm Signal Approval',
+        description: `Approve signal ${pendingAction.signal.id}. This records the operator decision and advances review state.`,
+        confirmLabel: 'Approve Signal',
+        confirmTone: 'default' as const,
+      };
+    }
+
+    if (pendingAction.action === 'RETURN') {
+      return {
+        title: 'Confirm Signal Return',
+        description: `Return signal ${pendingAction.signal.id} for follow-up. This records a returned disposition in the audit log.`,
+        confirmLabel: 'Return Signal',
+        confirmTone: 'danger' as const,
+      };
+    }
+
+    return {
+      title: 'Confirm Signal Execution',
+      description: `Execute signal ${pendingAction.signal.id}. Confirm the queue item is ready for execution before proceeding.`,
+      confirmLabel: 'Execute Signal',
+      confirmTone: 'default' as const,
+    };
+  }, [pendingAction]);
 
   return (
     <AppShell>
@@ -305,19 +368,43 @@ export default function AuditorPage() {
             <p className="mono-meta">Last Updated: {formatUtcTimestamp(selectedSignal.updatedAt)}</p>
             <p className="mono-meta">Review Gate: PROPOSED → IN REVIEW → APPROVED → EXECUTED / RETURNED</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-              <Button onClick={() => executeAction('APPROVE')} disabled={Boolean(actionBusy)}>
+              <Button onClick={() => selectedSignal && setPendingAction({ action: 'APPROVE', signal: selectedSignal })} disabled={Boolean(actionBusy)}>
                 {actionBusy === 'APPROVE' ? 'Recording...' : 'Approve'}
               </Button>
-              <Button tone="danger" onClick={() => executeAction('RETURN')} disabled={Boolean(actionBusy)}>
+              <Button
+                tone="danger"
+                onClick={() => selectedSignal && setPendingAction({ action: 'RETURN', signal: selectedSignal })}
+                disabled={Boolean(actionBusy)}
+              >
                 {actionBusy === 'RETURN' ? 'Recording...' : 'Return'}
               </Button>
-              <Button tone="secondary" onClick={() => executeAction('EXECUTE')} disabled={Boolean(actionBusy)}>
+              <Button
+                tone="secondary"
+                onClick={() => selectedSignal && setPendingAction({ action: 'EXECUTE', signal: selectedSignal })}
+                disabled={Boolean(actionBusy)}
+              >
                 {actionBusy === 'EXECUTE' ? 'Recording...' : 'Execute'}
               </Button>
             </div>
           </div>
         ) : null}
       </Drawer>
+      <ConfirmDialog
+        open={Boolean(pendingActionDialog)}
+        title={pendingActionDialog?.title || 'Confirm Queue Action'}
+        description={pendingActionDialog?.description || ''}
+        confirmLabel={pendingActionDialog?.confirmLabel || 'Confirm'}
+        confirmTone={pendingActionDialog?.confirmTone || 'default'}
+        cancelLabel="Return to Review"
+        busy={actionBusy !== null}
+        onCancel={() => {
+          if (!actionBusy) {
+            setPendingAction(null);
+          }
+        }}
+        onConfirm={() => executeAction(pendingAction)}
+      />
+      <ToastStack items={toasts} onDismiss={dismissToast} />
     </AppShell>
   );
 }
