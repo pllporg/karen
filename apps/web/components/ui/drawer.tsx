@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { cx } from './cx';
+import { focusOverlayElement, trapOverlayFocus } from './overlay-focus';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -21,31 +22,32 @@ export function Drawer({
   closeOnOverlay?: boolean;
   onClose: () => void;
 }) {
-  const drawerRef = useRef<HTMLElement>(null);
   const titleId = useId();
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return undefined;
-
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const container = drawerRef.current;
-
-    if (container) {
-      const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      const target = focusable[0] || container;
-      target.focus();
-    }
+    const drawer = drawerRef.current;
+    const raf =
+      drawer ?
+        requestAnimationFrame(() => {
+          focusOverlayElement(drawer, closeButtonRef.current);
+        })
+      : null;
 
     return () => {
+      if (raf !== null) {
+        cancelAnimationFrame(raf);
+      }
       if (previouslyFocused && document.contains(previouslyFocused)) {
         previouslyFocused.focus();
       }
     };
   }, [open]);
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (event.key === 'Escape') {
@@ -54,32 +56,9 @@ export function Drawer({
       return;
     }
 
-    if (event.key !== 'Tab') return;
-    const container = drawerRef.current;
-    if (!container) return;
-    const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) {
-      event.preventDefault();
-      container.focus();
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-
-    if (event.shiftKey) {
-      if (active === first || !container.contains(active)) {
-        event.preventDefault();
-        last.focus();
-      }
-      return;
-    }
-
-    if (active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+    trapOverlayFocus(drawer, event);
   }
 
   return (
@@ -97,11 +76,11 @@ export function Drawer({
       >
         <div className="ui-drawer-header">
           {title ? (
-            <p className="ui-drawer-title" id={titleId}>
+            <p id={titleId} className="ui-drawer-title">
               {title}
             </p>
           ) : null}
-          <button className="button ghost" type="button" onClick={onClose}>
+          <button ref={closeButtonRef} className="button ghost" type="button" onClick={onClose}>
             Close
           </button>
         </div>

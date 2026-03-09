@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fs from 'node:fs';
 
 import { Badge } from '../components/ui/badge';
@@ -14,6 +14,19 @@ import { SortableTh, Table } from '../components/ui/table';
 import { Textarea } from '../components/ui/textarea';
 import { Toast } from '../components/ui/toast';
 import { Toggle } from '../components/ui/toggle';
+
+function DrawerHarness() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Open Drawer</Button>
+      <Drawer open={open} title="Review Queue" onClose={() => setOpen(false)}>
+        <Button tone="secondary">Next Action</Button>
+      </Drawer>
+    </>
+  );
+}
 
 describe('UI primitives', () => {
   it('renders canonical button/input/select/badge/table/card primitives with expected state classes', () => {
@@ -173,29 +186,33 @@ describe('UI primitives', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('renders drawer with dialog semantics and keyboard-close behavior', () => {
-    const onClose = vi.fn();
-    render(
-      <Drawer open title="Review Queue" onClose={onClose}>
-        <button type="button">Second Action</button>
-      </Drawer>,
-    );
+  it('traps keyboard focus in the drawer and restores focus to the trigger on close', async () => {
+    render(<DrawerHarness />);
 
-    const dialog = screen.getByRole('dialog', { name: 'Review Queue' });
+    const trigger = screen.getByRole('button', { name: 'Open Drawer' });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const drawer = await screen.findByRole('dialog', { name: 'Review Queue' });
     const closeButton = screen.getByRole('button', { name: 'Close' });
-    const secondAction = screen.getByRole('button', { name: 'Second Action' });
-    expect(dialog).toBeInTheDocument();
+    const nextActionButton = screen.getByRole('button', { name: 'Next Action' });
+
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+
+    fireEvent.keyDown(drawer, { key: 'Tab', shiftKey: true });
+    expect(nextActionButton).toHaveFocus();
+
+    fireEvent.keyDown(drawer, { key: 'Tab' });
     expect(closeButton).toHaveFocus();
 
-    secondAction.focus();
-    fireEvent.keyDown(secondAction, { key: 'Tab' });
-    expect(closeButton).toHaveFocus();
+    fireEvent.keyDown(drawer, { key: 'Escape' });
 
-    fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
-    expect(secondAction).toHaveFocus();
-
-    fireEvent.keyDown(dialog, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Review Queue' })).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
   });
 
   it('does not render drawer focusable controls when closed', () => {

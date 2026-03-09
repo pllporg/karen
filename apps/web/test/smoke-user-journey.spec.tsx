@@ -156,5 +156,6 @@ describe('Web smoke journey', () => {
       );
       expect(screen.getByText('Can you share the latest mediation timeline?')).toBeInTheDocument();
     });
+    expect(screen.getByText('Portal Message Sent')).toBeInTheDocument();
   });
 });

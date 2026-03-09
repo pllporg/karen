@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { type ToastItem } from '../../components/toast-stack';
 import { apiFetch, getSessionToken } from '../../lib/api';
 import { portalMessageSchema, portalWorkflowSchema, type PortalMessageFormData, type PortalWorkflowFormData } from '../../lib/schemas/portal';
 
@@ -92,14 +93,30 @@ function formatPortalDocumentMetadata(document: PortalSnapshotDocument, matterLa
   return `${matterLabel} | Shared ${sharedAt.toLocaleString()}`;
 }
 
+function formatFeedbackTimestamp(date: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
 export function usePortalPage() {
   const [snapshot, setSnapshot] = useState<PortalSnapshot | null>(null);
   const [matterOptions, setMatterOptions] = useState<PortalMatterOption[]>([]);
   const [intakeFormOptions, setIntakeFormOptions] = useState<PortalLookupOption[]>([]);
   const [engagementTemplateOptions, setEngagementTemplateOptions] = useState<PortalLookupOption[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [statusText, setStatusText] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [confirmAction, setConfirmAction] = useState<PortalConfirmAction>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [intakeBusy, setIntakeBusy] = useState(false);
+  const [refreshBusyId, setRefreshBusyId] = useState<string | null>(null);
 
   const {
     register: registerMessage,
@@ -143,6 +160,23 @@ export function usePortalPage() {
     [matterOptions],
   );
 
+  function pushToast(tone: ToastItem['tone'], title: string, detail: string) {
+    setToasts((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+        tone,
+        title,
+        detail,
+        occurredAt: formatFeedbackTimestamp(new Date()),
+      },
+    ]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }
+
   const syncSelectedMatter = useCallback(
     (nextMatterId: string) => {
       setMessageValue('matterId', nextMatterId, { shouldDirty: true, shouldValidate: true });
@@ -185,12 +219,16 @@ export function usePortalPage() {
 
   const sendPortalMessage = handleMessageSubmit(async () => {
     if (!messageMatterId) return;
+    setError(null);
+    setStatusText('Portal message queued for review. Awaiting operator approval.');
     setConfirmAction('send-message');
   });
 
   async function executeSendPortalMessage() {
     const values = getMessageValues();
-    if (!values.matterId) return;
+    if (!values.matterId) {
+      throw new Error('Matter selection required for portal message send.');
+    }
     setError(null);
 
     const attachmentFile = firstFileFromValue(values.attachmentFile);
@@ -210,8 +248,7 @@ export function usePortalPage() {
       });
 
       if (!uploadResponse.ok) {
-        setError(await uploadResponse.text());
-        return;
+        throw new Error((await uploadResponse.text()) || 'Failed to upload portal attachment');
       }
 
       const uploaded = (await uploadResponse.json()) as { version?: { id?: string } };
@@ -242,22 +279,36 @@ export function usePortalPage() {
   async function submitIntake() {
     const values = getWorkflowValues();
     if (!values.intakeFormDefinitionId) return;
+    setError(null);
+    setStatusText('Submitting intake workflow...');
+    setIntakeBusy(true);
 
-    await apiFetch('/portal/intake-submissions', {
-      method: 'POST',
-      body: JSON.stringify({
-        intakeFormDefinitionId: values.intakeFormDefinitionId,
-        matterId: values.matterId || undefined,
-        data: { homeownerGoal: 'Resolve defect damages and warranty claims' },
-      }),
-    });
+    try {
+      await apiFetch('/portal/intake-submissions', {
+        method: 'POST',
+        body: JSON.stringify({
+          intakeFormDefinitionId: values.intakeFormDefinitionId,
+          matterId: values.matterId || undefined,
+          data: { homeownerGoal: 'Resolve defect damages and warranty claims' },
+        }),
+      });
 
-    await loadPortalData();
+      await loadPortalData();
+      setStatusText(null);
+      pushToast('success', 'Intake Submission Recorded', 'Portal intake submission logged and snapshot refreshed.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to submit intake workflow');
+      setStatusText(null);
+    } finally {
+      setIntakeBusy(false);
+    }
   }
 
   async function createEsignEnvelope() {
     const values = getWorkflowValues();
     if (!values.engagementLetterTemplateId) return;
+    setError(null);
+    setStatusText('E-sign dispatch queued for review. Awaiting operator approval.');
     setConfirmAction('create-esign');
   }
 
@@ -279,16 +330,24 @@ export function usePortalPage() {
 
   async function confirmClientAction() {
     setConfirmBusy(true);
+    setError(null);
+    setStatusText(
+      confirmAction === 'create-esign' ? 'Dispatching approved e-sign workflow...' : 'Sending approved portal message...',
+    );
     try {
       if (confirmAction === 'send-message') {
         await executeSendPortalMessage();
+        pushToast('success', 'Portal Message Sent', 'Client message dispatched after explicit review approval.');
       }
       if (confirmAction === 'create-esign') {
         await executeCreateEsignEnvelope();
+        pushToast('warning', 'E-Sign Envelope Dispatched', 'External envelope workflow dispatched after explicit review approval.');
       }
+      setStatusText(null);
       setConfirmAction(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to complete client-facing action');
+      setStatusText(null);
       setConfirmAction(null);
     } finally {
       setConfirmBusy(false);
@@ -296,10 +355,23 @@ export function usePortalPage() {
   }
 
   async function refreshEsignEnvelope(envelopeId: string) {
-    await apiFetch(`/portal/esign/${envelopeId}/refresh`, {
-      method: 'POST',
-    });
-    await loadPortalData();
+    setError(null);
+    setStatusText(`Refreshing envelope ${envelopeId} status...`);
+    setRefreshBusyId(envelopeId);
+
+    try {
+      await apiFetch(`/portal/esign/${envelopeId}/refresh`, {
+        method: 'POST',
+      });
+      await loadPortalData();
+      setStatusText(null);
+      pushToast('success', 'E-Sign Status Refreshed', `Envelope ${envelopeId} status refreshed from provider.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : `Failed to refresh envelope ${envelopeId}`);
+      setStatusText(null);
+    } finally {
+      setRefreshBusyId(null);
+    }
   }
 
   function formatMatterLabel(matter: PortalMatterOption): string {
@@ -316,8 +388,12 @@ export function usePortalPage() {
     intakeFormOptions,
     engagementTemplateOptions,
     error,
+    statusText,
+    toasts,
     confirmAction,
     confirmBusy,
+    intakeBusy,
+    refreshBusyId,
     registerMessage,
     registerWorkflow,
     messageMatterId,
@@ -332,6 +408,7 @@ export function usePortalPage() {
     confirmClientAction,
     refreshEsignEnvelope,
     setConfirmAction,
+    dismissToast,
     formatMatterLabel,
     formatDocumentMetadata,
   };

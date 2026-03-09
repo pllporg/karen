@@ -78,6 +78,7 @@ describe('PortalPage', () => {
       expect(messageMatterSelect.value).toBe('matter-1');
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Portal message queued for review. Awaiting operator approval.');
     const confirmDialog = await screen.findByRole('dialog', { name: 'Confirm Client Message Send' });
     expect(
       within(confirmDialog).getByText(
@@ -107,6 +108,7 @@ describe('PortalPage', () => {
       expect(screen.getByText('2 visible matters')).toBeInTheDocument();
       expect(screen.getByText('3 shared docs')).toBeInTheDocument();
     });
+    expect(screen.getByText('Portal Message Sent')).toBeInTheDocument();
   });
 
   it('submits intake and creates e-sign envelope from portal actions', async () => {
@@ -174,7 +176,7 @@ describe('PortalPage', () => {
         'Approving this action dispatches an external envelope workflow to the selected provider and cannot be silently undone.',
       ),
     ).toBeInTheDocument();
-    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Approve Send' }));
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Approve Dispatch' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -208,6 +210,8 @@ describe('PortalPage', () => {
       matterId: 'matter-22',
       provider: 'stub',
     });
+    expect(screen.getByText('Intake Submission Recorded')).toBeInTheDocument();
+    expect(screen.getByText('E-Sign Envelope Dispatched')).toBeInTheDocument();
   });
 
   it('refreshes an e-sign envelope status from the portal list', async () => {
@@ -274,6 +278,7 @@ describe('PortalPage', () => {
     });
 
     await screen.findByText('Status: SIGNED | Provider: sandbox');
+    expect(screen.getByText('E-Sign Status Refreshed')).toBeInTheDocument();
   });
 
   it('uploads a portal attachment, links it to message, and downloads securely', async () => {
@@ -392,6 +397,7 @@ describe('PortalPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Download Uploaded Portal Photo' })).toBeInTheDocument();
     });
+    expect(screen.getByText('Portal Message Sent')).toBeInTheDocument();
     expect(screen.getByText(/M-001 - Portal Matter \| Shared /i)).toBeInTheDocument();
     expect(screen.queryByText(/matter-1/i)).not.toBeInTheDocument();
 

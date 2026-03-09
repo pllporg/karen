@@ -3,6 +3,7 @@
 import { AppShell } from '../../components/app-shell';
 import { ConfirmDialog } from '../../components/confirm-dialog';
 import { PageHeader } from '../../components/page-header';
+import { ToastStack } from '../../components/toast-stack';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select } from '../../components/ui/select';
@@ -15,8 +16,12 @@ export default function PortalPage() {
     intakeFormOptions,
     engagementTemplateOptions,
     error,
+    statusText,
+    toasts,
     confirmAction,
     confirmBusy,
+    intakeBusy,
+    refreshBusyId,
     registerMessage,
     registerWorkflow,
     messageMatterId,
@@ -31,6 +36,7 @@ export default function PortalPage() {
     confirmClientAction,
     refreshEsignEnvelope,
     setConfirmAction,
+    dismissToast,
     formatMatterLabel,
     formatDocumentMetadata,
   } = usePortalPage();
@@ -40,6 +46,16 @@ export default function PortalPage() {
   return (
     <AppShell>
       <PageHeader title="Client Portal" subtitle="Portal-only experience: matter status, dates, invoices/payments, secure messages, shared docs." />
+      {statusText ? (
+        <p className="notice mb-3" role="status" aria-live="polite">
+          {statusText}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="error mb-3" role="alert">
+          {error}
+        </p>
+      ) : null}
       <div className="card-grid">
         <div className="card">
           <h3>Matters</h3>
@@ -88,7 +104,6 @@ export default function PortalPage() {
               Send
             </Button>
           </form>
-          {error ? <p className="error mt-2">{error}</p> : null}
           <p className="mono-meta mt-2">External client sends require explicit approval and are logged in audit history.</p>
         </div>
 
@@ -143,8 +158,8 @@ export default function PortalPage() {
                 </option>
               ))}
             </Select>
-            <Button tone="ghost" type="button" onClick={submitIntake}>
-              Submit Intake
+            <Button tone="ghost" type="button" onClick={submitIntake} disabled={intakeBusy || confirmBusy}>
+              {intakeBusy ? 'Submitting Intake...' : 'Submit Intake'}
             </Button>
             <Select
               aria-label="Portal Engagement Template"
@@ -176,8 +191,13 @@ export default function PortalPage() {
                     Status: {envelope.status} | Provider: {envelope.provider}
                   </div>
                 </div>
-                <Button tone="ghost" type="button" onClick={() => refreshEsignEnvelope(envelope.id)}>
-                  Refresh Status
+                <Button
+                  tone="ghost"
+                  type="button"
+                  onClick={() => refreshEsignEnvelope(envelope.id)}
+                  disabled={refreshBusyId === envelope.id}
+                >
+                  {refreshBusyId === envelope.id ? 'Refreshing...' : 'Refresh Status'}
                 </Button>
               </div>
             ))}
@@ -193,7 +213,7 @@ export default function PortalPage() {
             ? 'Approving this action dispatches an external envelope workflow to the selected provider and cannot be silently undone.'
             : 'Approving this action sends the portal message to the client for matter review. Verify content and attachments before proceeding.'
         }
-        confirmLabel="Approve Send"
+        confirmLabel={confirmAction === 'create-esign' ? 'Approve Dispatch' : 'Approve Send'}
         cancelLabel="Return to Review"
         busy={confirmBusy}
         onCancel={() => {
@@ -201,6 +221,7 @@ export default function PortalPage() {
         }}
         onConfirm={confirmClientAction}
       />
+      <ToastStack items={toasts} onDismiss={dismissToast} />
     </AppShell>
   );
 }

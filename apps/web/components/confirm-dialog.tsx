@@ -39,14 +39,6 @@ export function ConfirmDialog({
   const typedMatches = !requiresTypedConfirmation || typedValue === typedConfirmation;
 
   useEffect(() => {
-    if (!open) return undefined;
-    const raf = requestAnimationFrame(() => {
-      cancelButtonRef.current?.focus();
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [open]);
-
-  useEffect(() => {
     if (!open) {
       setTypedValue('');
     }
@@ -59,6 +51,7 @@ export function ConfirmDialog({
       descriptionId={descriptionId}
       className="confirm-dialog"
       busy={busy}
+      initialFocusRef={cancelButtonRef}
       onClose={onCancel}
     >
       <div className="confirm-body">
