@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { AppShell } from '../components/app-shell';
 import { useStrictAuthBootstrapMode } from './setup';
@@ -55,15 +55,54 @@ describe('AppShell responsive behavior matrix', () => {
       </AppShell>,
     );
 
-    await screen.findByRole('navigation', { name: 'Primary navigation' });
+    const menuButton = await screen.findByRole('button', { name: 'Menu' });
     const shellRoot = document.querySelector('.shell-root');
     const sidebar = document.querySelector('.shell-sidebar');
     expect(shellRoot).toHaveAttribute('data-shell-mode', 'tablet');
     expect(sidebar).toHaveAttribute('data-open', 'false');
+    expect(screen.queryByRole('navigation', { name: 'Primary navigation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Dashboard$/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(menuButton);
     expect(sidebar).toHaveAttribute('data-open', 'true');
+    expect(screen.getByRole('dialog', { name: 'Primary navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Close navigation' })).toBeInTheDocument();
+  });
+
+  it('traps focus inside the tablet navigation drawer and restores focus on escape close', async () => {
+    useStrictAuthBootstrapMode();
+    setViewport(900);
+    render(
+      <AppShell>
+        <div>Tablet content</div>
+      </AppShell>,
+    );
+
+    const menuButton = await screen.findByRole('button', { name: 'Menu' });
+    menuButton.focus();
+    fireEvent.click(menuButton);
+
+    const drawer = await screen.findByRole('dialog', { name: 'Primary navigation' });
+    const closeButton = screen.getByRole('button', { name: 'Close' });
+    const signOutButton = screen.getByRole('button', { name: 'Sign Out' });
+
+    await waitFor(() => {
+      expect(closeButton).toHaveFocus();
+    });
+
+    fireEvent.keyDown(drawer, { key: 'Tab', shiftKey: true });
+    expect(signOutButton).toHaveFocus();
+
+    fireEvent.keyDown(drawer, { key: 'Tab' });
+    expect(closeButton).toHaveFocus();
+
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Primary navigation' })).not.toBeInTheDocument();
+      expect(menuButton).toHaveFocus();
+    });
   });
 
   it('shows unsupported notice below 768px', () => {

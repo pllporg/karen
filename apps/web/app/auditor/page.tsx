@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '../../components/app-shell';
 import { PageHeader } from '../../components/page-header';
 import { Badge } from '../../components/ui/badge';
@@ -131,6 +131,11 @@ export default function AuditorPage() {
   const [actionBusy, setActionBusy] = useState<QueueAction | null>(null);
   const [errorText, setErrorText] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
+  const selectedSignalIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedSignalIdRef.current = selectedSignalId;
+  }, [selectedSignalId]);
 
   const selectedSignal = useMemo(
     () => signals.find((signal) => signal.id === selectedSignalId) || null,
@@ -155,7 +160,7 @@ export default function AuditorPage() {
     try {
       const nextSignals = await fetchSignals();
       setSignals(nextSignals);
-      if (selectedSignalId && !nextSignals.some((signal) => signal.id === selectedSignalId)) {
+      if (selectedSignalIdRef.current && !nextSignals.some((signal) => signal.id === selectedSignalIdRef.current)) {
         setSelectedSignalId(null);
       }
     } catch {
@@ -163,7 +168,7 @@ export default function AuditorPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedSignalId]);
+  }, []);
 
   useEffect(() => {
     loadQueue().catch(() => undefined);

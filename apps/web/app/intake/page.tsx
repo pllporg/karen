@@ -123,6 +123,7 @@ function buildQueueRows(leads: Lead[]) {
 }
 
 export default function IntakeQueuePage() {
+  const resultsPanelId = 'intake-queue-results-panel';
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<IntakeQueueTabKey>('all');
   const [searchInput, setSearchInput] = useState('');
@@ -210,105 +211,109 @@ export default function IntakeQueuePage() {
             }}
             searchValue={searchInput}
             onSearchChange={setSearchInput}
+            panelId={resultsPanelId}
           />
 
-          {loading ? <LoadingState label="Loading intake queue..." /> : null}
-          {!loading && error ? <ErrorState message="Unable to load intake queue." onRetry={refetch} /> : null}
+          <div id={resultsPanelId} role="tabpanel" aria-labelledby={`intake-queue-tab-${activeTab}`}>
+            {loading ? <LoadingState label="Loading intake queue..." /> : null}
+            {!loading && error ? <ErrorState message="Unable to load intake queue." onRetry={refetch} /> : null}
 
-          {!loading && !error ? (
-            <>
-              {pagedRows.length ? (
-                <>
-                  <TableWrapper>
-                    <Table>
-                      <thead>
-                        <tr>
-                          <th scope="col">Lead</th>
-                          <th scope="col">Source</th>
-                          <th scope="col">Stage</th>
-                          <th scope="col">Type</th>
-                          <th scope="col">Attorney</th>
-                          <th scope="col">Created</th>
-                          <th scope="col">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pagedRows.map((lead) => (
-                          <tr key={lead.id}>
-                            <td>
-                              <div className="intake-queue-lead">
-                                <span className="intake-queue-lead-name">{lead.displayName}</span>
-                                <span className="mono-meta">ID {shortenId(lead.id)}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="intake-queue-source">
-                                {lead.portalOrigin ? <span aria-hidden="true">◆</span> : null}
-                                <span>{lead.source}</span>
-                              </span>
-                            </td>
-                            <td>
-                              <Badge tone={stageTone(lead.stage)}>{stageLabel(lead.stage)}</Badge>
-                            </td>
-                            <td className="mono-meta">{lead.displayType}</td>
-                            <td>{lead.displayAttorney}</td>
-                            <td className="mono-meta">{formatRelativeTime(lead.createdAt)}</td>
-                            <td>
-                              <Link className="button ghost" href={`/intake/${lead.id}/intake`} prefetch={false}>
-                                Open
-                              </Link>
-                            </td>
+<<<<<<< HEAD
+            {!loading && !error ? (
+              <>
+                {pagedRows.length ? (
+                  <>
+                    <TableWrapper>
+                      <Table>
+                        <thead>
+                          <tr>
+                            <th scope="col">Lead</th>
+                            <th scope="col">Source</th>
+                            <th scope="col">Stage</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Attorney</th>
+                            <th scope="col">Created</th>
+                            <th scope="col">Action</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </TableWrapper>
+                        </thead>
+                        <tbody>
+                          {pagedRows.map((lead) => (
+                            <tr key={lead.id}>
+                              <td>
+                                <div className="intake-queue-lead">
+                                  <span className="intake-queue-lead-name">{lead.displayName}</span>
+                                  <span className="mono-meta">ID {shortenId(lead.id)}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="intake-queue-source">
+                                  {lead.portalOrigin ? <span aria-hidden="true">◆</span> : null}
+                                  <span>{lead.source}</span>
+                                </span>
+                              </td>
+                              <td>
+                                <Badge tone={stageTone(lead.stage)}>{stageLabel(lead.stage)}</Badge>
+                              </td>
+                              <td className="mono-meta">{lead.displayType}</td>
+                              <td>{lead.displayAttorney}</td>
+                              <td className="mono-meta">{formatRelativeTime(lead.createdAt)}</td>
+                              <td>
+                                <Link className="button ghost" href={`/intake/${lead.id}/intake`} prefetch={false}>
+                                  Open
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableWrapper>
 
-                  <div className="intake-queue-pagination">
-                    <p className="mono-meta">
-                      Showing {showingFrom}-{showingTo} of {filteredRows.length}
-                    </p>
-                    <div className="intake-queue-page-buttons">
-                      <button
-                        type="button"
-                        className="button ghost"
-                        onClick={() => setPage((value) => Math.max(1, value - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        Previous
-                      </button>
-                      {Array.from({ length: totalPages }, (_, index) => index + 1)
-                        .slice(Math.max(0, currentPage - 3), Math.max(5, currentPage + 2))
-                        .map((pageNumber) => (
-                          <button
-                            key={pageNumber}
-                            type="button"
-                            className={`button ${pageNumber === currentPage ? '' : 'ghost'}`}
-                            onClick={() => setPage(pageNumber)}
-                            aria-current={pageNumber === currentPage ? 'page' : undefined}
-                          >
-                            {pageNumber}
-                          </button>
-                        ))}
-                      <button
-                        type="button"
-                        className="button ghost"
-                        onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        Next
-                      </button>
+                    <div className="intake-queue-pagination">
+                      <p className="mono-meta">
+                        Showing {showingFrom}-{showingTo} of {filteredRows.length}
+                      </p>
+                      <div className="intake-queue-page-buttons">
+                        <button
+                          type="button"
+                          className="button ghost"
+                          onClick={() => setPage((value) => Math.max(1, value - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: totalPages }, (_, index) => index + 1)
+                          .slice(Math.max(0, currentPage - 3), Math.max(5, currentPage + 2))
+                          .map((pageNumber) => (
+                            <button
+                              key={pageNumber}
+                              type="button"
+                              className={`button ${pageNumber === currentPage ? '' : 'ghost'}`}
+                              onClick={() => setPage(pageNumber)}
+                              aria-current={pageNumber === currentPage ? 'page' : undefined}
+                            >
+                              {pageNumber}
+                            </button>
+                          ))}
+                        <button
+                          type="button"
+                          className="button ghost"
+                          onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <EmptyState
-                  message="No leads match the current filter."
-                  action={{ label: 'Create Lead', onClick: () => router.push('/intake/new') }}
-                />
-              )}
-            </>
-          ) : null}
+                  </>
+                ) : (
+                  <EmptyState
+                    message="No leads match the current filter."
+                    action={{ label: 'Create Lead', onClick: () => router.push('/intake/new') }}
+                  />
+                )}
+              </>
+            ) : null}
+          </div>
         </section>
       </div>
     </AppShell>

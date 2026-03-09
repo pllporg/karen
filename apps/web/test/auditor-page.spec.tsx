@@ -27,6 +27,19 @@ const fixtureSignals = [
 ];
 
 describe('AuditorPage', () => {
+  let consoleErrorMock: ReturnType<typeof vi.spyOn> | undefined;
+
+  beforeEach(() => {
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    expect(consoleErrorMock).toBeDefined();
+    expect(consoleErrorMock).not.toHaveBeenCalled();
+    consoleErrorMock?.mockRestore();
+    vi.restoreAllMocks();
+  });
+
   it('renders queue table with required columns', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -54,6 +67,7 @@ describe('AuditorPage', () => {
     render(<AuditorPage />);
 
     const reviewButton = await screen.findByRole('button', { name: 'Review sig-1' });
+    reviewButton.focus();
     fireEvent.click(reviewButton);
 
     expect(screen.getByText('Signal ID: sig-1')).toBeInTheDocument();
@@ -63,6 +77,9 @@ describe('AuditorPage', () => {
       expect(screen.queryByText('Signal ID: sig-1')).not.toBeInTheDocument();
     });
     expect(screen.getByText('Acme v. Dawson')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Review sig-1' })).toHaveFocus();
+    });
   });
 
   it('supports keyboard focus flow with interactive controls using focus-visible-compatible classes', async () => {
