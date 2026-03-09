@@ -15,6 +15,7 @@
     "test:integrations-live": "pnpm --filter api test:connectors-live",
     "ops:drill:backup-restore": "node tools/ops/backup_restore_rollback_drill.mjs",
     "ops:evidence:capture": "node tools/ops/capture_provider_status_evidence.mjs",
+    "ops:symphony:handoff:check": "node tools/ops/check_symphony_handoff.mjs",
     "perf:web:evidence": "node tools/perf/capture_web_perf_evidence.mjs",
     "perf:web:stability": "pnpm --filter web test:stability",
     "ops:preflight": "node tools/ops/operator_preflight.mjs",
