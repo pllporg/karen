@@ -814,10 +814,11 @@ export class LeadsService {
 
   private async resolveIntakeFormDefinitionId(organizationId: string, requestedIdOrName: string) {
     const normalized = requestedIdOrName?.trim() || LeadsService.DEFAULT_LEAD_INTAKE_FORM_NAME;
+    const identityFilter = this.isUuidLike(normalized) ? [{ id: normalized }, { name: normalized }] : [{ name: normalized }];
     const existing = await this.prisma.intakeFormDefinition.findFirst({
       where: {
         organizationId,
-        OR: [{ id: normalized }, { name: normalized }],
+        OR: identityFilter,
       },
       select: { id: true },
     });
@@ -847,10 +848,11 @@ export class LeadsService {
 
   private async resolveEngagementTemplateId(organizationId: string, requestedIdOrName: string) {
     const normalized = requestedIdOrName?.trim() || 'engagement-template-standard';
+    const identityFilter = this.isUuidLike(normalized) ? [{ id: normalized }, { name: normalized }] : [{ name: normalized }];
     const existing = await this.prisma.engagementLetterTemplate.findFirst({
       where: {
         organizationId,
-        OR: [{ id: normalized }, { name: normalized }],
+        OR: identityFilter,
       },
       select: { id: true },
     });
