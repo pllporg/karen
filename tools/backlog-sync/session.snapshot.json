@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.1.0",
-  "generatedAt": "2026-03-09T16:05:47.232Z",
+  "generatedAt": "2026-03-10T15:14:48.352Z",
   "sourceOfTruth": "Linear",
   "contextContract": {
     "canonicalOrder": [
@@ -113,21 +113,16 @@
   },
   "uiLaneSummary": {
     "label": "ui-ux",
-    "issueCount": 33,
-    "openIssueCount": 7,
+    "issueCount": 35,
+    "openIssueCount": 3,
     "stateCounts": {
-      "Ready": 4,
-      "Done": 26,
+      "Done": 32,
       "Backlog": 3
     },
     "openIssueKeys": [
       "KAR-118",
       "KAR-123",
-      "KAR-124",
-      "KAR-126",
-      "KAR-127",
-      "KAR-128",
-      "KAR-129"
+      "KAR-124"
     ],
     "openIssues": [
       {
@@ -150,46 +145,20 @@
         "state": "Backlog",
         "requirementId": "PRD-07",
         "updatedAt": "2026-03-09T15:51:43.357Z"
-      },
-      {
-        "key": "KAR-126",
-        "title": "PRD-06 A11y lane A: keyboard, focus-visible, and tab order hardening",
-        "state": "Ready",
-        "requirementId": "PRD-06-A11Y-A",
-        "updatedAt": "2026-03-09T15:51:42.760Z"
-      },
-      {
-        "key": "KAR-127",
-        "title": "PRD-06 A11y lane B: labels/aria/error semantics and table accessibility",
-        "state": "Ready",
-        "requirementId": "PRD-06-A11Y-B",
-        "updatedAt": "2026-03-09T15:51:43.059Z"
-      },
-      {
-        "key": "KAR-128",
-        "title": "PRD-07 Perf lane A: route bundle and render-path optimization",
-        "state": "Ready",
-        "requirementId": "PRD-07-PERF-A",
-        "updatedAt": "2026-03-09T15:51:43.357Z"
-      },
-      {
-        "key": "KAR-129",
-        "title": "PRD-07 Perf lane B: runtime stability tests and perf evidence automation",
-        "state": "Ready",
-        "requirementId": "PRD-07-PERF-B",
-        "updatedAt": "2026-03-09T15:51:43.674Z"
       }
     ]
   },
   "operational": {
-    "lastSuccessfulBacklogVerifyAt": "2026-03-09T16:05:44.327Z",
+    "lastSuccessfulBacklogVerifyAt": "2026-03-10T15:14:44.847Z",
     "verifyStatePath": "tools/backlog-sync/state/verify.last.json"
   },
   "workspace": {
-    "gitHead": "daefa87f40163f1e7ec25e71126c6439a8be56ae",
+    "gitHead": "2d2df6bcce6efbe084af0b2d47e245717c4884e5",
     "gitStatusShort": [
-      "## main...origin/main"
+      "## main...origin/main",
+      " M docs/SESSION_HANDOFF.md",
+      " M tools/backlog-sync/session.snapshot.json"
     ],
-    "dirtyFileCount": 0
+    "dirtyFileCount": 2
   }
 }
