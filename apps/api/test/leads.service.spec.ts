@@ -240,6 +240,14 @@ describe('LeadsService', () => {
         }),
       }),
     );
+    expect(prisma.intakeFormDefinition.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId,
+          OR: [{ name: 'construction-intake-v1' }],
+        }),
+      }),
+    );
   });
 
   it('resolves named engagement templates before generating envelopes', async () => {
@@ -257,6 +265,14 @@ describe('LeadsService', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           engagementLetterTemplateId: 'template-1',
+        }),
+      }),
+    );
+    expect(prisma.engagementLetterTemplate.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId,
+          OR: [{ name: 'engagement-template-standard' }],
         }),
       }),
     );
