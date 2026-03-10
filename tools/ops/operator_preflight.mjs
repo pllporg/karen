@@ -17,6 +17,7 @@ const canonicalControlFiles = [
   'docs/WORKING_CONTRACT.md',
   'README.md',
 ];
+const housekeepingArtifactFiles = ['tools/backlog-sync/session.snapshot.json', 'docs/SESSION_HANDOFF.md'];
 const requiredTokenEnv = ['LINEAR_API_TOKEN', 'GITHUB_TOKEN', 'GITHUB_OWNER', 'GITHUB_REPO'];
 
 preloadEnvFiles(envFiles);
@@ -54,7 +55,12 @@ if (missingTokenEnv.length === 0) {
 }
 
 const failedChecks = checks.filter((check) => check.result === 'FAIL');
-const hasHardDirtyControlDrift = dirtyCanonicalFiles.length > 0;
+const onlyFreshHousekeepingArtifactsDirty =
+  dirtyCanonicalFiles.length === housekeepingArtifactFiles.length &&
+  dirtyNonCanonicalFiles.length === 0 &&
+  housekeepingArtifactFiles.every((file) => dirtyCanonicalFiles.includes(file));
+const hasFreshnessCheckFailure = failedChecks.some((check) => check.name === 'backlog:handoff:check');
+const hasHardDirtyControlDrift = dirtyCanonicalFiles.length > 0 && !(onlyFreshHousekeepingArtifactsDirty && !hasFreshnessCheckFailure);
 
 const summary = {
   startedAt,
@@ -67,6 +73,7 @@ const summary = {
   requiredEnvPresence: Object.fromEntries(requiredTokenEnv.map((name) => [name, Boolean(process.env[name])])),
   missingRequiredEnv: missingTokenEnv,
   checks,
+  housekeepingArtifactsOnly: onlyFreshHousekeepingArtifactsDirty,
   outcome: {
     pass: missingTokenEnv.length === 0 && !hasHardDirtyControlDrift && failedChecks.length === 0,
     reasons: [
@@ -186,6 +193,9 @@ function printSummary(result, pathToArtifact) {
   console.log(`- branch: ${result.branch}`);
   console.log(`- dirty files: ${result.dirtyFileCount}`);
   console.log(`- dirty canonical control files: ${result.dirtyCanonicalFiles.length}`);
+  if (result.housekeepingArtifactsOnly) {
+    console.log('- dirty canonical files are the fresh snapshot/handoff pair from housekeeping');
+  }
   console.log(`- missing required env: ${result.missingRequiredEnv.length ? result.missingRequiredEnv.join(', ') : '(none)'}`);
   for (const check of result.checks) {
     console.log(`- ${check.name}: ${check.result}`);
